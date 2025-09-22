@@ -2,5 +2,30 @@ spring:
   application:
     name: security-service
 
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: jdbc:postgresql://${SECURITY_POSTGRES_HOST}:${SECURITY_POSTGRES_PORT}/${SECURITY_POSTGRES_DB}
+    username: ${SECURITY_POSTGRES_USERNAME}
+    password: ${SECURITY_POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+  security:
+    jwt:
+      secret: "f" #${JWT_SECRET}
+      access-expiration: "f" #${JWT_ACCESS_EXPIRATION}
+      refresh-expiration: "f" #${JWT_REFRESH_EXPIRATION}
+
 server:
   port: 8080
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
