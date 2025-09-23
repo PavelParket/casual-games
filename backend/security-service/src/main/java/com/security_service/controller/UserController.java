@@ -4,6 +4,7 @@ import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,12 +28,12 @@ public class UserController {
     private final UserService service;
 
     @PostMapping
-    public ResponseEntity<UserResponse> create(@RequestBody RegisterRequest request) {
+    public ResponseEntity<UserResponse> create(@Valid @RequestBody RegisterRequest request) {
         return new ResponseEntity<>(service.create(request), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> update(@PathVariable Long id, @RequestBody UpdateRequest request) {
+    public ResponseEntity<UserResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateRequest request) {
         return new ResponseEntity<>(service.update(id, request), HttpStatus.OK);
     }
 

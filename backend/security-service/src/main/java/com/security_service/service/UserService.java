@@ -5,9 +5,6 @@ import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.domain.entity.CustomUserDetails;
 import com.security_service.domain.entity.User;
-import com.security_service.domain.enums.Role;
-import com.security_service.exception.EmailAlreadyExistsException;
-import com.security_service.exception.InvalidRoleException;
 import com.security_service.exception.UserNotFoundException;
 import com.security_service.factory.UserFactory;
 import com.security_service.mapper.UserMapper;
@@ -21,7 +18,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -38,7 +34,6 @@ public class UserService implements UserDetailsService {
     private final UserValidator validator;
 
     private final PasswordService passwordService;
-    private UserValidator validator1;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -62,34 +57,16 @@ public class UserService implements UserDetailsService {
         User user = repository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id=" + id));
 
-        if (request.email() != null && !request.email().equals(user.getEmail())
-                && repository.existsByEmail(request.email())) {
-            throw new EmailAlreadyExistsException("User with email=" + request.email() + " already exists!");
-        }
+        validator.validateUpdate(request);
 
-        if (request.role() != null && !request.role().isBlank()) {
-            boolean exists = Arrays.stream(Role.values())
-                    .anyMatch(role -> role.name().equalsIgnoreCase(request.role()));
-
-            if (!exists) {
-                throw new InvalidRoleException("Role " + request.role() + " not found!");
-            }
-        }
-
-        mapper.updateEntity(user, request);
-
-        if (request.password() != null && !request.password().isBlank()) {
-            user.setPassword(passwordService.encode(request.password()));
-        }
+        mapper.updateEntity(user, request, passwordService);
 
         return mapper.toResponse(repository.save(user));
     }
 
     @Transactional
     public void delete(Long id) {
-        if (!repository.existsById(id)) {
-            throw new UserNotFoundException("User not found!");
-        }
+        validator.validateIdExists(id);
 
         repository.deleteById(id);
     }

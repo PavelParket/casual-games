@@ -33,6 +33,7 @@ public class UserFactory {
         return create(request.username(), request.email(), request.password(), Role.USER);
     }
 
+    @Deprecated
     public User createFromParams(String username, String email, String password, Role role) {
         return create(username, email, password, role);
     }

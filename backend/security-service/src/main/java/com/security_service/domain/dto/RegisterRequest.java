@@ -1,6 +1,5 @@
 package com.security_service.domain.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 
@@ -10,7 +9,6 @@ public record RegisterRequest(
         String username,
 
         @NotBlank(message = "Email cannot be empty")
-        @Email(message = "Email should be valid")
         String email,
 
         @NotBlank(message = "Password cannot be empty")
