@@ -11,11 +11,17 @@ import java.time.Instant;
 
 @Component
 @RequiredArgsConstructor
-public class UserFactory {
+public class UserFactory implements Factory<User> {
 
     private final PasswordService passwordService;
 
-    private User create(String username, String email, String password, Role role) {
+    @Override
+    public User create(Object... params) {
+        String username = (String) params[0];
+        String email = (String) params[1];
+        String password = (String) params[2];
+        Role role = params.length > 3 && params[3] != null ? (Role) params[3] : Role.USER;
+
         String encodedPassword = (password != null && !password.isBlank())
                 ? passwordService.encode(password)
                 : null;
@@ -24,7 +30,7 @@ public class UserFactory {
                 .username(username)
                 .email(email)
                 .password(encodedPassword)
-                .role(role != null ? role : Role.USER)
+                .role(role)
                 .createdAt(Instant.now())
                 .build();
     }
