@@ -27,7 +27,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository repository;
 
-    public final UserMapper mapper;
+    private final UserMapper mapper;
 
     private final UserFactory factory;
 

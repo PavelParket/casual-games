@@ -13,12 +13,12 @@ import org.springframework.security.config.annotation.authentication.configurati
 @RequiredArgsConstructor
 public class AuthenticationConfig {
 
-    public final UserService service;
+    /*public final UserService service;
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
         return new DaoAuthenticationProvider(service);
-    }
+    }*/
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {

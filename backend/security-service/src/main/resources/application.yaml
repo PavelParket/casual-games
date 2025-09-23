@@ -18,9 +18,9 @@ spring:
 
   security:
     jwt:
-      secret: "f" #${JWT_SECRET}
-      access-expiration: "f" #${JWT_ACCESS_EXPIRATION}
-      refresh-expiration: "f" #${JWT_REFRESH_EXPIRATION}
+      secret: ${JWT_SECRET}
+      access-expiration: ${JWT_ACCESS_EXPIRATION}
+      refresh-expiration: ${JWT_REFRESH_EXPIRATION}
 
 server:
   port: 8080
