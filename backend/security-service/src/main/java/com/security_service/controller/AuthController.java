@@ -24,16 +24,16 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return new ResponseEntity<>(service.register(request), HttpStatus.CREATED);
+        return new ResponseEntity<>(service.register(request), HttpStatus.OK);
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return new ResponseEntity<>(service.login(request), HttpStatus.CREATED);
+        return new ResponseEntity<>(service.login(request), HttpStatus.OK);
     }
 
     @GetMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@RequestParam String token) {
-        return new ResponseEntity<>(service.refresh(token), HttpStatus.CREATED);
+        return new ResponseEntity<>(service.refresh(token), HttpStatus.OK);
     }
 }
