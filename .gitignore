@@ -19,6 +19,34 @@
 *.tar.gz
 *.rar
 
+**/target/
+**/build/
+
+.idea/
+.gradle/
+*.iml
+*.iws
+*.ipr
+
+.DS_Store
+Thumbs.db
+
+*.log
+**/log/
+**/logs/
+temp/
+tmp/
+*.tmp
+
+.env
+.local
+*.properties.local
+
+*.class
+
+**/out/
+
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
