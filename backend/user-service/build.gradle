@@ -34,11 +34,10 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     //Liquibase
-    implementation 'org.liquibase:liquibase-core:4.25.1'
+    //implementation 'org.liquibase:liquibase-core:4.25.1'
 
     //Postgresql
     implementation 'org.postgresql:postgresql:42.7.7'
-    runtimeOnly 'org.postgresql:postgresql'
 
     //Lombok
     compileOnly 'org.projectlombok:lombok'

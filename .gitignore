@@ -39,6 +39,7 @@ tmp/
 *.tmp
 
 **/.env
+.env
 .local
 *.properties.local
 
