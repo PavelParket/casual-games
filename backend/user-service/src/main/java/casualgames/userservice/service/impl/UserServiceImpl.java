@@ -1,16 +1,19 @@
 package casualgames.userservice.service.impl;
 
 import casualgames.userservice.dto.UserRequest;
+import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.entity.User;
+import casualgames.userservice.exception.ResourceNotFoundException;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.UserService;
+import casualgames.userservice.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -19,83 +22,63 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
+    private final UserValidator  userValidator;
+
     @Override
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+    public Optional<UserResponse> findById(Long id) {
+        return userRepository.findById(id)
+                .map(userMapper::toResponseDto);
     }
 
     @Override
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public List<UserResponse> findAll() {
+        return userMapper.toListResponse(userRepository.findAll());
     }
 
+    @Transactional
     @Override
-    public void create(UserRequest userRequest) {
+    public UserResponse create(UserRequest userRequest) {
 
-        if (userRepository.findByUsername(userRequest.username()).isPresent() ||
-                userRepository.findByEmail(userRequest.email()).isPresent()) {
-            throw new IllegalArgumentException("Пользователь с таким именем или email уже существует");
-        }
+        userValidator.validateForCreation(userRequest);
 
         User user = userMapper.toEntity(userRequest);
-        userRepository.save(user);
+        return userMapper.toResponseDto(userRepository.save(user));
     }
 
+    @Transactional
     @Override
-    public void update(Long userId, UserRequest userRequest) {
+    public UserResponse update(Long userId, UserRequest userRequest) {
 
         User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
-        validateUniqueness(
-                userRequest.username(),
-                userRepository::findByUsername,
-                existingUser,
-                "именем"
-        );
+        userValidator.validateUsernameForUpdate(userRequest.username(), existingUser);
 
-        validateUniqueness(
-                userRequest.email(),
-                userRepository::findByEmail,
-                existingUser,
-                "email"
-        );
+        userValidator.validateEmailForUpdate(userRequest.email(), existingUser);
 
         userMapper.toUpdateEntity(userRequest, existingUser);
 
-        userRepository.save(existingUser);
+        return userMapper.toResponseDto(userRepository.save(existingUser));
     }
 
+    @Transactional
     @Override
     public void delete(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Пользователь не найден");
+        }
         userRepository.deleteById(id);
     }
 
     @Override
-    public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
+    public Optional<UserResponse> findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .map(userMapper::toResponseDto);
     }
 
     @Override
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
-
-
-    private void validateUniqueness(
-            String newValue,
-            Function<String, Optional<User>> finder,
-            User existingUser,
-            String fieldName
-    ) {
-        if (newValue != null && !newValue.isBlank()) {
-            finder.apply(newValue)
-                    .filter(foundUser -> !foundUser.getId().equals(existingUser.getId()))
-                    .ifPresent(foundUser -> {
-                        throw new IllegalArgumentException(
-                                "Пользователь с " + fieldName + " '" + newValue + "' уже существует"
-                        );
-                    });
-        }
+    public Optional<UserResponse> findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(userMapper::toResponseDto);
     }
 }
