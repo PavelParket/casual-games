@@ -19,13 +19,13 @@ spring:
       hibernate:
         format_sql: true
 
-  liquibase:
-    enabled: false
+#  liquibase:
+#    enabled: false
 
-  logging:
-    level:
-      root: INFO
-      org.springframework.boot.autoconfigure: DEBUG
+#  logging:
+#    level:
+#      root: INFO
+#      org.springframework.boot.autoconfigure: DEBUG
 
 server:
   port: 8081
