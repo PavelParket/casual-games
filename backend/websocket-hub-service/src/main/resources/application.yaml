@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: websocket-hub-service
+
+  config:
+    import: optional:file:.env[.properties]
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      access-expiration: ${JWT_ACCESS_EXPIRATION}
+      refresh-expiration: ${JWT_REFRESH_EXPIRATION}
+
+server:
+  port: 8081
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.web.websocket: DEBUG
