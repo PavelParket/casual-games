@@ -7,12 +7,12 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class JsonSerializer implements MessageSerializer {
+public class JsonSerializer implements MessageSerializer<String> {
 
     private final ObjectMapper mapper;
 
     @Override
-    public String serialize(Message message) throws Exception {
+    public String serialize(Message<String> message) throws Exception {
         return mapper.writeValueAsString(message);
     }
 }

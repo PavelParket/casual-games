@@ -6,6 +6,8 @@ public interface Message<T> {
 
     String fromUserId();
 
+    String toUserId();
+
     String roomId();
 
     T content();

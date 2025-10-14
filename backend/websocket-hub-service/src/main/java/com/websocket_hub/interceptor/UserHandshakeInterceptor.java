@@ -2,30 +2,55 @@ package com.websocket_hub.interceptor;
 
 import com.websocket_hub.provider.IdentityProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+import java.time.Instant;
 import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class UserHandshakeInterceptor implements HandshakeInterceptor {
 
     private final IdentityProvider identityProvider;
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
-        attributes.put("userId", identityProvider.resolveUserId(request));
-        attributes.put("roomId", identityProvider.resolveRoomId(request));
+        String userId = identityProvider.resolveUserId(request);
+        String username = identityProvider.resolveUsername(request);
+        String roomId = identityProvider.resolveRoomId(request);
+
+        attributes.put("userId", userId);
+        attributes.put("username", username);
+        attributes.put("roomId", roomId);
+        attributes.put("connectedAt", Instant.now());
+
+        log.debug("Preparing handshake for user={} room={} ip={}", userId, roomId, request.getRemoteAddress().getHostString());
 
         return true;
     }
 
     @Override
     public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
+        String ip = request.getRemoteAddress().getHostString();
 
+        if (exception == null) {
+            try {
+                String userId = identityProvider.resolveUserId(request);
+                String username = identityProvider.resolveUsername(request);
+                String roomId = identityProvider.resolveRoomId(request);
+
+                log.info("Handshake complete: user={} ({}) joined room='{}' from ip={}", username, userId, roomId, ip);
+            } catch (Exception e) {
+                log.warn("Handshake post-processing failed: {}", e.getMessage());
+            }
+        } else {
+            log.warn("Handshake failed from ip={}: {}", ip, exception.getMessage());
+        }
     }
 }
