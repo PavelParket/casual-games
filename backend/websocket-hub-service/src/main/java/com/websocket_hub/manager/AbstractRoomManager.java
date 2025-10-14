@@ -22,7 +22,7 @@ public abstract class AbstractRoomManager {
     @Getter
     private final Map<String, Set<WebSocketSession>> rooms = new ConcurrentHashMap<>();
 
-    private final MessageSerializer serializer;
+    private final MessageSerializer<String> serializer;
 
     public abstract String getName();
 
@@ -50,22 +50,28 @@ public abstract class AbstractRoomManager {
         log.info("Session \"{}\" left room \"{}\"", session.getId(), roomId);
     }
 
-    public void broadcast(String roomId, Message message) {
+    public void broadcast(String roomId, Message<String> message) {
         try {
             String json = serializer.serialize(message);
 
             var sessions = rooms.get(roomId);
 
-            if (sessions == null || sessions.isEmpty()) return;
+            if (sessions == null || sessions.isEmpty()) {
+                return;
+            }
 
             for (WebSocketSession session : sessions) {
-                try {
-                    synchronized (session) {
-                        session.sendMessage(new TextMessage(json));
-                    }
-                } catch (IOException e) {
-                    log.warn("Failed to send message to session {}: {}", session.getId(), e.getMessage());
+                if (session == null || !session.isOpen()) {
+                    continue;
                 }
+
+                Thread.ofVirtual().start(() -> {
+                    try {
+                        session.sendMessage(new TextMessage(json));
+                    } catch (IOException e) {
+                        log.warn("Failed to send message to session {}: {}", session.getId(), e.getMessage());
+                    }
+                });
             }
 
             log.info("Broadcast in room \"{}\" from {} → {} recipients", roomId, message.fromUserId(), sessions.size());
@@ -85,18 +91,18 @@ public abstract class AbstractRoomManager {
                 .collect(Collectors.toSet());
     }
 
-    protected void sendToSession(WebSocketSession session, Message message) {
-        try {
-            String json = serializer.serialize(message);
-
-            if (session != null && session.isOpen()) {
-                synchronized (session) {
-                    session.sendMessage(new TextMessage(json));
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Failed to send private message to session \"{}\": {}", session != null ? session.getId() : "n/a", e.getMessage());
+    protected void sendToSession(WebSocketSession session, Message<String> message) {
+        if (session == null || !session.isOpen()) {
+            return;
         }
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                session.sendMessage(new TextMessage(serializer.serialize(message)));
+            } catch (Exception e) {
+                log.warn("Failed to send private message to session \"{}\": {}", session.getId(), e.getMessage());
+            }
+        });
     }
 
     protected abstract void onAddSession(String roomId, WebSocketSession session);

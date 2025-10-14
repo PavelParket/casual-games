@@ -19,31 +19,37 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String userId = getUserIdFromSession(session);
+        String username = getUsernameFromSession(session);
         String roomId = getRoomIdFromSession(session);
 
         sessionManager.register(userId, session);
         roomManager.addSession(roomId, session);
 
-        onJoin(roomId, userId, session);
+        onJoin(roomId, username);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         String userId = getUserIdFromSession(session);
+        String username = getUsernameFromSession(session);
         String roomId = getRoomIdFromSession(session);
 
         sessionManager.remove(userId);
         roomManager.removeSession(roomId, session);
 
-        onLeave(roomId, userId, session);
+        onLeave(roomId, username);
     }
 
-    protected abstract void onJoin(String roomId, String userId, WebSocketSession session);
+    protected abstract void onJoin(String roomId, String username);
 
-    protected abstract void onLeave(String roomId, String userId, WebSocketSession session);
+    protected abstract void onLeave(String roomId, String username);
 
     protected String getUserIdFromSession(WebSocketSession session) {
         return (String) session.getAttributes().get("userId");
+    }
+
+    protected String getUsernameFromSession(WebSocketSession session) {
+        return (String) session.getAttributes().get("username");
     }
 
     protected String getRoomIdFromSession(WebSocketSession session) {

@@ -35,7 +35,7 @@ public class JwtIdentityProvider implements IdentityProvider {
     // TODO: send the request to user service, receive data and resolve need
     @Override
     public String resolveUsername(ServerHttpRequest request) {
-        return null;
+        return "Pavel";
     }
 
     @Override
