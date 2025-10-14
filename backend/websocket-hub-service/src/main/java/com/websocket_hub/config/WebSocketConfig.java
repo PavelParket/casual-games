@@ -1,4 +1,4 @@
-package com.websocket_hub;
+package com.websocket_hub.config;
 
 import com.websocket_hub.handler.RoomHandler;
 import com.websocket_hub.interceptor.UserHandshakeInterceptor;

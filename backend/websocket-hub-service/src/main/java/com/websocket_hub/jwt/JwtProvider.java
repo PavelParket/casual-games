@@ -37,15 +37,6 @@ public class JwtProvider {
                 .get("role", String.class);
     }
 
-    public Long getUserId(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .get("userId", Long.class);
-    }
-
     public String getUsername(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())

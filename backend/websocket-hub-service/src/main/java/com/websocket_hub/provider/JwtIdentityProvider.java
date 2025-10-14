@@ -27,10 +27,15 @@ public class JwtIdentityProvider implements IdentityProvider {
             throw new JwtException("Invalid JWT token!");
         }
 
-        //String userId = Long.toString(provider.getUserId(token));
-        String userId = provider.getUsername(token);
+        String userId = provider.getEmail(token);
 
         return !userId.isBlank() ? userId : "guest-" + System.currentTimeMillis();
+    }
+
+    // TODO: send the request to user service, receive data and resolve need
+    @Override
+    public String resolveUsername(ServerHttpRequest request) {
+        return null;
     }
 
     @Override

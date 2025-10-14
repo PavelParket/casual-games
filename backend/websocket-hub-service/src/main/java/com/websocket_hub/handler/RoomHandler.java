@@ -1,5 +1,6 @@
 package com.websocket_hub.handler;
 
+import com.websocket_hub.enums.SystemEvents;
 import com.websocket_hub.manager.RoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.MessageMapper;
@@ -20,11 +21,11 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
 
     @Override
     protected void onJoin(String roomId, String userId, WebSocketSession session) {
-        roomManager.broadcast(roomId, mapper.toResponse(roomId, "User \"" + userId + "\" joined the room \"" + roomId + "\""));
+        roomManager.broadcast(roomId, mapper.toResponse(roomId, userId + " " + SystemEvents.JOIN.getDescription() + " room: [" + roomId + "]"));
     }
 
     @Override
     protected void onLeave(String roomId, String userId, WebSocketSession session) {
-        roomManager.broadcast(roomId, mapper.toResponse(roomId, "User \"" + userId + "\" left the room \"" + roomId + "\""));
+        roomManager.broadcast(roomId, mapper.toResponse(roomId, userId + " " + SystemEvents.LEFT.getDescription() + "room: [" + roomId + "]"));
     }
 }

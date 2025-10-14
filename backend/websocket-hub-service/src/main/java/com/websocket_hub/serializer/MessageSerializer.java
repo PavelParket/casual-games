@@ -2,7 +2,7 @@ package com.websocket_hub.serializer;
 
 import com.websocket_hub.dto.Message;
 
-public interface MessageSerializer {
+public interface MessageSerializer<T> {
 
-    String serialize(Message message) throws Exception;
+    T serialize(Message<T> message) throws Exception;
 }

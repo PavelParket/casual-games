@@ -6,5 +6,7 @@ public interface IdentityProvider {
 
     String resolveUserId(ServerHttpRequest request);
 
+    String resolveUsername(ServerHttpRequest request);
+
     String resolveRoomId(ServerHttpRequest request);
 }
