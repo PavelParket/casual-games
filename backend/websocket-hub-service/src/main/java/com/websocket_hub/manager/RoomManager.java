@@ -9,7 +9,7 @@ import org.springframework.web.socket.WebSocketSession;
 @Slf4j
 public class RoomManager extends AbstractRoomManager {
 
-    public RoomManager(MessageSerializer serializer) {
+    public RoomManager(MessageSerializer<String> serializer) {
         super(serializer);
     }
 

@@ -6,7 +6,6 @@ import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.MessageMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.WebSocketSession;
 
 @Component
 @Slf4j
@@ -20,12 +19,12 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
     }
 
     @Override
-    protected void onJoin(String roomId, String userId, WebSocketSession session) {
-        roomManager.broadcast(roomId, mapper.toResponse(roomId, userId + " " + SystemEvents.JOIN.getDescription() + " room: [" + roomId + "]"));
+    protected void onJoin(String roomId, String username) {
+        roomManager.broadcast(roomId, mapper.toResponse(roomId, username + " " + SystemEvents.JOIN.getDescription() + " room: [" + roomId + "]"));
     }
 
     @Override
-    protected void onLeave(String roomId, String userId, WebSocketSession session) {
-        roomManager.broadcast(roomId, mapper.toResponse(roomId, userId + " " + SystemEvents.LEFT.getDescription() + "room: [" + roomId + "]"));
+    protected void onLeave(String roomId, String username) {
+        roomManager.broadcast(roomId, mapper.toResponse(roomId, username + " " + SystemEvents.LEFT.getDescription() + "room: [" + roomId + "]"));
     }
 }
