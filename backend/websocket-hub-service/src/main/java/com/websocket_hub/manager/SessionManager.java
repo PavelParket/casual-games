@@ -1,5 +1,7 @@
 package com.websocket_hub.manager;
 
+import com.websocket_hub.entity.ClientSession;
+import com.websocket_hub.factory.ObjectFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,43 +15,45 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class SessionManager {
 
-    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+    private final Map<String, ClientSession> sessions = new ConcurrentHashMap<>();
 
-    public void register(String userId, WebSocketSession session) {
-        if (userId == null || session == null) {
+    private final ObjectFactory<ClientSession> factory;
+
+    public void register(String userId, String username, WebSocketSession session) {
+        if (userId == null || username == null || session == null) {
             return;
         }
 
-        sessions.put(userId, session);
+        sessions.put(userId, factory.create(userId, username, session));
 
         log.info("User \"{}\" registered session \"{}\"", userId, session.getId());
     }
 
     public void remove(String userId) {
-        WebSocketSession session = sessions.remove(userId);
+        ClientSession client = sessions.remove(userId);
 
-        log.info("User {} removed session {}", userId, session != null ? session.getId() : null);
+        log.info("User {} removed session {}", userId, client != null ? client.getSession().getId() : null);
     }
 
-    public Map<String, WebSocketSession> getAll() {
+    public Map<String, ClientSession> getAll() {
         return sessions;
     }
 
-    public WebSocketSession getByUserId(String userId) {
-        WebSocketSession session = sessions.get(userId);
+    public ClientSession getByUserId(String userId) {
+        ClientSession client = sessions.get(userId);
 
-        if (session != null && !session.isOpen()) {
+        if (client != null && !client.getSession().isOpen()) {
             sessions.remove(userId);
 
             return null;
         }
 
-        return session;
+        return client;
     }
 
     public boolean isActive(String userId) {
-        WebSocketSession session = sessions.get(userId);
+        ClientSession client = sessions.get(userId);
 
-        return session != null && session.isOpen();
+        return client != null && client.getSession().isOpen();
     }
 }

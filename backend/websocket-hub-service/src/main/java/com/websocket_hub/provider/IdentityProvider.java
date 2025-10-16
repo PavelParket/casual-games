@@ -8,5 +8,5 @@ public interface IdentityProvider {
 
     String resolveUsername(ServerHttpRequest request);
 
-    String resolveRoomId(ServerHttpRequest request);
+    String resolveRoomName(ServerHttpRequest request);
 }

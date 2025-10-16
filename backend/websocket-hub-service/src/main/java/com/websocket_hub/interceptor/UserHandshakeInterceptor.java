@@ -23,14 +23,14 @@ public class UserHandshakeInterceptor implements HandshakeInterceptor {
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
         String userId = identityProvider.resolveUserId(request);
         String username = identityProvider.resolveUsername(request);
-        String roomId = identityProvider.resolveRoomId(request);
+        String roomName = identityProvider.resolveRoomName(request);
 
         attributes.put("userId", userId);
         attributes.put("username", username);
-        attributes.put("roomId", roomId);
+        attributes.put("roomName", roomName);
         attributes.put("connectedAt", Instant.now());
 
-        log.debug("Preparing handshake for user={} room={} ip={}", userId, roomId, request.getRemoteAddress().getHostString());
+        log.debug("Preparing handshake for user={} room={} ip={}", userId, roomName, request.getRemoteAddress().getHostString());
 
         return true;
     }
@@ -43,9 +43,9 @@ public class UserHandshakeInterceptor implements HandshakeInterceptor {
             try {
                 String userId = identityProvider.resolveUserId(request);
                 String username = identityProvider.resolveUsername(request);
-                String roomId = identityProvider.resolveRoomId(request);
+                String roomName = identityProvider.resolveRoomName(request);
 
-                log.info("Handshake complete: user={} ({}) joined room='{}' from ip={}", username, userId, roomId, ip);
+                log.info("Handshake complete: user={} ({}) joined room='{}' from ip={}", username, userId, roomName, ip);
             } catch (Exception e) {
                 log.warn("Handshake post-processing failed: {}", e.getMessage());
             }

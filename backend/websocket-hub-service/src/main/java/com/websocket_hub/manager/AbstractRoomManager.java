@@ -1,6 +1,9 @@
 package com.websocket_hub.manager;
 
 import com.websocket_hub.dto.Message;
+import com.websocket_hub.entity.ClientSession;
+import com.websocket_hub.entity.Room;
+import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.serializer.MessageSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,47 +23,54 @@ import java.util.stream.Collectors;
 public abstract class AbstractRoomManager {
 
     @Getter
-    private final Map<String, Set<WebSocketSession>> rooms = new ConcurrentHashMap<>();
+    private final Map<String, Room> rooms = new ConcurrentHashMap<>();
 
     private final MessageSerializer<String> serializer;
 
+    private final ObjectFactory<Room> roomFactory;
+
+    private final ObjectFactory<ClientSession> clientFactory;
+
     public abstract String getName();
 
-    public void addSession(String roomId, WebSocketSession session) {
-        rooms.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet()).add(session);
+    public void addSession(String roomName, String userId, String username, WebSocketSession session) {
+        Room room = rooms.computeIfAbsent(roomName, roomFactory::create);
+        room.add(clientFactory.create(userId, username, session));
 
-        onAddSession(roomId, session);
+        onAddSession(roomName, session);
 
-        log.info("Session \"{}\" joined room \"{}\"", session.getId(), roomId);
+        log.info("Session \"{}\" joined room \"{}\"", session.getId(), roomName);
     }
 
-    public void removeSession(String roomId, WebSocketSession session) {
-        var sessions = rooms.get(roomId);
+    public void removeSession(String roomName, WebSocketSession session) {
+        Room room = rooms.get(roomName);
 
-        if (sessions != null) {
-            sessions.remove(session);
+        if (room != null) {
+            room.getParticipants().removeIf(clientSession -> clientSession.getSession().equals(session));
 
-            if (sessions.isEmpty()) {
-                rooms.remove(roomId, sessions);
+            if (room.isEmpty()) {
+                rooms.remove(roomName);
             }
         }
 
-        onRemoveSession(roomId, session);
+        onRemoveSession(roomName, session);
 
-        log.info("Session \"{}\" left room \"{}\"", session.getId(), roomId);
+        log.info("Session \"{}\" left room \"{}\"", session.getId(), roomName);
     }
 
-    public void broadcast(String roomId, Message<String> message) {
+    public void broadcast(String roomName, Message<String> message) {
         try {
             String json = serializer.serialize(message);
 
-            var sessions = rooms.get(roomId);
+            Room room = rooms.get(roomName);
 
-            if (sessions == null || sessions.isEmpty()) {
+            if (room == null || room.isEmpty()) {
                 return;
             }
 
-            for (WebSocketSession session : sessions) {
+            for (ClientSession clientSession : room.getParticipants()) {
+                WebSocketSession session = clientSession.getSession();
+
                 if (session == null || !session.isOpen()) {
                     continue;
                 }
@@ -74,7 +84,7 @@ public abstract class AbstractRoomManager {
                 });
             }
 
-            log.info("Broadcast in room \"{}\" from {} → {} recipients", roomId, message.fromUserId(), sessions.size());
+            log.info("Broadcast in room \"{}\" from {} → {} recipients", roomName, message.fromUserId(), room.getParticipants().size());
         } catch (Exception e) {
             log.error("Failed to broadcast message", e);
         }
@@ -84,9 +94,15 @@ public abstract class AbstractRoomManager {
         return rooms.keySet();
     }
 
-    public Set<String> getUsersId(String roomId) {
-        return getRooms().getOrDefault(roomId, Set.of()).stream()
-                .map(session -> (String) session.getAttributes().get("userId"))
+    public Set<String> getUsersIds(String roomName) {
+        Room room = rooms.get(roomName);
+
+        if (room == null) {
+            return Set.of();
+        }
+
+        return room.getParticipants().stream()
+                .map(ClientSession::getUserId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
@@ -105,7 +121,7 @@ public abstract class AbstractRoomManager {
         });
     }
 
-    protected abstract void onAddSession(String roomId, WebSocketSession session);
+    protected abstract void onAddSession(String roomName, WebSocketSession session);
 
-    protected abstract void onRemoveSession(String roomId, WebSocketSession session);
+    protected abstract void onRemoveSession(String roomName, WebSocketSession session);
 }

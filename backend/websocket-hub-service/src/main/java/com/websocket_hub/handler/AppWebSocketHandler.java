@@ -20,29 +20,29 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String userId = getUserIdFromSession(session);
         String username = getUsernameFromSession(session);
-        String roomId = getRoomIdFromSession(session);
+        String roomName = getRoomNameFromSession(session);
 
-        sessionManager.register(userId, session);
-        roomManager.addSession(roomId, session);
+        sessionManager.register(userId, username, session);
+        roomManager.addSession(roomName, userId, username, session);
 
-        onJoin(roomId, username);
+        onJoin(roomName, username);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         String userId = getUserIdFromSession(session);
         String username = getUsernameFromSession(session);
-        String roomId = getRoomIdFromSession(session);
+        String roomName = getRoomNameFromSession(session);
 
         sessionManager.remove(userId);
-        roomManager.removeSession(roomId, session);
+        roomManager.removeSession(roomName, session);
 
-        onLeave(roomId, username);
+        onLeave(roomName, username);
     }
 
-    protected abstract void onJoin(String roomId, String username);
+    protected abstract void onJoin(String roomName, String username);
 
-    protected abstract void onLeave(String roomId, String username);
+    protected abstract void onLeave(String roomName, String username);
 
     protected String getUserIdFromSession(WebSocketSession session) {
         return (String) session.getAttributes().get("userId");
@@ -52,7 +52,7 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
         return (String) session.getAttributes().get("username");
     }
 
-    protected String getRoomIdFromSession(WebSocketSession session) {
-        return (String) session.getAttributes().get("roomId");
+    protected String getRoomNameFromSession(WebSocketSession session) {
+        return (String) session.getAttributes().get("roomName");
     }
 }

@@ -39,7 +39,7 @@ public class JwtIdentityProvider implements IdentityProvider {
     }
 
     @Override
-    public String resolveRoomId(ServerHttpRequest request) {
+    public String resolveRoomName(ServerHttpRequest request) {
         var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
 
         String roomId = params.getFirst("roomId");
