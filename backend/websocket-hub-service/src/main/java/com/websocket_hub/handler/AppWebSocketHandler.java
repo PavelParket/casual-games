@@ -2,6 +2,7 @@ package com.websocket_hub.handler;
 
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.manager.SessionManager;
+import com.websocket_hub.util.WebSocketUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.CloseStatus;
@@ -18,9 +19,9 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String userId = getUserIdFromSession(session);
-        String username = getUsernameFromSession(session);
-        String roomName = getRoomNameFromSession(session);
+        String userId = WebSocketUtil.getUserId(session);
+        String username = WebSocketUtil.getUsername(session);
+        String roomName = WebSocketUtil.getRoomName(session);
 
         sessionManager.register(userId, username, session);
         roomManager.addSession(roomName, userId, username, session);
@@ -30,12 +31,12 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        String userId = getUserIdFromSession(session);
-        String username = getUsernameFromSession(session);
-        String roomName = getRoomNameFromSession(session);
+        String userId = WebSocketUtil.getUserId(session);
+        String username = WebSocketUtil.getUsername(session);
+        String roomName = WebSocketUtil.getRoomName(session);
 
         sessionManager.remove(userId);
-        roomManager.removeSession(roomName, session);
+        roomManager.removeSession(roomName, username, session);
 
         onLeave(roomName, username);
     }
@@ -43,16 +44,4 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
     protected abstract void onJoin(String roomName, String username);
 
     protected abstract void onLeave(String roomName, String username);
-
-    protected String getUserIdFromSession(WebSocketSession session) {
-        return (String) session.getAttributes().get("userId");
-    }
-
-    protected String getUsernameFromSession(WebSocketSession session) {
-        return (String) session.getAttributes().get("username");
-    }
-
-    protected String getRoomNameFromSession(WebSocketSession session) {
-        return (String) session.getAttributes().get("roomName");
-    }
 }

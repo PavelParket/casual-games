@@ -1,6 +1,6 @@
 package com.websocket_hub.factory;
 
-import com.websocket_hub.entity.Room;
+import com.websocket_hub.domain.entity.Room;
 
 import java.util.UUID;
 import org.springframework.stereotype.Component;

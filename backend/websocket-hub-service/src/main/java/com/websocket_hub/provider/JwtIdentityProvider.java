@@ -3,15 +3,21 @@ package com.websocket_hub.provider;
 import com.websocket_hub.jwt.JwtProvider;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtIdentityProvider implements IdentityProvider {
 
     private final JwtProvider provider;
+
+    @Value("${app.websocket.default-room}")
+    private String defaultRoom;
 
     @Override
     public String resolveUserId(ServerHttpRequest request) {
@@ -20,7 +26,11 @@ public class JwtIdentityProvider implements IdentityProvider {
         String token = params.getFirst("token");
 
         if (token == null || token.isBlank()) {
-            return "guest-" + System.currentTimeMillis();
+            String guestId = "guest-" + System.currentTimeMillis();
+
+            log.debug("Anonymous connection — generated guest id {}", guestId);
+
+            return guestId;
         }
 
         if (!provider.validate(token)) {
@@ -29,7 +39,7 @@ public class JwtIdentityProvider implements IdentityProvider {
 
         String userId = provider.getEmail(token);
 
-        return !userId.isBlank() ? userId : "guest-" + System.currentTimeMillis();
+        return (userId != null && !userId.isBlank()) ? userId : "guest-" + System.currentTimeMillis();
     }
 
     // TODO: send the request to user service, receive data and resolve need
@@ -44,6 +54,6 @@ public class JwtIdentityProvider implements IdentityProvider {
 
         String roomId = params.getFirst("roomId");
 
-        return (roomId == null || roomId.isBlank()) ? "default" : roomId;
+        return (roomId == null || roomId.isBlank()) ? defaultRoom : roomId;
     }
 }

@@ -1,6 +1,6 @@
 package com.websocket_hub.factory;
 
-import com.websocket_hub.entity.ClientSession;
+import com.websocket_hub.domain.entity.ClientSession;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.stereotype.Component;
 

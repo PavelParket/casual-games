@@ -1,4 +1,4 @@
-package com.websocket_hub.dto;
+package com.websocket_hub.domain.dto;
 
 public interface Message<T> {
 

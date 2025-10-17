@@ -1,8 +1,8 @@
 package com.websocket_hub.manager;
 
-import com.websocket_hub.dto.Message;
-import com.websocket_hub.entity.ClientSession;
-import com.websocket_hub.entity.Room;
+import com.websocket_hub.domain.dto.Message;
+import com.websocket_hub.domain.entity.ClientSession;
+import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.serializer.MessageSerializer;
 import lombok.AllArgsConstructor;
@@ -35,25 +35,31 @@ public abstract class AbstractRoomManager {
 
     public void addSession(String roomName, String userId, String username, WebSocketSession session) {
         Room room = rooms.computeIfAbsent(roomName, roomFactory::create);
-        room.add(clientFactory.create(userId, username, session));
 
-        onAddSession(roomName, session);
+        synchronized (room) {
+            room.add(clientFactory.create(userId, username, session));
+        }
+        onAddSession(username, roomName, session);
 
         log.info("Session \"{}\" joined room \"{}\"", session.getId(), roomName);
     }
 
-    public void removeSession(String roomName, WebSocketSession session) {
-        Room room = rooms.get(roomName);
+    public void removeSession(String roomName, String username, WebSocketSession session) {
+        rooms.computeIfPresent(roomName, (key, room) -> {
+            synchronized (room) {
+                room.getParticipants().removeIf(clientSession -> clientSession.getSession().equals(session));
 
-        if (room != null) {
-            room.getParticipants().removeIf(clientSession -> clientSession.getSession().equals(session));
+                if (room.isEmpty()) {
+                    log.debug("Room \"{}\" is now empty, removing...", roomName);
 
-            if (room.isEmpty()) {
-                rooms.remove(roomName);
+                    return null;
+                }
             }
-        }
 
-        onRemoveSession(roomName, session);
+            return room;
+        });
+
+        onRemoveSession(username, roomName, session);
 
         log.info("Session \"{}\" left room \"{}\"", session.getId(), roomName);
     }
@@ -68,10 +74,14 @@ public abstract class AbstractRoomManager {
                 return;
             }
 
+            Set<ClientSession> dead = ConcurrentHashMap.newKeySet();
+
             for (ClientSession clientSession : room.getParticipants()) {
                 WebSocketSession session = clientSession.getSession();
 
                 if (session == null || !session.isOpen()) {
+                    dead.add(clientSession);
+
                     continue;
                 }
 
@@ -80,8 +90,22 @@ public abstract class AbstractRoomManager {
                         session.sendMessage(new TextMessage(json));
                     } catch (IOException e) {
                         log.warn("Failed to send message to session {}: {}", session.getId(), e.getMessage());
+
+                        dead.add(clientSession);
                     }
                 });
+            }
+
+            if (!dead.isEmpty()) {
+                synchronized (room) {
+                    room.getParticipants().removeAll(dead);
+
+                    if (room.isEmpty()) {
+                        rooms.remove(roomName);
+
+                        log.info("Room \"{}\" removed due to all sessions being closed", roomName);
+                    }
+                }
             }
 
             log.info("Broadcast in room \"{}\" from {} → {} recipients", roomName, message.fromUserId(), room.getParticipants().size());
@@ -94,7 +118,7 @@ public abstract class AbstractRoomManager {
         return rooms.keySet();
     }
 
-    public Set<String> getUsersIds(String roomName) {
+    public Set<String> getUserIds(String roomName) {
         Room room = rooms.get(roomName);
 
         if (room == null) {
@@ -121,7 +145,7 @@ public abstract class AbstractRoomManager {
         });
     }
 
-    protected abstract void onAddSession(String roomName, WebSocketSession session);
+    protected abstract void onAddSession(String username, String roomName, WebSocketSession session);
 
-    protected abstract void onRemoveSession(String roomName, WebSocketSession session);
+    protected abstract void onRemoveSession(String username, String roomName, WebSocketSession session);
 }

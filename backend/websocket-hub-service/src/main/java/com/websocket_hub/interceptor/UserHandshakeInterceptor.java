@@ -3,6 +3,7 @@ package com.websocket_hub.interceptor;
 import com.websocket_hub.provider.IdentityProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,12 @@ public class UserHandshakeInterceptor implements HandshakeInterceptor {
         String userId = identityProvider.resolveUserId(request);
         String username = identityProvider.resolveUsername(request);
         String roomName = identityProvider.resolveRoomName(request);
+
+        if (isBlank(userId) || isBlank(username) || isBlank(roomName)) {
+            log.warn("Handshake rejected: invalid params userId={}, username={}, roomName={}", userId, username, roomName);
+            response.setStatusCode(HttpStatus.BAD_REQUEST);
+            return false;
+        }
 
         attributes.put("userId", userId);
         attributes.put("username", username);
@@ -52,5 +59,9 @@ public class UserHandshakeInterceptor implements HandshakeInterceptor {
         } else {
             log.warn("Handshake failed from ip={}: {}", ip, exception.getMessage());
         }
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 }

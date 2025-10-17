@@ -1,4 +1,4 @@
-package com.websocket_hub.entity;
+package com.websocket_hub.domain.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +23,5 @@ public class ClientSession {
     private final WebSocketSession session;
 
     @Builder.Default
-    @EqualsAndHashCode.Include
     private Instant joinedAt = Instant.now();
 }

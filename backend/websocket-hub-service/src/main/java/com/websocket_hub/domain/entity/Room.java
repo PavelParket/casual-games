@@ -1,4 +1,4 @@
-package com.websocket_hub.entity;
+package com.websocket_hub.domain.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,7 +25,6 @@ public class Room {
     private final Set<ClientSession> participants = ConcurrentHashMap.newKeySet();
 
     @Builder.Default
-    @EqualsAndHashCode.Include
     private Instant createdAt = Instant.now();
 
     public void add(ClientSession clientSession) {
