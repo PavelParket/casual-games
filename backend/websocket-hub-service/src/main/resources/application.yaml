@@ -79,6 +79,10 @@ kafka:
   topics:
     room-lifecycle: ${KAFKA_ROOM_LIFECYCLE_TOPIC:room-lifecycle}
 
+app:
+  websocket:
+    default-room: default
+
 logging:
   level:
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
