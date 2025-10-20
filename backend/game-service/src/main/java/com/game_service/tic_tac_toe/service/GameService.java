@@ -3,14 +3,16 @@ package com.game_service.tic_tac_toe.service;
 import com.game_service.tic_tac_toe.dto.GameRequest;
 import com.game_service.tic_tac_toe.dto.GameResponse;
 import com.game_service.tic_tac_toe.enums.MessageType;
-import com.game_service.tic_tac_toe.exception.GameValidationException;
-import com.game_service.tic_tac_toe.exception.InvalidMoveException;
+import com.game_service.tic_tac_toe.util.BoardUtils;
+import com.game_service.tic_tac_toe.util.GameLogicUtils;
+import com.game_service.tic_tac_toe.validator.GameValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -20,29 +22,26 @@ import java.util.Random;
 @Slf4j
 public class GameService {
 
+    private final GameValidator validator;
+
     private final Random random = new Random();
 
     public GameResponse processStart(GameRequest request) {
-        if (request == null) {
-            throw new GameValidationException("Request cannot be null");
-        }
-
-        if (request.players() == null || request.players().size() != 2) {
-            throw new GameValidationException("Exactly two players required");
-        }
+        validator.validateStart(request);
 
         String[][] board = new String[3][3];
 
         List<String> players = new ArrayList<>(request.players());
 
         Collections.shuffle(players, random);
+
         String first = players.get(0);
         String second = players.get(1);
 
-        Map<String, String> playersSymbols = Map.of(
-                first, "X",
-                second, "O"
-        );
+        Map<String, String> playersSymbols = new HashMap<>() {{
+            put(first, "X");
+            put(second, "O");
+        }};
 
         log.info("Starting new game in room '{}': {} -> X, {} -> O", request.roomName(), first, second);
 
@@ -57,51 +56,33 @@ public class GameService {
     }
 
     public GameResponse processMove(GameRequest request) {
-        if (request == null) {
-            throw new GameValidationException("Request cannot be null");
-        }
+        validator.validateMove(request);
+
+        Integer cell = request.cell();
+        int row = BoardUtils.getRow(cell);
+        int col = BoardUtils.getCol(cell);
 
         String[][] board = request.board();
-        Integer cell = request.cell();
-        String player = request.player();
-
-        if (board == null || cell == null || player == null) {
-            throw new GameValidationException("Invalid request: missing board, cell or player");
-        }
-
-        int row = cell / 3;
-        int col = cell % 3;
-
-        if (row < 0 || row >= 3 || col < 0) {
-            throw new GameValidationException("Invalid cell index: " + cell);
-        }
-
-        if (board[row][col] != null && !board[row][col].isBlank()) {
-            throw new InvalidMoveException("Cell already occupied");
-        }
-
-        if (!player.equals("X") && !player.equals("O")) {
-            throw new GameValidationException("Unknown player: " + player);
-        }
-
         board[row][col] = request.player();
 
-        MessageType type;
+        String player = request.player();
+        String winner = GameLogicUtils.checkWinner(board);
         String nextPlayer;
-        String winner = checkWinner(board);
+
+        MessageType type;
         String message;
 
         if (winner != null) {
             type = winner.equals("X") ? MessageType.WINNER_X : MessageType.WINNER_O;
             nextPlayer = null;
-            message = "Player " + player + " wins!";
-        } else if (isDraw(board)) {
+            message = "Player " + winner + " wins!";
+        } else if (GameLogicUtils.isDraw(board)) {
             type = MessageType.DRAW;
             nextPlayer = null;
             message = "It's a draw!";
         } else {
             type = MessageType.MOVE;
-            nextPlayer = nextPlayerSymbol(player);
+            nextPlayer = GameLogicUtils.nextPlayerSymbol(player);
             message = "Next move: " + nextPlayer;
         }
 
@@ -117,44 +98,5 @@ public class GameService {
                 .winner(winner)
                 .message(message)
                 .build();
-    }
-
-    private String nextPlayerSymbol(String current) {
-        return current.equals("X") ? "O" : "X";
-    }
-
-    private boolean isDraw(String[][] board) {
-        for (String[] row : board) {
-            for (String cell : row) {
-                if (cell == null || cell.isBlank()) {
-                    return false;
-                }
-            }
-        }
-
-        return checkWinner(board) == null;
-    }
-
-    private String checkWinner(String[][] board) {
-        for (int i = 0; i < 3; i++) {
-            if (board[i][0] != null && board[i][0].equals(board[i][1]) && board[i][1].equals(board[i][2])) {
-                return board[i][0];
-            }
-        }
-
-        for (int i = 0; i < 3; i++) {
-            if (board[0][i] != null && board[0][i].equals(board[1][i]) && board[1][i].equals(board[2][i]))
-                return board[0][i];
-        }
-
-        if (board[0][0] != null && board[0][0].equals(board[1][1]) && board[1][1].equals(board[2][2])) {
-            return board[0][0];
-        }
-
-        if (board[0][2] != null && board[0][2].equals(board[1][1]) && board[1][1].equals(board[2][0])) {
-            return board[0][2];
-        }
-
-        return null;
     }
 }
