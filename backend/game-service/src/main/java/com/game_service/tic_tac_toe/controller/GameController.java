@@ -22,4 +22,9 @@ public class GameController {
     public ResponseEntity<GameResponse> processStart(@RequestBody GameRequest request) {
         return new ResponseEntity<>(service.processStart(request), HttpStatus.OK);
     }
+
+    @PostMapping("/move")
+    public ResponseEntity<GameResponse> processMove(@RequestBody GameRequest request) {
+        return new ResponseEntity<>(service.processMove(request), HttpStatus.OK);
+    }
 }
