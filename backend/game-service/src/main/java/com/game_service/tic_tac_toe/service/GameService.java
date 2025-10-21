@@ -3,6 +3,7 @@ package com.game_service.tic_tac_toe.service;
 import com.game_service.tic_tac_toe.dto.GameRequest;
 import com.game_service.tic_tac_toe.dto.GameResponse;
 import com.game_service.tic_tac_toe.enums.MessageType;
+import com.game_service.tic_tac_toe.mapper.GameMapper;
 import com.game_service.tic_tac_toe.util.BoardUtils;
 import com.game_service.tic_tac_toe.util.GameLogicUtils;
 import com.game_service.tic_tac_toe.validator.GameValidator;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -23,6 +23,8 @@ import java.util.Random;
 public class GameService {
 
     private final GameValidator validator;
+
+    private final GameMapper mapper;
 
     private final Random random = new Random();
 
@@ -35,24 +37,14 @@ public class GameService {
 
         Collections.shuffle(players, random);
 
-        String first = players.get(0);
-        String second = players.get(1);
+        Map<String, String> playersSymbols = Map.of(
+                players.get(0), "X",
+                players.get(1), "O"
+        );
 
-        Map<String, String> playersSymbols = new HashMap<>() {{
-            put(first, "X");
-            put(second, "O");
-        }};
+        log.info("Starting new game in room '{}': {}=X, {}=O", request.roomName(), players.get(0), players.get(1));
 
-        log.info("Starting new game in room '{}': {} -> X, {} -> O", request.roomName(), first, second);
-
-        return GameResponse.builder()
-                .type(MessageType.START)
-                .roomName(request.roomName())
-                .board(board)
-                .nextPlayer("X")
-                .playersSymbols(playersSymbols)
-                .players(request.players())
-                .build();
+        return mapper.toStartResponse(request.roomName(), board, playersSymbols, request.players());
     }
 
     public GameResponse processMove(GameRequest request) {
@@ -62,41 +54,21 @@ public class GameService {
         int row = BoardUtils.getRow(cell);
         int col = BoardUtils.getCol(cell);
 
-        String[][] board = request.board();
-        board[row][col] = request.player();
-
         String player = request.player();
-        String winner = GameLogicUtils.checkWinner(board);
-        String nextPlayer;
 
-        MessageType type;
-        String message;
+        String[][] board = request.board();
+        board[row][col] = player;
+
+        String winner = GameLogicUtils.checkWinner(board);
 
         if (winner != null) {
-            type = winner.equals("X") ? MessageType.WINNER_X : MessageType.WINNER_O;
-            nextPlayer = null;
-            message = "Player " + winner + " wins!";
+            MessageType type = winner.equals("X") ? MessageType.WINNER_X : MessageType.WINNER_O;
+            return mapper.toWinResponse(type, request.roomName(), board, cell, player, winner);
         } else if (GameLogicUtils.isDraw(board)) {
-            type = MessageType.DRAW;
-            nextPlayer = null;
-            message = "It's a draw!";
+            return mapper.toDrawResponse(request.roomName(), board, cell, player);
         } else {
-            type = MessageType.MOVE;
-            nextPlayer = GameLogicUtils.nextPlayerSymbol(player);
-            message = "Next move: " + nextPlayer;
+            String nextPlayer = GameLogicUtils.nextPlayerSymbol(player);
+            return mapper.toMoveResponse(request.roomName(), board, cell, player, nextPlayer);
         }
-
-        log.info("Move: player={}, cell={}, result={}", player, cell, type);
-
-        return GameResponse.builder()
-                .type(type)
-                .roomName(request.roomName())
-                .board(board)
-                .cell(cell)
-                .player(player)
-                .nextPlayer(nextPlayer)
-                .winner(winner)
-                .message(message)
-                .build();
     }
 }
