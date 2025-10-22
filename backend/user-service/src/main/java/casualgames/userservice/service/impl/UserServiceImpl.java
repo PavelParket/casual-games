@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,9 +24,10 @@ public class UserServiceImpl implements UserService {
     private final UserValidator  userValidator;
 
     @Override
-    public Optional<UserResponse> findById(Long id) {
+    public UserResponse findById(Long id) {
         return userRepository.findById(id)
-                .map(userMapper::toResponseDto);
+                .map(userMapper::toResponseDto)
+                .orElseThrow(() -> new ResourceNotFoundException("User with id: '" + id + "' not found"));
     }
 
     @Override
@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse update(Long userId, UserRequest userRequest) {
 
         User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         userValidator.validateUsernameForUpdate(userRequest.username(), existingUser);
 
@@ -65,20 +65,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public void delete(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Пользователь не найден");
+            throw new ResourceNotFoundException("User not found");
         }
         userRepository.deleteById(id);
     }
 
     @Override
-    public Optional<UserResponse> findByUsername(String username) {
+    public UserResponse findByUsername(String username) {
         return userRepository.findByUsername(username)
-                .map(userMapper::toResponseDto);
+                .map(userMapper::toResponseDto)
+                .orElseThrow(() -> new ResourceNotFoundException("User with username: '" + username + "' not found"));
     }
 
     @Override
-    public Optional<UserResponse> findByEmail(String email) {
+    public UserResponse findByEmail(String email) {
         return userRepository.findByEmail(email)
-                .map(userMapper::toResponseDto);
+                .map(userMapper::toResponseDto)
+                .orElseThrow(() -> new ResourceNotFoundException("User with email: " + email+ "' not found"));
     }
 }
