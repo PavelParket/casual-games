@@ -19,47 +19,40 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> findAllUsers() {
-        return ResponseEntity.ok(userService.findAll());
+    public List<UserResponse> findAllUsers() {
+        return userService.findAll();
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserResponse> findUserById(@PathVariable Long userId) {
-        return userService.findById(userId)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public UserResponse findUserById(@PathVariable Long userId) {
+        return userService.findById(userId);
     }
 
     @GetMapping("/username/{username}")
-    public ResponseEntity<UserResponse> findUserByUsername(@PathVariable String username) {
-        return userService.findByUsername(username)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public UserResponse findUserByUsername(@PathVariable String username) {
+        return userService.findByUsername(username);
     }
 
     @GetMapping("/email/{email}")
-    public ResponseEntity<UserResponse> findUserByEmail(@PathVariable String email) {
-        return userService.findByEmail(email)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public UserResponse findUserByEmail(@PathVariable String email) {
+        return userService.findByEmail(email);
     }
 
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest userRequest) {
-        UserResponse createdUser = userService.create(userRequest);
-        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserResponse createUser(@Valid @RequestBody UserRequest userRequest) {
+        return userService.create(userRequest);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable("id") Long userId,
-                                                   @Valid @RequestBody UserRequest userRequest) {
-        UserResponse updatedUser = userService.update(userId, userRequest);
-        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    public UserResponse updateUser(@PathVariable("id") Long userId,
+                                   @Valid @RequestBody UserRequest userRequest) {
+        return userService.update(userId, userRequest);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable Long id) {
         userService.delete(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
