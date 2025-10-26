@@ -17,10 +17,10 @@ public class UserValidator {
 
     public void validateForCreation(UserRequest request) {
         if (userRepository.findByUsername(request.username()).isPresent()) {
-            throw new ResourceAlreadyExistsException("Пользователь с именем '" + request.username() + "' уже существует");
+            throw new ResourceAlreadyExistsException("User with name '" + request.username() + "' already exists");
         }
         if (userRepository.findByEmail(request.email()).isPresent()) {
-            throw new ResourceAlreadyExistsException("Пользователь с email '" + request.email() + "' уже существует");
+            throw new ResourceAlreadyExistsException("User with email '" + request.email() + "' already exists");
         }
     }
 
@@ -33,7 +33,7 @@ public class UserValidator {
                     .filter(foundUser -> !foundUser.getId().equals(existingUser.getId()))
                     .ifPresent(foundUser -> {
                         throw new ResourceAlreadyExistsException(
-                                "Пользователь с именем '" + newUsername + "' уже существует"
+                                "User with name '" + newUsername + "' already exists"
                         );
                     });
         }
@@ -47,7 +47,7 @@ public class UserValidator {
                     .filter(foundUser -> !foundUser.getId().equals(existingUser.getId()))
                     .ifPresent(foundUser -> {
                         throw new ResourceAlreadyExistsException(
-                                "Пользователь с email '" + newEmail + "' уже существует"
+                                "User with email '" + newEmail + "' already exists"
                         );
                     });
         }

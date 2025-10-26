@@ -12,7 +12,7 @@ public interface UserService extends Service<UserResponse, Long> {
 
     UserResponse update (Long userId, UserRequest userRequest);
 
-    Optional<UserResponse> findByUsername(String username);
+    UserResponse findByUsername(String username);
 
-    Optional<UserResponse> findByEmail(String email);
+    UserResponse findByEmail(String email);
 }
