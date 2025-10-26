@@ -39,21 +39,12 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String token = authHeader.substring(7);
 
         try {
-            Claims claims = Jwts.parserBuilder()
+            Jwts.parserBuilder()
                     .setSigningKey(this.signingKey)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseClaimsJws(token);
 
-            String userId = claims.getSubject();
-            String userRoles = claims.get("roles", String.class);
-
-            ServerHttpRequest modifiedRequest = request.mutate()
-                    .header("User-Id", userId)
-                    .header("User-Roles", userRoles != null ? userRoles : "")
-                    .build();
-
-            return chain.filter(exchange.mutate().request(modifiedRequest).build());
+            return chain.filter(exchange);
 
         } catch (JwtException e) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
