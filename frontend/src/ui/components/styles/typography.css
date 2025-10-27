@@ -1,0 +1,27 @@
+.typography {
+   color: var(--color-text);
+   font-family: var(--font-family);
+}
+
+.typography.h1 {
+   font-size: 2rem;
+   font-weight: 600;
+}
+
+.typography.h2 {
+   font-size: 1.5rem;
+   font-weight: 500;
+}
+
+.typography.h3 {
+   font-size: 1.25rem;
+}
+
+.typography.body {
+   font-size: 1rem;
+}
+
+.typography.caption {
+   font-size: 0.8rem;
+   opacity: 0.8;
+}

@@ -1,0 +1,75 @@
+.btn {
+   border-radius: var(--radius-md);
+   font-family: var(--font-family);
+   font-size: 1rem;
+   font-weight: 500;
+   cursor: pointer;
+   padding: 0.5rem 1.2rem;
+   transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+   backdrop-filter: blur(var(--glass-blur));
+}
+
+/* color-only hover effect */
+.btn:hover {
+   box-shadow: var(--shadow-md);
+}
+
+/* active (pressed) state: color-only */
+.btn:active {
+   box-shadow: var(--shadow-sm);
+}
+
+/* keyboard focus ring for accessibility */
+.btn:focus-visible {
+   outline: none;
+   box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 30%, transparent), var(--shadow-sm);
+}
+
+/* solid */
+.btn-solid {
+   background: var(--color-primary);
+   color: var(--on-primary);
+   border: none;
+   box-shadow: var(--shadow-sm);
+}
+
+.btn-solid:hover {
+   background: var(--btn-solid-hover-bg);
+}
+
+.btn-solid:active {
+   background: var(--btn-solid-active-bg);
+}
+
+/* outline */
+.btn-outline {
+   background: var(--glass-surface);
+   border: none;
+   color: var(--color-primary);
+   box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.btn-outline:hover {
+   background: var(--btn-outline-hover-bg);
+   color: var(--on-primary);
+   box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.btn-outline:active {
+   background: var(--btn-outline-active-bg);
+}
+
+/* ghost */
+.btn-ghost {
+   background: var(--glass-surface);
+   border: none;
+   color: var(--color-primary);
+}
+
+.btn-ghost:hover {
+   background: var(--btn-ghost-hover-bg);
+}
+
+.btn-ghost:active {
+   background: var(--btn-ghost-active-bg);
+}

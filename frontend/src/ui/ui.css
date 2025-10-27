@@ -1,0 +1,124 @@
+* {
+   margin: 0;
+   padding: 0;
+   box-sizing: border-box;
+}
+
+body {
+   font-family: var(--font-family, "Poppins", sans-serif);
+   background: var(--color-bg);
+   color: var(--color-text);
+   transition: background 0.25s ease, color 0.25s ease;
+   background-image: var(--bg-image);
+   background-size: cover;
+   background-position: center;
+   background-attachment: fixed;
+}
+
+/* Light theme by default */
+:root {
+   --color-bg: #ffffff;
+   --color-bg-glass: rgba(255, 255, 255, 0.6);
+   /* Unified glass surface + blur preset */
+   --glass-surface: rgba(255, 255, 255, 0.6);
+   --glass-blur: 5px;
+   --color-text: #111111;
+   --color-text-inverse: #ffffff;
+   --color-border: rgba(0, 0, 0, 0.1);
+   /* Grayscale primary for light theme */
+   --color-primary: #111111;
+   --color-primary-hover: #000000;
+   --on-primary: #ffffff;
+
+   --radius-sm: 6px;
+   --radius-md: 12px;
+   --radius-lg: 20px;
+
+   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.15);
+   --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.2);
+
+   /* Background image tokens (set to an URL from /public if needed) */
+   --bg-image: url("../assets/images/bg-light.jpg");
+
+   /* Button interaction tokens (light theme) */
+   /* Solid (dark bg -> lighten on hover/active) */
+   --btn-solid-hover-bg: color-mix(in oklab, var(--color-primary) 85%, white 15%);
+   --btn-solid-active-bg: color-mix(in oklab, var(--color-primary) 70%, white 30%);
+   /* Outline (hover -> dark bg; active -> slightly lighten) */
+   --btn-outline-hover-bg: var(--color-primary);
+   --btn-outline-active-bg: color-mix(in oklab, var(--color-primary) 85%, white 30%);
+   /* Ghost (light glass -> darken on hover/active) */
+   --btn-ghost-hover-bg: color-mix(in oklab, var(--glass-surface) 85%, black 15%);
+   --btn-ghost-active-bg: color-mix(in oklab, var(--glass-surface) 70%, black 30%);
+
+   /* Link interaction tokens (light theme): darken on hover/active */
+   --link-hover-color: color-mix(in oklab, var(--color-text) 85%, black 15%);
+   --link-active-color: color-mix(in oklab, var(--color-text) 70%, black 30%);
+}
+
+/* Dark theme */
+html.dark {
+   --color-bg: #121212;
+   --color-bg-glass: rgba(30, 30, 30, 0.7);
+   /* Unified glass surface + blur preset */
+   --glass-surface: rgba(30, 30, 30, 0.7);
+   --glass-blur: 5px;
+   --color-text: #f5f5f5;
+   --color-text-inverse: #121212;
+   --color-border: rgba(255, 255, 255, 0.1);
+   /* Grayscale primary for dark theme */
+   --color-primary: #f5f5f5;
+   --color-primary-hover: #ffffff;
+   --on-primary: #000000;
+
+   /* Background image for dark theme (set as needed) */
+   --bg-image: url("../assets/images/bg-dark.jpeg");
+
+   /* Button interaction tokens (dark theme) */
+   /* Solid (light bg -> darken on hover/active) */
+   --btn-solid-hover-bg: color-mix(in oklab, var(--color-primary) 85%, black 15%);
+   --btn-solid-active-bg: color-mix(in oklab, var(--color-primary) 70%, black 30%);
+   /* Outline (hover -> light bg; active -> slightly darken) */
+   --btn-outline-hover-bg: var(--color-primary);
+   --btn-outline-active-bg: color-mix(in oklab, var(--color-primary) 85%, black 30%);
+   /* Ghost (dark glass -> lighten on hover/active) */
+   --btn-ghost-hover-bg: color-mix(in oklab, var(--glass-surface) 85%, white 15%);
+   --btn-ghost-active-bg: color-mix(in oklab, var(--glass-surface) 70%, white 30%);
+
+   /* Link interaction tokens (dark theme): lighten on hover/active */
+   --link-hover-color: color-mix(in oklab, var(--color-text) 85%, white 15%);
+   --link-active-color: color-mix(in oklab, var(--color-text) 70%, white 30%);
+}
+
+/* Generic link styling */
+.link {
+   color: inherit;
+   transition: color 0.15s ease;
+}
+
+.link:hover {
+   color: var(--link-hover-color);
+}
+
+.link:active {
+   color: var(--link-active-color);
+}
+
+/* High-contrast modifier (accessibility) */
+html.high-contrast {
+   /* Increase text/background contrast and border visibility */
+   --color-text: #000000;
+   --color-bg: #ffffff;
+   --color-border: rgba(0, 0, 0, 0.35);
+   --color-primary: #000000;
+   --color-primary-hover: #000000;
+   --on-primary: #ffffff;
+   /* Reduce transparency on glass to improve legibility, and slightly increase blur */
+   --glass-surface: rgba(255, 255, 255, 0.85);
+   --glass-blur: 5px;
+}
+
+.text-color-inverse {
+   color: var(--color-text-inverse);
+}

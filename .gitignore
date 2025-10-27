@@ -112,14 +112,9 @@ fabric.properties
 
 .idea/
 .gradle/
-*.iml
-*.iws
-*.ipr
 
 .DS_Store
 Thumbs.db
-
-*.log
 **/log/
 **/logs/
 temp/
@@ -131,8 +126,6 @@ tmp/
 .local
 *.properties.local
 
-*.class
-
 **/out/
 
 
@@ -141,6 +134,7 @@ hs_err_pid*
 replay_pid*
 
 ### VisualStudioCode ###
+.vscode/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -161,7 +155,6 @@ replay_pid*
 
 ### Gradle ###
 .gradle
-**/build/
 !src/**/build/
 
 # Ignore Gradle GUI config
@@ -186,7 +179,29 @@ gradle-app.setting
 # Java heap dump
 *.hprof
 
-### Environment ###
-.env
+bin/
+
+.cursor/
 
 /public/Scheme.drawio.svg
+
+# Logs
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
