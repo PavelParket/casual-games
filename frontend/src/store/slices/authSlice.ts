@@ -1,7 +1,7 @@
 import type { AxiosError } from 'axios';
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { AuthAPI } from '../../api/authApi';
-import { setAccessToken as setGlobalToken } from '../../utils/tokenManager';
+import { setAccessToken as setGlobalToken, startTokenTimer, stopTokenTimer } from '../../utils/tokenManager';
 
 export interface User {
    id: number;
@@ -60,6 +60,36 @@ export const register = createAsyncThunk<AuthResponse, RegisterRequest, { reject
    }
 );
 
+export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
+   "auth/logout",
+   async (_, { rejectWithValue }) => {
+      try {
+         await AuthAPI.logout();
+         setGlobalToken(null);
+         stopTokenTimer();
+      } catch (err: unknown) {
+         setGlobalToken(null);
+         stopTokenTimer();
+
+         const error = err as AxiosError<{ message?: string }>;
+         return rejectWithValue(error.response?.data?.message ?? "Logout failed");
+      }
+   }
+);
+
+export const refresh = createAsyncThunk<AuthResponse, void, { rejectValue: string }>(
+   "auth/refresh",
+   async (_, { rejectWithValue }) => {
+      try {
+         const response = await AuthAPI.refresh();
+         return response.data;
+      } catch (err: unknown) {
+         const error = err as AxiosError<{ message?: string }>;
+         return rejectWithValue(error.response?.data?.message ?? "Session expired");
+      }
+   }
+);
+
 const initialState: AuthState = {
    user: null,
    accessToken: null,
@@ -75,13 +105,6 @@ const authSlice = createSlice({
       clearError: (state) => {
          state.error = null;
       },
-      logout: (state) => {
-         state.user = null;
-         state.accessToken = null;
-         state.isAuthenticated = false;
-         state.error = null;
-         setGlobalToken(null);
-      },
       setAccessToken: (state, action: PayloadAction<string>) => {
          state.accessToken = action.payload;
          state.isAuthenticated = true;
@@ -90,6 +113,7 @@ const authSlice = createSlice({
    },
    extraReducers: (builder) => {
       builder
+         // Login
          .addCase(login.pending, (state) => {
             state.isLoading = true;
             state.error = null;
@@ -100,20 +124,70 @@ const authSlice = createSlice({
             state.accessToken = action.payload.accessToken;
             state.isAuthenticated = true;
             setGlobalToken(action.payload.accessToken);
+            startTokenTimer(action.payload.accessToken);
          })
          .addCase(login.rejected, (state, action) => {
             state.isLoading = false;
             state.error = action.payload ?? "Login failed";
          })
+         // Register
+         .addCase(register.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+         })
          .addCase(register.fulfilled, (state, action) => {
+            state.isLoading = false;
             state.user = action.payload.user;
             state.accessToken = action.payload.accessToken;
             state.isAuthenticated = true;
             setGlobalToken(action.payload.accessToken);
+            startTokenTimer(action.payload.accessToken);
+         })
+         .addCase(register.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload ?? "Registration failed";
+         })
+         // Logout
+         .addCase(logout.pending, (state) => {
+            state.isLoading = true;
+         })
+         .addCase(logout.fulfilled, (state) => {
+            state.isLoading = false;
+            state.user = null;
+            state.accessToken = null;
+            state.isAuthenticated = false;
+            state.error = null;
+         })
+         .addCase(logout.rejected, (state) => {
+            state.isLoading = false;
+            state.user = null;
+            state.accessToken = null;
+            state.isAuthenticated = false;
+            state.error = null;
+         })
+         // Refresh
+         .addCase(refresh.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+         })
+         .addCase(refresh.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.user = action.payload.user;
+            state.accessToken = action.payload.accessToken;
+            state.isAuthenticated = true;
+            setGlobalToken(action.payload.accessToken);
+            startTokenTimer(action.payload.accessToken);
+         })
+         .addCase(refresh.rejected, (state, action) => {
+            state.isLoading = false;
+            state.user = null;
+            state.accessToken = null;
+            state.isAuthenticated = false;
+            state.error = action.payload ?? "Session expired";
          });
    },
 });
 
-export const { clearError, logout, setAccessToken } = authSlice.actions;
+export const { clearError, setAccessToken } = authSlice.actions;
 
 export default authSlice.reducer;
