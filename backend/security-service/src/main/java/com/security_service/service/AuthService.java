@@ -25,10 +25,12 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         UserResponse user = userService.create(request);
 
-        String accessToken = tokenService.generateAccessToken(user.username(), user.email(), user.role());
-        String refreshToken = tokenService.generateRefreshToken(user.username(), user.email(), user.role());
+        //String accessToken = tokenService.generateAccessToken(user.username(), user.email(), user.role());
+        //String refreshToken = tokenService.generateRefreshToken(user.username(), user.email(), user.role());
 
-        return mapper.toResponse(user, accessToken, refreshToken);
+        //return mapper.toResponse(user, accessToken, refreshToken);
+
+        return generateTokens(user);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -36,10 +38,12 @@ public class AuthService {
 
         authenticate(request.email(), request.password());
 
-        String accessToken = tokenService.generateAccessToken(user.username(), user.email(), user.role());
-        String refreshToken = tokenService.generateRefreshToken(user.username(), user.email(), user.role());
+        return generateTokens(user);
 
-        return mapper.toResponse(user, accessToken, refreshToken);
+        //String accessToken = tokenService.generateAccessToken(user.username(), user.email(), user.role());
+        //String refreshToken = tokenService.generateRefreshToken(user.username(), user.email(), user.role());
+
+        //return mapper.toResponse(user, accessToken, refreshToken);
     }
 
     public AuthResponse refresh(String token) {
@@ -48,5 +52,12 @@ public class AuthService {
 
     private void authenticate(String email, String password) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+    }
+
+    private AuthResponse generateTokens(UserResponse user) {
+        String accessToken = tokenService.generateAccessToken(user.username(), user.email(), user.role());
+        String refreshToken = tokenService.generateRefreshToken(user.username(), user.email(), user.role());
+
+        return mapper.toResponse(user, accessToken, refreshToken);
     }
 }
