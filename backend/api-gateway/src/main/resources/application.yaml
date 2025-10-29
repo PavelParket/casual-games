@@ -25,5 +25,17 @@ spring:
     jwt:
       secret: ${JWT_SECRET}
 
+logging:
+  level:
+    # Отладка маршрутизации и фильтров Gateway
+    org.springframework.cloud.gateway: DEBUG
+    # Отладка вашего кастомного фильтра
+    casualgames.apigateway.filter.JwtAuthenticationFilter: DEBUG
+    # Отладка Spring Security (авторизация)
+    org.springframework.security: DEBUG
+    # Отладка HTTP-запросов и ответов (опционально)
+    reactor.netty.http.client: DEBUG
+
+
 server:
   port: 8088
