@@ -1,6 +1,7 @@
 package com.security_service.service;
 
 import com.security_service.exception.InvalidCredentialsException;
+import com.security_service.exception.MissingTokenException;
 import com.security_service.factory.CookieFactory;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,6 +44,6 @@ public class CookieService {
                 .filter(cookie -> COOKIE_NAME.equals(cookie.getName()))
                 .findFirst()
                 .map(Cookie::getValue)
-                .orElseThrow(() -> new InvalidCredentialsException("Refresh token not found"));
+                .orElseThrow(() -> new MissingTokenException("Refresh token not found"));
     }
 }

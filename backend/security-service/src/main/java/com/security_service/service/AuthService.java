@@ -25,11 +25,6 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         UserResponse user = userService.create(request);
 
-        //String accessToken = tokenService.generateAccessToken(user.username(), user.email(), user.role());
-        //String refreshToken = tokenService.generateRefreshToken(user.username(), user.email(), user.role());
-
-        //return mapper.toResponse(user, accessToken, refreshToken);
-
         return generateTokens(user);
     }
 
@@ -39,11 +34,6 @@ public class AuthService {
         authenticate(request.email(), request.password());
 
         return generateTokens(user);
-
-        //String accessToken = tokenService.generateAccessToken(user.username(), user.email(), user.role());
-        //String refreshToken = tokenService.generateRefreshToken(user.username(), user.email(), user.role());
-
-        //return mapper.toResponse(user, accessToken, refreshToken);
     }
 
     public AuthResponse refresh(String token) {

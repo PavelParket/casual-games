@@ -82,9 +82,15 @@ export const refresh = createAsyncThunk<AuthResponse, void, { rejectValue: strin
    async (_, { rejectWithValue }) => {
       try {
          const response = await AuthAPI.refresh();
+
+         if (response.status === 204 || !response.data) {
+            return rejectWithValue("");
+         }
+
          return response.data;
       } catch (err: unknown) {
          const error = err as AxiosError<{ message?: string }>;
+
          return rejectWithValue(error.response?.data?.message ?? "Session expired");
       }
    }
@@ -172,6 +178,14 @@ const authSlice = createSlice({
          })
          .addCase(refresh.fulfilled, (state, action) => {
             state.isLoading = false;
+
+            if (action.payload === null) {
+               state.user = null;
+               state.accessToken = null;
+               state.isAuthenticated = false;
+               return;
+            }
+
             state.user = action.payload.user;
             state.accessToken = action.payload.accessToken;
             state.isAuthenticated = true;

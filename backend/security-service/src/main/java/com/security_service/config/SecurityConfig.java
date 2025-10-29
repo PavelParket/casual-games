@@ -1,7 +1,7 @@
 package com.security_service.config;
 
-import com.security_service.exception.JwtAccessDeniedHandler;
-import com.security_service.exception.JwtAuthenticationEntryPoint;
+import com.security_service.jwt.JwtAccessDeniedHandler;
+import com.security_service.jwt.JwtAuthenticationEntryPoint;
 import com.security_service.jwt.JwtFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
