@@ -23,8 +23,9 @@ public class SecurityConfig {
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/security-service/auth/**").permitAll()
-                        .pathMatchers("/user-service/users/**").hasAuthority("ADMIN")
+                        .pathMatchers("/user-service/users/**").hasAnyAuthority("USER", "ADMIN")
                         .pathMatchers("/game-service/game/**").hasAnyAuthority("USER", "ADMIN")
+                        .pathMatchers("/websocket-service/websocket/**").hasAuthority("ADMIN")
                         .anyExchange().authenticated()
                 )
                 .build();
