@@ -31,10 +31,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
-
-    //Liquibase
-    //implementation 'org.liquibase:liquibase-core:4.25.1'
 
     //Postgresql
     implementation 'org.postgresql:postgresql:42.7.7'
