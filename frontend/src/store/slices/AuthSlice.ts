@@ -1,6 +1,6 @@
 import type { AxiosError } from 'axios';
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { AuthAPI } from '../../api/authApi';
+import { AuthAPI } from '../../api/AuthApi';
 import { setAccessToken as setGlobalToken, startTokenTimer, stopTokenTimer } from '../../utils/tokenManager';
 
 export interface User {
