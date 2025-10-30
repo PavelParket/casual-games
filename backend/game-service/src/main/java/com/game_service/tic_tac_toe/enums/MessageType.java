@@ -7,11 +7,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum MessageType {
 
-    START("Start"),
-    MOVE("Move"),
-    WINNER_X("Winner X"),
-    WINNER_O("Winner O"),
-    DRAW("Draw");
+    START("start"),
+    MOVE("move"),
+    WINNER_X("winner X"),
+    WINNER_O("winner O"),
+    DRAW("draw");
 
     private final String type;
 }

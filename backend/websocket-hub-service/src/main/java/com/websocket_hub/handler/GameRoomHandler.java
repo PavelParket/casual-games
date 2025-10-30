@@ -30,7 +30,7 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
     }
 
     @Override
-    public void handleTextMessage(@NonNull   WebSocketSession session, TextMessage message) throws Exception {
+    public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
         log.debug("Received game message: {}", payload);
 
@@ -78,7 +78,7 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
             log.info("Starting game in room {} with players: {}", roomId, players);
 
             Map<String, Object> startRequest = Map.of(
-                    "type", "START",
+                    "type", "start",
                     "roomName", roomId,
                     "players", players
             );
@@ -102,7 +102,7 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
             String[][] board = convertToBoard(boardObj);
 
             Map<String, Object> moveRequest = Map.of(
-                    "type", "MOVE",
+                    "type", "move",
                     "roomName", roomId,
                     "board", board,
                     "cell", cell,

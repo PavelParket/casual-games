@@ -1,62 +1,31 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { wsService, type GameMessage, type WSMessage } from "../services/WebSocketService";
+import { useCallback, useEffect, useState } from "react";
+import type { WSMessage } from "../types/ws";
+import { wsService } from "../services/WebSocketService";
 
-interface UseWebSocketOptions {
-   roomName: string;
-   isGameRoom?: boolean;
-   onConnect?: () => void;
-   onDisconnect?: () => void;
-   onError?: (error: Event) => void;
-   autoConnect?: boolean;
-}
-
-export function useWebSocket(options: UseWebSocketOptions) {
-   const { roomName, isGameRoom = false, onConnect, onDisconnect, onError, autoConnect = true } = options;
-   const [isConnected, setIsConnected] = useState(false);
-   const unsubscribers = useRef<Array<() => void>>([]);
-
-   const connect = useCallback(async () => {
-      try {
-         await wsService.connect(roomName, isGameRoom);
-         setIsConnected(true);
-         onConnect?.();
-      } catch (error) {
-         console.error('Failed to connect to WebSocket:', error);
-         setIsConnected(false);
-         onError?.(error as Event);
-      }
-   }, [roomName, isGameRoom, onConnect, onError]);
-
-   const disconnect = useCallback(() => {
-      wsService.disconnect();
-      setIsConnected(false);
-      onDisconnect?.();
-   }, [onDisconnect]);
-
-   const sendMessage = useCallback(<T extends WSMessage | GameMessage>(message: T) => {
-      wsService.send(message);
-   }, []);
-
-   const subscribe = useCallback((
-      type: string,
-      handler: (message: WSMessage | GameMessage) => void
-   ) => {
-      const unsubscribe = wsService.subscribe(type, handler);
-      unsubscribers.current.push(unsubscribe);
-      return unsubscribe;
-   }, []);
+export function useWebSocket<T extends WSMessage = WSMessage>(roomName?: string) {
+   const [connected, setConnected] = useState(false);
 
    useEffect(() => {
-      if (autoConnect && roomName) {
-         connect();
-      }
+      wsService.connect(roomName);
+
+      const interval = setInterval(() => {
+         if (wsService.isConnected()) setConnected(true);
+         else setConnected(false);
+      }, 500);
 
       return () => {
-         unsubscribers.current.forEach((unsubscribe) => unsubscribe());
-         unsubscribers.current = [];
-         disconnect();
+         clearInterval(interval);
+         wsService.disconnect();
       };
-   }, [roomName, autoConnect, connect, disconnect]);
+   }, [roomName]);
 
-   return { isConnected, connect, disconnect, sendMessage, subscribe };
+   const send = useCallback((msg: T) => {
+      wsService.send(msg);
+   }, []);
+
+   const subscribe = useCallback((handler: (msg: T) => void) => {
+      return wsService.subscribe(handler);
+   }, []);
+
+   return { connected, send, subscribe };
 }

@@ -1,271 +1,230 @@
-import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import type { RootState } from "../../store/store";
 import { useEffect, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
-import type { GameMessage } from "../../services/WebSocketService";
-import { Box, Button, Card, Container, Typography } from "../../ui";
-
-type Cell = string | null;
+import { Box, Button, Card, Container, Icon, Typography, useThemedIcon } from "../../ui";
+import type { GameMessage } from "../../types/ws";
 
 export default function TicTacToeRoom() {
-   const { roomName } = useParams<{ roomName: string }>();
+   const { roomName } = useParams();
    const navigate = useNavigate();
-   const { user } = useSelector((state: RootState) => state.auth);
+   const { getInverseIcon } = useThemedIcon();
 
-   const [board, setBoard] = useState<Cell[]>(Array(9).fill(null));
-   const [players, setPlayers] = useState<string[]>([]);
-   const [readyPlayers, setReadyPlayers] = useState<string[]>([]);
+   const { connected, send, subscribe } = useWebSocket<GameMessage>(roomName);
+
+   const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
+   const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
    const [mySymbol, setMySymbol] = useState<string | null>(null);
-   const [currentPlayer, setCurrentPlayer] = useState<string>("X");
    const [winner, setWinner] = useState<string | null>(null);
-   const [gameMessage, setGameMessage] = useState<string>("");
-   const [isReady, setIsReady] = useState(false);
-
-   const { sendMessage, subscribe } = useWebSocket({
-      roomName: roomName || "default",
-      isGameRoom: true,
-      onConnect: () => console.log("Connected to game room"),
-   });
+   const [players, setPlayers] = useState<{ name: string; symbol: string }[]>([]);
+   const [ready, setReady] = useState(false);
 
    useEffect(() => {
-      const unsubscribe = subscribe("player_list", (msg) => {
-         try {
-            const data = JSON.parse((msg as GameMessage).message || "{}");
-            setPlayers(data.players || []);
-            setReadyPlayers(data.readyPlayers || []);
-         } catch (e) {
-            console.error("Failed to parse player list:", e);
-         }
-      });
-
-      return unsubscribe;
-   }, [subscribe]);
-
-   useEffect(() => {
-      const unsubscribe = subscribe("START", (msg) => {
-         const gameMsg = msg as GameMessage;
-
-         // Convert 2D board to 1D
-         const flatBoard: Cell[] = [];
-         if (gameMsg.board) {
-            for (let i = 0; i < 3; i++) {
-               for (let j = 0; j < 3; j++) {
-                  flatBoard.push(gameMsg.board[i]?.[j] || null);
+      const unsubscribe = subscribe((message: GameMessage) => {
+         switch (message.type) {
+            case "start":
+               if (message.board)
+                  setBoard(message.board.flat() as (string | null)[]);
+               if (message.nextPlayer)
+                  setCurrentPlayer(message.nextPlayer);
+               if (message.player)
+                  setMySymbol(message.player);
+               if (message.playersSymbols) {
+                  const playersList = Object.entries(message.playersSymbols).map(([name, symbol]) => ({
+                     name,
+                     symbol,
+                  }));
+                  setPlayers(playersList);
                }
-            }
-         }
-         setBoard(flatBoard);
+               break;
 
-         if (gameMsg.playersSymbols && user) {
-            setMySymbol(gameMsg.playersSymbols[user.id.toString()]);
-         }
+            case "move":
+               if (message.board)
+                  setBoard(message.board.flat() as (string | null)[]);
+               if (message.nextPlayer)
+                  setCurrentPlayer(message.nextPlayer);
+               if (message.winner !== undefined && message.winner !== null)
+                  setWinner(message.winner);
+               break;
 
-         setCurrentPlayer(gameMsg.nextPlayer || "X");
-         setGameMessage(gameMsg.message || "Game started!");
-      });
+            case "system":
+               if (message.message)
+                  alert(message.message);
+               break;
 
-      return unsubscribe;
-   }, [subscribe, user]);
+            case "ready":
+               console.log("Player ready:", message.fromUserId);
+               break;
 
-   useEffect(() => {
-      const unsubscribe = subscribe("MOVE", (msg) => {
-         const gameMsg = msg as GameMessage;
-
-         const flatBoard: Cell[] = [];
-         if (gameMsg.board) {
-            for (let i = 0; i < 3; i++) {
-               for (let j = 0; j < 3; j++) {
-                  flatBoard.push(gameMsg.board[i]?.[j] || null);
+            case "leave":
+               if (message.playersSymbols) {
+                  const updatedPlayers = Object.entries(message.playersSymbols).map(([name, symbol]) => ({
+                     name,
+                     symbol,
+                  }));
+                  setPlayers(updatedPlayers);
                }
-            }
+               break;
+
+            default:
+               break;
          }
-         setBoard(flatBoard);
-         setCurrentPlayer(gameMsg.nextPlayer || "X");
-         setGameMessage(gameMsg.message || "");
-      });
-
-      return unsubscribe;
-   }, [subscribe]);
-
-   useEffect(() => {
-      const unsubscribeX = subscribe("WINNER_X", (msg) => {
-         const gameMsg = msg as GameMessage;
-         setWinner("X");
-         setGameMessage(gameMsg.message || "X wins!");
-
-         const flatBoard: Cell[] = [];
-         if (gameMsg.board) {
-            for (let i = 0; i < 3; i++) {
-               for (let j = 0; j < 3; j++) {
-                  flatBoard.push(gameMsg.board[i]?.[j] || null);
-               }
-            }
-         }
-         setBoard(flatBoard);
-      });
-
-      const unsubscribeO = subscribe("WINNER_O", (msg) => {
-         const gameMsg = msg as GameMessage;
-         setWinner("O");
-         setGameMessage(gameMsg.message || "O wins!");
-
-         const flatBoard: Cell[] = [];
-         if (gameMsg.board) {
-            for (let i = 0; i < 3; i++) {
-               for (let j = 0; j < 3; j++) {
-                  flatBoard.push(gameMsg.board[i]?.[j] || null);
-               }
-            }
-         }
-         setBoard(flatBoard);
-      });
-
-      const unsubscribeDraw = subscribe("DRAW", (msg) => {
-         const gameMsg = msg as GameMessage;
-         setWinner("Draw");
-         setGameMessage(gameMsg.message || "It's a draw!");
-
-         const flatBoard: Cell[] = [];
-         if (gameMsg.board) {
-            for (let i = 0; i < 3; i++) {
-               for (let j = 0; j < 3; j++) {
-                  flatBoard.push(gameMsg.board[i]?.[j] || null);
-               }
-            }
-         }
-         setBoard(flatBoard);
       });
 
       return () => {
-         unsubscribeX();
-         unsubscribeO();
-         unsubscribeDraw();
+         unsubscribe?.();
       };
    }, [subscribe]);
 
-   const handleReady = () => {
-      sendMessage({
-         type: "ready",
-         roomName: roomName || "default",
-      });
-      setIsReady(true);
-   };
-
-   const handleMove = (index: number) => {
-      if (board[index] || winner || !mySymbol || currentPlayer !== mySymbol) {
+   const handleClick = (index: number) => {
+      if (!connected || board[index] || winner || currentPlayer !== mySymbol) {
          return;
       }
 
-      // Convert 1D to 2D board
-      const board2D: (string | null)[][] = [];
-      for (let i = 0; i < 3; i++) {
-         board2D[i] = [];
-         for (let j = 0; j < 3; j++) {
-            board2D[i][j] = board[i * 3 + j];
-         }
-      }
-
-      sendMessage({
+      send({
          type: "move",
-         roomName: roomName || "default",
+         player: mySymbol!,
          cell: index,
-         player: mySymbol,
-         board: board2D,
+         roomName,
       });
    };
 
-   const isMyTurn = mySymbol === currentPlayer && !winner;
+   const handleReady = () => {
+      if (!connected || ready) {
+         return;
+      }
+
+      send({ type: "ready", roomName });
+      setReady(true);
+   };
+
+   const handleLeave = () => {
+      if (connected) {
+         send({ type: "leave", roomName });
+      }
+
+      navigate("/rooms");
+   };
 
    return (
       <Box style={{
          minHeight: "calc(100vh - 60px - 50px)",
          margin: "0 10rem",
-         padding: "2rem 1rem",
+         padding: "0 1rem",
          background: "var(--color-bg-glass)",
          backdropFilter: "blur(2px)",
          borderRadius: "var(--radius-md)",
          boxShadow: "var(--shadow-lg)"
       }}>
          <Container>
-            <Box style={{ textAlign: "center", marginBottom: "2rem" }}>
-               <Typography variant="h2">Tic-Tac-Toe</Typography>
-               <Typography variant="caption" style={{ opacity: 0.7, marginTop: "0.5rem", display: "block" }}>
-                  Room: {roomName}
+            <Box style={{ padding: "2rem 0" }}>
+               <Typography variant="h2" style={{ textAlign: "center" }}>
+                  Tic-Tae-Toe
                </Typography>
             </Box>
 
             <Card style={{
-               padding: "2rem",
+               padding: "0",
                display: "flex",
                flexDirection: "column",
-               alignItems: "center",
-               gap: "2rem"
+               alignItems: "center"
             }}>
-               <Typography variant="h3">
-                  {winner ? gameMessage : isMyTurn ? `Your turn (${mySymbol})` : `Waiting... (${currentPlayer})`}
+               <Typography variant="h3" style={{ margin: "2rem 0" }}>
+                  {winner
+                     ? winner === "Draw"
+                        ? "Draw!"
+                        : `Winner: ${winner}`
+                     : `Turn: ${currentPlayer}`
+                  }
                </Typography>
 
-               {gameMessage && !winner && (
-                  <Typography variant="body" style={{ opacity: 0.7 }}>
-                     {gameMessage}
-                  </Typography>
-               )}
-
-               <Box style={{ display: "flex", gap: "3rem", alignItems: "center" }}>
-                  {/* Players */}
-                  <Box style={{ textAlign: "center" }}>
-                     <Typography variant="h3" style={{ marginBottom: "1rem" }}>Players</Typography>
-                     {players.map((p, i) => (
-                        <Box key={i} style={{ marginBottom: "0.5rem" }}>
-                           <Typography variant="body">
-                              {p} {readyPlayers.includes(p) ? "✓" : ""}
-                           </Typography>
-                        </Box>
+               <Box style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  alignItems: "center",
+                  justifyContent: "center",
+               }}>
+                  <Box style={{
+                     marginRight: "5rem",
+                     display: "flex",
+                     flexDirection: "column",
+                     alignItems: "center",
+                     justifyContent: "center",
+                     rowGap: "1.5rem",
+                  }}>
+                     {players.map((User, index) => (
+                        <Typography key={index} variant="h2">
+                           {User.name}: {User.symbol}
+                        </Typography>
                      ))}
                   </Box>
 
-                  {/* Board */}
                   <Box style={{
                      display: "grid",
                      gridTemplateColumns: "repeat(3, 80px)",
                      gridTemplateRows: "repeat(3, 80px)",
-                     gap: "4px"
+                     borderRadius: "var(--radius-lg)",
+                     overflow: "hidden",
+                     boxShadow: "var(--shadow-lg)",
                   }}>
-                     {board.map((cell, index) => (
-                        <Button
-                           key={index}
-                           variant="ghost"
-                           onClick={() => handleMove(index)}
-                           disabled={!!cell || !!winner || !isMyTurn}
-                           style={{
-                              width: "80px",
-                              height: "80px",
-                              fontSize: "32px",
-                              fontWeight: "bold"
-                           }}
-                        >
-                           {cell}
-                        </Button>
-                     ))}
+                     {board.map((cell, index) => {
+                        const style: React.CSSProperties = {
+                           width: "80px",
+                           height: "80px",
+                           fontSize: "32px",
+                           fontWeight: "bold",
+                           borderRadius: "0",
+                           borderRight: "none",
+                           borderBottom: "none",
+                        };
+
+                        if (index % 3 !== 2)
+                           style.borderRight = "2px solid var(--color-text)";
+                        if (index < 6)
+                           style.borderBottom = "2px solid var(--color-text)";
+
+                        return (
+                           <Button
+                              key={index}
+                              variant="ghost"
+                              style={style}
+                              onClick={() => handleClick(index)}
+                              disabled={!!cell || !!winner}
+                           >
+                              {cell}
+                           </Button>
+                        );
+                     })}
                   </Box>
                </Box>
 
-               {/* Controls */}
-               <Box style={{ display: "flex", gap: "1rem" }}>
-                  <Button variant="outline" onClick={() => navigate("/rooms")}>
-                     Leave
-                  </Button>
+               <Box style={{
+                  width: "100%",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  alignItems: "center",
+                  justifyItems: "center",
+               }}>
+                  <Button variant="outline" onClick={handleLeave}>Leave</Button>
 
-                  {!mySymbol && (
-                     <Button
-                        variant="solid"
-                        onClick={handleReady}
-                        disabled={isReady || players.length < 2}
-                     >
-                        {isReady ? "Ready ✓" : "Get Ready"}
-                     </Button>
-                  )}
+                  <Button
+                     onClick={handleReady}
+                     disabled={ready}
+                     style={{
+                        margin: "2rem",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px"
+                     }}
+                  >
+                     {ready ? (
+                        <>
+                           <Typography variant="body" inverse style={{ fontSize: "20px", fontWeight: 500 }}>Ready</Typography>
+                           <Icon src={getInverseIcon("check")} alt="check" size={20} />
+                        </>
+                     ) : (
+                        <Typography variant="body" inverse style={{ fontSize: "20px", fontWeight: 500 }}>Get Ready</Typography>
+                     )}
+                  </Button>
                </Box>
             </Card>
          </Container>

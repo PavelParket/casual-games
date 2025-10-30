@@ -1,121 +1,70 @@
+import type { WSMessage } from "../types/ws";
 import { getAccessToken } from "../utils/TokenManager";
 
-export interface WSMessage {
-   type: string;
-   fromUserId?: string;
-   toUserId?: string;
-   roomName?: string;
-}
-
-export interface GameMessage extends WSMessage {
-   board?: (string | null)[][];
-   cell?: number;
-   player?: string;
-   nextPlayer?: string;
-   playersSymbols?: Record<string, string>;
-   players?: string[];
-   winner?: string;
-   message?: string;
-}
-
-type MessageHandler = (message: WSMessage | GameMessage) => void;
+type MessageHandler<T extends WSMessage = WSMessage> = (message: T) => void;
 
 class WebSocketService {
    private ws: WebSocket | null = null;
-   private messageHandlers: Map<string, Set<MessageHandler>> = new Map();
-   private currentRoomId: string | null = null;
+   private handlers: MessageHandler[] = [];
 
-   connect(roomName: string, isGameRoom: boolean = false): Promise<void> {
-      return new Promise((resolve, reject) => {
-         if (this.ws?.readyState === WebSocket.OPEN) {
-            console.log('WebSocket already connected');
-            resolve();
-            return;
-         }
+   constructor() { }
 
-         this.currentRoomId = roomName;
-         const token = getAccessToken();
-         const endpoint = isGameRoom ? "/ws/game" : "/ws/room";
-         const url = `ws://localhost:8081${endpoint}?token=${token}&roomId=${roomName}`;
+   connect(roomName?: string): void {
+      if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+         console.log('[WS] Already connected or connecting');
+         return;
+      }
 
+      const token = getAccessToken();
+
+      const url = `ws://localhost:8081/ws/game?roomId=${roomName}&token=${token}`;
+
+      this.ws = new WebSocket(url);
+
+      this.ws.onopen = () => {
+         console.log("Open connection");
+      }
+
+      this.ws.onmessage = (event) => {
          try {
-            this.ws = new WebSocket(url);
-
-            this.ws.onopen = () => {
-               console.log('WebSocket connected to room:', roomName);
-               resolve();
-            };
-
-            this.ws.onmessage = (event) => {
-               try {
-                  const message = JSON.parse(event.data);
-                  this.handleMessage(message);
-               } catch (error) {
-                  console.error('Failed to parse WebSocket message:', error);
-               }
-            };
-
-            this.ws.onerror = (error) => {
-               console.error('WebSocket error:', error);
-               reject(error);
-            };
-
-            this.ws.onclose = () => {
-               console.log('WebSocket closed');
-            };
-         } catch (error) {
-            console.error('Failed to create WebSocket connection:', error);
-            reject(error);
+            const data = JSON.parse(event.data);
+            this.handlers.forEach((h) => h(data));
+         } catch (err) {
+            console.error('[WS] Invalid message', err);
          }
-      });
+      };
+
+      this.ws.onclose = (e) => {
+         console.log('[WS] Disconnected', e);
+         this.ws = null;
+      };
    }
 
    disconnect(): void {
       if (this.ws) {
-         this.ws.close(1000, "Client disconnect");
+         console.log('[WS] Closing connection');
+         this.ws.close();
          this.ws = null;
       }
-      this.currentRoomId = null;
    }
 
-   send<T extends WSMessage | GameMessage>(message: T): void {
+   send<T extends WSMessage>(msg: T): void {
       if (this.ws?.readyState === WebSocket.OPEN) {
-         this.ws.send(JSON.stringify(message));
+         this.ws.send(JSON.stringify(msg));
       } else {
-         console.warn('WebSocket not connected');
+         console.warn('[WS] Cannot send, socket not open');
       }
    }
 
-   subscribe(type: string, handler: MessageHandler): () => void {
-      if (!this.messageHandlers.has(type)) {
-         this.messageHandlers.set(type, new Set());
-      }
-      this.messageHandlers.get(type)!.add(handler);
-
+   subscribe<T extends WSMessage>(handler: MessageHandler<T>): () => void {
+      this.handlers.push(handler as MessageHandler);
       return () => {
-         const handlers = this.messageHandlers.get(type);
-         if (handlers) {
-            handlers.delete(handler);
-            if (handlers.size === 0) {
-               this.messageHandlers.delete(type);
-            }
-         }
+         this.handlers = this.handlers.filter((h) => h !== handler);
       };
-   }
-
-   private handleMessage(message: WSMessage | GameMessage): void {
-      const handlers = this.messageHandlers.get(message.type);
-      if (handlers) {
-         handlers.forEach((handler) => handler(message));
-      }
    }
 
    isConnected(): boolean {
       return this.ws?.readyState === WebSocket.OPEN;
-   }
-
-   getConnectionState(): number {
-      return this.ws?.readyState ?? WebSocket.CLOSED;
    }
 }
 
