@@ -1,5 +1,5 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { getAccessToken, notifyTokenRefresh, setAccessToken } from '../utils/tokenManager';
+import { getAccessToken, notifyTokenRefresh, setAccessToken } from '../utils/TokenManager';
 
 const API_BASE_URL = 'http://localhost:8080';
 

@@ -1,5 +1,5 @@
-import type { AuthResponse, LoginRequest, RegisterRequest } from "../store/slices/authSlice";
-import { client } from "./axiosConfig";
+import type { AuthResponse, LoginRequest, RegisterRequest } from "../store/slices/AuthSlice";
+import { client } from "./AxiosConfig";
 
 export const AuthAPI = {
    login: (data: LoginRequest) => client.post<AuthResponse>("auth/login", data),

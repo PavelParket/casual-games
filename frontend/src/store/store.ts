@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer, { logout, setAccessToken } from "./slices/authSlice";
-import { setOnTokenRefresh } from "../utils/tokenManager";
+import authReducer, { logout, setAccessToken } from "./slices/AuthSlice";
+import { setOnTokenRefresh } from "../utils/TokenManager";
 
 export const store = configureStore({
    reducer: {

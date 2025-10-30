@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "react-router-dom"
 import { Button, Navbar, ThemeSwitcher, Typography } from "../ui"
 import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "../store/store";
-import { logout } from "../store/slices/authSlice";
+import type { AppDispatch, RootState } from "../store/store";
+import { logout } from "../store/slices/AuthSlice";
 
 export default function Header() {
    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-   const dispatch = useDispatch();
+   const dispatch = useDispatch<AppDispatch>();
    const navigate = useNavigate();
 
    const handleLogout = () => {
@@ -25,6 +25,12 @@ export default function Header() {
          )}
          right={(
             <>
+               {isAuthenticated && (
+                  <Link to="/rooms">
+                     <Button variant="ghost">Rooms</Button>
+                  </Link>
+               )}
+
                {!isAuthenticated && (
                   <>
                      <Link to="/register">

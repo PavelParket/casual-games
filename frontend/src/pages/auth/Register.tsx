@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Button, Card, Container, Form, FormField, Typography, useThemedIcon } from "../../ui";
 import { Link, useNavigate } from "react-router-dom";
-import { register } from "../../store/slices/authSlice";
+import { register } from "../../store/slices/AuthSlice";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
 

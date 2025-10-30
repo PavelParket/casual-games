@@ -3,7 +3,7 @@ import { Box, Button, Card, Container, Form, FormField, Typography } from "../..
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import { login } from "../../store/slices/authSlice";
+import { login } from "../../store/slices/AuthSlice";
 import { useThemedIcon } from "../../ui/hooks/useThemedIcon";
 
 export default function Login() {
