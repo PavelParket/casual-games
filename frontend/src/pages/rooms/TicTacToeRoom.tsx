@@ -5,11 +5,11 @@ import { Box, Button, Card, Container, Icon, Typography, useThemedIcon } from ".
 import type { GameMessage } from "../../types/ws";
 
 export default function TicTacToeRoom() {
-   const { roomName } = useParams();
+   const roomName = useParams<{ roomId: string }>();
    const navigate = useNavigate();
    const { getInverseIcon } = useThemedIcon();
 
-   const { connected, send, subscribe } = useWebSocket<GameMessage>(roomName);
+   const { connected, send, subscribe } = useWebSocket<GameMessage>(roomName.roomId);
 
    const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
    const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
@@ -84,7 +84,7 @@ export default function TicTacToeRoom() {
          type: "move",
          player: mySymbol!,
          cell: index,
-         roomName,
+         roomName: roomName as string,
       });
    };
 
@@ -93,13 +93,13 @@ export default function TicTacToeRoom() {
          return;
       }
 
-      send({ type: "ready", roomName });
+      send({ type: "ready", roomName: roomName as string });
       setReady(true);
    };
 
    const handleLeave = () => {
       if (connected) {
-         send({ type: "leave", roomName });
+         send({ type: "leave", roomName: roomName as string });
       }
 
       navigate("/rooms");

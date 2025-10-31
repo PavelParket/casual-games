@@ -3,41 +3,50 @@ import { getAccessToken } from "../utils/TokenManager";
 
 type MessageHandler<T extends WSMessage = WSMessage> = (message: T) => void;
 
-class WebSocketService {
+export class WebSocketService {
    private ws: WebSocket | null = null;
    private handlers: MessageHandler[] = [];
 
    constructor() { }
 
-   connect(roomName?: string): void {
-      if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
-         console.log('[WS] Already connected or connecting');
-         return;
-      }
-
-      const token = getAccessToken();
-
-      const url = `ws://localhost:8081/ws/game?roomId=${roomName}&token=${token}`;
-
-      this.ws = new WebSocket(url);
-
-      this.ws.onopen = () => {
-         console.log("Open connection");
-      }
-
-      this.ws.onmessage = (event) => {
-         try {
-            const data = JSON.parse(event.data);
-            this.handlers.forEach((h) => h(data));
-         } catch (err) {
-            console.error('[WS] Invalid message', err);
+   connect(roomName?: string) {
+      return new Promise<void>((resolve, reject) => {
+         if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+            console.log('[WS] Already connected or connecting');
+            return;
          }
-      };
 
-      this.ws.onclose = (e) => {
-         console.log('[WS] Disconnected', e);
-         this.ws = null;
-      };
+         const token = getAccessToken();
+         console.log("Trying to find room name: " + roomName);
+
+         const url = `ws://localhost:8081/ws/game?roomId=${roomName}&token=${token}`;
+
+         this.ws = new WebSocket(url);
+
+         this.ws.onopen = () => {
+            console.log("Open connection");
+            resolve();
+         }
+
+         this.ws.onerror = (err) => {
+            console.error("❌ WebSocket error:", err);
+            reject(err);
+         };
+
+         this.ws.onmessage = (event) => {
+            try {
+               const data = JSON.parse(event.data);
+               this.handlers.forEach((h) => h(data));
+            } catch (err) {
+               console.error('[WS] Invalid message', err);
+            }
+         };
+
+         this.ws.onclose = (e) => {
+            console.log('[WS] Disconnected', e);
+            this.ws = null;
+         };
+      });
    }
 
    disconnect(): void {
@@ -48,9 +57,9 @@ class WebSocketService {
       }
    }
 
-   send<T extends WSMessage>(msg: T): void {
+   send<T extends WSMessage>(message: T): void {
       if (this.ws?.readyState === WebSocket.OPEN) {
-         this.ws.send(JSON.stringify(msg));
+         this.ws.send(JSON.stringify(message));
       } else {
          console.warn('[WS] Cannot send, socket not open');
       }
@@ -67,5 +76,3 @@ class WebSocketService {
       return this.ws?.readyState === WebSocket.OPEN;
    }
 }
-
-export const wsService = new WebSocketService();

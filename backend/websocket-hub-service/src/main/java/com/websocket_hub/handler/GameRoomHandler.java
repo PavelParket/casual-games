@@ -3,6 +3,7 @@ package com.websocket_hub.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.websocket_hub.client.GameServiceClient;
 import com.websocket_hub.domain.dto.GameMessage;
+import com.websocket_hub.enums.GameMessageType;
 import com.websocket_hub.manager.GameRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.util.WebSocketUtil;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,6 +69,8 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
     private void handlePlayerReady(String roomId, String userId) {
         roomManager.markReady(roomId, userId);
 
+        log.info("Player= \"{}\" is ready", userId);
+
         if (roomManager.areBothPlayersReady(roomId)) {
             startGame(roomId);
         }
@@ -78,7 +83,7 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
             log.info("Starting game in room {} with players: {}", roomId, players);
 
             Map<String, Object> startRequest = Map.of(
-                    "type", "start",
+                    "type", GameMessageType.START,
                     "roomName", roomId,
                     "players", players
             );
@@ -102,7 +107,7 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
             String[][] board = convertToBoard(boardObj);
 
             Map<String, Object> moveRequest = Map.of(
-                    "type", "move",
+                    "type", GameMessageType.MOVE,
                     "roomName", roomId,
                     "board", board,
                     "cell", cell,
@@ -132,7 +137,7 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
         Map<String, String> playersSymbols = (Map<String, String>) gameResponse.get("playersSymbols");
 
         @SuppressWarnings("unchecked")
-        Set<String> players = (Set<String>) gameResponse.get("players");
+        List<String> players = (List<String>) gameResponse.get("players");
 
         Integer cell = gameResponse.get("cell") != null ? (Integer) gameResponse.get("cell") : null;
         String player = (String) gameResponse.get("player");
@@ -147,7 +152,7 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
                 .player(player)
                 .nextPlayer(nextPlayer)
                 .playersSymbols(playersSymbols)
-                .players(players)
+                .players(new HashSet<>(players))
                 .winner(winner)
                 .message(message)
                 .build();

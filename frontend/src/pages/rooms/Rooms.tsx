@@ -1,30 +1,22 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import type { RootState } from "../../store/store";
+import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState } from "react";
 import { Box, Button, Card, Container, Icon, Modal, Textfield, Typography, useThemedIcon } from "../../ui";
-import { RoomAPI, type GameRoom } from "../../api/RoomApi";
+import { fetchRooms } from "../../store/slices/RoomSlice";
 
 export default function Rooms() {
    const navigate = useNavigate();
+   const dispatch = useDispatch<AppDispatch>();
    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
    const [createModalOpen, setCreateModalOpen] = useState(false);
    const [newRoomName, setNewRoomName] = useState("");
-   const [rooms, setRooms] = useState<GameRoom[]>([]);
+   const { rooms } = useSelector((state: RootState) => state.rooms);
    const { getIcon, getInverseIcon } = useThemedIcon();
 
    useEffect(() => {
-      const fetchRooms = async () => {
-         try {
-            const response = await RoomAPI.getGameRooms();
-            setRooms(response.data);
-         } catch (err) {
-            console.error('Failed to fetch rooms:', err);
-         }
-      };
-
-      fetchRooms();
-   }, []);
+      dispatch(fetchRooms());
+   }, [dispatch]);
 
    const handleJoinRoom = (roomName: string) => {
       if (!isAuthenticated) {
@@ -38,8 +30,9 @@ export default function Rooms() {
          return;
       }
 
+      console.log("Maybe here will be the room: " + newRoomName);
+
       setCreateModalOpen(false);
-      setNewRoomName("");
       navigate(`/room/game/${newRoomName}`);
    };
 
@@ -99,10 +92,10 @@ export default function Rooms() {
                   rowGap: "3rem",
                   justifyItems: "center",
                }}>
-                  {rooms.map((room) => (
+                  {rooms.map((room: string) => (
                      <>
                         <Card
-                           key={room.id}
+                           key={room}
                            style={{
                               width: "180px",
                               height: "180px",
@@ -113,8 +106,8 @@ export default function Rooms() {
                               gap: "10px",
                            }}
                         >
-                           <Typography variant="body">{room.name}</Typography>
-                           <Button variant="outline" onClick={() => handleJoinRoom(room.name)}>Join</Button>
+                           <Typography variant="body">{room}</Typography>
+                           <Button variant="outline" onClick={() => handleJoinRoom(room)}>Join</Button>
                            {/* <Button variant="ghost" onClick={() => handleInfo(room)}>Info</Button> */}
                         </Card>
 

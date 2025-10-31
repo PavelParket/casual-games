@@ -1,6 +1,5 @@
 package com.security_service.service;
 
-import com.security_service.exception.InvalidCredentialsException;
 import com.security_service.exception.MissingTokenException;
 import com.security_service.factory.CookieFactory;
 import jakarta.servlet.http.Cookie;
@@ -37,7 +36,7 @@ public class CookieService {
 
     public String extractRefreshToken(HttpServletRequest request) {
         if (request.getCookies() == null) {
-            throw new InvalidCredentialsException("Refresh token not found in cookies");
+            throw new MissingTokenException("Refresh token not found in cookies");
         }
 
         return Arrays.stream(request.getCookies())
