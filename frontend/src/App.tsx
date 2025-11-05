@@ -13,6 +13,7 @@ import { refresh } from './store/slices/AuthSlice'
 import { ProtectedRoute } from './router/ProtectedRoute'
 import Rooms from './pages/rooms/Rooms'
 import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
+import WebSocketComponent from './components/WebSocketComponent'
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
@@ -35,6 +36,7 @@ export default function App() {
                   <Route element={<Layout />}>
                      <Route path="/rooms" element={<Rooms />} />
                      <Route path="/room/game/:roomId" element={<TicTacToeRoom />} />
+                     <Route path="/ws" element={<WebSocketComponent />} />
                   </Route>
                </Route>
 

@@ -1,40 +1,46 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { WSMessage } from "../types/ws";
-import { WebSocketService } from "../services/WebSocketService";
+import { getAccessToken } from "../utils/TokenManager";
 
-export function useWebSocket<T extends WSMessage = WSMessage>(roomName?: string) {
-   const [connected, setConnected] = useState(false);
-   const wsClient = useRef<WebSocketService | null>(null);
+export function useWebSocket<T extends WSMessage = WSMessage>(url: string, roomName: string) {
+   const [isConnected, setIsConnected] = useState<boolean>(false);
+   const [message, setMessage] = useState<T>();
+
+   const client = useRef<WebSocket | null>(null);
 
    useEffect(() => {
-      const client = new WebSocketService();
-      wsClient.current = client;
-      console.log("Executed");
+      const token = getAccessToken();
+      const socket = new WebSocket(`${url}?roomId=${roomName}&token=${token}`);
 
-      client.connect(roomName)
-         .then(() => {
-            setConnected(true);
-            console.log("What about there: " + roomName);
-         })
-         .catch((e: unknown) => {
-            console.log("WS connection failed: ", e);
-            setConnected(false);
-         });
+      socket.onopen = () => setIsConnected(true);
+      socket.onclose = () => {
+         setIsConnected(false);
+         client.current = null;
+      }
+
+      socket.onmessage = (event) => {
+         try {
+            const data: T = JSON.parse(event.data);
+            setMessage(data);
+         } catch (e) {
+            console.log("Invalid message", e);
+         }
+      };
+
+      client.current = socket;
 
       return () => {
-         client.disconnect();
-         wsClient.current = null;
-         setConnected(false);
-      };
-   }, [roomName]);
+         socket.close();
+      }
+   }, [url, roomName]);
 
    const send = useCallback((message: T) => {
-      wsClient.current?.send(message);
+      if (client.current?.readyState === WebSocket.OPEN) {
+         client.current.send(JSON.stringify(message));
+      } else {
+         console.warn("Cannot send, socket not open");
+      }
    }, []);
 
-   const subscribe = useCallback((handler: (msg: T) => void) => {
-      return wsClient.current?.subscribe(handler);
-   }, []);
-
-   return { connected, send, subscribe };
+   return { isConnected, message, send };
 }

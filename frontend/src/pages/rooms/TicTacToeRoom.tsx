@@ -9,7 +9,7 @@ export default function TicTacToeRoom() {
    const navigate = useNavigate();
    const { getInverseIcon } = useThemedIcon();
 
-   const { connected, send, subscribe } = useWebSocket<GameMessage>(roomName.roomId);
+   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws/game", roomName.roomId!);
 
    const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
    const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
@@ -19,7 +19,7 @@ export default function TicTacToeRoom() {
    const [ready, setReady] = useState(false);
 
    useEffect(() => {
-      const unsubscribe = subscribe((message: GameMessage) => {
+      if (isConnected && message) {
          switch (message.type) {
             case "start":
                if (message.board)
@@ -68,15 +68,11 @@ export default function TicTacToeRoom() {
             default:
                break;
          }
-      });
-
-      return () => {
-         unsubscribe?.();
-      };
-   }, [subscribe]);
+      }
+   }, [isConnected, message]);
 
    const handleClick = (index: number) => {
-      if (!connected || board[index] || winner || currentPlayer !== mySymbol) {
+      if (!isConnected || board[index] || winner || currentPlayer !== mySymbol) {
          return;
       }
 
@@ -84,22 +80,22 @@ export default function TicTacToeRoom() {
          type: "move",
          player: mySymbol!,
          cell: index,
-         roomName: roomName as string,
+         roomName: roomName.roomId,
       });
    };
 
    const handleReady = () => {
-      if (!connected || ready) {
+      if (!isConnected || ready) {
          return;
       }
 
-      send({ type: "ready", roomName: roomName as string });
+      send({ type: "ready", roomName: roomName.roomId });
       setReady(true);
    };
 
    const handleLeave = () => {
-      if (connected) {
-         send({ type: "leave", roomName: roomName as string });
+      if (isConnected) {
+         send({ type: "leave", roomName: roomName.roomId });
       }
 
       navigate("/rooms");

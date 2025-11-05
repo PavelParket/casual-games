@@ -31,9 +31,14 @@ export default function Home() {
                </Typography>
 
                {isAuthenticated ? (
-                  <Button variant="solid" onClick={() => navigate("/rooms")} style={{ fontSize: "18px", padding: "0.75rem 2rem" }}>
-                     Go to Rooms
-                  </Button>
+                  <Box style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+                     <Button variant="solid" onClick={() => navigate("/rooms")} style={{ fontSize: "18px", padding: "0.75rem 2rem" }}>
+                        Go to Rooms
+                     </Button>
+                     <Button variant="solid" onClick={() => navigate("/ws")} style={{ fontSize: "18px", padding: "0.75rem 2rem" }}>
+                        Go to WebSocket
+                     </Button>
+                  </Box>
                ) : (
                   <Box style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
                      <Button variant="solid" onClick={() => navigate("/login")} style={{ fontSize: "18px", padding: "0.75rem 2rem" }}>
