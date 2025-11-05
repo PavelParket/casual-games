@@ -15,6 +15,7 @@ export { FormField } from "./components/forms/FormField";
 export { Icon } from "./components/common/Icon";
 export { Textfield } from "./components/forms/Textfield";
 export { Modal } from "./components/layout/Modal";
+export { Toast } from "./components/common/Toast";
 
 export { ThemeProvider } from "./theme/ThemeProvider"
 export { useTheme } from "./theme/useTheme";
