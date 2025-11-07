@@ -1,10 +1,13 @@
 package com.websocket_hub.manager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.websocket_hub.domain.dto.GameMessage;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
+import com.websocket_hub.enums.GameEvent;
+import com.websocket_hub.enums.MessageType;
+import com.websocket_hub.enums.SystemEvent;
 import com.websocket_hub.factory.ObjectFactory;
+import com.websocket_hub.mapper.GameMessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,13 +21,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class GameRoomManager extends AbstractRoomManager {
 
-    private final ObjectMapper objectMapper;
-
     private final Map<String, Set<String>> readyPlayers = new ConcurrentHashMap<>();
 
-    public GameRoomManager(MessageSerializer<String> serializer, ObjectFactory<Room> roomFactory, ObjectFactory<ClientSession> clientFactory, ObjectMapper objectMapper) {
+    private final GameMessageMapper mapper;
+
+    public GameRoomManager(
+            MessageSerializer<String> serializer,
+            ObjectFactory<Room> roomFactory,
+            ObjectFactory<ClientSession> clientFactory,
+            GameMessageMapper mapper
+    ) {
         super(serializer, roomFactory, clientFactory);
-        this.objectMapper = objectMapper;
+        this.mapper = mapper;
     }
 
     @Override
@@ -35,7 +43,8 @@ public class GameRoomManager extends AbstractRoomManager {
     @Override
     protected void onAddSession(String username, String roomName, WebSocketSession session) {
         log.info("Player {} joined game room {}", username, roomName);
-        broadcastPlayerList(roomName);
+
+        broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, SystemEvent.JOIN, roomName, "Player \"" + username + "\" has joined the room \"" + roomName + "\""));
     }
 
     @Override
@@ -47,7 +56,7 @@ public class GameRoomManager extends AbstractRoomManager {
             return players.isEmpty() ? null : players;
         });
 
-        broadcastPlayerList(roomName);
+        broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, SystemEvent.LEAVE, roomName, "Player \"" + username + "\" has left the room \"" + roomName + "\""));
     }
 
     public void markReady(String roomName, String username) {
@@ -56,7 +65,7 @@ public class GameRoomManager extends AbstractRoomManager {
 
         log.info("Player {} ready in room {}. Total ready: {}", username, roomName, ready.size());
 
-        broadcastPlayerList(roomName);
+        broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, GameEvent.READY, roomName, "Player \"" + username + "\" is ready."));
     }
 
     public boolean areBothPlayersReady(String roomName) {
@@ -66,61 +75,13 @@ public class GameRoomManager extends AbstractRoomManager {
         return ready != null && ready.size() == 2 && players.size() == 2;
     }
 
-    public void broadcastGameMessage(String roomName, GameMessage message) {
+    public void broadcastGameMessage(GameMessage gameMessage) {
         try {
-            String json = objectMapper.writeValueAsString(message);
+            GameMessage message = mapper.toGameStartMessageFromEntity(gameMessage);
 
-            GameMessage wrappedMessage = GameMessage.builder()
-                    .type(message.type())
-                    .fromUserId(message.fromUserId())
-                    .toUserId(message.toUserId())
-                    .roomId(roomName)
-                    .board(message.board())
-                    .cell(message.cell())
-                    .player(message.player())
-                    .nextPlayer(message.nextPlayer())
-                    .playersSymbols(message.playersSymbols())
-                    .players(message.players())
-                    .winner(message.winner())
-                    .message(json)
-                    .build();
-
-            broadcast(roomName, wrappedMessage);
+            broadcast(message.roomId(), message);
         } catch (Exception e) {
             log.error("Failed to broadcast game message", e);
         }
-    }
-
-    private void broadcastPlayerList(String roomName) {
-        Set<String> players = getUserIds(roomName);
-        Set<String> ready = readyPlayers.getOrDefault(roomName, Set.of());
-
-        try {
-            Map<String, Object> playersData = Map.of(
-                    "players", players,
-                    "readyPlayers", ready,
-                    "totalPlayers", players.size(),
-                    "readyCount", ready.size()
-            );
-
-            String content = objectMapper.writeValueAsString(playersData);
-
-            GameMessage message = GameMessage.builder()
-                    .type("player_list")
-                    .fromUserId("system")
-                    .toUserId("")
-                    .roomId(roomName)
-                    .message(content)
-                    .build();
-
-            broadcast(roomName, message);
-        } catch (Exception e) {
-            log.error("Failed to broadcast player list", e);
-        }
-    }
-
-    public void resetRoom(String roomId) {
-        readyPlayers.remove(roomId);
-        log.info("Room {} reset", roomId);
     }
 }

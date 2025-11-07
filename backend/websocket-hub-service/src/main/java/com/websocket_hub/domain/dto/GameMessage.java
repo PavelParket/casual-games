@@ -9,13 +9,15 @@ import java.util.Set;
 public record GameMessage(
         String type,
 
+        String event,
+
         String fromUserId,
 
         String toUserId,
 
         String roomId,
 
-        String[][] board,
+        String[] board,
 
         Integer cell,
 

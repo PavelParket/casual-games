@@ -3,7 +3,7 @@ package com.websocket_hub.manager;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.enums.MessageType;
-import com.websocket_hub.enums.SystemEvents;
+import com.websocket_hub.enums.SystemEvent;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
@@ -29,11 +29,11 @@ public class RoomManager extends AbstractRoomManager {
 
     @Override
     protected void onAddSession(String username, String roomName, WebSocketSession session) {
-        broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, roomName, username + " " + SystemEvents.JOIN.getDescription() + " room: [" + roomName + "]"));
+        broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, SystemEvent.JOIN, roomName, username + " " + SystemEvent.JOIN.getDescription() + " room: [" + roomName + "]"));
     }
 
     @Override
     protected void onRemoveSession(String username, String roomName, WebSocketSession session) {
-        broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, roomName, username + " " + SystemEvents.LEFT.getDescription() + "room: [" + roomName + "]"));
+        broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, SystemEvent.LEAVE, roomName, username + " " + SystemEvent.LEAVE.getDescription() + "room: [" + roomName + "]"));
     }
 }

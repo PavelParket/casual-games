@@ -1,11 +1,13 @@
 package com.websocket_hub.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.websocket_hub.client.GameServiceClient;
 import com.websocket_hub.domain.dto.GameMessage;
-import com.websocket_hub.enums.GameMessageType;
+import com.websocket_hub.enums.GameEvent;
 import com.websocket_hub.manager.GameRoomManager;
 import com.websocket_hub.manager.SessionManager;
+import com.websocket_hub.mapper.GameMessageMapper;
+import com.websocket_hub.serializer.JsonDeserializer;
+import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.util.WebSocketUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
@@ -13,44 +15,56 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Component
 @Slf4j
 public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
 
-    private final ObjectMapper objectMapper;
+    private final MessageDeserializer deserializer;
+
+    private final GameMessageMapper mapper;
 
     private final GameServiceClient client;
 
-    public GameRoomHandler(SessionManager sessionManager, GameRoomManager roomManager, ObjectMapper objectMapper, GameServiceClient client) {
+    public GameRoomHandler(
+            SessionManager sessionManager,
+            GameRoomManager roomManager,
+            JsonDeserializer deserializer,
+            GameMessageMapper mapper,
+            GameServiceClient client
+    ) {
         super(sessionManager, roomManager);
-        this.objectMapper = objectMapper;
+        this.deserializer = deserializer;
+        this.mapper = mapper;
         this.client = client;
     }
 
     @Override
     public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
+        if (message.getPayload().isEmpty()) {
+            log.warn("Received empty message from session {}", session.getId());
+
+            return;
+        }
+
         String payload = message.getPayload();
+
         log.debug("Received game message: {}", payload);
 
         try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> data = objectMapper.readValue(payload, Map.class);
+            GameMessage gameMessage = deserializer.deserialize(payload, GameMessage.class);
 
-            String type = (String) data.get("type");
+            String type = gameMessage.type();
             String roomId = WebSocketUtil.getRoomName(session);
             String userId = WebSocketUtil.getUserId(session);
 
             switch (type) {
                 case "ready" -> handlePlayerReady(roomId, userId);
-                case "move" -> handleGameMove(roomId, userId, data);
+                case "move" -> handleGameMove(roomId, gameMessage);
                 default -> log.warn("Unknown game message type: {}", type);
             }
-
         } catch (Exception e) {
             log.error("Failed to handle game message", e);
         }
@@ -82,97 +96,25 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
 
             log.info("Starting game in room {} with players: {}", roomId, players);
 
-            Map<String, Object> startRequest = Map.of(
-                    "type", GameMessageType.START,
-                    "roomName", roomId,
-                    "players", players
-            );
+            GameMessage startRequest = mapper.toGameStartMessageFromParams(GameEvent.START, roomId, players);
 
-            Map<String, Object> gameResponse = client.startGame(startRequest);
+            Optional<GameMessage> startResponse = client.startGame(startRequest);
 
-            GameMessage message = buildGameMessage(roomId, gameResponse);
-            roomManager.broadcastGameMessage(roomId, message);
-
+            roomManager.broadcastGameMessage(startResponse.orElseThrow(() -> new RuntimeException("Empty state")));
         } catch (Exception e) {
             log.error("Failed to start game in room {}", roomId, e);
         }
     }
 
-    private void handleGameMove(String roomId, String userId, Map<String, Object> data) {
+    private void handleGameMove(String roomId, GameMessage message) {
         try {
-            Integer cell = (Integer) data.get("cell");
-            String player = (String) data.get("player");
+            GameMessage moveRequest = mapper.toGameMoveMessage(GameEvent.MOVE, roomId, message.board(), message.cell(), message.player());
 
-            Object boardObj = data.get("board");
-            String[][] board = convertToBoard(boardObj);
+            Optional<GameMessage> moveResponse = client.processMove(moveRequest);
 
-            Map<String, Object> moveRequest = Map.of(
-                    "type", GameMessageType.MOVE,
-                    "roomName", roomId,
-                    "board", board,
-                    "cell", cell,
-                    "player", player
-            );
-
-            Map<String, Object> gameResponse = client.processMove(moveRequest);
-
-            GameMessage message = buildGameMessage(roomId, gameResponse);
-            roomManager.broadcastGameMessage(roomId, message);
-
+            roomManager.broadcastGameMessage(moveResponse.orElseThrow(() -> new RuntimeException(("Empty state"))));
         } catch (Exception e) {
             log.error("Failed to process move in room {}", roomId, e);
         }
-    }
-
-    private GameMessage buildGameMessage(String roomId, Map<String, Object> gameResponse) {
-        String type = (String) gameResponse.get("type");
-        String nextPlayer = (String) gameResponse.get("nextPlayer");
-        String winner = (String) gameResponse.get("winner");
-        String message = (String) gameResponse.get("message");
-
-        Object boardObj = gameResponse.get("board");
-        String[][] board = convertToBoard(boardObj);
-
-        @SuppressWarnings("unchecked")
-        Map<String, String> playersSymbols = (Map<String, String>) gameResponse.get("playersSymbols");
-
-        @SuppressWarnings("unchecked")
-        List<String> players = (List<String>) gameResponse.get("players");
-
-        Integer cell = gameResponse.get("cell") != null ? (Integer) gameResponse.get("cell") : null;
-        String player = (String) gameResponse.get("player");
-
-        return GameMessage.builder()
-                .type(type)
-                .fromUserId("system")
-                .toUserId("")
-                .roomId(roomId)
-                .board(board)
-                .cell(cell)
-                .player(player)
-                .nextPlayer(nextPlayer)
-                .playersSymbols(playersSymbols)
-                .players(new HashSet<>(players))
-                .winner(winner)
-                .message(message)
-                .build();
-    }
-
-    private String[][] convertToBoard(Object boardObj) {
-        if (boardObj == null) {
-            return new String[3][3];
-        }
-
-        String[][] board = new String[3][3];
-
-        if (boardObj instanceof Object[][] objBoard) {
-            for (int i = 0; i < 3 && i < objBoard.length; i++) {
-                for (int j = 0; j < 3 && j < objBoard[i].length; j++) {
-                    board[i][j] = objBoard[i][j] != null ? objBoard[i][j].toString() : null;
-                }
-            }
-        }
-
-        return board;
     }
 }

@@ -5,13 +5,14 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum GameMessageType {
+public enum GameEvent implements EventType {
 
     START("start"),
+    READY("ready"),
     MOVE("move"),
     WINNER_X("winner X"),
     WINNER_O("winner O"),
     DRAW("draw");
 
-    private final String type;
+    private final String description;
 }

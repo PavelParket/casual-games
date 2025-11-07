@@ -17,10 +17,33 @@ export default function TicTacToeRoom() {
    const [winner, setWinner] = useState<string | null>(null);
    const [players, setPlayers] = useState<{ name: string; symbol: string }[]>([]);
    const [ready, setReady] = useState(false);
+   const [isGame, setIsGame] = useState(false);
 
    useEffect(() => {
       if (isConnected && message) {
          switch (message.type) {
+            case "system":
+
+               break;
+
+            case "joined":
+
+               break;
+
+            case "left":
+               if (message.playersSymbols) {
+                  const updatedPlayers = Object.entries(message.playersSymbols).map(([name, symbol]) => ({
+                     name,
+                     symbol,
+                  }));
+                  setPlayers(updatedPlayers);
+               }
+               break;
+
+            case "ready":
+               console.log("Player ready:", message.fromUserId);
+               break;
+
             case "start":
                if (message.board)
                   setBoard(message.board.flat() as (string | null)[]);
@@ -44,25 +67,6 @@ export default function TicTacToeRoom() {
                   setCurrentPlayer(message.nextPlayer);
                if (message.winner !== undefined && message.winner !== null)
                   setWinner(message.winner);
-               break;
-
-            case "system":
-               if (message.message)
-                  alert(message.message);
-               break;
-
-            case "ready":
-               console.log("Player ready:", message.fromUserId);
-               break;
-
-            case "leave":
-               if (message.playersSymbols) {
-                  const updatedPlayers = Object.entries(message.playersSymbols).map(([name, symbol]) => ({
-                     name,
-                     symbol,
-                  }));
-                  setPlayers(updatedPlayers);
-               }
                break;
 
             default:
@@ -95,7 +99,7 @@ export default function TicTacToeRoom() {
 
    const handleLeave = () => {
       if (isConnected) {
-         send({ type: "leave", roomName: roomName.roomId });
+         send({ type: "left", roomName: roomName.roomId });
       }
 
       navigate("/rooms");

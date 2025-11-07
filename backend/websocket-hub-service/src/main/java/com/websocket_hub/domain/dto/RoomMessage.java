@@ -3,8 +3,10 @@ package com.websocket_hub.domain.dto;
 import lombok.Builder;
 
 @Builder
-public record RoomResponse(
+public record RoomMessage(
         String type,
+
+        String event,
 
         String fromUserId,
 

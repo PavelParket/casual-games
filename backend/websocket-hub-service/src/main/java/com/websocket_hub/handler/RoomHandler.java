@@ -1,7 +1,7 @@
 package com.websocket_hub.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.websocket_hub.domain.dto.RoomResponse;
+import com.websocket_hub.domain.dto.RoomMessage;
 import com.websocket_hub.manager.RoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.util.WebSocketUtil;
@@ -13,6 +13,15 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Map;
 
+/**
+ * Handler only for testing room broadcast functionality and websocket connections.
+ *
+ * <p>
+ * Method {@link #handleTextMessage} receives messages from clients and broadcasts it to all clients in the same room.
+ *
+ * <p>
+ * Methods {@link #onJoin} and {@link #onLeave} used to handle user join and leave events if needed.
+ */
 @Component
 @Slf4j
 public class RoomHandler extends AppWebSocketHandler<RoomManager> {
@@ -34,12 +43,14 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
             Map<String, Object> data = objectMapper.readValue(payload, Map.class);
 
             String type = (String) data.get("type");
+            String event = (String) data.get("event");
             String roomId = WebSocketUtil.getRoomName(session);
             String userId = WebSocketUtil.getUserId(session);
             String content = (String) data.get("content");
 
-            RoomResponse response = RoomResponse.builder()
+            RoomMessage response = RoomMessage.builder()
                     .type(type)
+                    .event(event)
                     .fromUserId(userId)
                     .roomId(roomId)
                     .content(content)

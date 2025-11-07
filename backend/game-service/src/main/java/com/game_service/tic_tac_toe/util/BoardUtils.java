@@ -1,8 +1,9 @@
 package com.game_service.tic_tac_toe.util;
 
-import lombok.experimental.UtilityClass;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-@UtilityClass
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BoardUtils {
 
     private static final int SIZE = 3;

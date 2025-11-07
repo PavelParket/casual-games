@@ -4,6 +4,8 @@ public interface Message<T> {
 
     String type();
 
+    String event();
+
     String fromUserId();
 
     String toUserId();
