@@ -6,8 +6,8 @@ import com.game_service.tic_tac_toe.factory.ErrorFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
@@ -18,30 +18,34 @@ public class GlobalExceptionHandler {
     private final ErrorFactory factory;
 
     @ExceptionHandler(GameValidationException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(GameValidationException ex) {
-        log.warn("Validation error: {}", ex.getMessage());
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidation(GameValidationException e) {
+        log.warn("Validation error: {}", e.getMessage());
 
-        return new ResponseEntity<>(factory.create(ErrorType.VALIDATION_ERROR, ex.getMessage(), HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
+        return factory.create(ErrorType.VALIDATION_ERROR, e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(InvalidMoveException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidMove(InvalidMoveException ex) {
-        log.warn("Invalid move: {}", ex.getMessage());
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleInvalidMove(InvalidMoveException e) {
+        log.warn("Invalid move: {}", e.getMessage());
 
-        return new ResponseEntity<>(factory.create(ErrorType.INVALID_MOVE, ex.getMessage(), HttpStatus.CONFLICT), HttpStatus.CONFLICT);
+        return factory.create(ErrorType.INVALID_MOVE, e.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(GameInternalException.class)
-    public ResponseEntity<ErrorResponse> handleInternal(GameInternalException ex) {
-        log.error("Internal game error: {}", ex.getMessage());
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleInternal(GameInternalException e) {
+        log.error("Internal game error: {}", e.getMessage());
 
-        return new ResponseEntity<>(factory.create(ErrorType.INTERNAL_GAME_ERROR, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
+        return factory.create(ErrorType.INTERNAL_GAME_ERROR, e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
-        log.error("Unexpected error", ex);
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleGeneric(Exception e) {
+        log.error("Unexpected error", e);
 
-        return new ResponseEntity<>(factory.create(ErrorType.UNEXPECTED_ERROR, "Unexpected server error", HttpStatus.INTERNAL_SERVER_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
+        return factory.create(ErrorType.UNEXPECTED_ERROR, "Unexpected server error", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

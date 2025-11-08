@@ -16,7 +16,7 @@ public class RoomController {
     private final RoomService service;
 
     @GetMapping("/all")
-    public List<String> getRooms() {
-        return service.getRooms();
+    public List<String> getRoomsNames() {
+        return service.getRoomsNames();
     }
 }

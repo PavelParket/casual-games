@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum MessageType {
+public enum GameEvent {
 
     START("start"),
     MOVE("move"),
@@ -13,5 +13,5 @@ public enum MessageType {
     WINNER_O("winner O"),
     DRAW("draw");
 
-    private final String type;
+    private final String description;
 }

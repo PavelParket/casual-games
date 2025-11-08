@@ -50,7 +50,7 @@ public abstract class AbstractRoomManager {
                 room.getParticipants().removeIf(clientSession -> clientSession.getSession().equals(session));
 
                 if (room.isEmpty()) {
-                    log.debug("Room \"{}\" is now empty, removing...", roomName);
+                    log.info("Room \"{}\" is now empty, removing...", roomName);
 
                     return null;
                 }
@@ -114,7 +114,7 @@ public abstract class AbstractRoomManager {
         }
     }
 
-    public Set<String> getActiveRooms() {
+    public Set<String> getActiveRoomsNames() {
         return rooms.keySet();
     }
 

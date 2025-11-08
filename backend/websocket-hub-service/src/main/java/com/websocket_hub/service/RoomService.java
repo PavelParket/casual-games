@@ -14,9 +14,9 @@ public class RoomService {
 
     private final List<AbstractRoomManager> roomManagers;
 
-    public List<String> getRooms() {
+    public List<String> getRoomsNames() {
         return roomManagers.stream()
-                .flatMap(manager -> manager.getActiveRooms().stream())
+                .flatMap(manager -> manager.getActiveRoomsNames().stream())
                 .toList();
     }
 }

@@ -8,6 +8,7 @@ import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -17,7 +18,12 @@ public class RoomManager extends AbstractRoomManager {
 
     private final MessageMapper mapper;
 
-    public RoomManager(MessageSerializer<String> serializer, ObjectFactory<Room> roomFactory, ObjectFactory<ClientSession> clientFactory, MessageMapper mapper) {
+    public RoomManager(
+            MessageSerializer<String> serializer,
+            ObjectFactory<Room> roomFactory,
+            ObjectFactory<ClientSession> clientFactory,
+            @Qualifier("messageMapperImpl") MessageMapper mapper
+    ) {
         super(serializer, roomFactory, clientFactory);
         this.mapper = mapper;
     }

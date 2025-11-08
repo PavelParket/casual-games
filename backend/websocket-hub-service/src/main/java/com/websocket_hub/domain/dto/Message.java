@@ -10,7 +10,7 @@ public interface Message<T> {
 
     String toUserId();
 
-    String roomId();
+    String roomName();
 
     T content();
 }

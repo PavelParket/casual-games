@@ -15,7 +15,7 @@ public record GameMessage(
 
         String toUserId,
 
-        String roomId,
+        String roomName,
 
         String[] board,
 

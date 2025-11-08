@@ -36,7 +36,7 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
     @Override
     public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
-        log.debug("Received game message: {}", payload);
+        log.info("Received game message: {}", payload);
 
         try {
             @SuppressWarnings("unchecked")
@@ -44,7 +44,7 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
 
             String type = (String) data.get("type");
             String event = (String) data.get("event");
-            String roomId = WebSocketUtil.getRoomName(session);
+            String roomName = WebSocketUtil.getRoomName(session);
             String userId = WebSocketUtil.getUserId(session);
             String content = (String) data.get("content");
 
@@ -52,11 +52,11 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
                     .type(type)
                     .event(event)
                     .fromUserId(userId)
-                    .roomId(roomId)
+                    .roomName(roomName)
                     .content(content)
                     .build();
 
-            roomManager.broadcast(roomId, response);
+            roomManager.broadcast(roomName, response);
 
         } catch (Exception e) {
             log.error("Failed to handle game message", e);
@@ -64,10 +64,10 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
     }
 
     @Override
-    protected void onJoin(String roomId, String username) {
+    protected void onJoin(String roomName, String username) {
     }
 
     @Override
-    protected void onLeave(String roomId, String username) {
+    protected void onLeave(String roomName, String username) {
     }
 }

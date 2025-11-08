@@ -11,7 +11,7 @@ import java.util.Set;
 @Mapper(componentModel = "spring", imports = {MessageType.class})
 public interface GameMessageMapper extends MessageMapper {
 
-    @Mapping(target = "type", expression = "java(MessageType.SYSTEM)")
+    @Mapping(target = "type", expression = "java(MessageType.SYSTEM.getType())")
     @Mapping(target = "fromUserId", ignore = true)
     @Mapping(target = "toUserId", ignore = true)
     @Mapping(target = "board", ignore = true)
@@ -21,11 +21,9 @@ public interface GameMessageMapper extends MessageMapper {
     @Mapping(target = "playersSymbols", ignore = true)
     @Mapping(target = "winner", ignore = true)
     @Mapping(target = "message", ignore = true)
-    GameMessage toGameStartMessageFromParams(GameEvent event, String roomId, Set<String> players);
+    GameMessage toGameStartMessageFromParams(GameEvent event, String roomName, Set<String> players);
 
-    GameMessage toGameStartMessageFromEntity(GameMessage gameMessage);
-
-    @Mapping(target = "type", expression = "java(MessageType.SYSTEM)")
+    @Mapping(target = "type", expression = "java(MessageType.SYSTEM.getType())")
     @Mapping(target = "fromUserId", ignore = true)
     @Mapping(target = "toUserId", ignore = true)
     @Mapping(target = "nextPlayer", ignore = true)
@@ -33,5 +31,5 @@ public interface GameMessageMapper extends MessageMapper {
     @Mapping(target = "players", ignore = true)
     @Mapping(target = "winner", ignore = true)
     @Mapping(target = "message", ignore = true)
-    GameMessage toGameMoveMessage(GameEvent event, String roomId, String[] board, Integer cell, String player);
+    GameMessage toGameMoveMessage(GameEvent event, String roomName, String[] board, Integer cell, String player);
 }

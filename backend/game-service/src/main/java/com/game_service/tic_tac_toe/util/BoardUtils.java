@@ -12,10 +12,12 @@ public class BoardUtils {
         return cell >= 0 && cell < SIZE * SIZE;
     }
 
+    @Deprecated
     public static int getRow(int cell) {
         return cell / SIZE;
     }
 
+    @Deprecated
     public static int getCol(int cell) {
         return cell % SIZE;
     }

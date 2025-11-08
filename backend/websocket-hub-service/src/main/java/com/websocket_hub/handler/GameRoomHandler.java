@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -51,19 +50,19 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
 
         String payload = message.getPayload();
 
-        log.debug("Received game message: {}", payload);
-
         try {
             GameMessage gameMessage = deserializer.deserialize(payload, GameMessage.class);
 
-            String type = gameMessage.type();
-            String roomId = WebSocketUtil.getRoomName(session);
+            log.info("Received game message: {}", gameMessage);
+
+            String event = gameMessage.event();
+            String roomName = WebSocketUtil.getRoomName(session);
             String userId = WebSocketUtil.getUserId(session);
 
-            switch (type) {
-                case "ready" -> handlePlayerReady(roomId, userId);
-                case "move" -> handleGameMove(roomId, gameMessage);
-                default -> log.warn("Unknown game message type: {}", type);
+            switch (event) {
+                case "ready" -> handlePlayerReady(roomName, userId);
+                case "move" -> handleGameMove(roomName, gameMessage);
+                default -> log.warn("Unknown game message event: {}", event);
             }
         } catch (Exception e) {
             log.error("Failed to handle game message", e);
@@ -80,41 +79,41 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
 
     }
 
-    private void handlePlayerReady(String roomId, String userId) {
-        roomManager.markReady(roomId, userId);
+    private void handlePlayerReady(String roomName, String userId) {
+        roomManager.markReady(roomName, userId);
 
         log.info("Player= \"{}\" is ready", userId);
 
-        if (roomManager.areBothPlayersReady(roomId)) {
-            startGame(roomId);
+        if (roomManager.areBothPlayersReady(roomName)) {
+            startGame(roomName);
         }
     }
 
-    private void startGame(String roomId) {
+    private void startGame(String roomName) {
         try {
-            Set<String> players = roomManager.getUserIds(roomId);
+            Set<String> players = roomManager.getUserIds(roomName);
 
-            log.info("Starting game in room {} with players: {}", roomId, players);
+            log.info("Starting game in room {} with players: {}", roomName, players);
 
-            GameMessage startRequest = mapper.toGameStartMessageFromParams(GameEvent.START, roomId, players);
+            GameMessage startRequest = mapper.toGameStartMessageFromParams(GameEvent.START, roomName, players);
 
-            Optional<GameMessage> startResponse = client.startGame(startRequest);
+            GameMessage startResponse = client.startGame(startRequest).orElseThrow(() -> new RuntimeException("Empty state"));
 
-            roomManager.broadcastGameMessage(startResponse.orElseThrow(() -> new RuntimeException("Empty state")));
+            roomManager.broadcast(startResponse.roomName(), startResponse);
         } catch (Exception e) {
-            log.error("Failed to start game in room {}", roomId, e);
+            log.error("Failed to start game in room {}", roomName, e);
         }
     }
 
-    private void handleGameMove(String roomId, GameMessage message) {
+    private void handleGameMove(String roomName, GameMessage message) {
         try {
-            GameMessage moveRequest = mapper.toGameMoveMessage(GameEvent.MOVE, roomId, message.board(), message.cell(), message.player());
+            GameMessage moveRequest = mapper.toGameMoveMessage(GameEvent.MOVE, roomName, message.board(), message.cell(), message.player());
 
-            Optional<GameMessage> moveResponse = client.processMove(moveRequest);
+            GameMessage moveResponse = client.processMove(moveRequest).orElseThrow(() -> new RuntimeException(("Empty state")));
 
-            roomManager.broadcastGameMessage(moveResponse.orElseThrow(() -> new RuntimeException(("Empty state"))));
+            roomManager.broadcast(moveResponse.roomName(), moveResponse);
         } catch (Exception e) {
-            log.error("Failed to process move in room {}", roomId, e);
+            log.error("Failed to process move in room {}", roomName, e);
         }
     }
 }

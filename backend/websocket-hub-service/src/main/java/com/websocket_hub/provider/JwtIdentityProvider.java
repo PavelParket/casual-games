@@ -52,8 +52,8 @@ public class JwtIdentityProvider implements IdentityProvider {
     public String resolveRoomName(ServerHttpRequest request) {
         var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
 
-        String roomId = params.getFirst("roomId");
+        String roomName = params.getFirst("roomName");
 
-        return (roomId == null || roomId.isBlank()) ? defaultRoom : roomId;
+        return (roomName == null || roomName.isBlank()) ? defaultRoom : roomName;
     }
 }

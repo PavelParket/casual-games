@@ -12,7 +12,7 @@ public record RoomMessage(
 
         String toUserId,
 
-        String roomId,
+        String roomName,
 
         String content
 ) implements Message<String> {
