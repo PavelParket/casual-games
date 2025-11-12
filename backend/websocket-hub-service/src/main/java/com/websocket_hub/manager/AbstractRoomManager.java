@@ -88,6 +88,7 @@ public abstract class AbstractRoomManager {
                 Thread.ofVirtual().start(() -> {
                     try {
                         session.sendMessage(new TextMessage(json));
+                        log.info("Sent message: {}", json);
                     } catch (IOException e) {
                         log.warn("Failed to send message to session {}: {}", session.getId(), e.getMessage());
 

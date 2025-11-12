@@ -10,12 +10,13 @@ export function useWebSocket<T extends WSMessage = WSMessage>(url: string, roomN
 
    useEffect(() => {
       const token = getAccessToken();
-      const socket = new WebSocket(`${url}?roomId=${roomName}&token=${token}`);
+      const socket = new WebSocket(`${url}?roomName=${roomName}&token=${token}`);
 
-      socket.onopen = () => setIsConnected(true);
+      socket.onopen = () => {
+         setIsConnected(true);
+      }
       socket.onclose = () => {
          setIsConnected(false);
-         client.current = null;
       }
 
       socket.onmessage = (event) => {

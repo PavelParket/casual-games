@@ -35,7 +35,7 @@ export default function App() {
                <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>
                   <Route element={<Layout />}>
                      <Route path="/rooms" element={<Rooms />} />
-                     <Route path="/room/game/:roomId" element={<TicTacToeRoom />} />
+                     <Route path="/room/game/:roomName" element={<TicTacToeRoom />} />
                      <Route path="/ws" element={<WebSocketComponent />} />
                   </Route>
                </Route>
