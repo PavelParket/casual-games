@@ -14,6 +14,9 @@ export default function Rooms() {
    const { rooms } = useSelector((state: RootState) => state.rooms);
    const { getIcon, getInverseIcon } = useThemedIcon();
 
+   const [hovered, setHovered] = useState(false);
+   const [pressed, setPressed] = useState(false);
+
    useEffect(() => {
       dispatch(fetchRooms());
    }, [dispatch]);
@@ -29,8 +32,6 @@ export default function Rooms() {
       if (!newRoomName.trim()) {
          return;
       }
-
-      console.log("Maybe here will be the room: " + newRoomName);
 
       setCreateModalOpen(false);
       navigate(`/room/game/${newRoomName}`);
@@ -93,43 +94,57 @@ export default function Rooms() {
                   justifyItems: "center",
                }}>
                   {rooms.map((room: string) => (
-                     <>
-                        <Card
-                           key={room}
-                           style={{
-                              width: "180px",
-                              height: "180px",
-                              textAlign: "center",
-                              padding: "20px",
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "10px",
-                           }}
-                        >
-                           <Typography variant="body">{room}</Typography>
-                           <Button variant="outline" onClick={() => handleJoinRoom(room)}>Join</Button>
-                           {/* <Button variant="ghost" onClick={() => handleInfo(room)}>Info</Button> */}
-                        </Card>
-
-                        {rooms.length > 0 && (
-                           <Card
-                              onClick={() => setCreateModalOpen(true)}
-                              style={{
-                                 width: "180px",
-                                 height: "180px",
-                                 textAlign: "center",
-                                 padding: "20px",
-                                 display: "flex",
-                                 alignItems: "center",
-                                 justifyContent: "center",
-                                 cursor: "pointer",
-                              }}
-                           >
-                              <Icon src={getIcon("add")} alt="add" size={50} />
-                           </Card>
-                        )}
-                     </>
+                     <Card
+                        key={room}
+                        style={{
+                           width: "180px",
+                           height: "180px",
+                           textAlign: "center",
+                           padding: "20px",
+                           display: "flex",
+                           flexDirection: "column",
+                           gap: "10px",
+                        }}
+                     >
+                        <Typography variant="body">{room}</Typography>
+                        <Button variant="outline" onClick={() => handleJoinRoom(room)}>Join</Button>
+                        {/* <Button variant="ghost" onClick={() => handleInfo(room)}>Info</Button> */}
+                     </Card>
                   ))}
+
+                  {rooms.length > 0 && <Card
+                     onClick={() => setCreateModalOpen(true)}
+                     onMouseEnter={() => setHovered(true)}
+                     onMouseLeave={() => {
+                        setHovered(false);
+                        setPressed(false);
+                     }}
+                     onMouseDown={() => setPressed(true)}
+                     onMouseUp={() => setPressed(false)}
+                     style={{
+                        width: "180px",
+                        height: "180px",
+                        textAlign: "center",
+                        padding: "20px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                        background: "var(--color-bg-glass)",
+                        borderRadius: "var(--radius-md)",
+                        boxShadow: hovered
+                           ? "var(--shadow-lg)"
+                           : "var(--shadow-md)",
+                        transform: pressed
+                           ? "scale(0.95)"
+                           : hovered
+                              ? "scale(1.05)"
+                              : "scale(1)",
+                     }}
+                  >
+                     <Icon src={getIcon("add")} alt="add" size={50} />
+                  </Card>}
                </Box>
             </Container>
          </Box>

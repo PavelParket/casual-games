@@ -120,6 +120,10 @@ public abstract class AbstractRoomManager {
     }
 
     public Set<String> getUserIds(String roomName) {
+        if (roomName == null || roomName.isEmpty()) {
+            return Set.of();
+        }
+
         Room room = rooms.get(roomName);
 
         if (room == null) {

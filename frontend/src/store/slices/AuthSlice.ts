@@ -91,7 +91,7 @@ export const refresh = createAsyncThunk<AuthResponse, void, { rejectValue: strin
       } catch (err: unknown) {
          const error = err as AxiosError<{ message?: string }>;
 
-         return rejectWithValue(error.response?.data?.message ?? "Session expired");
+         return rejectWithValue(error.response?.data?.message ?? "");
       }
    }
 );

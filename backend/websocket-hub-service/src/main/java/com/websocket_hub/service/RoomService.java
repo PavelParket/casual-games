@@ -19,4 +19,11 @@ public class RoomService {
                 .flatMap(manager -> manager.getActiveRoomsNames().stream())
                 .toList();
     }
+
+    public List<String> getPlayersInRoom(String roomName) {
+        return roomManagers.stream()
+                .filter(manager -> "gameRoomManager".equals(manager.getName()))
+                .flatMap(manager -> manager.getUserIds(roomName).stream())
+                .toList();
+    }
 }

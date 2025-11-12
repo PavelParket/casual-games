@@ -25,3 +25,7 @@
    font-size: 0.8rem;
    opacity: 0.8;
 }
+
+.typography.text-color-inverse {
+   color: var(--color-text-inverse);
+}

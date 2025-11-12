@@ -1,15 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
-import { Box, Button, Card, Container, Icon, Typography, useThemedIcon } from "../../ui";
+import { Box, Button, Card, Container, Icon, Toast, Typography, useThemedIcon } from "../../ui";
 import type { GameMessage } from "../../types/ws";
+import { RoomAPI } from "../../api/WsHubApi";
 
 export default function TicTacToeRoom() {
-   const roomName = useParams<{ roomId: string }>();
+   const { roomName } = useParams<string>();
    const navigate = useNavigate();
    const { getInverseIcon } = useThemedIcon();
 
-   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws/game", roomName.roomId!);
+   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws/game", roomName ?? "");
 
    const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
    const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
@@ -17,46 +18,54 @@ export default function TicTacToeRoom() {
    const [winner, setWinner] = useState<string | null>(null);
    const [players, setPlayers] = useState<{ name: string; symbol: string }[]>([]);
    const [ready, setReady] = useState(false);
-   const [isGame, setIsGame] = useState(false);
+   const [toast, setToast] = useState<{ text: string } | null>(null);
+
+   const fetchPlayers = useCallback(async () => {
+      try {
+         console.log(roomName);
+         const response = await RoomAPI.getPlayersInRoom(roomName!);
+         const data = response.data;
+
+         setPlayers(data.map(player => ({ name: player, symbol: "" })));
+      } catch (error) {
+         console.error("Failed to fetch players:", error);
+      }
+   }, [roomName]);
 
    useEffect(() => {
       if (isConnected && message) {
-         switch (message.type) {
+         switch (message.event) {
             case "system":
-
                break;
 
             case "joined":
-
+               fetchPlayers();
+               showToast(message.content ?? "");
                break;
 
             case "left":
-               if (message.playersSymbols) {
-                  const updatedPlayers = Object.entries(message.playersSymbols).map(([name, symbol]) => ({
-                     name,
-                     symbol,
-                  }));
-                  setPlayers(updatedPlayers);
-               }
+               fetchPlayers();
+               showToast(message.content ?? "");
                break;
 
             case "ready":
-               console.log("Player ready:", message.fromUserId);
+               showToast(message.content ?? "");
                break;
 
             case "start":
                if (message.board)
-                  setBoard(message.board.flat() as (string | null)[]);
+                  setBoard(message.board);
                if (message.nextPlayer)
                   setCurrentPlayer(message.nextPlayer);
                if (message.player)
                   setMySymbol(message.player);
                if (message.playersSymbols) {
-                  const playersList = Object.entries(message.playersSymbols).map(([name, symbol]) => ({
-                     name,
-                     symbol,
-                  }));
-                  setPlayers(playersList);
+                  setPlayers(prev =>
+                     prev.map(p => ({
+                        ...p,
+                        symbol: message.playersSymbols![p.name] ?? "",
+                     }))
+                  );
                }
                break;
 
@@ -73,7 +82,7 @@ export default function TicTacToeRoom() {
                break;
          }
       }
-   }, [isConnected, message]);
+   }, [fetchPlayers, isConnected, message]);
 
    const handleClick = (index: number) => {
       if (!isConnected || board[index] || winner || currentPlayer !== mySymbol) {
@@ -81,10 +90,11 @@ export default function TicTacToeRoom() {
       }
 
       send({
-         type: "move",
+         type: "message",
+         event: "move",
          player: mySymbol!,
          cell: index,
-         roomName: roomName.roomId,
+         roomName: roomName,
       });
    };
 
@@ -93,16 +103,20 @@ export default function TicTacToeRoom() {
          return;
       }
 
-      send({ type: "ready", roomName: roomName.roomId });
+      send({ type: "message", event: "ready", roomName: roomName });
       setReady(true);
    };
 
    const handleLeave = () => {
-      if (isConnected) {
-         send({ type: "left", roomName: roomName.roomId });
-      }
+      /* if (isConnected) {
+         send({ type: "message", event: "left", roomName: roomName });
+      } */
 
       navigate("/rooms");
+   };
+
+   const showToast = (text: string) => {
+      setToast({ text });
    };
 
    return (
@@ -228,6 +242,10 @@ export default function TicTacToeRoom() {
                </Box>
             </Card>
          </Container>
+
+         {toast && (
+            <Toast message={toast.text} onClose={() => setToast(null)} />
+         )}
       </Box>
    );
 }

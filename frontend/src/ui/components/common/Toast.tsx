@@ -34,7 +34,7 @@ export function Toast({ message, duration = 3000, onClose }: ToastProps) {
             backdropFilter: "blur(var(--glass-blur))",
          }}
       >
-         <Typography variant="body" inverse>
+         <Typography variant="body">
             {message}
          </Typography>
          <Button variant="ghost" onClick={onClose} style={{ padding: "0.25rem" }}>
