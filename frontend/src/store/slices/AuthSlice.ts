@@ -30,9 +30,24 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
+   id: number;
+   username: string;
+   email: string;
+   role: string;
    accessToken: string;
-   user: User;
 }
+
+const mapAuthResponseToState = (data: AuthResponse): { user: User; accessToken: string } => ({
+   user: {
+      id: data.id,
+      username: data.username,
+      email: data.email,
+      role: data.role,
+   },
+   accessToken: data.accessToken,
+});
+
+// ------------------ Thunks ------------------
 
 export const login = createAsyncThunk<AuthResponse, LoginRequest, { rejectValue: string }>(
    "auth/login",
@@ -65,14 +80,12 @@ export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
    async (_, { rejectWithValue }) => {
       try {
          await AuthAPI.logout();
-         setGlobalToken(null);
-         stopTokenTimer();
       } catch (err: unknown) {
-         setGlobalToken(null);
-         stopTokenTimer();
-
          const error = err as AxiosError<{ message?: string }>;
          return rejectWithValue(error.response?.data?.message ?? "Logout failed");
+      } finally {
+         setGlobalToken(null);
+         stopTokenTimer();
       }
    }
 );
@@ -82,19 +95,18 @@ export const refresh = createAsyncThunk<AuthResponse, void, { rejectValue: strin
    async (_, { rejectWithValue }) => {
       try {
          const response = await AuthAPI.refresh();
-
          if (response.status === 204 || !response.data) {
             return rejectWithValue("");
          }
-
          return response.data;
       } catch (err: unknown) {
          const error = err as AxiosError<{ message?: string }>;
-
          return rejectWithValue(error.response?.data?.message ?? "");
       }
    }
 );
+
+// ------------------ Slice ------------------
 
 const initialState: AuthState = {
    user: null,
@@ -125,12 +137,13 @@ const authSlice = createSlice({
             state.error = null;
          })
          .addCase(login.fulfilled, (state, action) => {
+            const { user, accessToken } = mapAuthResponseToState(action.payload);
             state.isLoading = false;
-            state.user = action.payload.user;
-            state.accessToken = action.payload.accessToken;
+            state.user = user;
+            state.accessToken = accessToken;
             state.isAuthenticated = true;
-            setGlobalToken(action.payload.accessToken);
-            startTokenTimer(action.payload.accessToken);
+            setGlobalToken(accessToken);
+            startTokenTimer(accessToken);
          })
          .addCase(login.rejected, (state, action) => {
             state.isLoading = false;
@@ -142,12 +155,13 @@ const authSlice = createSlice({
             state.error = null;
          })
          .addCase(register.fulfilled, (state, action) => {
+            const { user, accessToken } = mapAuthResponseToState(action.payload);
             state.isLoading = false;
-            state.user = action.payload.user;
-            state.accessToken = action.payload.accessToken;
+            state.user = user;
+            state.accessToken = accessToken;
             state.isAuthenticated = true;
-            setGlobalToken(action.payload.accessToken);
-            startTokenTimer(action.payload.accessToken);
+            setGlobalToken(accessToken);
+            startTokenTimer(accessToken);
          })
          .addCase(register.rejected, (state, action) => {
             state.isLoading = false;
@@ -177,20 +191,13 @@ const authSlice = createSlice({
             state.error = null;
          })
          .addCase(refresh.fulfilled, (state, action) => {
+            const { user, accessToken } = mapAuthResponseToState(action.payload);
             state.isLoading = false;
-
-            if (action.payload === null) {
-               state.user = null;
-               state.accessToken = null;
-               state.isAuthenticated = false;
-               return;
-            }
-
-            state.user = action.payload.user;
-            state.accessToken = action.payload.accessToken;
+            state.user = user;
+            state.accessToken = accessToken;
             state.isAuthenticated = true;
-            setGlobalToken(action.payload.accessToken);
-            startTokenTimer(action.payload.accessToken);
+            setGlobalToken(accessToken);
+            startTokenTimer(accessToken);
          })
          .addCase(refresh.rejected, (state, action) => {
             state.isLoading = false;

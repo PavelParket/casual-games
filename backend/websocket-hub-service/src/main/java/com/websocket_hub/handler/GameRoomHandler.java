@@ -86,6 +86,8 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
 
         if (roomManager.areBothPlayersReady(roomName)) {
             startGame(roomName);
+
+            roomManager.clearReadyPlayers(roomName);
         }
     }
 

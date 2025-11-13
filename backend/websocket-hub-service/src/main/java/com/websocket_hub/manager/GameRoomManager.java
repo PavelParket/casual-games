@@ -74,4 +74,10 @@ public class GameRoomManager extends AbstractRoomManager {
 
         return ready != null && ready.size() == 2 && players.size() == 2;
     }
+
+    public void clearReadyPlayers(String roomName) {
+        readyPlayers.remove(roomName);
+
+        log.info("Cleared ready players for room {}", roomName);
+    }
 }

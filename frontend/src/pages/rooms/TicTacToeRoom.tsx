@@ -4,8 +4,11 @@ import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Toast, Typography, useThemedIcon } from "../../ui";
 import type { GameMessage } from "../../types/ws";
 import { RoomAPI } from "../../api/WsHubApi";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store/store";
 
 export default function TicTacToeRoom() {
+   const user = useSelector((state: RootState) => state.auth.user);
    const { roomName } = useParams<string>();
    const navigate = useNavigate();
    const { getInverseIcon } = useThemedIcon();
@@ -22,7 +25,6 @@ export default function TicTacToeRoom() {
 
    const fetchPlayers = useCallback(async () => {
       try {
-         console.log(roomName);
          const response = await RoomAPI.getPlayersInRoom(roomName!);
          const data = response.data;
 
@@ -35,31 +37,34 @@ export default function TicTacToeRoom() {
    useEffect(() => {
       if (isConnected && message) {
          switch (message.event) {
-            case "system":
-               break;
-
             case "joined":
                fetchPlayers();
-               showToast(message.content ?? "");
+               showToast(message.content!);
                break;
 
             case "left":
                fetchPlayers();
-               showToast(message.content ?? "");
+               showToast(message.content!);
                break;
 
             case "ready":
-               showToast(message.content ?? "");
+               showToast(message.content!);
                break;
 
             case "start":
                if (message.board)
                   setBoard(message.board);
+
                if (message.nextPlayer)
                   setCurrentPlayer(message.nextPlayer);
-               if (message.player)
-                  setMySymbol(message.player);
+
                if (message.playersSymbols) {
+                  if (user?.email && message.playersSymbols[user.email]) {
+                     setMySymbol(message.playersSymbols[user.email]);
+                  } else {
+                     console.log("Email not found", user?.email, message.playersSymbols);
+                  }
+
                   setPlayers(prev =>
                      prev.map(p => ({
                         ...p,
@@ -67,22 +72,43 @@ export default function TicTacToeRoom() {
                      }))
                   );
                }
+
                break;
 
             case "move":
                if (message.board)
-                  setBoard(message.board.flat() as (string | null)[]);
+                  setBoard(message.board);
                if (message.nextPlayer)
                   setCurrentPlayer(message.nextPlayer);
                if (message.winner !== undefined && message.winner !== null)
                   setWinner(message.winner);
+
+               break;
+
+            case "winner X":
+            case "winner O": {
+               setWinner(message.player!);
+
+               if (winner === mySymbol) {
+                  showToast("You are the winner!");
+               } else {
+                  showToast(`Your oponent has won!`);
+               }
+
+               break;
+            }
+
+            case "draw":
+               setWinner("draw");
+               showToast(message.content!);
+
                break;
 
             default:
                break;
          }
       }
-   }, [fetchPlayers, isConnected, message]);
+   }, [fetchPlayers, isConnected, message, mySymbol, user?.email, winner]);
 
    const handleClick = (index: number) => {
       if (!isConnected || board[index] || winner || currentPlayer !== mySymbol) {
@@ -92,9 +118,11 @@ export default function TicTacToeRoom() {
       send({
          type: "message",
          event: "move",
-         player: mySymbol!,
-         cell: index,
+         fromUserId: user?.email,
          roomName: roomName,
+         board: board,
+         cell: index,
+         player: mySymbol!,
       });
    };
 
@@ -108,10 +136,6 @@ export default function TicTacToeRoom() {
    };
 
    const handleLeave = () => {
-      /* if (isConnected) {
-         send({ type: "message", event: "left", roomName: roomName });
-      } */
-
       navigate("/rooms");
    };
 
