@@ -8,10 +8,11 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 
 export default function TicTacToeRoom() {
-   const user = useSelector((state: RootState) => state.auth.user);
+   const email = useSelector((state: RootState) => state.auth.user?.email);
    const { roomName } = useParams<string>();
    const navigate = useNavigate();
    const { getInverseIcon } = useThemedIcon();
+   const [toast, setToast] = useState<{ text: string } | null>(null);
 
    const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws/game", roomName ?? "");
 
@@ -21,7 +22,8 @@ export default function TicTacToeRoom() {
    const [winner, setWinner] = useState<string | null>(null);
    const [players, setPlayers] = useState<{ name: string; symbol: string }[]>([]);
    const [ready, setReady] = useState(false);
-   const [toast, setToast] = useState<{ text: string } | null>(null);
+   const [readyCount, setReadyCount] = useState(0);
+   const [totalPlayers, setTotalPlayers] = useState(0);
 
    const fetchPlayers = useCallback(async () => {
       try {
@@ -29,6 +31,18 @@ export default function TicTacToeRoom() {
          const data = response.data;
 
          setPlayers(data.map(player => ({ name: player, symbol: "" })));
+         setTotalPlayers(data.length);
+      } catch (error) {
+         console.error("Failed to fetch players:", error);
+      }
+   }, [roomName]);
+
+   const fetchReadyPlayers = useCallback(async () => {
+      try {
+         const response = await RoomAPI.getReadyPlayers(roomName!);
+         const data = response.data;
+
+         setReadyCount(data);
       } catch (error) {
          console.error("Failed to fetch players:", error);
       }
@@ -39,30 +53,41 @@ export default function TicTacToeRoom() {
          switch (message.event) {
             case "joined":
                fetchPlayers();
-               showToast(message.content!);
+               fetchReadyPlayers();
+               showToast(message.message!);
                break;
 
             case "left":
+               if (currentPlayer && mySymbol) {
+                  showToast("Your opponent left the room. Waiting for a new player...");
+                  setBoard(Array(9).fill(null));
+                  setCurrentPlayer(null);
+                  setMySymbol(null);
+                  setWinner(null);
+                  setReady(false);
+               } else {
+                  showToast(message.message!);
+               }
+
                fetchPlayers();
-               showToast(message.content!);
+               fetchReadyPlayers();
+
                break;
 
             case "ready":
-               showToast(message.content!);
+               showToast(message.message!);
+               fetchReadyPlayers();
                break;
 
             case "start":
-               if (message.board)
-                  setBoard(message.board);
-
-               if (message.nextPlayer)
-                  setCurrentPlayer(message.nextPlayer);
+               setBoard(message.board!);
+               setCurrentPlayer(message.nextPlayer!);
 
                if (message.playersSymbols) {
-                  if (user?.email && message.playersSymbols[user.email]) {
-                     setMySymbol(message.playersSymbols[user.email]);
+                  if (email && message.playersSymbols[email]) {
+                     setMySymbol(message.playersSymbols[email]);
                   } else {
-                     console.log("Email not found", user?.email, message.playersSymbols);
+                     console.log("Email not found", email, message.playersSymbols);
                   }
 
                   setPlayers(prev =>
@@ -76,31 +101,29 @@ export default function TicTacToeRoom() {
                break;
 
             case "move":
-               if (message.board)
-                  setBoard(message.board);
-               if (message.nextPlayer)
-                  setCurrentPlayer(message.nextPlayer);
-               if (message.winner !== undefined && message.winner !== null)
-                  setWinner(message.winner);
+               setBoard(message.board!);
+               setCurrentPlayer(message.nextPlayer!);
 
                break;
 
             case "winner X":
             case "winner O": {
+               setBoard(message.board!);
                setWinner(message.player!);
 
                if (winner === mySymbol) {
                   showToast("You are the winner!");
                } else {
-                  showToast(`Your oponent has won!`);
+                  showToast(`Your opponent won!`);
                }
 
                break;
             }
 
             case "draw":
-               setWinner("draw");
-               showToast(message.content!);
+               setBoard(message.board!);
+               setWinner(message.winner!);
+               showToast(message.message!);
 
                break;
 
@@ -108,7 +131,7 @@ export default function TicTacToeRoom() {
                break;
          }
       }
-   }, [fetchPlayers, isConnected, message, mySymbol, user?.email, winner]);
+   }, [fetchPlayers, fetchReadyPlayers, email, isConnected, message, currentPlayer, mySymbol, winner, readyCount, totalPlayers]);
 
    const handleClick = (index: number) => {
       if (!isConnected || board[index] || winner || currentPlayer !== mySymbol) {
@@ -118,7 +141,7 @@ export default function TicTacToeRoom() {
       send({
          type: "message",
          event: "move",
-         fromUserId: user?.email,
+         fromUserId: email,
          roomName: roomName,
          board: board,
          cell: index,
@@ -135,13 +158,11 @@ export default function TicTacToeRoom() {
       setReady(true);
    };
 
-   const handleLeave = () => {
-      navigate("/rooms");
-   };
+   const handleLeave = () => navigate("/rooms");
 
-   const showToast = (text: string) => {
-      setToast({ text });
-   };
+   const showToast = (text: string) => setToast({ text });
+
+   const gameStarted = currentPlayer !== null && mySymbol !== null;
 
    return (
       <Box style={{
@@ -171,7 +192,9 @@ export default function TicTacToeRoom() {
                      ? winner === "Draw"
                         ? "Draw!"
                         : `Winner: ${winner}`
-                     : `Turn: ${currentPlayer}`
+                     : gameStarted
+                        ? `Turn: ${currentPlayer}`
+                        : `Ready players: ${readyCount} / ${totalPlayers}`
                   }
                </Typography>
 
@@ -197,41 +220,48 @@ export default function TicTacToeRoom() {
                   </Box>
 
                   <Box style={{
-                     display: "grid",
-                     gridTemplateColumns: "repeat(3, 80px)",
-                     gridTemplateRows: "repeat(3, 80px)",
-                     borderRadius: "var(--radius-lg)",
-                     overflow: "hidden",
-                     boxShadow: "var(--shadow-lg)",
+                     display: "flex",
+                     alignItems: "center",
+                     justifyContent: "center",
                   }}>
-                     {board.map((cell, index) => {
-                        const style: React.CSSProperties = {
-                           width: "80px",
-                           height: "80px",
-                           fontSize: "32px",
-                           fontWeight: "bold",
-                           borderRadius: "0",
-                           borderRight: "none",
-                           borderBottom: "none",
-                        };
+                     <Box style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(3, 80px)",
+                        gridTemplateRows: "repeat(3, 80px)",
+                        justifyContent: "center",
+                        borderRadius: "var(--radius-lg)",
+                        overflow: "hidden",
+                        boxShadow: "var(--shadow-lg)",
+                     }}>
+                        {board.map((cell, index) => {
+                           const style: React.CSSProperties = {
+                              width: "80px",
+                              height: "80px",
+                              fontSize: "32px",
+                              fontWeight: "bold",
+                              borderRadius: "0",
+                              borderRight: "none",
+                              borderBottom: "none",
+                           };
 
-                        if (index % 3 !== 2)
-                           style.borderRight = "2px solid var(--color-text)";
-                        if (index < 6)
-                           style.borderBottom = "2px solid var(--color-text)";
+                           if (index % 3 !== 2)
+                              style.borderRight = "2px solid var(--color-text)";
+                           if (index < 6)
+                              style.borderBottom = "2px solid var(--color-text)";
 
-                        return (
-                           <Button
-                              key={index}
-                              variant="ghost"
-                              style={style}
-                              onClick={() => handleClick(index)}
-                              disabled={!!cell || !!winner}
-                           >
-                              {cell}
-                           </Button>
-                        );
-                     })}
+                           return (
+                              <Button
+                                 key={index}
+                                 variant="ghost"
+                                 style={style}
+                                 onClick={() => handleClick(index)}
+                                 disabled={!!cell || !!winner}
+                              >
+                                 {cell}
+                              </Button>
+                           );
+                        })}
+                     </Box>
                   </Box>
                </Box>
 

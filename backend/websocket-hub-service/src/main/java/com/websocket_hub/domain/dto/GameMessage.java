@@ -32,9 +32,5 @@ public record GameMessage(
         String winner,
 
         String message
-) implements Message<String> {
-    @Override
-    public String content() {
-        return message;
-    }
+) implements Message {
 }

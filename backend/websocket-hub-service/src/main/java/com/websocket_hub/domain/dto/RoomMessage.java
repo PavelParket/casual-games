@@ -14,6 +14,6 @@ public record RoomMessage(
 
         String roomName,
 
-        String content
-) implements Message<String> {
+        String message
+) implements Message {
 }

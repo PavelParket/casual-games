@@ -4,5 +4,5 @@ import com.websocket_hub.domain.dto.Message;
 
 public interface MessageSerializer<T> {
 
-    T serialize(Message<T> message) throws Exception;
+    T serialize(Message message) throws Exception;
 }

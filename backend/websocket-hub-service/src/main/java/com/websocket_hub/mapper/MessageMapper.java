@@ -13,6 +13,6 @@ public interface MessageMapper {
     @Mapping(target = "event", expression = "java(event.getDescription())")
     @Mapping(target = "fromUserId", constant = "system")
     @Mapping(target = "toUserId", ignore = true)
-    RoomMessage toResponse(MessageType type, EventType event, String roomName, String content);
+    RoomMessage toResponse(MessageType type, EventType event, String roomName, String message);
 }
 

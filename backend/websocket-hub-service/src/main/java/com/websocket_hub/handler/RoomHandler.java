@@ -46,14 +46,14 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
             String event = (String) data.get("event");
             String roomName = WebSocketUtil.getRoomName(session);
             String userId = WebSocketUtil.getUserId(session);
-            String content = (String) data.get("content");
+            String content = (String) data.get("message");
 
             RoomMessage response = RoomMessage.builder()
                     .type(type)
                     .event(event)
                     .fromUserId(userId)
                     .roomName(roomName)
-                    .content(content)
+                    .message(content)
                     .build();
 
             roomManager.broadcast(roomName, response);

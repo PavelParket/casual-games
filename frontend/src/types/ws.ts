@@ -4,7 +4,7 @@ export interface WSMessage {
    fromUserId?: string;
    toUserId?: string;
    roomName?: string;
-   content?: string;
+   message?: string;
 }
 
 export interface GameMessage extends WSMessage {
@@ -15,5 +15,4 @@ export interface GameMessage extends WSMessage {
    playersSymbols?: Record<string, string>;
    players?: string[];
    winner?: string;
-   message?: string;
 }

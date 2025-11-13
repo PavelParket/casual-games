@@ -48,24 +48,24 @@ public class GameRoomManager extends AbstractRoomManager {
     }
 
     @Override
-    protected void onRemoveSession(String username, String roomName, WebSocketSession session) {
-        log.info("Player {} left game room {}", username, roomName);
+    protected void onRemoveSession(String userId, String username, String roomName, WebSocketSession session) {
+        log.info("Player {} left game room {}", userId, roomName);
 
         readyPlayers.computeIfPresent(roomName, (key, players) -> {
-            players.remove(username);
+            players.remove(userId);
             return players.isEmpty() ? null : players;
         });
 
         broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, SystemEvent.LEAVE, roomName, "Player={" + username + "} has left the room={" + roomName + "}"));
     }
 
-    public void markReady(String roomName, String username) {
+    public void markReady(String roomName, String userId) {
         Set<String> ready = readyPlayers.computeIfAbsent(roomName, key -> ConcurrentHashMap.newKeySet());
-        ready.add(username);
+        ready.add(userId);
 
-        log.info("Player {} ready in room {}. Total ready: {}", username, roomName, ready.size());
+        log.info("Player {} ready in room {}. Total ready: {}", userId, roomName, ready.size());
 
-        broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, GameEvent.READY, roomName, "Player={" + username + "} is ready."));
+        broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, GameEvent.READY, roomName, "Player={" + userId + "} is ready."));
     }
 
     public boolean areBothPlayersReady(String roomName) {
@@ -79,5 +79,9 @@ public class GameRoomManager extends AbstractRoomManager {
         readyPlayers.remove(roomName);
 
         log.info("Cleared ready players for room {}", roomName);
+    }
+
+    public Integer getReadyPlayerCount(String roomName) {
+        return readyPlayers.getOrDefault(roomName, Set.of()).size();
     }
 }

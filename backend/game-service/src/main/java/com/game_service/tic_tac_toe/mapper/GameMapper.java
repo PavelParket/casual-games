@@ -48,6 +48,7 @@ public interface GameMapper {
     @Mapping(target = "cell", source = "cell")
     @Mapping(target = "player", source = "player")
     @Mapping(target = "nextPlayer", expression = "java(null)")
+    @Mapping(target = "winner", constant = "draw")
     @Mapping(target = "message", constant = "It's a draw!")
     GameResponse toDrawResponse(GameRequest request, String[] board, Integer cell, String player);
 }

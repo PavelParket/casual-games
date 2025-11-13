@@ -25,4 +25,9 @@ public class RoomController {
     public List<String> getPlayersInRoom(@PathVariable String roomName) {
         return service.getPlayersInRoom(roomName);
     }
+
+    @GetMapping("/{roomName}/count")
+    public Integer getReadyPlayerCount(@PathVariable String roomName) {
+        return service.getReadyPlayerCount(roomName);
+    }
 }

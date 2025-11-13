@@ -39,7 +39,7 @@ public class RoomManager extends AbstractRoomManager {
     }
 
     @Override
-    protected void onRemoveSession(String username, String roomName, WebSocketSession session) {
+    protected void onRemoveSession(String userId, String username, String roomName, WebSocketSession session) {
         broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, SystemEvent.LEAVE, roomName, username + " " + SystemEvent.LEAVE.getDescription() + "room: [" + roomName + "]"));
     }
 }

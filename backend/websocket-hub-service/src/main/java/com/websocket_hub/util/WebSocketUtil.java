@@ -6,6 +6,7 @@ import org.springframework.web.socket.WebSocketSession;
 @UtilityClass
 public class WebSocketUtil {
 
+    // Return user email
     public String getUserId(WebSocketSession session) {
         return (String) session.getAttributes().get("userId");
     }
