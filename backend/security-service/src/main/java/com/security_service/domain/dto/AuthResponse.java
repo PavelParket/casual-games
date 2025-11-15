@@ -6,6 +6,10 @@ import lombok.Builder;
 public record AuthResponse(
         Long id,
 
+        String username,
+
+        String email,
+
         String role,
 
         String accessToken,

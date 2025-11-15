@@ -1,9 +1,9 @@
 package com.websocket_hub.factory;
 
 import com.websocket_hub.domain.entity.Room;
+import org.springframework.stereotype.Component;
 
 import java.util.UUID;
-import org.springframework.stereotype.Component;
 
 @Component
 public class RoomFactory implements ObjectFactory<Room> {
@@ -17,7 +17,7 @@ public class RoomFactory implements ObjectFactory<Room> {
         return create(name);
     }
 
-    public Room create(String name) {
+    private Room create(String name) {
         return Room.builder()
                 .id(UUID.randomUUID().toString())
                 .name(name)

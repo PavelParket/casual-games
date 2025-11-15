@@ -13,6 +13,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
@@ -76,10 +77,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(factory.create(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request), HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(MissingTokenException.class)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ErrorResponse handleMissingToken(MissingTokenException e, HttpServletRequest request) {
+        log.warn("Missing token: {}", e.getMessage());
+
+        return factory.create(HttpStatus.NO_CONTENT, ErrorCode.MISSING_TOKEN, e.getMessage(), request);
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception e, HttpServletRequest request) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleGeneric(Exception e, HttpServletRequest request) {
         log.error("Unexpected error occurred", e);
 
-        return new ResponseEntity<>(factory.create(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, "An unexpected error occurred", request), HttpStatus.INTERNAL_SERVER_ERROR);
+        return factory.create(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, "An unexpected error occurred", request);
     }
 }

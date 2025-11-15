@@ -44,13 +44,13 @@ public abstract class AbstractRoomManager {
         log.info("Session \"{}\" joined room \"{}\"", session.getId(), roomName);
     }
 
-    public void removeSession(String roomName, String username, WebSocketSession session) {
+    public void removeSession(String roomName, String userId, String username, WebSocketSession session) {
         rooms.computeIfPresent(roomName, (key, room) -> {
             synchronized (room) {
                 room.getParticipants().removeIf(clientSession -> clientSession.getSession().equals(session));
 
                 if (room.isEmpty()) {
-                    log.debug("Room \"{}\" is now empty, removing...", roomName);
+                    log.info("Room \"{}\" is now empty, removing...", roomName);
 
                     return null;
                 }
@@ -59,12 +59,16 @@ public abstract class AbstractRoomManager {
             return room;
         });
 
-        onRemoveSession(username, roomName, session);
+        onRemoveSession(userId, username, roomName, session);
 
         log.info("Session \"{}\" left room \"{}\"", session.getId(), roomName);
     }
 
-    public void broadcast(String roomName, Message<String> message) {
+    protected abstract void onAddSession(String username, String roomName, WebSocketSession session);
+
+    protected abstract void onRemoveSession(String userId, String username, String roomName, WebSocketSession session);
+
+    public void broadcast(String roomName, Message message) {
         try {
             String json = serializer.serialize(message);
 
@@ -88,6 +92,7 @@ public abstract class AbstractRoomManager {
                 Thread.ofVirtual().start(() -> {
                     try {
                         session.sendMessage(new TextMessage(json));
+                        log.info("Sent message: {}", json);
                     } catch (IOException e) {
                         log.warn("Failed to send message to session {}: {}", session.getId(), e.getMessage());
 
@@ -114,11 +119,15 @@ public abstract class AbstractRoomManager {
         }
     }
 
-    public Set<String> getActiveRooms() {
+    public Set<String> getActiveRoomsNames() {
         return rooms.keySet();
     }
 
     public Set<String> getUserIds(String roomName) {
+        if (roomName == null || roomName.isEmpty()) {
+            return Set.of();
+        }
+
         Room room = rooms.get(roomName);
 
         if (room == null) {
@@ -131,7 +140,7 @@ public abstract class AbstractRoomManager {
                 .collect(Collectors.toSet());
     }
 
-    protected void sendToSession(WebSocketSession session, Message<String> message) {
+    protected void sendToSession(WebSocketSession session, Message message) {
         if (session == null || !session.isOpen()) {
             return;
         }
@@ -144,8 +153,4 @@ public abstract class AbstractRoomManager {
             }
         });
     }
-
-    protected abstract void onAddSession(String username, String roomName, WebSocketSession session);
-
-    protected abstract void onRemoveSession(String username, String roomName, WebSocketSession session);
 }

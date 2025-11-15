@@ -1,8 +1,8 @@
 package com.websocket_hub.factory;
 
 import com.websocket_hub.domain.entity.ClientSession;
-import org.springframework.web.socket.WebSocketSession;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.WebSocketSession;
 
 @Component
 public class ClientFactory implements ObjectFactory<ClientSession> {
@@ -19,7 +19,7 @@ public class ClientFactory implements ObjectFactory<ClientSession> {
         return create(userId, username, session);
     }
 
-    public ClientSession create(String userId, String username, WebSocketSession session) {
+    private ClientSession create(String userId, String username, WebSocketSession session) {
         return ClientSession.builder()
                 .userId(userId)
                 .username(username)

@@ -1,0 +1,8 @@
+.card {
+   background: var(--glass-surface);
+   border: none;
+   border-radius: var(--radius-lg);
+   box-shadow: var(--shadow-md);
+   padding: 1rem;
+   backdrop-filter: blur(var(--glass-blur));
+}

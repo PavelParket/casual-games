@@ -1,6 +1,5 @@
 package com.game_service.tic_tac_toe.dto;
 
-import com.game_service.tic_tac_toe.enums.MessageType;
 import lombok.Builder;
 
 import java.util.Map;
@@ -8,11 +7,17 @@ import java.util.Set;
 
 @Builder
 public record GameRequest(
-        MessageType type,
+        String type,
+
+        String event,
+
+        String fromUserId,
+
+        String toUserId,
 
         String roomName,
 
-        String[][] board,
+        String[] board,
 
         Integer cell,
 

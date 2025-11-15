@@ -45,15 +45,13 @@ public class GameValidator {
             throw new GameValidationException("Invalid cell index: " + cell);
         }
 
-        int row = cell / 3;
-        int col = cell % 3;
-        String[][] board = request.board();
+        String[] board = request.board();
 
-        if (board[row][col] != null && !board[row][col].isBlank()) {
+        if (board[cell] != null && !board[cell].isBlank()) {
             throw new InvalidMoveException("Cell already occupied");
         }
 
-        if (!request.player().equals("X") && !request.player().equals("O")) {
+        if (!"X".equals(request.player()) && !"O".equals(request.player())) {
             throw new GameValidationException("Unknown player: " + request.player());
         }
     }

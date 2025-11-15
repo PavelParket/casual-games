@@ -1,4 +1,4 @@
-package com.security_service.exception;
+package com.security_service.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.security_service.domain.dto.ErrorResponse;
@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -20,26 +20,26 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class JwtAccessDeniedHandler implements AccessDeniedHandler {
+public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private final ErrorFactory factory;
 
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
         ErrorResponse error = factory.create(
-                HttpStatus.FORBIDDEN,
-                ErrorCode.ACCESS_DENIED,
-                "You do not have permission to access this resource",
+                HttpStatus.UNAUTHORIZED,
+                ErrorCode.AUTHENTICATION_ERROR,
+                "Authentication required",
                 request
         );
 
-        log.warn("Access denied: IP={}, Method={}, URI={}, User-Agent={}, Exception={}",
+        log.warn("Unauthorized access attempt: IP={}, Method={}, URI={}, User-Agent={}, Exception={}",
                 request.getRemoteAddr(), request.getMethod(),
                 request.getRequestURI(), request.getHeader("User-Agent"),
-                accessDeniedException.getMessage()
+                authException.getMessage()
         );
 
-        response.setStatus(HttpStatus.FORBIDDEN.value());
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         new ObjectMapper().writeValue(response.getWriter(), error);
