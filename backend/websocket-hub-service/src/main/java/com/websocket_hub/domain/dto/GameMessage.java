@@ -1,4 +1,4 @@
-package com.game_service.tic_tac_toe.dto;
+package com.websocket_hub.domain.dto;
 
 import lombok.Builder;
 
@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Builder
-public record GameRequest(
+public record GameMessage(
         String type,
 
         String event,
@@ -32,5 +32,5 @@ public record GameRequest(
         String winner,
 
         String message
-) {
+) implements Message {
 }

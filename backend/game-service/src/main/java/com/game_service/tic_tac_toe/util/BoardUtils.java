@@ -1,8 +1,9 @@
 package com.game_service.tic_tac_toe.util;
 
-import lombok.experimental.UtilityClass;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-@UtilityClass
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BoardUtils {
 
     private static final int SIZE = 3;
@@ -11,10 +12,12 @@ public class BoardUtils {
         return cell >= 0 && cell < SIZE * SIZE;
     }
 
+    @Deprecated
     public static int getRow(int cell) {
         return cell / SIZE;
     }
 
+    @Deprecated
     public static int getCol(int cell) {
         return cell % SIZE;
     }

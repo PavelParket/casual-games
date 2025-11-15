@@ -1,42 +1,43 @@
 package com.game_service.tic_tac_toe.util;
 
-import lombok.experimental.UtilityClass;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-@UtilityClass
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class GameLogicUtils {
 
     public static String nextPlayerSymbol(String current) {
         return "X".equals(current) ? "O" : "X";
     }
 
-    public static boolean isDraw(String[][] board) {
-        for (String[] row : board) {
-            for (String cell : row) {
-                if (cell == null || cell.isBlank()) {
-                    return false;
-                }
+    public static boolean isDraw(String[] board) {
+        for (String cell : board) {
+            if (cell == null || cell.isBlank()) {
+                return false;
             }
         }
-        return checkWinner(board) == null;
+        return true;
     }
 
-    public static String checkWinner(String[][] board) {
+    public static String checkWinner(String[] board) {
+        for (int i = 0; i < 3; i = i + 3) {
+            if (board[i] != null && board[i].equals(board[i + 1]) && board[i + 1].equals(board[i + 2])) {
+                return board[i];
+            }
+        }
+
         for (int i = 0; i < 3; i++) {
-            if (board[i][0] != null && board[i][0].equals(board[i][1]) && board[i][1].equals(board[i][2])) {
-                return board[i][0];
-            }
-
-            if (board[0][i] != null && board[0][i].equals(board[1][i]) && board[1][i].equals(board[2][i])) {
-                return board[0][i];
+            if (board[i] != null && board[i].equals(board[i + 3]) && board[i + 3].equals(board[i + 6])) {
+                return board[i];
             }
         }
 
-        if (board[0][0] != null && board[0][0].equals(board[1][1]) && board[1][1].equals(board[2][2])) {
-            return board[0][0];
+        if (board[0] != null && board[0].equals(board[4]) && board[4].equals(board[8])) {
+            return board[0];
         }
 
-        if (board[0][2] != null && board[0][2].equals(board[1][1]) && board[1][1].equals(board[2][0])) {
-            return board[0][2];
+        if (board[2] != null && board[2].equals(board[4]) && board[4].equals(board[6])) {
+            return board[2];
         }
 
         return null;

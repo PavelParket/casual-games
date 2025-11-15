@@ -2,9 +2,8 @@ package com.game_service.tic_tac_toe.service;
 
 import com.game_service.tic_tac_toe.dto.GameRequest;
 import com.game_service.tic_tac_toe.dto.GameResponse;
-import com.game_service.tic_tac_toe.enums.MessageType;
+import com.game_service.tic_tac_toe.enums.GameEvent;
 import com.game_service.tic_tac_toe.mapper.GameMapper;
-import com.game_service.tic_tac_toe.util.BoardUtils;
 import com.game_service.tic_tac_toe.util.GameLogicUtils;
 import com.game_service.tic_tac_toe.validator.GameValidator;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +28,11 @@ public class GameService {
     private final Random random = new Random();
 
     public GameResponse processStart(GameRequest request) {
+        log.info("Received message {}", request);
+
         validator.validateStart(request);
 
-        String[][] board = new String[3][3];
+        String[] board = new String[9];
 
         List<String> players = new ArrayList<>(request.players());
 
@@ -44,31 +45,30 @@ public class GameService {
 
         log.info("Starting new game in room '{}': {}=X, {}=O", request.roomName(), players.get(0), players.get(1));
 
-        return mapper.toStartResponse(request.roomName(), board, playersSymbols, request.players());
+        return mapper.toStartResponse(request, board, playersSymbols, request.players());
     }
 
     public GameResponse processMove(GameRequest request) {
         validator.validateMove(request);
 
         Integer cell = request.cell();
-        int row = BoardUtils.getRow(cell);
-        int col = BoardUtils.getCol(cell);
 
         String player = request.player();
 
-        String[][] board = request.board();
-        board[row][col] = player;
+        String[] board = request.board();
+
+        board[cell] = player;
 
         String winner = GameLogicUtils.checkWinner(board);
 
         if (winner != null) {
-            MessageType type = winner.equals("X") ? MessageType.WINNER_X : MessageType.WINNER_O;
-            return mapper.toWinResponse(type, request.roomName(), board, cell, player, winner);
+            GameEvent event = winner.equals("X") ? GameEvent.WINNER_X : GameEvent.WINNER_O;
+            return mapper.toWinResponse(request, event, board, cell, player, winner);
         } else if (GameLogicUtils.isDraw(board)) {
-            return mapper.toDrawResponse(request.roomName(), board, cell, player);
+            return mapper.toDrawResponse(request, board, cell, player);
         } else {
             String nextPlayer = GameLogicUtils.nextPlayerSymbol(player);
-            return mapper.toMoveResponse(request.roomName(), board, cell, player, nextPlayer);
+            return mapper.toMoveResponse(request, board, cell, player, nextPlayer);
         }
     }
 }

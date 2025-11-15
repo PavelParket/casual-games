@@ -82,6 +82,8 @@ kafka:
 app:
   websocket:
     default-room: default
+  game-service:
+    url: http://localhost:8082
 
 logging:
   level:

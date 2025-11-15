@@ -5,10 +5,10 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum SystemEvents {
+public enum SystemEvent implements EventType {
 
     JOIN("joined"),
-    LEFT("left");
+    LEAVE("left");
 
     private final String description;
 }
