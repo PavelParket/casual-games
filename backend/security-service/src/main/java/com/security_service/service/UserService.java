@@ -52,8 +52,7 @@ public class UserService implements UserDetailsService {
         User user = mapper.toEntity(request);
 
         try {
-            var response = client.create(mapper.toCreateUserRequest(user));
-            user.setId(response.id());
+            client.create(mapper.toCreateUserRequest(user));
         } catch (ServiceUnavailableException e) {
             log.error("UserService is unavailable: {}", e.getMessage(), e);
             throw e;

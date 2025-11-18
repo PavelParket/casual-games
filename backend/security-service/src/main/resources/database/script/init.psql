@@ -1,4 +1,6 @@
-CREATE TABLE IF NOT EXISTS auths (
+DROP DATABASE IF EXISTS auths;
+
+CREATE TABLE auths (
     id BIGSERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
     email VARCHAR(200) NOT NULL UNIQUE,
@@ -7,4 +9,4 @@ CREATE TABLE IF NOT EXISTS auths (
     created_at TIMESTAMP NOT NULL
 );
 
-CREATE UNIQUE INDEX ux_users_email ON users(email);
+CREATE UNIQUE INDEX ux_auths_email ON auths(email);
