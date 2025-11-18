@@ -1,15 +1,6 @@
 package com.security_service.factory;
 
-import com.security_service.domain.dto.RegisterRequest;
-import com.security_service.domain.entity.User;
-import com.security_service.domain.enums.Role;
-import com.security_service.service.PasswordService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-
-@Component
+/*@Component
 @RequiredArgsConstructor
 public class UserFactory implements Factory<User> {
 
@@ -43,4 +34,4 @@ public class UserFactory implements Factory<User> {
     public User createFromParams(String username, String email, String password, Role role) {
         return create(username, email, password, role);
     }
-}
+}*/

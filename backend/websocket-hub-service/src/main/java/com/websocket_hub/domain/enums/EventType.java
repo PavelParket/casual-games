@@ -1,4 +1,4 @@
-package com.websocket_hub.enums;
+package com.websocket_hub.domain.enums;
 
 public interface EventType {
 

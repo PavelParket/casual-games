@@ -29,9 +29,9 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        UserResponse user = userService.getByEmail(request.email());
-
         authenticate(request.email(), request.password());
+
+        UserResponse user = userService.getByEmail(request.email());
 
         return generateTokens(user);
     }

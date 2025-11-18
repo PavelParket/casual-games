@@ -28,7 +28,6 @@ public class UserValidator implements Validator {
         }
     }
 
-    @Deprecated
     public void validateEmailNotExists(String email) {
         if (!repository.existsByEmail(email)) {
             throw new UserNotFoundException("User with email=" + email + " does not exist!");

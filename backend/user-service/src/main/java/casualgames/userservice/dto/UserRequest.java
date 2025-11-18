@@ -6,14 +6,14 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UserRequest(
-
         @NotBlank
-        @Size(min = 6, max = 50)
+        @Size(max = 50)
         @Pattern(regexp = "^[a-zA-Z0-9_]+$")
         String username,
 
         @NotBlank
         @Email
-        @Size(max = 250)
+        @Size(max = 200)
         String email
-) {}
+) {
+}

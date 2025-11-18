@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
 
         userValidator.validateEmailForUpdate(userRequest.email(), existingUser);
 
-        userMapper.toUpdateEntity(userRequest, existingUser);
+        userMapper.updateEntity(userRequest, existingUser);
 
         return userMapper.toResponseDto(userRepository.save(existingUser));
     }

@@ -3,7 +3,9 @@ package com.security_service.mapper;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.domain.dto.UserResponse;
+import com.security_service.domain.dto.user_service.CreateUserRequest;
 import com.security_service.domain.entity.User;
+import com.security_service.domain.enums.Role;
 import com.security_service.service.PasswordService;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Context;
@@ -15,12 +17,11 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {Role.class})
 public interface UserMapper {
 
-    @Deprecated
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "role", expression = "java(Role.USER)")
     @Mapping(target = "createdAt", ignore = true)
     User toEntity(RegisterRequest registerRequest);
 
@@ -51,4 +52,6 @@ public interface UserMapper {
 
         return passwordService.encode(password);
     }
+
+    CreateUserRequest toCreateUserRequest(User user);
 }

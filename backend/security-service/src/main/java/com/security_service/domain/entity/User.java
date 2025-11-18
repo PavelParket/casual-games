@@ -20,7 +20,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 
 @Entity
-@Table(name = "users")
+@Table(name = "auths")
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @AllArgsConstructor

@@ -1,11 +1,11 @@
-package com.security_service.domain.dto;
+package casualgames.userservice.dto.security_service;
 
 import jakarta.validation.constraints.Email;
 import lombok.Builder;
 import org.hibernate.validator.constraints.Length;
 
 @Builder
-public record UpdateRequest(
+public record UpdateUserRequest(
         @Length(max = 50)
         String username,
 
