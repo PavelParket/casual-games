@@ -2,6 +2,7 @@ package casualgames.userservice.mapper;
 
 import casualgames.userservice.dto.UserRequest;
 import casualgames.userservice.dto.UserResponse;
+import casualgames.userservice.dto.security_service.UpdateUserRequest;
 import casualgames.userservice.entity.User;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -32,4 +33,6 @@ public interface UserMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     void updateEntity(UserRequest dto, @MappingTarget User user);
+
+    UpdateUserRequest toUpdateUserRequest(User user, String password);
 }

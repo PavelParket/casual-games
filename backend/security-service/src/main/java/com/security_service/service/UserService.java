@@ -49,7 +49,7 @@ public class UserService implements UserDetailsService {
     public UserResponse create(RegisterRequest request) {
         validator.validateRegister(request);
 
-        User user = mapper.toEntity(request);
+        User user = mapper.toEntity(request, passwordService);
 
         try {
             client.create(mapper.toCreateUserRequest(user));

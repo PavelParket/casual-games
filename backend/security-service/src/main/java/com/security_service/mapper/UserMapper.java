@@ -21,9 +21,10 @@ import java.util.List;
 public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "password", expression = "java(setPassword(registerRequest.password(), null, passwordService))")
     @Mapping(target = "role", expression = "java(Role.USER)")
     @Mapping(target = "createdAt", ignore = true)
-    User toEntity(RegisterRequest registerRequest);
+    User toEntity(RegisterRequest registerRequest, @Context PasswordService passwordService);
 
     @Mapping(target = "role", expression = "java(user.getRole().toString())")
     UserResponse toResponse(User user);

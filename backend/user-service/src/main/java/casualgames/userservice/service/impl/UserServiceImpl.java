@@ -1,14 +1,17 @@
 package casualgames.userservice.service.impl;
 
+import casualgames.userservice.client.SecurityServiceClient;
 import casualgames.userservice.dto.UserRequest;
 import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.entity.User;
 import casualgames.userservice.exception.ResourceNotFoundException;
+import casualgames.userservice.exception.ServiceUnavailableException;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.UserService;
 import casualgames.userservice.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,12 +19,16 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+
     private final UserMapper userMapper;
 
-    private final UserValidator  userValidator;
+    private final UserValidator userValidator;
+
+    private final SecurityServiceClient client;
 
     @Override
     public UserResponse findById(Long id) {
@@ -58,6 +65,13 @@ public class UserServiceImpl implements UserService {
 
         userMapper.updateEntity(userRequest, existingUser);
 
+        try {
+            client.update(userMapper.toUpdateUserRequest(existingUser, userRequest.password()));
+        } catch (ServiceUnavailableException e) {
+            log.error("UserService is unavailable: {}", e.getMessage(), e);
+            throw e;
+        }
+
         return userMapper.toResponseDto(userRepository.save(existingUser));
     }
 
@@ -81,6 +95,6 @@ public class UserServiceImpl implements UserService {
     public UserResponse findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .map(userMapper::toResponseDto)
-                .orElseThrow(() -> new ResourceNotFoundException("User with email: " + email+ "' not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User with email: " + email + "' not found"));
     }
 }

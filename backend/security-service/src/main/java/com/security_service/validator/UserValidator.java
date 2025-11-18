@@ -71,7 +71,6 @@ public class UserValidator implements Validator {
         if (request.email() != null) {
             validateString(request.email(), "email");
             validateEmailFormat(request.email());
-            validateEmailExists(request.email());
         }
 
         if (request.password() != null) {

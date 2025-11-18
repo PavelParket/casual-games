@@ -14,8 +14,6 @@ public record UpdateUserRequest(
         String email,
 
         @Length(min = 4)
-        String password,
-
-        String role
+        String password
 ) {
 }
