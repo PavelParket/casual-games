@@ -1,6 +1,7 @@
 package casualgames.userservice.mapper;
 
-import casualgames.userservice.dto.UserRequest;
+import casualgames.userservice.dto.CreateUserRequest;
+import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.dto.security_service.UpdateUserInternalRequest;
 import casualgames.userservice.entity.User;
@@ -20,7 +21,7 @@ public interface UserMapper {
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    User toEntity(UserRequest dto);
+    User toEntity(CreateUserRequest createUserRequest);
 
     UserResponse toResponseDto(User user);
 
@@ -33,7 +34,7 @@ public interface UserMapper {
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    void updateEntity(UserRequest dto, @MappingTarget User user);
+    void updateEntity(UpdateUserRequest updateUserRequest, @MappingTarget User user);
 
-    UpdateUserInternalRequest toUpdateUserRequest(User user, String password);
+    UpdateUserInternalRequest toUpdateUserInternalRequest(User user, String password);
 }

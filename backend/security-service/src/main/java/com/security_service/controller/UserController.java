@@ -36,19 +36,19 @@ public class UserController {
         return service.create(request);
     }
 
-    /*@PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/id={id}")
     public UserResponse updateById(@PathVariable Long id, @Valid @RequestBody UpdateRequest request) {
         return service.updateById(id, request);
-    }*/
+    }
 
-    @PutMapping("/{guid}")
+    @PutMapping("/guid={guid}")
     public UserResponse updateByGuid(@PathVariable UUID guid, @Valid @RequestBody UpdateRequest request) {
         return service.updateByGuid(guid, request);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/id={id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         service.delete(id);

@@ -33,7 +33,7 @@ public class SecurityServiceClient {
 
     public UpdateUserInternalResponse update(UpdateUserInternalRequest request) {
         URI uri = UriComponentsBuilder.fromUriString(securityServiceUrl)
-                .path("/users/{guid}")
+                .path("/users/guid={guid}")
                 .buildAndExpand(request.guid())
                 .toUri();
 

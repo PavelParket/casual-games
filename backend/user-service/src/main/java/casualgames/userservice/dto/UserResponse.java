@@ -6,11 +6,17 @@ import java.util.UUID;
 
 public record UserResponse(
         UUID guid,
+
         String username,
+
         String email,
+
         BigDecimal balance,
+
         String role,
+
         String status,
+
         Instant createdAt
 ) {
 }

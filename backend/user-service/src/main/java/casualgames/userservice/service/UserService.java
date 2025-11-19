@@ -1,19 +1,25 @@
 package casualgames.userservice.service;
 
-import casualgames.userservice.dto.UserRequest;
+import casualgames.userservice.dto.CreateUserRequest;
+import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface UserService extends Service<UserResponse, Long> {
 
-    UserResponse create(UserRequest userRequest);
+    UserResponse create(CreateUserRequest request);
 
-    UserResponse update(Long userId, UserRequest userRequest);
+    UserResponse update(Long userId, UpdateUserRequest request);
 
-    UserResponse update(UUID guid, UserRequest request);
+    UserResponse updateByGuid(UUID guid, UpdateUserRequest request);
 
-    UserResponse findByUsername(String username);
+    List<UserResponse> findByUsername(String username);
 
     UserResponse findByEmail(String email);
+
+    UserResponse findByGuid(UUID guid);
+
+    void deleteByGuid(UUID id);
 }

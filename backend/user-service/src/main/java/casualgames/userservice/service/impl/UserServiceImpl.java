@@ -1,7 +1,8 @@
 package casualgames.userservice.service.impl;
 
 import casualgames.userservice.client.SecurityServiceClient;
-import casualgames.userservice.dto.UserRequest;
+import casualgames.userservice.dto.CreateUserRequest;
+import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.entity.User;
 import casualgames.userservice.exception.ResourceNotFoundException;
@@ -45,22 +46,20 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserResponse create(UserRequest userRequest) {
+    public UserResponse create(CreateUserRequest request) {
 
-        userValidator.validateForCreation(userRequest);
+        userValidator.validateForCreation(request);
 
-        User user = userMapper.toEntity(userRequest);
+        User user = userMapper.toEntity(request);
         return userMapper.toResponseDto(userRepository.save(user));
     }
 
     @Transactional
     @Override
-    public UserResponse update(Long userId, UserRequest userRequest) {
+    public UserResponse update(Long userId, UpdateUserRequest userRequest) {
 
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        userValidator.validateUsernameForUpdate(userRequest.username(), existingUser);
 
         userValidator.validateEmailForUpdate(userRequest.email(), existingUser);
 
@@ -71,18 +70,16 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserResponse update(UUID guid, UserRequest request) {
+    public UserResponse updateByGuid(UUID guid, UpdateUserRequest request) {
         User user = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with guid: " + guid));
-
-        userValidator.validateUsernameForUpdate(request.username(), user);
 
         userValidator.validateEmailForUpdate(request.email(), user);
 
         userMapper.updateEntity(request, user);
 
         try {
-            client.update(userMapper.toUpdateUserRequest(user, request.password()));
+            client.update(userMapper.toUpdateUserInternalRequest(user, request.password()));
         } catch (ServiceUnavailableException e) {
             log.error("UserService is unavailable: {}", e.getMessage(), e);
             throw e;
@@ -100,11 +97,21 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(id);
     }
 
+    @Transactional
     @Override
-    public UserResponse findByUsername(String username) {
-        return userRepository.findByUsername(username)
+    public void deleteByGuid(UUID guid) {
+        if (!userRepository.existsByGuid(guid)) {
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        userRepository.deleteByGuid(guid);
+    }
+
+    @Override
+    public List<UserResponse> findByUsername(String username) {
+        return userRepository.findByUsername(username).stream()
                 .map(userMapper::toResponseDto)
-                .orElseThrow(() -> new ResourceNotFoundException("User with username: '" + username + "' not found"));
+                .toList();
     }
 
     @Override
@@ -112,5 +119,11 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(email)
                 .map(userMapper::toResponseDto)
                 .orElseThrow(() -> new ResourceNotFoundException("User with email: " + email + "' not found"));
+    }
+
+    @Override
+    public UserResponse findByGuid(UUID guid) {
+        return userMapper.toResponseDto(userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found")));
     }
 }
