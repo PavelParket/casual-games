@@ -104,6 +104,13 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("User not found");
         }
 
+        try {
+            client.delete(guid);
+        } catch (ServiceUnavailableException e) {
+            log.error("UserService is unavailable: {}", e.getMessage(), e);
+            throw e;
+        }
+
         userRepository.deleteByGuid(guid);
     }
 

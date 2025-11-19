@@ -54,6 +54,12 @@ public class UserController {
         service.delete(id);
     }
 
+    @DeleteMapping("/guid={guid}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteByGuid(@PathVariable UUID guid) {
+        service.deleteByGuid(guid);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<UserResponse> getAll() {

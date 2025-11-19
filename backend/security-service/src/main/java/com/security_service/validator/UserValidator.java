@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Component
@@ -50,6 +51,12 @@ public class UserValidator implements Validator {
     public void validateIdExists(Long id) {
         if (!repository.existsById(id)) {
             throw new UserNotFoundException("User with id=" + id + " does not exist!");
+        }
+    }
+
+    public void validateGuidExists(UUID guid) {
+        if (!repository.existsByGuid(guid)) {
+            throw new UserNotFoundException("User with guid=" + guid + " does not exist!");
         }
     }
 

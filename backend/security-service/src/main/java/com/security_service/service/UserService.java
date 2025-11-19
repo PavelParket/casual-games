@@ -103,6 +103,13 @@ public class UserService implements UserDetailsService {
         repository.deleteById(id);
     }
 
+    @Transactional
+    public void deleteByGuid(UUID guid) {
+        validator.validateGuidExists(guid);
+
+        repository.deleteByGuid(guid);
+    }
+
     public List<UserResponse> getAll() {
         return mapper.toResponseList(repository.findAll());
     }

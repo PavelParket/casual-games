@@ -13,11 +13,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -44,9 +46,27 @@ public class SecurityServiceClient {
             );
 
             return response.getBody();
+        } catch (HttpClientErrorException e) {
+            throw new ServiceUnavailableException(e.getResponseBodyAsString());
         } catch (RestClientException e) {
             log.error("Failed to call User Service: {}", e.getMessage(), e);
-            throw new ServiceUnavailableException("Service is unavailable");
+            throw new ServiceUnavailableException("Failed to update user: " + e.getMessage());
+        }
+    }
+
+    public void delete(UUID guid) {
+        URI uri = UriComponentsBuilder.fromUriString(securityServiceUrl)
+                .path("/users/guid={guid}")
+                .buildAndExpand(guid)
+                .toUri();
+
+        try {
+            restTemplate.exchange(new RequestEntity<>(HttpMethod.DELETE, uri), Void.class);
+        } catch (HttpClientErrorException e) {
+            throw new ServiceUnavailableException(e.getResponseBodyAsString());
+        } catch (RestClientException e) {
+            log.error("Failed to call User Service: {}", e.getMessage(), e);
+            throw new ServiceUnavailableException("Failed to delete user: " + e.getMessage());
         }
     }
 }
