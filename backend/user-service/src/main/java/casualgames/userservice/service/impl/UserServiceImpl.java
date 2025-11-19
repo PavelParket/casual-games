@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -65,14 +66,29 @@ public class UserServiceImpl implements UserService {
 
         userMapper.updateEntity(userRequest, existingUser);
 
+        return userMapper.toResponseDto(userRepository.save(existingUser));
+    }
+
+    @Transactional
+    @Override
+    public UserResponse update(UUID guid, UserRequest request) {
+        User user = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with guid: " + guid));
+
+        userValidator.validateUsernameForUpdate(request.username(), user);
+
+        userValidator.validateEmailForUpdate(request.email(), user);
+
+        userMapper.updateEntity(request, user);
+
         try {
-            client.update(userMapper.toUpdateUserRequest(existingUser, userRequest.password()));
+            client.update(userMapper.toUpdateUserRequest(user, request.password()));
         } catch (ServiceUnavailableException e) {
             log.error("UserService is unavailable: {}", e.getMessage(), e);
             throw e;
         }
 
-        return userMapper.toResponseDto(userRepository.save(existingUser));
+        return userMapper.toResponseDto(userRepository.save(user));
     }
 
     @Transactional

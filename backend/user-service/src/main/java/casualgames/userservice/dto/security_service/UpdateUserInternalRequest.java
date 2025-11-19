@@ -4,8 +4,12 @@ import jakarta.validation.constraints.Email;
 import lombok.Builder;
 import org.hibernate.validator.constraints.Length;
 
+import java.util.UUID;
+
 @Builder
-public record UpdateUserRequest(
+public record UpdateUserInternalRequest(
+        UUID guid,
+
         @Length(max = 50)
         String username,
 

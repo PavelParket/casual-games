@@ -1,7 +1,7 @@
 package com.security_service.client;
 
-import com.security_service.domain.dto.user_service.CreateUserRequest;
-import com.security_service.domain.dto.user_service.CreateUserResponse;
+import com.security_service.domain.dto.user_service.CreateUserInternalRequest;
+import com.security_service.domain.dto.user_service.CreateUserInternalResponse;
 import com.security_service.exception.ServiceUnavailableException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -31,15 +31,15 @@ public class UserServiceClient {
 
     RestTemplate restTemplate;
 
-    public CreateUserResponse create(CreateUserRequest request) {
+    public CreateUserInternalResponse create(CreateUserInternalRequest request) {
         URI uri = UriComponentsBuilder.fromUriString(userServiceUrl)
                 .path("/users")
                 .build()
                 .toUri();
         try {
-            ResponseEntity<CreateUserResponse> response = restTemplate.exchange(
+            ResponseEntity<CreateUserInternalResponse> response = restTemplate.exchange(
                     new RequestEntity<>(request, HttpMethod.POST, uri),
-                    CreateUserResponse.class
+                    CreateUserInternalResponse.class
             );
 
             return response.getBody();
@@ -48,26 +48,4 @@ public class UserServiceClient {
             throw new ServiceUnavailableException("Service is unavailable");
         }
     }
-
-    /*public void delete(String email) {
-        URI uri = UriComponentsBuilder.fromUriString(userServiceUrl)
-                .path("/users/email/{email}")
-                .queryParam(email)
-                .build()
-                .toUri();
-
-        try {
-            ResponseEntity<Void> response = restTemplate.exchange(
-                    new RequestEntity<>(HttpMethod.DELETE, uri),
-                    Void.class
-            );
-
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new RestClientException("Failed to delete user, status=" + response.getStatusCode());
-            }
-        } catch (RestClientException e) {
-            log.error("Failed to call User Service: {}", e.getMessage(), e);
-            throw new ServiceUnavailableException(e.getMessage());
-        }
-    }*/
 }

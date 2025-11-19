@@ -6,8 +6,13 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import org.hibernate.validator.constraints.Length;
 
+import java.util.UUID;
+
 @Builder
-public record CreateUserRequest(
+public record CreateUserInternalRequest(
+        @NotBlank(message = "GUID cannot be empty")
+        UUID guid,
+
         @NotBlank(message = "Username cannot be empty")
         @Length(max = 50)
         @Pattern(regexp = "^[a-zA-Z0-9_]+$")

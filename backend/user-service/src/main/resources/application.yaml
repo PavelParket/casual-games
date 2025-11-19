@@ -25,3 +25,7 @@ server:
 app:
   security-service:
     url: http://localhost:8080
+
+logging:
+  level:
+    org.springframework.web: DEBUG

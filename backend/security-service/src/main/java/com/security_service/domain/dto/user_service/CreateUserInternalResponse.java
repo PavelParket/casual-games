@@ -4,10 +4,11 @@ import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 
 @Builder
-public record CreateUserResponse(
-        Long id,
+public record CreateUserInternalResponse(
+        UUID guid,
 
         String username,
 

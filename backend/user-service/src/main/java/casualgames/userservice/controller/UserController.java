@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -52,10 +53,16 @@ public class UserController {
         return userService.create(userRequest);
     }
 
-    @PutMapping("/{id}")
+    /*@PutMapping("/{id}")
     public UserResponse update(@PathVariable("id") Long userId,
                                @Valid @RequestBody UserRequest userRequest) {
         return userService.update(userId, userRequest);
+    }*/
+
+    @PutMapping("/{id}")
+    public UserResponse update(@PathVariable("id") UUID guid,
+                               @Valid @RequestBody UserRequest userRequest) {
+        return userService.update(guid, userRequest);
     }
 
     @DeleteMapping("/{id}")

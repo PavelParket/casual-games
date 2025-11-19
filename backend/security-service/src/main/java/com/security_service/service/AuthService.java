@@ -5,6 +5,8 @@ import com.security_service.domain.dto.LoginRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.mapper.AuthMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,36 +20,48 @@ public class AuthService {
 
     private final TokenService tokenService;
 
+    private final CookieService cookieService;
+
     private final AuthMapper mapper;
 
     private final AuthenticationManager authenticationManager;
 
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request, HttpServletResponse response) {
         UserResponse user = userService.create(request);
 
-        return generateTokens(user);
+        return generateTokens(user, response);
     }
 
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, HttpServletResponse response) {
         authenticate(request.email(), request.password());
 
         UserResponse user = userService.getByEmail(request.email());
 
-        return generateTokens(user);
+        return generateTokens(user, response);
     }
 
-    public AuthResponse refresh(String token) {
-        return tokenService.refresh(token, userService, mapper);
+    public AuthResponse refresh(HttpServletRequest request, HttpServletResponse response) {
+        String token = cookieService.extractRefreshToken(request);
+
+        UserResponse user = userService.getByGuid(tokenService.extractGuid(token));
+
+        return generateTokens(user, response);
+    }
+
+    public void logout(HttpServletResponse response) {
+        cookieService.deleteRefreshToken(response);
     }
 
     private void authenticate(String email, String password) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
     }
 
-    private AuthResponse generateTokens(UserResponse user) {
-        String accessToken = tokenService.generateAccessToken(user.username(), user.email(), user.role());
-        String refreshToken = tokenService.generateRefreshToken(user.username(), user.email(), user.role());
+    private AuthResponse generateTokens(UserResponse user, HttpServletResponse response) {
+        String accessToken = tokenService.generateAccessToken(user.guid());
+        String refreshToken = tokenService.generateRefreshToken(user.guid());
 
-        return mapper.toResponse(user, accessToken, refreshToken);
+        cookieService.addRefreshToken(response, refreshToken);
+
+        return mapper.toResponse(user, accessToken);
     }
 }

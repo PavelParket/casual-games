@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/users")
@@ -35,15 +36,15 @@ public class UserController {
         return service.create(request);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    /*@PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public UserResponse updateById(@PathVariable Long id, @Valid @RequestBody UpdateRequest request) {
         return service.updateById(id, request);
-    }
+    }*/
 
-    @PutMapping
-    public UserResponse updateByEntity(@Valid @RequestBody UpdateRequest request) {
-        return service.updateByEntity(request);
+    @PutMapping("/{guid}")
+    public UserResponse updateByGuid(@PathVariable UUID guid, @Valid @RequestBody UpdateRequest request) {
+        return service.updateByGuid(guid, request);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

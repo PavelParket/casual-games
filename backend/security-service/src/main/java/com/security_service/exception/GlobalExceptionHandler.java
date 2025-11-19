@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleUserNotFound(UserNotFoundException e, HttpServletRequest request) {
-        log.warn("User not found: {}", e.getMessage());
+        log.warn("User not found: {}", e.getMessage(), e);
 
         return factory.create(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, e.getMessage(), request);
     }

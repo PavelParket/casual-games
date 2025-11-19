@@ -11,7 +11,6 @@ import com.security_service.exception.UserNotFoundException;
 import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
 import com.security_service.validator.UserValidator;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +41,13 @@ public class UserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = repository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email=" + email));
+
+        return new CustomUserDetails(user);
+    }
+
+    public UserDetails loadUserByGuid(UUID guid) throws UsernameNotFoundException {
+        User user = repository.findByGuid(guid)
+                .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid));
 
         return new CustomUserDetails(user);
     }
@@ -74,9 +81,13 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public UserResponse updateByEntity(@Valid UpdateRequest request) {
-        User user = repository.findByEmail(request.email())
-                .orElseThrow(() -> new UserNotFoundException("User not found with email=" + request.email()));
+    public UserResponse updateByGuid(UUID guid, UpdateRequest request) {
+        User user = repository.findByGuid(guid)
+                .orElseGet(() -> {
+                    log.error("User not found with guid={}", guid);
+                    throw new UserNotFoundException("User not found!");
+                });
+
 
         validator.validateUpdate(request);
 
@@ -92,22 +103,6 @@ public class UserService implements UserDetailsService {
         repository.deleteById(id);
     }
 
-    @Transactional
-    public void deleteByEmail(String email) {
-        validator.validateEmailNotExists(email);
-
-/*
-        try {
-            client.delete(email);
-        } catch (ServiceUnavailableException e) {
-            log.error("UserService is unavailable during delete: {}", e.getMessage());
-            throw e;
-        }
-*/
-
-        repository.deleteByEmail(email);
-    }
-
     public List<UserResponse> getAll() {
         return mapper.toResponseList(repository.findAll());
     }
@@ -120,5 +115,10 @@ public class UserService implements UserDetailsService {
     public UserResponse getByEmail(String email) {
         return mapper.toResponse(repository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email=" + email)));
+    }
+
+    public UserResponse getByGuid(UUID guid) {
+        return mapper.toResponse(repository.findByGuid(guid)
+                .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid)));
     }
 }

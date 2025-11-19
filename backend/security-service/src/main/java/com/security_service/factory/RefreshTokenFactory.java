@@ -5,6 +5,8 @@ import com.security_service.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class RefreshTokenFactory implements Factory<String> {
@@ -15,10 +17,8 @@ public class RefreshTokenFactory implements Factory<String> {
 
     @Override
     public String create(Object... args) {
-        String username = (String) args[0];
-        String email = (String) args[1];
-        String role = (String) args[2];
+        UUID guid = (UUID) args[0];
 
-        return jwtProvider.generateToken(username, email, role, properties.refreshExpiration());
+        return jwtProvider.generateToken(guid, properties.refreshExpiration());
     }
 }

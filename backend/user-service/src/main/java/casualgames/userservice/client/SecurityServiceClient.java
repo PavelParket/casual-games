@@ -1,7 +1,7 @@
 package casualgames.userservice.client;
 
-import casualgames.userservice.dto.security_service.UpdateUserRequest;
-import casualgames.userservice.dto.security_service.UpdateUserResponse;
+import casualgames.userservice.dto.security_service.UpdateUserInternalRequest;
+import casualgames.userservice.dto.security_service.UpdateUserInternalResponse;
 import casualgames.userservice.exception.ServiceUnavailableException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -31,16 +31,16 @@ public class SecurityServiceClient {
 
     RestTemplate restTemplate;
 
-    public UpdateUserResponse update(UpdateUserRequest request) {
+    public UpdateUserInternalResponse update(UpdateUserInternalRequest request) {
         URI uri = UriComponentsBuilder.fromUriString(securityServiceUrl)
-                .path("/users")
-                .build()
+                .path("/users/{guid}")
+                .buildAndExpand(request.guid())
                 .toUri();
 
         try {
-            ResponseEntity<UpdateUserResponse> response = restTemplate.exchange(
+            ResponseEntity<UpdateUserInternalResponse> response = restTemplate.exchange(
                     new RequestEntity<>(request, HttpMethod.PUT, uri),
-                    UpdateUserResponse.class
+                    UpdateUserInternalResponse.class
             );
 
             return response.getBody();
