@@ -2,6 +2,7 @@ package com.websocket_hub.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.websocket_hub.domain.dto.RoomMessage;
+import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
 import com.websocket_hub.manager.RoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.util.WebSocketUtil;
@@ -14,13 +15,19 @@ import org.springframework.web.socket.WebSocketSession;
 import java.util.Map;
 
 /**
+ * <h2>
+ * RoomHandler
+ *
+ * <h4>
  * Handler only for testing room broadcast functionality and websocket connections.
+ * Don't use it in production!
  *
  * <p>
  * Method {@link #handleTextMessage} receives messages from clients and broadcasts it to all clients in the same room.
  *
  * <p>
- * Methods {@link #onJoin} and {@link #onLeave} used to handle user join and leave events if needed.
+ * Methods {@link AppWebSocketHandler#onJoin} and {@link AppWebSocketHandler#onLeave} used to handle user join and
+ * leave events if needed.
  */
 @Component
 @Slf4j
@@ -45,13 +52,13 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
             String type = (String) data.get("type");
             String event = (String) data.get("event");
             String roomName = WebSocketUtil.getRoomName(session);
-            String userId = WebSocketUtil.getUserId(session);
+            UserInfoInternalResponse user = WebSocketUtil.getUser(session);
             String content = (String) data.get("message");
 
             RoomMessage response = RoomMessage.builder()
                     .type(type)
                     .event(event)
-                    .fromUserId(userId)
+                    .fromUserId(user.email())
                     .roomName(roomName)
                     .message(content)
                     .build();
@@ -64,10 +71,10 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
     }
 
     @Override
-    protected void onJoin(String roomName, String username) {
+    protected void onJoin(String roomName, UserInfoInternalResponse user) {
     }
 
     @Override
-    protected void onLeave(String roomName, String username) {
+    protected void onLeave(String roomName, UserInfoInternalResponse user) {
     }
 }

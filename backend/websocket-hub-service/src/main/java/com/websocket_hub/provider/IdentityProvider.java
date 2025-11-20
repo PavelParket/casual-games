@@ -2,11 +2,13 @@ package com.websocket_hub.provider;
 
 import org.springframework.http.server.ServerHttpRequest;
 
+import java.util.UUID;
+
 public interface IdentityProvider {
 
-    String resolveUserId(ServerHttpRequest request);
-
-    String resolveUsername(ServerHttpRequest request);
+    UUID resolveGuid(ServerHttpRequest request);
 
     String resolveRoomName(ServerHttpRequest request);
+
+    String resolveToken(ServerHttpRequest request);
 }

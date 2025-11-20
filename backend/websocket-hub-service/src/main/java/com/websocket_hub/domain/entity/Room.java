@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 
 import java.time.Instant;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Data
@@ -16,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Room {
 
     @EqualsAndHashCode.Include
-    private final String id;
+    private final UUID id;
 
     @EqualsAndHashCode.Include
     private final String name;
@@ -28,14 +29,18 @@ public class Room {
     private Instant createdAt = Instant.now();
 
     public void add(ClientSession clientSession) {
-        participants.add(clientSession);
+        this.participants.add(clientSession);
     }
 
     public void remove(ClientSession clientSession) {
-        participants.remove(clientSession);
+        this.participants.remove(clientSession);
     }
 
     public boolean isEmpty() {
-        return participants.isEmpty();
+        return this.participants.isEmpty();
+    }
+
+    public Integer size() {
+        return participants.size();
     }
 }

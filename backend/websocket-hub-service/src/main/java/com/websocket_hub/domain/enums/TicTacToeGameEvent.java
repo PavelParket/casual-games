@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum GameEvent implements EventType {
+public enum TicTacToeGameEvent implements EventType {
 
     START("start"),
     READY("ready"),

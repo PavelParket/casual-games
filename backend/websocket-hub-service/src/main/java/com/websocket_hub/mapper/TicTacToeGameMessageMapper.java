@@ -1,15 +1,15 @@
 package com.websocket_hub.mapper;
 
-import com.websocket_hub.domain.dto.GameMessage;
-import com.websocket_hub.enums.GameEvent;
-import com.websocket_hub.enums.MessageType;
+import com.websocket_hub.domain.dto.TicTacToeGameMessage;
+import com.websocket_hub.domain.enums.MessageType;
+import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.util.Set;
 
 @Mapper(componentModel = "spring", imports = {MessageType.class})
-public interface GameMessageMapper extends MessageMapper {
+public interface TicTacToeGameMessageMapper extends MessageMapper {
 
     @Mapping(target = "type", expression = "java(MessageType.SYSTEM.getType())")
     @Mapping(target = "fromUserId", ignore = true)
@@ -21,7 +21,7 @@ public interface GameMessageMapper extends MessageMapper {
     @Mapping(target = "playersSymbols", ignore = true)
     @Mapping(target = "winner", ignore = true)
     @Mapping(target = "message", ignore = true)
-    GameMessage toGameStartMessageFromParams(GameEvent event, String roomName, Set<String> players);
+    TicTacToeGameMessage toGameStartMessageFromParams(TicTacToeGameEvent event, String roomName, Set<String> players);
 
     @Mapping(target = "type", expression = "java(MessageType.SYSTEM.getType())")
     @Mapping(target = "fromUserId", ignore = true)
@@ -31,5 +31,5 @@ public interface GameMessageMapper extends MessageMapper {
     @Mapping(target = "players", ignore = true)
     @Mapping(target = "winner", ignore = true)
     @Mapping(target = "message", ignore = true)
-    GameMessage toGameMoveMessage(GameEvent event, String roomName, String[] board, Integer cell, String player);
+    TicTacToeGameMessage toGameMoveMessage(TicTacToeGameEvent event, String roomName, String[] board, Integer cell, String player);
 }
