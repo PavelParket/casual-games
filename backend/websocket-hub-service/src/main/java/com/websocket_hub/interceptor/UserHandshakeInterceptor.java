@@ -44,19 +44,8 @@ public class UserHandshakeInterceptor implements HandshakeInterceptor {
 
     @Override
     public void afterHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler, Exception exception) {
-        String ip = request.getRemoteAddress().getHostString();
-
-        if (exception == null) {
-            try {
-                UserInfoInternalResponse user = (UserInfoInternalResponse) request.getAttributes().get("user");
-                UUID guid = (UUID) request.getAttributes().get("guid");
-                String roomName = (String) request.getAttributes().get("roomName");
-
-                log.info("Handshake complete: user={} ({}) joined room='{}' from ip={}", user.email(), guid, roomName, ip);
-            } catch (Exception e) {
-                log.warn("Handshake post-processing failed: {}", e.getMessage());
-            }
-        } else {
+        if (exception != null) {
+            String ip = request.getRemoteAddress().getHostString();
             log.warn("Handshake failed from ip={}: {}", ip, exception.getMessage());
         }
     }

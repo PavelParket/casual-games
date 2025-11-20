@@ -56,7 +56,7 @@ public class GameRoomHandler extends AppWebSocketHandler<TicTacToeGameRoomManage
 
             log.info("Received game message: {}", ticTacToeGameMessage);
 
-            TicTacToeGameEvent event = TicTacToeGameEvent.valueOf(ticTacToeGameMessage.event());
+            TicTacToeGameEvent event = TicTacToeGameEvent.fromDescription(ticTacToeGameMessage.event());
             String roomName = WebSocketUtil.getRoomName(session);
             UserInfoInternalResponse user = WebSocketUtil.getUser(session);
 

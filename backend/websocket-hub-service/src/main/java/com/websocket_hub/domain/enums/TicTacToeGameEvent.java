@@ -15,4 +15,8 @@ public enum TicTacToeGameEvent implements EventType {
     DRAW("draw");
 
     private final String description;
+
+    public static TicTacToeGameEvent fromDescription(String description) {
+        return EventType.fromDescription(description, TicTacToeGameEvent.class);
+    }
 }

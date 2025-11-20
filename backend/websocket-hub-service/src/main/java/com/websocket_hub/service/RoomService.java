@@ -24,7 +24,7 @@ public class RoomService {
 
     public List<String> getPlayersInRoom(String roomName) {
         return getManager(TicTacToeGameRoomManager.class)
-                .map(manager -> manager.getUserNames(roomName).stream().toList())
+                .map(manager -> manager.getUserEmails(roomName).stream().toList())
                 .orElse(List.of());
     }
 
