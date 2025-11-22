@@ -1,5 +1,6 @@
 package com.websocket_hub.domain.entity;
 
+import com.websocket_hub.domain.enums.RoomType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,9 @@ public class Room {
 
     @EqualsAndHashCode.Include
     private final String name;
+
+    @EqualsAndHashCode.Include
+    private final RoomType type;
 
     @Builder.Default
     private final Set<ClientSession> participants = ConcurrentHashMap.newKeySet();

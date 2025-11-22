@@ -61,6 +61,7 @@ public class JwtProvider {
         return false;
     }
 
+
     public boolean isToken(String token) {
         return token != null && !token.isBlank();
     }

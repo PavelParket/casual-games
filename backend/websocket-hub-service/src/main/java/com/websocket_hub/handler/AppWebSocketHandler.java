@@ -1,6 +1,7 @@
 package com.websocket_hub.handler;
 
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
+import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.util.WebSocketUtil;
@@ -27,10 +28,11 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
         UUID guid = WebSocketUtil.getGuid(session);
         UserInfoInternalResponse user = WebSocketUtil.getUser(session);
         String roomName = WebSocketUtil.getRoomName(session);
+        RoomType roomType = WebSocketUtil.getRoomType(session);
         Instant connectedAt = WebSocketUtil.getConnectedAt(session);
 
         sessionManager.register(guid, user, session, connectedAt);
-        roomManager.addSession(roomName, user, session);
+        roomManager.addSession(roomName, roomType, user, session);
 
         onJoin(roomName, user);
     }
@@ -40,8 +42,9 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
         UUID guid = WebSocketUtil.getGuid(session);
         UserInfoInternalResponse user = WebSocketUtil.getUser(session);
         String roomName = WebSocketUtil.getRoomName(session);
+        RoomType roomType = WebSocketUtil.getRoomType(session);
 
-        roomManager.removeSession(roomName, user, session);
+        roomManager.removeSession(roomName, roomType, user, session);
         sessionManager.remove(guid);
 
         onLeave(roomName, user);

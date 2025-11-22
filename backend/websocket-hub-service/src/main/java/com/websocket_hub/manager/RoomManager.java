@@ -30,7 +30,7 @@ public class RoomManager extends AbstractRoomManager {
 
     @Override
     public String getName() {
-        return "roomManager";
+        return "RoomManager";
     }
 
     @Override

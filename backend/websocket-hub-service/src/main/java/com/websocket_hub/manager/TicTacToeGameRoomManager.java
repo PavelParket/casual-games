@@ -37,7 +37,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
     @Override
     public String getName() {
-        return "gameRoomManager";
+        return "TicTacToeGameRoomManager";
     }
 
     @Override
@@ -57,6 +57,11 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
         });
 
         broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, SystemEvent.LEAVE, roomName, "Player " + user.username() + " has left the room " + roomName));
+    }
+
+    @Override
+    public Integer getReadyPlayerCount(String roomName) {
+        return readyPlayers.getOrDefault(roomName, Set.of()).size();
     }
 
     public void markReady(String roomName, String email) {
@@ -79,9 +84,5 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
         readyPlayers.remove(roomName);
 
         log.info("Cleared ready players for room {}", roomName);
-    }
-
-    public Integer getReadyPlayerCount(String roomName) {
-        return readyPlayers.getOrDefault(roomName, Set.of()).size();
     }
 }

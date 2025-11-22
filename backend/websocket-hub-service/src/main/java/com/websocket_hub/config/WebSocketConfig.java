@@ -1,7 +1,7 @@
 package com.websocket_hub.config;
 
-import com.websocket_hub.handler.GameRoomHandler;
 import com.websocket_hub.handler.RoomHandler;
+import com.websocket_hub.handler.TicTacToeGameRoomHandler;
 import com.websocket_hub.interceptor.UserHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +16,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final RoomHandler roomHandler;
 
-    private final GameRoomHandler gameRoomHandler;
+    private final TicTacToeGameRoomHandler ticTacToeGameRoomHandler;
 
     private final UserHandshakeInterceptor handshakeInterceptor;
 
@@ -26,7 +26,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 .setAllowedOriginPatterns("*")
                 .addInterceptors(handshakeInterceptor);
 
-        registry.addHandler(gameRoomHandler, "/ws/game")
+        registry.addHandler(ticTacToeGameRoomHandler, "/ws/game")
                 .setAllowedOriginPatterns("*")
                 .addInterceptors(handshakeInterceptor);
     }
