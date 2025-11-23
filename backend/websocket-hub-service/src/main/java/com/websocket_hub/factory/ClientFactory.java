@@ -1,29 +1,43 @@
 package com.websocket_hub.factory;
 
+import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Component
 public class ClientFactory implements ObjectFactory<ClientSession> {
 
     @Override
     public ClientSession create(Object... objects) {
-        if (objects.length != 3 ||
-                !(objects[0] instanceof String userId) ||
-                !(objects[1] instanceof String username) ||
-                !(objects[2] instanceof WebSocketSession session)) {
+        if (objects.length != 4
+                || !(objects[0] instanceof UUID guid)
+                || !(objects[1] instanceof UserInfoInternalResponse user)
+                || !(objects[2] instanceof WebSocketSession session)
+                || !(objects[3] instanceof Instant connectedAt)) {
             throw new IllegalArgumentException("Invalid arguments for ClientSession creation");
         }
 
-        return create(userId, username, session);
+        return create(guid, user, session, connectedAt);
     }
 
-    private ClientSession create(String userId, String username, WebSocketSession session) {
+    private ClientSession create(
+            UUID guid,
+            UserInfoInternalResponse user,
+            WebSocketSession session,
+            Instant connectedAt
+    ) {
         return ClientSession.builder()
-                .userId(userId)
-                .username(username)
+                .guid(guid)
+                .username(user.username())
+                .email(user.email())
+                .role(user.role())
+                .status(user.status())
                 .session(session)
+                .connectedAt(connectedAt)
                 .build();
     }
 }

@@ -1,6 +1,6 @@
 package com.websocket_hub.client;
 
-import com.websocket_hub.domain.dto.GameMessage;
+import com.websocket_hub.domain.dto.TicTacToeGameMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +24,7 @@ public class GameServiceClient {
     @Value("${app.game-service.url}")
     private String gameServiceUrl;
 
-    public Optional<GameMessage> startGame(GameMessage request) {
+    public Optional<TicTacToeGameMessage> startGame(TicTacToeGameMessage request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
                 .path("/game/t-t-t/start")
                 .build()
@@ -33,13 +33,13 @@ public class GameServiceClient {
         log.info("Calling game-service to start game: {}", request);
 
         try {
-            ResponseEntity<GameMessage> response = restTemplate.exchange(
+            ResponseEntity<TicTacToeGameMessage> response = restTemplate.exchange(
                     new RequestEntity<>(
                             request,
                             HttpMethod.POST,
                             uri
                     ),
-                    GameMessage.class
+                    TicTacToeGameMessage.class
             );
 
             log.info("Game started successfully: {}", response);
@@ -51,7 +51,7 @@ public class GameServiceClient {
         }
     }
 
-    public Optional<GameMessage> processMove(GameMessage request) {
+    public Optional<TicTacToeGameMessage> processMove(TicTacToeGameMessage request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
                 .path("game/t-t-t/move")
                 .build()
@@ -60,12 +60,12 @@ public class GameServiceClient {
         log.info("Calling game-service to process move: {}", request);
 
         try {
-            ResponseEntity<GameMessage> response = restTemplate.exchange(
+            ResponseEntity<TicTacToeGameMessage> response = restTemplate.exchange(
                     new RequestEntity<>(
                             request,
                             HttpMethod.POST,
                             uri
-                    ), GameMessage.class
+                    ), TicTacToeGameMessage.class
             );
 
             log.info("Move processed successfully: {}", response);

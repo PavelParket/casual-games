@@ -19,7 +19,7 @@ public class RoomFactory implements ObjectFactory<Room> {
 
     private Room create(String name) {
         return Room.builder()
-                .id(UUID.randomUUID().toString())
+                .id(UUID.randomUUID())
                 .name(name)
                 .build();
     }

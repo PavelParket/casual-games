@@ -1,11 +1,12 @@
 package com.websocket_hub.handler;
 
 import com.websocket_hub.client.GameServiceClient;
-import com.websocket_hub.domain.dto.GameMessage;
-import com.websocket_hub.enums.GameEvent;
-import com.websocket_hub.manager.GameRoomManager;
+import com.websocket_hub.domain.dto.TicTacToeGameMessage;
+import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
+import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
-import com.websocket_hub.mapper.GameMessageMapper;
+import com.websocket_hub.manager.TicTacToeGameRoomManager;
+import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.serializer.JsonDeserializer;
 import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.util.WebSocketUtil;
@@ -19,25 +20,25 @@ import java.util.Set;
 
 @Component
 @Slf4j
-public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
+public class GameRoomHandler extends AppWebSocketHandler<TicTacToeGameRoomManager> {
 
     private final MessageDeserializer deserializer;
 
-    private final GameMessageMapper mapper;
+    private final TicTacToeGameMessageMapper mapper;
 
-    private final GameServiceClient client;
+    private final GameServiceClient gameServiceClient;
 
     public GameRoomHandler(
             SessionManager sessionManager,
-            GameRoomManager roomManager,
+            TicTacToeGameRoomManager roomManager,
             JsonDeserializer deserializer,
-            GameMessageMapper mapper,
-            GameServiceClient client
+            TicTacToeGameMessageMapper mapper,
+            GameServiceClient gameServiceClient
     ) {
         super(sessionManager, roomManager);
         this.deserializer = deserializer;
         this.mapper = mapper;
-        this.client = client;
+        this.gameServiceClient = gameServiceClient;
     }
 
     @Override
@@ -51,17 +52,17 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
         String payload = message.getPayload();
 
         try {
-            GameMessage gameMessage = deserializer.deserialize(payload, GameMessage.class);
+            TicTacToeGameMessage ticTacToeGameMessage = deserializer.deserialize(payload, TicTacToeGameMessage.class);
 
-            log.info("Received game message: {}", gameMessage);
+            log.info("Received game message: {}", ticTacToeGameMessage);
 
-            String event = gameMessage.event();
+            TicTacToeGameEvent event = TicTacToeGameEvent.fromDescription(ticTacToeGameMessage.event());
             String roomName = WebSocketUtil.getRoomName(session);
-            String userId = WebSocketUtil.getUserId(session);
+            UserInfoInternalResponse user = WebSocketUtil.getUser(session);
 
             switch (event) {
-                case "ready" -> handlePlayerReady(roomName, userId);
-                case "move" -> handleGameMove(roomName, gameMessage);
+                case READY -> handlePlayerReady(roomName, user.email());
+                case MOVE -> handleGameMove(roomName, ticTacToeGameMessage);
                 default -> log.warn("Unknown game message event: {}", event);
             }
         } catch (Exception e) {
@@ -70,19 +71,19 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
     }
 
     @Override
-    protected void onJoin(String roomName, String username) {
+    protected void onJoin(String roomName, UserInfoInternalResponse user) {
 
     }
 
     @Override
-    protected void onLeave(String roomName, String username) {
+    protected void onLeave(String roomName, UserInfoInternalResponse user) {
 
     }
 
-    private void handlePlayerReady(String roomName, String userId) {
-        roomManager.markReady(roomName, userId);
+    private void handlePlayerReady(String roomName, String email) {
+        roomManager.markReady(roomName, email);
 
-        log.info("Player= \"{}\" is ready", userId);
+        log.info("Player= \"{}\" is ready", email);
 
         if (roomManager.areBothPlayersReady(roomName)) {
             startGame(roomName);
@@ -93,13 +94,14 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
 
     private void startGame(String roomName) {
         try {
-            Set<String> players = roomManager.getUserIds(roomName);
+            Set<String> players = roomManager.getUserEmails(roomName);
 
             log.info("Starting game in room {} with players: {}", roomName, players);
 
-            GameMessage startRequest = mapper.toGameStartMessageFromParams(GameEvent.START, roomName, players);
+            TicTacToeGameMessage startRequest = mapper.toGameStartMessageFromParams(TicTacToeGameEvent.START, roomName, players);
 
-            GameMessage startResponse = client.startGame(startRequest).orElseThrow(() -> new RuntimeException("Empty state"));
+            TicTacToeGameMessage startResponse = gameServiceClient.startGame(startRequest)
+                    .orElseThrow(() -> new RuntimeException("Empty state"));
 
             roomManager.broadcast(startResponse.roomName(), startResponse);
         } catch (Exception e) {
@@ -107,11 +109,12 @@ public class GameRoomHandler extends AppWebSocketHandler<GameRoomManager> {
         }
     }
 
-    private void handleGameMove(String roomName, GameMessage message) {
+    private void handleGameMove(String roomName, TicTacToeGameMessage message) {
         try {
-            GameMessage moveRequest = mapper.toGameMoveMessage(GameEvent.MOVE, roomName, message.board(), message.cell(), message.player());
+            TicTacToeGameMessage moveRequest = mapper.toGameMoveMessage(TicTacToeGameEvent.MOVE, roomName, message.board(), message.cell(), message.player());
 
-            GameMessage moveResponse = client.processMove(moveRequest).orElseThrow(() -> new RuntimeException(("Empty state")));
+            TicTacToeGameMessage moveResponse = gameServiceClient.processMove(moveRequest)
+                    .orElseThrow(() -> new RuntimeException(("Empty state")));
 
             roomManager.broadcast(moveResponse.roomName(), moveResponse);
         } catch (Exception e) {

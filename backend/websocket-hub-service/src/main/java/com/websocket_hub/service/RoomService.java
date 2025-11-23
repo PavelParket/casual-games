@@ -1,7 +1,7 @@
 package com.websocket_hub.service;
 
 import com.websocket_hub.manager.AbstractRoomManager;
-import com.websocket_hub.manager.GameRoomManager;
+import com.websocket_hub.manager.TicTacToeGameRoomManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,13 +23,13 @@ public class RoomService {
     }
 
     public List<String> getPlayersInRoom(String roomName) {
-        return getManager(GameRoomManager.class)
-                .map(manager -> manager.getUserIds(roomName).stream().toList())
+        return getManager(TicTacToeGameRoomManager.class)
+                .map(manager -> manager.getUserEmails(roomName).stream().toList())
                 .orElse(List.of());
     }
 
     public Integer getReadyPlayerCount(String roomName) {
-        return getManager(GameRoomManager.class)
+        return getManager(TicTacToeGameRoomManager.class)
                 .map(manager -> manager.getReadyPlayerCount(roomName))
                 .orElse(0);
     }

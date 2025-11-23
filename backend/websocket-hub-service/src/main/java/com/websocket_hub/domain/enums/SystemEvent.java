@@ -11,4 +11,8 @@ public enum SystemEvent implements EventType {
     LEAVE("left");
 
     private final String description;
+
+    public SystemEvent fromDescription(String description) {
+        return EventType.fromDescription(description, SystemEvent.class);
+    }
 }
