@@ -1,15 +1,24 @@
 package casualgames.userservice.controller;
 
-import casualgames.userservice.dto.UserRequest;
+import casualgames.userservice.dto.CreateUserRequest;
+import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,40 +28,57 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public List<UserResponse> findAllUsers() {
+    public List<UserResponse> findAll() {
         return userService.findAll();
     }
 
     @GetMapping("/{userId}")
-    public UserResponse findUserById(@PathVariable Long userId) {
+    public UserResponse findById(@PathVariable Long userId) {
         return userService.findById(userId);
     }
 
     @GetMapping("/username/{username}")
-    public UserResponse findUserByUsername(@PathVariable String username) {
+    public List<UserResponse> findByUsername(@PathVariable String username) {
         return userService.findByUsername(username);
     }
 
     @GetMapping("/email/{email}")
-    public UserResponse findUserByEmail(@PathVariable String email) {
+    public UserResponse findByEmail(@PathVariable String email) {
         return userService.findByEmail(email);
+    }
+
+    @GetMapping("/guid={guid}")
+    public UserResponse findByGuid(@PathVariable UUID guid) {
+        return userService.findByGuid(guid);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse createUser(@Valid @RequestBody UserRequest userRequest) {
+    public UserResponse create(@Valid @RequestBody CreateUserRequest userRequest) {
         return userService.create(userRequest);
     }
 
-    @PutMapping("/{id}")
-    public UserResponse updateUser(@PathVariable("id") Long userId,
-                                   @Valid @RequestBody UserRequest userRequest) {
+    @PutMapping("/id={id}")
+    public UserResponse update(@PathVariable("id") Long userId,
+                               @Valid @RequestBody UpdateUserRequest userRequest) {
         return userService.update(userId, userRequest);
     }
 
-    @DeleteMapping("/{id}")
+    @PutMapping("/guid={id}")
+    public UserResponse updateByGuid(@PathVariable("id") UUID guid,
+                                     @Valid @RequestBody UpdateUserRequest userRequest) {
+        return userService.updateByGuid(guid, userRequest);
+    }
+
+    @DeleteMapping("/id={id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         userService.delete(id);
+    }
+
+    @DeleteMapping("/guid={id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable UUID id) {
+        userService.deleteByGuid(id);
     }
 }

@@ -1,9 +1,15 @@
 package casualgames.userservice.mapper;
 
-import casualgames.userservice.dto.UserRequest;
+import casualgames.userservice.dto.CreateUserRequest;
+import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
+import casualgames.userservice.dto.security_service.UpdateUserInternalRequest;
 import casualgames.userservice.entity.User;
-import org.mapstruct.*;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.List;
 
@@ -11,10 +17,11 @@ import java.util.List;
 public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "balance", ignore = true)
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    User toEntity(UserRequest dto);
+    User toEntity(CreateUserRequest createUserRequest);
 
     UserResponse toResponseDto(User user);
 
@@ -22,6 +29,12 @@ public interface UserMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "guid", ignore = true)
+    @Mapping(target = "balance", ignore = true)
+    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    void toUpdateEntity(UserRequest dto, @MappingTarget User user);
+    void updateEntity(UpdateUserRequest updateUserRequest, @MappingTarget User user);
+
+    UpdateUserInternalRequest toUpdateUserInternalRequest(User user, String password);
 }

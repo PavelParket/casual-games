@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Component
@@ -28,7 +29,6 @@ public class UserValidator implements Validator {
         }
     }
 
-    @Deprecated
     public void validateEmailNotExists(String email) {
         if (!repository.existsByEmail(email)) {
             throw new UserNotFoundException("User with email=" + email + " does not exist!");
@@ -54,6 +54,12 @@ public class UserValidator implements Validator {
         }
     }
 
+    public void validateGuidExists(UUID guid) {
+        if (!repository.existsByGuid(guid)) {
+            throw new UserNotFoundException("User with guid=" + guid + " does not exist!");
+        }
+    }
+
     public void validateRegister(RegisterRequest request) {
         validateString(request.username(), "username");
 
@@ -72,7 +78,6 @@ public class UserValidator implements Validator {
         if (request.email() != null) {
             validateString(request.email(), "email");
             validateEmailFormat(request.email());
-            validateEmailExists(request.email());
         }
 
         if (request.password() != null) {

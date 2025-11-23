@@ -8,6 +8,7 @@ public interface Validator {
         }
     }
 
+    @Deprecated
     default void validateNotEmpty(String value, String fieldName) {
         if (value == null || value.isEmpty()) {
             throw new IllegalArgumentException("Field \"" + fieldName + "\" cannot be empty");
@@ -22,7 +23,6 @@ public interface Validator {
 
     default void validateString(String value, String fieldName) {
         validateNotNull(value, fieldName);
-        validateNotEmpty(value, fieldName);
         validateNotBlank(value, fieldName);
     }
 }

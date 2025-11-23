@@ -3,7 +3,9 @@ package com.security_service.mapper;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.domain.dto.UserResponse;
+import com.security_service.domain.dto.user_service.CreateUserInternalRequest;
 import com.security_service.domain.entity.User;
+import com.security_service.domain.enums.Role;
 import com.security_service.service.PasswordService;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Context;
@@ -14,15 +16,17 @@ import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.List;
+import java.util.UUID;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = {Role.class, UUID.class})
 public interface UserMapper {
 
-    @Deprecated
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "guid", expression = "java(UUID.randomUUID())")
+    @Mapping(target = "password", expression = "java(setPassword(registerRequest.password(), null, passwordService))")
+    @Mapping(target = "role", expression = "java(Role.USER)")
     @Mapping(target = "createdAt", ignore = true)
-    User toEntity(RegisterRequest registerRequest);
+    User toEntity(RegisterRequest registerRequest, @Context PasswordService passwordService);
 
     @Mapping(target = "role", expression = "java(user.getRole().toString())")
     UserResponse toResponse(User user);
@@ -31,6 +35,7 @@ public interface UserMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "guid", ignore = true)
     @Mapping(target = "username", qualifiedByName = "ignoreEmpty")
     @Mapping(target = "email", qualifiedByName = "ignoreEmpty")
     @Mapping(target = "password", expression = "java(setPassword(updateRequest.password(), user.getPassword(), passwordService))")
@@ -51,4 +56,6 @@ public interface UserMapper {
 
         return passwordService.encode(password);
     }
+
+    CreateUserInternalRequest toCreateUserRequest(User user);
 }

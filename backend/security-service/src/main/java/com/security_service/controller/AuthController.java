@@ -4,7 +4,6 @@ import com.security_service.domain.dto.AuthResponse;
 import com.security_service.domain.dto.LoginRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.service.AuthService;
-import com.security_service.service.CookieService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -23,38 +22,24 @@ public class AuthController {
 
     private final AuthService service;
 
-    private final CookieService cookieService;
-
     @PostMapping("/register")
     public AuthResponse register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
-        AuthResponse authResponse = service.register(request);
-
-        cookieService.addRefreshToken(response, authResponse.refreshToken());
-
-        return authResponse;
+        return service.register(request, response);
     }
 
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
-        AuthResponse authResponse = service.login(request);
-
-        cookieService.addRefreshToken(response, authResponse.refreshToken());
-
-        return authResponse;
+        return service.login(request, response);
     }
 
     @PostMapping("/refresh")
     public AuthResponse refresh(HttpServletRequest request, HttpServletResponse response) {
-        AuthResponse authResponse = service.refresh(cookieService.extractRefreshToken(request));
-
-        cookieService.addRefreshToken(response, authResponse.refreshToken());
-
-        return authResponse;
+        return service.refresh(request, response);
     }
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(HttpServletResponse response) {
-        cookieService.deleteRefreshToken(response);
+        service.logout(response);
     }
 }
