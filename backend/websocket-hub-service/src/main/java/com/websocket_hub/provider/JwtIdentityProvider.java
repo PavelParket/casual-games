@@ -9,6 +9,8 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -20,32 +22,30 @@ public class JwtIdentityProvider implements IdentityProvider {
     private String defaultRoom;
 
     @Override
-    public String resolveUserId(ServerHttpRequest request) {
+    public UUID resolveGuid(ServerHttpRequest request) {
         var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
 
         String token = params.getFirst("token");
 
-        if (token == null || token.isBlank()) {
-            String guestId = "guest-" + System.currentTimeMillis();
-
-            log.debug("Anonymous connection — generated guest id {}", guestId);
-
-            return guestId;
+        if (!provider.isToken(token)) {
+            throw new JwtException("Missing JWT token");
         }
 
         if (!provider.validate(token)) {
             throw new JwtException("Invalid JWT token!");
         }
 
-        String userId = provider.getEmail(token);
+        String guid = provider.getGuid(token);
 
-        return (userId != null && !userId.isBlank()) ? userId : "guest-" + System.currentTimeMillis();
-    }
+        if (guid == null || guid.isBlank()) {
+            throw new JwtException("JWT token does not contain GUID");
+        }
 
-    // TODO: send the request to user service, receive data and resolve need
-    @Override
-    public String resolveUsername(ServerHttpRequest request) {
-        return "Pavel";
+        try {
+            return UUID.fromString(guid);
+        } catch (IllegalArgumentException e) {
+            throw new JwtException("Malformed GUID inside JWT: " + guid, e);
+        }
     }
 
     @Override
@@ -55,5 +55,22 @@ public class JwtIdentityProvider implements IdentityProvider {
         String roomName = params.getFirst("roomName");
 
         return (roomName == null || roomName.isBlank()) ? defaultRoom : roomName;
+    }
+
+    @Override
+    public String resolveToken(ServerHttpRequest request) {
+        var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
+
+        String token = params.getFirst("token");
+
+        if (!provider.isToken(token)) {
+            throw new JwtException("Missing JWT token");
+        }
+
+        if (!provider.validate(token)) {
+            throw new JwtException("Invalid JWT token!");
+        }
+
+        return token;
     }
 }

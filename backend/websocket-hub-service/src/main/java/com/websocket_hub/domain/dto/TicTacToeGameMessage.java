@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Builder
-public record GameMessage(
+public record TicTacToeGameMessage(
         String type,
 
         String event,

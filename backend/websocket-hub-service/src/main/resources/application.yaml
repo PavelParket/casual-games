@@ -84,6 +84,8 @@ app:
     default-room: default
   game-service:
     url: http://localhost:8082
+  user-service:
+    url: http://localhost:8083
 
 logging:
   level:

@@ -1,6 +1,7 @@
 package com.websocket_hub.jwt;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -24,7 +25,7 @@ public class JwtProvider {
         return Keys.hmacShaKeyFor(properties.secret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String getEmail(String token) {
+    public String getGuid(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
@@ -33,28 +34,14 @@ public class JwtProvider {
                 .getSubject();
     }
 
-    public String getRole(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .get("role", String.class);
-    }
-
-    public String getUsername(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .get("username", String.class);
-    }
-
     public boolean validate(String token) {
         try {
-            Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token);
             return true;
+
         } catch (ExpiredJwtException e) {
             log.warn("JWT expired at {}: {}", e.getClaims().getExpiration(), e.getMessage());
         } catch (UnsupportedJwtException e) {
@@ -65,10 +52,16 @@ public class JwtProvider {
             log.warn("Invalid JWT signature: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             log.warn("Empty or invalid JWT argument: {}", e.getMessage());
+        } catch (JwtException e) {
+            log.warn("JWT validation error: {}", e.getMessage());
         } catch (Exception e) {
             log.error("Unexpected error while validating JWT: {}", e.getMessage(), e);
         }
 
         return false;
+    }
+
+    public boolean isToken(String token) {
+        return token != null && !token.isBlank();
     }
 }
