@@ -56,7 +56,7 @@ public class JwtIdentityProvider implements IdentityProvider {
         String roomName = params.getFirst("roomName");
 
         if (roomName == null || roomName.isBlank()) {
-            throw new IllegalArgumentException("Missing room type parameter!");
+            throw new IllegalArgumentException("Missing room name parameter!");
         }
 
         return roomName;

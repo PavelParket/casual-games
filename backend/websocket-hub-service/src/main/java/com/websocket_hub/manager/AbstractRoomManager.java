@@ -7,6 +7,7 @@ import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.serializer.MessageSerializer;
+import com.websocket_hub.service.RoomManagerService;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -34,21 +35,25 @@ public abstract class AbstractRoomManager {
 
     private final SessionManager sessionManager;
 
+    private final RoomManagerService service;
+
     public abstract String getName();
 
     protected abstract void onAddSession(UserInfoInternalResponse user, String roomName, WebSocketSession session);
 
     protected abstract void onRemoveSession(UserInfoInternalResponse user, String roomName, WebSocketSession session);
 
+    protected abstract boolean validateManagerType(RoomType roomType);
+
+    // todo: разделить логику между создание комнаты и входом в неё
     public void addSession(String roomName, RoomType roomType, UserInfoInternalResponse user, WebSocketSession session) {
-        if (rooms.containsKey(roomName)) {
-            throw new RuntimeException("This room already exists: " + roomName);
-        }
+        Room room = service.getOrCreate(roomName, roomType, rooms);
+        ClientSession client = sessionManager.getByGuid(user.guid());
 
-        Room room = rooms.computeIfAbsent(roomName, s -> roomFactory.create(roomName, roomType));
-
-        synchronized (room) {
-            room.add(sessionManager.getByGuid(user.guid()));
+        if (client != null && client.validateSession(session) && validateManagerType(roomType)) {
+            synchronized (room) {
+                room.add(client);
+            }
         }
 
         onAddSession(user, roomName, session);
@@ -60,9 +65,7 @@ public abstract class AbstractRoomManager {
         ClientSession client = sessionManager.getByGuid(user.guid());
         Room room = rooms.getOrDefault(roomName, null);
 
-        if (client != null && client.validateSession(session)
-                && room != null && room.getType().equals(roomType)
-        ) {
+        if (client != null && client.validateSession(session) && room != null && room.getType().equals(roomType)) {
             synchronized (room) {
                 room.remove(client);
 
@@ -166,10 +169,7 @@ public abstract class AbstractRoomManager {
             return Set.of();
         }
 
-        return room.getParticipants().stream()
-                .map(ClientSession::getUsername)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        return room.getParticipants().stream().map(ClientSession::getUsername).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     public Integer getReadyPlayerCount(String roomName) {
