@@ -1,22 +1,16 @@
-package casualgames.userservice.dto;
+package casualgames.userservice.dto.security_service;
 
-import java.math.BigDecimal;
+import lombok.Builder;
+
 import java.time.Instant;
 import java.util.UUID;
 
-public record UserResponse(
+@Builder
+public record UpdateUserInternalResponse(
         UUID guid,
-
         String username,
-
         String email,
-
-        BigDecimal balance,
-
         String role,
-
-        String status,
-
         Instant createdAt
 ) {
 }

@@ -1,11 +1,15 @@
-package com.security_service.domain.dto;
+package casualgames.userservice.dto.security_service;
 
 import jakarta.validation.constraints.Email;
 import lombok.Builder;
 import org.hibernate.validator.constraints.Length;
 
+import java.util.UUID;
+
 @Builder
-public record UpdateRequest(
+public record UpdateUserInternalRequest(
+        UUID guid,
+
         @Length(max = 50)
         String username,
 
@@ -14,8 +18,6 @@ public record UpdateRequest(
         String email,
 
         @Length(min = 4)
-        String password,
-
-        String role
+        String password
 ) {
 }

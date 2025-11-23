@@ -3,13 +3,21 @@ package casualgames.userservice.entity;
 
 import casualgames.userservice.enums.Role;
 import casualgames.userservice.enums.Status;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -22,6 +30,9 @@ public class User {
     private Long id;
 
     @Column(unique = true, nullable = false)
+    private UUID guid;
+
+    @Column(nullable = false)
     private String username;
 
     @Column(unique = true, nullable = false)

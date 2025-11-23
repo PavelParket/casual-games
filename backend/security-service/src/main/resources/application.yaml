@@ -83,6 +83,10 @@ kafka:
 ws-ticket:
   ttl-seconds: ${WS_TICKET_TTL_SECONDS:30}
 
+app:
+  user-service:
+    url: http://localhost:8083
+
 logging:
   level:
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
