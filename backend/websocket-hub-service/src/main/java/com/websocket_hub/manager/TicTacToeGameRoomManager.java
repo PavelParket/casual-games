@@ -1,9 +1,11 @@
 package com.websocket_hub.manager;
 
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
+import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.SystemEvent;
 import com.websocket_hub.domain.enums.TicTacToeGameEvent;
+import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
@@ -26,11 +28,12 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
     public TicTacToeGameRoomManager(
             MessageSerializer<String> serializer,
+            ObjectFactory<Room> factory,
             SessionManager sessionManager,
             RoomManagerService service,
             TicTacToeGameMessageMapper mapper
     ) {
-        super(serializer, sessionManager, service);
+        super(serializer, factory, sessionManager, service);
         this.mapper = mapper;
     }
 
