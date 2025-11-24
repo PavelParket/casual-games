@@ -3,15 +3,20 @@ import { useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState } from "react";
 import { Box, Button, Card, Container, Icon, Modal, Textfield, Typography, useThemedIcon } from "../../ui";
-import { fetchRooms } from "../../store/slices/RoomSlice";
+import { fetchRooms, fetchTypes, type Room } from "../../store/slices/RoomSlice";
 
 export default function Rooms() {
    const navigate = useNavigate();
    const dispatch = useDispatch<AppDispatch>();
+
    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+   const { rooms } = useSelector((state: RootState) => state.rooms);
+
    const [createModalOpen, setCreateModalOpen] = useState(false);
    const [newRoomName, setNewRoomName] = useState("");
-   const { rooms } = useSelector((state: RootState) => state.rooms);
+   const [infoModalOpen, setInfoModalOpen] = useState(false);
+   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+
    const { getIcon, getInverseIcon } = useThemedIcon();
 
    const [hovered, setHovered] = useState(false);
@@ -19,13 +24,14 @@ export default function Rooms() {
 
    useEffect(() => {
       dispatch(fetchRooms());
+      dispatch(fetchTypes());
    }, [dispatch]);
 
-   const handleJoinRoom = (roomName: string) => {
+   const handleJoinRoom = (room: Room) => {
       if (!isAuthenticated) {
          return;
       }
-      navigate(`/room/game/${roomName}`);
+      navigate(`/room/game/${room.name}`);
    };
 
    const handleCreateRoom = () => {
@@ -36,6 +42,11 @@ export default function Rooms() {
       setCreateModalOpen(false);
       navigate(`/room/game/${newRoomName}`);
    };
+
+   function handleInfo(room: Room): void {
+      setInfoModalOpen(true);
+      setSelectedRoom(room);
+   }
 
    return (
       <>
@@ -93,9 +104,9 @@ export default function Rooms() {
                   rowGap: "3rem",
                   justifyItems: "center",
                }}>
-                  {rooms.map((room: string) => (
+                  {rooms.map((room: Room) => (
                      <Card
-                        key={room}
+                        key={room.id}
                         style={{
                            width: "180px",
                            height: "180px",
@@ -106,9 +117,9 @@ export default function Rooms() {
                            gap: "10px",
                         }}
                      >
-                        <Typography variant="body">{room}</Typography>
+                        <Typography variant="h3">{room.name}</Typography>
                         <Button variant="outline" onClick={() => handleJoinRoom(room)}>Join</Button>
-                        {/* <Button variant="ghost" onClick={() => handleInfo(room)}>Info</Button> */}
+                        <Button variant="ghost" onClick={() => handleInfo(room)}>Info</Button>
                      </Card>
                   ))}
 
@@ -149,9 +160,18 @@ export default function Rooms() {
             </Container>
          </Box>
 
-         {/* <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Room Info">
-            <Typography>{modalContent}</Typography>
-         </Modal> */}
+         <Modal
+            isOpen={infoModalOpen}
+            onClose={() => {
+               setInfoModalOpen(false);
+               setSelectedRoom(null);
+            }}
+            title="Room Info"
+         >
+            <Typography variant="h3">{selectedRoom?.name}</Typography>
+            <Typography variant="h3">Type: {selectedRoom?.type}</Typography>
+            <Typography variant="body">Current player count: {selectedRoom?.participantCount}</Typography>
+         </Modal>
 
          <Modal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Create Room">
             <Box style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

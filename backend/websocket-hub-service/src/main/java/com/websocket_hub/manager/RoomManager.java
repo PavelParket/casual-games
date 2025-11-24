@@ -1,11 +1,8 @@
 package com.websocket_hub.manager;
 
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
-import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
-import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.SystemEvent;
-import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
 import com.websocket_hub.service.RoomManagerService;
@@ -22,12 +19,11 @@ public class RoomManager extends AbstractRoomManager {
 
     public RoomManager(
             MessageSerializer<String> serializer,
-            ObjectFactory<Room> roomFactory,
             SessionManager sessionManager,
             RoomManagerService service,
             @Qualifier("messageMapperImpl") MessageMapper mapper
     ) {
-        super(serializer, roomFactory, sessionManager, service);
+        super(serializer, sessionManager, service);
         this.mapper = mapper;
     }
 
@@ -44,10 +40,5 @@ public class RoomManager extends AbstractRoomManager {
     @Override
     protected void onRemoveSession(UserInfoInternalResponse user, String roomName, WebSocketSession session) {
         broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, SystemEvent.LEAVE, roomName, user.username() + " " + SystemEvent.LEAVE.getDescription() + "room: " + roomName));
-    }
-
-    @Override
-    protected boolean validateManagerType(RoomType roomType) {
-        return this.getClass().equals(roomType.getManagerClass());
     }
 }

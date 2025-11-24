@@ -5,11 +5,9 @@ import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomType;
-import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.serializer.MessageSerializer;
 import com.websocket_hub.service.RoomManagerService;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -26,12 +24,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class AbstractRoomManager {
 
-    @Getter
     private final Map<String, Room> rooms = new ConcurrentHashMap<>();
 
     private final MessageSerializer<String> serializer;
-
-    private final ObjectFactory<Room> roomFactory;
 
     private final SessionManager sessionManager;
 
@@ -43,7 +38,9 @@ public abstract class AbstractRoomManager {
 
     protected abstract void onRemoveSession(UserInfoInternalResponse user, String roomName, WebSocketSession session);
 
-    protected abstract boolean validateManagerType(RoomType roomType);
+    public boolean validateManagerType(RoomType roomType) {
+        return this.getClass().equals(roomType.getManagerClass());
+    }
 
     // todo: разделить логику между создание комнаты и входом в неё
     public void addSession(String roomName, RoomType roomType, UserInfoInternalResponse user, WebSocketSession session) {

@@ -91,4 +91,8 @@ public class JwtIdentityProvider implements IdentityProvider {
 
         return token;
     }
+
+    public String extractToken(ServerHttpRequest request) {
+        return request.getHeaders().getFirst("Authorization");
+    }
 }

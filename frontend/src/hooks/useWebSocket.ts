@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { WSMessage } from "../types/ws";
 import { getAccessToken } from "../utils/TokenManager";
 
-export function useWebSocket<T extends WSMessage = WSMessage>(url: string, roomName: string) {
+export function useWebSocket<T extends WSMessage = WSMessage>(url: string, roomName: string, roomType: string) {
    const [isConnected, setIsConnected] = useState<boolean>(false);
    const [message, setMessage] = useState<T>();
 
@@ -10,7 +10,7 @@ export function useWebSocket<T extends WSMessage = WSMessage>(url: string, roomN
 
    useEffect(() => {
       const token = getAccessToken();
-      const socket = new WebSocket(`${url}?roomName=${roomName}&token=${token}`);
+      const socket = new WebSocket(`${url}?roomName=${roomName}&roomType=${roomType}&token=${token}`);
 
       socket.onopen = () => {
          setIsConnected(true);
@@ -33,7 +33,7 @@ export function useWebSocket<T extends WSMessage = WSMessage>(url: string, roomN
       return () => {
          socket.close();
       }
-   }, [url, roomName]);
+   }, [url, roomName, roomType]);
 
    const send = useCallback((message: T) => {
       if (client.current?.readyState === WebSocket.OPEN) {

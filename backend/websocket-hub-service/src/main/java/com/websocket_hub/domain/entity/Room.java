@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,5 +47,11 @@ public class Room {
 
     public Integer size() {
         return participants.size();
+    }
+
+    public List<String> getParticipantEmails() {
+        return participants.stream()
+                .map(ClientSession::getEmail)
+                .toList();
     }
 }

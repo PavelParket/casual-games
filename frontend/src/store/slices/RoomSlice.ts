@@ -1,20 +1,23 @@
-import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { RoomAPI } from "../../api/WsHubApi";
 import type { AxiosError } from "axios";
 
+export interface Room {
+   id: string;
+   name: string;
+   type: string;
+   participantEmails: string[];
+   participantCount: number;
+}
+
 export interface RoomState {
-   rooms: string[];
+   rooms: Room[];
+   types: string[];
    isLoading: boolean;
    error: string | null;
 }
 
-const initialState: RoomState = {
-   rooms: [],
-   isLoading: false,
-   error: null,
-};
-
-export const fetchRooms = createAsyncThunk<string[], void, { rejectValue: string }>(
+export const fetchRooms = createAsyncThunk<Room[], void, { rejectValue: string }>(
    "rooms/fetchAll",
    async (_, { rejectWithValue }) => {
       try {
@@ -27,6 +30,26 @@ export const fetchRooms = createAsyncThunk<string[], void, { rejectValue: string
    }
 );
 
+export const fetchTypes = createAsyncThunk<string[], void, { rejectValue: string }>(
+   "rooms/fetchTypes",
+   async (_, { rejectWithValue }) => {
+      try {
+         const response = await RoomAPI.getTypes();
+         return response.data;
+      } catch (err: unknown) {
+         const error = err as AxiosError<{ message?: string }>;
+         return rejectWithValue(error.response?.data?.message ?? "Failed to fetch room types");
+      }
+   }
+);
+
+const initialState: RoomState = {
+   rooms: [],
+   types: [],
+   isLoading: false,
+   error: null,
+};
+
 const roomSlice = createSlice({
    name: "rooms",
    initialState,
@@ -38,17 +61,33 @@ const roomSlice = createSlice({
    },
    extraReducers: (builder) => {
       builder
+
+         /* === Rooms === */
          .addCase(fetchRooms.pending, (state) => {
             state.isLoading = true;
             state.error = null;
          })
-         .addCase(fetchRooms.fulfilled, (state, action: PayloadAction<string[]>) => {
+         .addCase(fetchRooms.fulfilled, (state, action) => {
             state.isLoading = false;
             state.rooms = action.payload;
          })
          .addCase(fetchRooms.rejected, (state, action) => {
             state.isLoading = false;
             state.error = action.payload ?? "Failed to fetch rooms";
+         })
+
+         /* === Types === */
+         .addCase(fetchTypes.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+         })
+         .addCase(fetchTypes.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.types = action.payload;
+         })
+         .addCase(fetchTypes.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload ?? "Failed to fetch room types";
          });
    },
 });

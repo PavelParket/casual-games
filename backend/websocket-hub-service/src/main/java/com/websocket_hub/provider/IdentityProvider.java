@@ -14,4 +14,6 @@ public interface IdentityProvider {
     RoomType resolveRoomType(ServerHttpRequest request);
 
     String resolveToken(ServerHttpRequest request);
+
+    String extractToken(ServerHttpRequest request);
 }

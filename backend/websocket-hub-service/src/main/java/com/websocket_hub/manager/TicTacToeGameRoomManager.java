@@ -1,13 +1,11 @@
 package com.websocket_hub.manager;
 
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
-import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
-import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.SystemEvent;
 import com.websocket_hub.domain.enums.TicTacToeGameEvent;
-import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.mapper.MessageMapper;
+import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
 import com.websocket_hub.service.RoomManagerService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,12 +26,11 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
     public TicTacToeGameRoomManager(
             MessageSerializer<String> serializer,
-            ObjectFactory<Room> roomFactory,
             SessionManager sessionManager,
             RoomManagerService service,
-            MessageMapper mapper
+            TicTacToeGameMessageMapper mapper
     ) {
-        super(serializer, roomFactory, sessionManager, service);
+        super(serializer, sessionManager, service);
         this.mapper = mapper;
     }
 
@@ -59,11 +56,6 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
         });
 
         broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, SystemEvent.LEAVE, roomName, "Player " + user.username() + " has left the room " + roomName));
-    }
-
-    @Override
-    protected boolean validateManagerType(RoomType roomType) {
-        return this.getClass().equals(roomType.getManagerClass());
     }
 
     @Override

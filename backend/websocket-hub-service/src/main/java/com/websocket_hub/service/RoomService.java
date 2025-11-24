@@ -1,43 +1,62 @@
 package com.websocket_hub.service;
 
+import com.websocket_hub.domain.dto.client.RoomInfoResponse;
+import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.manager.AbstractRoomManager;
-import com.websocket_hub.manager.TicTacToeGameRoomManager;
-import lombok.RequiredArgsConstructor;
+import com.websocket_hub.mapper.RoomMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class RoomService {
 
-    private final List<AbstractRoomManager> roomManagers;
+    private final Map<RoomType, AbstractRoomManager> managers;
 
-    public List<String> getRoomsNames() {
-        return roomManagers.stream()
-                .flatMap(manager -> manager.getActiveRoomsNames().stream())
+    private final RoomMapper mapper;
+
+    public RoomService(List<AbstractRoomManager> managers, RoomMapper mapper) {
+        this.managers = Arrays.stream(RoomType.values())
+                .collect(Collectors.toMap(
+                        type -> type,
+                        type -> managers.stream()
+                                .filter(manager -> type.getManagerClass().isAssignableFrom(manager.getClass()))
+                                .findFirst()
+                                .orElseThrow(() -> new RuntimeException("No manager found for room type: " + type))
+                ));
+        this.mapper = mapper;
+    }
+
+    public List<RoomInfoResponse> getRooms() {
+        return managers.values().stream()
+                .flatMap(manager -> manager.getActiveRooms().stream())
+                .map(mapper::toResponse)
                 .toList();
     }
 
-    public List<String> getPlayersInRoom(String roomName) {
-        return getManager(TicTacToeGameRoomManager.class)
+    public List<String> getPlayerEmailsInRoom(String roomName, RoomType roomType) {
+        return getManager(roomType)
                 .map(manager -> manager.getUserEmails(roomName).stream().toList())
-                .orElse(List.of());
+                .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType));
     }
 
-    public Integer getReadyPlayerCount(String roomName) {
-        return getManager(TicTacToeGameRoomManager.class)
+    public Integer getReadyPlayerCount(String roomName, RoomType roomType) {
+        return getManager(roomType)
                 .map(manager -> manager.getReadyPlayerCount(roomName))
-                .orElse(0);
+                .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType));
     }
 
-    private <T extends AbstractRoomManager> Optional<T> getManager(Class<T> type) {
-        return roomManagers.stream()
-                .filter(type::isInstance)
-                .map(type::cast)
-                .findFirst();
+    public List<RoomType> getTypes() {
+        return Arrays.stream(RoomType.values()).toList();
+    }
+
+    private Optional<AbstractRoomManager> getManager(RoomType roomType) {
+        return Optional.ofNullable(managers.get(roomType));
     }
 }

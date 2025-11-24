@@ -4,11 +4,18 @@ const WS_HUB_URL = 'http://localhost:8081/ws';
 
 export const RoomAPI = {
    getAllRooms: () =>
-      axios.get<string[]>(`${WS_HUB_URL}/rooms/all`),
+      axios.get(`${WS_HUB_URL}/rooms/all`),
 
-   getPlayersInRoom: (roomName: string) =>
-      axios.get<string[]>(`${WS_HUB_URL}/rooms/${roomName}/players`),
+   getTypes: () =>
+      axios.get(`${WS_HUB_URL}/rooms/types`),
 
-   getReadyPlayers: (roomName: string) =>
-      axios.get<number>(`${WS_HUB_URL}/rooms/${roomName}/count`),
+   getPlayersInRoom: (roomName: string, roomType: string) =>
+      axios.get(`${WS_HUB_URL}/rooms/${roomName}/players`, {
+         params: { roomType }
+      }),
+
+   getReadyPlayers: (roomName: string, roomType: string) =>
+      axios.get(`${WS_HUB_URL}/rooms/${roomName}/ready-count`, {
+         params: { roomType }
+      }),
 };
