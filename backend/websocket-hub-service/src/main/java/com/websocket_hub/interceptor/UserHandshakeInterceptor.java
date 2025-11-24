@@ -2,6 +2,7 @@ package com.websocket_hub.interceptor;
 
 import com.websocket_hub.client.UserServiceClient;
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
+import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.provider.IdentityProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,15 +30,17 @@ public class UserHandshakeInterceptor implements HandshakeInterceptor {
     public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
         UUID guid = identityProvider.resolveGuid(request);
         String roomName = identityProvider.resolveRoomName(request);
+        RoomType roomType = identityProvider.resolveRoomType(request);
         UserInfoInternalResponse user = client.getUserByGuid(guid);
         String ip = request.getRemoteAddress().getHostString();
 
-        attributes.put("user", user);
         attributes.put("guid", guid);
+        attributes.put("user", user);
         attributes.put("roomName", roomName);
+        attributes.put("roomType", roomType);
         attributes.put("connectedAt", Instant.now());
 
-        log.info("Preparing handshake for user={} room={} ip={}", user.email(), roomName, ip);
+        log.info("Preparing handshake for user={} room={} type={} ip={}", user.email(), roomName, roomType, ip);
 
         return true;
     }

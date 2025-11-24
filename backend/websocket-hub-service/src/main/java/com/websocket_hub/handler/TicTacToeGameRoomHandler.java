@@ -20,7 +20,7 @@ import java.util.Set;
 
 @Component
 @Slf4j
-public class GameRoomHandler extends AppWebSocketHandler<TicTacToeGameRoomManager> {
+public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameRoomManager> {
 
     private final MessageDeserializer deserializer;
 
@@ -28,7 +28,7 @@ public class GameRoomHandler extends AppWebSocketHandler<TicTacToeGameRoomManage
 
     private final GameServiceClient gameServiceClient;
 
-    public GameRoomHandler(
+    public TicTacToeGameRoomHandler(
             SessionManager sessionManager,
             TicTacToeGameRoomManager roomManager,
             JsonDeserializer deserializer,

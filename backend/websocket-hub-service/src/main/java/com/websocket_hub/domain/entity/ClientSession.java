@@ -4,8 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -37,5 +39,13 @@ public class ClientSession {
 
     public boolean validateSession(WebSocketSession session) {
         return this.getSession().equals(session);
+    }
+
+    public void sendMessage(WebSocketMessage<?> message) throws IOException {
+        this.session.sendMessage(message);
+    }
+
+    public boolean isOpen() {
+        return this.session.isOpen();
     }
 }
