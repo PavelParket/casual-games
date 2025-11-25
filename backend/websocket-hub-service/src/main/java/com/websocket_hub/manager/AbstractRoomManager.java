@@ -55,8 +55,9 @@ public abstract class AbstractRoomManager {
         Room room = rooms.get(roomName);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
-        validator.validateRoom(room);
-        validator.validateRoomType(room, roomType);
+        if (room == null || !validator.validateRoomType(room, roomType)) {
+            return;
+        }
 
         if (client != null && client.validateSession(session)) {
             synchronized (room) {
@@ -77,8 +78,9 @@ public abstract class AbstractRoomManager {
         Room room = rooms.get(roomName);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
-        validator.validateRoom(room);
-        validator.validateRoomType(room, roomType);
+        if (room == null || !validator.validateRoomType(room, roomType)) {
+            return;
+        }
 
         if (client != null && client.validateSession(session)) {
             synchronized (room) {

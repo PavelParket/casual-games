@@ -2,10 +2,8 @@ package com.websocket_hub.interceptor;
 
 import com.websocket_hub.client.UserServiceClient;
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
-import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.provider.IdentityProvider;
-import com.websocket_hub.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
@@ -28,7 +26,7 @@ public class UserHandshakeInterceptor implements HandshakeInterceptor {
 
     private final UserServiceClient client;
 
-    private final RoomService service;
+    //private final RoomService service;
 
     @Override
     public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
@@ -39,12 +37,12 @@ public class UserHandshakeInterceptor implements HandshakeInterceptor {
         UserInfoInternalResponse user = client.getUserByGuid(guid);
         String ip = request.getRemoteAddress().getHostString();
 
-        Map<String, Room> rooms = service.getRoomsByType(roomType);
+        /*Map<String, Room> rooms = service.getRoomsByType(roomType);
 
         if ("join".equals(action) && !rooms.containsKey(roomName)) {
             log.warn("Join to non-existent room {}", roomName);
             throw new IllegalArgumentException("Room does not exist");
-        }
+        }*/
 
         attributes.put("guid", guid);
         attributes.put("user", user);

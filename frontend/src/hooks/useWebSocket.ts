@@ -6,14 +6,17 @@ export function useWebSocket<T extends WSMessage = WSMessage>(url: string, roomN
    const [isConnected, setIsConnected] = useState<boolean>(false);
    const [message, setMessage] = useState<T>();
 
+   const actionRef = useRef<string | null>(localStorage.getItem("action") ?? "join");
+
    const client = useRef<WebSocket | null>(null);
 
    useEffect(() => {
       const token = getAccessToken();
-      const socket = new WebSocket(`${url}?roomName=${roomName}&roomType=${roomType}&token=${token}`);
+      const socket = new WebSocket(`${url}?roomName=${roomName}&roomType=${roomType}&action=${actionRef.current}&token=${token}`);
 
       socket.onopen = () => {
          setIsConnected(true);
+         localStorage.removeItem("action");
       }
       socket.onclose = () => {
          setIsConnected(false);

@@ -10,8 +10,11 @@ import type { RootState } from "../../store/store";
 export default function TicTacToeRoom() {
    const email = useSelector((state: RootState) => state.auth.user?.email);
    const { roomName } = useParams<string>();
+
    const navigate = useNavigate();
+
    const { getInverseIcon } = useThemedIcon();
+
    const [toast, setToast] = useState<{ text: string } | null>(null);
 
    const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws/game", roomName!, "TIC_TAC_TOE");
@@ -39,7 +42,7 @@ export default function TicTacToeRoom() {
          const response = await RoomAPI.getPlayersInRoom(roomName!, "TIC_TAC_TOE");
          const data = response.data;
 
-         setPlayers(data.map(player => ({ name: player, symbol: "" })));
+         setPlayers(data.map((player: string) => ({ name: player, symbol: "" })));
          setTotalPlayers(data.length);
       } catch (error) {
          console.error("Failed to fetch players:", error);

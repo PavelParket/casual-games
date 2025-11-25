@@ -31,6 +31,8 @@ export default function Rooms() {
       if (!isAuthenticated) {
          return;
       }
+
+      localStorage.setItem("action", "join");
       navigate(`/room/game/${room.name}`);
    };
 
@@ -39,6 +41,7 @@ export default function Rooms() {
          return;
       }
 
+      localStorage.setItem("action", "create");
       setCreateModalOpen(false);
       navigate(`/room/game/${newRoomName}`);
    };
