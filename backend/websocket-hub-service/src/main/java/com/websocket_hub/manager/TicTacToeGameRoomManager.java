@@ -9,7 +9,7 @@ import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
-import com.websocket_hub.service.RoomManagerService;
+import com.websocket_hub.validator.RoomValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
@@ -30,10 +30,10 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
             MessageSerializer<String> serializer,
             ObjectFactory<Room> factory,
             SessionManager sessionManager,
-            RoomManagerService service,
+            RoomValidator validator,
             TicTacToeGameMessageMapper mapper
     ) {
-        super(serializer, factory, sessionManager, service);
+        super(serializer, factory, sessionManager, validator);
         this.mapper = mapper;
     }
 

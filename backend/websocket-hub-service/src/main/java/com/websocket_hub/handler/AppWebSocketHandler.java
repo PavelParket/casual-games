@@ -30,9 +30,21 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
         String roomName = WebSocketUtil.getRoomName(session);
         RoomType roomType = WebSocketUtil.getRoomType(session);
         Instant connectedAt = WebSocketUtil.getConnectedAt(session);
+        String action = WebSocketUtil.getAction(session);
 
         sessionManager.register(guid, user, session, connectedAt);
-        roomManager.addSession(roomName, roomType, user, session);
+
+        if ("create".equals(action)) {
+            roomManager.create(roomName, roomType);
+            roomManager.addSession(roomName, roomType, user, session);
+        } else if ("join".equals(action)) {
+            roomManager.addSession(roomName, roomType, user, session);
+        } else {
+            log.warn("Unknown action '{}' for user {} in room {}", action, user.email(), roomName);
+            session.close(CloseStatus.BAD_DATA);
+            sessionManager.remove(guid);
+            return;
+        }
 
         onJoin(roomName, user);
     }
@@ -45,7 +57,10 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
         RoomType roomType = WebSocketUtil.getRoomType(session);
 
         roomManager.removeSession(roomName, roomType, user, session);
+
         sessionManager.remove(guid);
+
+        roomManager.delete(roomName, roomType);
 
         onLeave(roomName, user);
     }

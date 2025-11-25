@@ -30,4 +30,8 @@ public class WebSocketUtil {
     public static Instant getConnectedAt(WebSocketSession session) {
         return (Instant) session.getAttributes().get("connectedAt");
     }
+
+    public static String getAction(WebSocketSession session) {
+        return (String) session.getAttributes().get("action");
+    }
 }

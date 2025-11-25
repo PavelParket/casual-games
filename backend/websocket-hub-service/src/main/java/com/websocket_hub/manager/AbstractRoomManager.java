@@ -7,7 +7,8 @@ import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.serializer.MessageSerializer;
-import com.websocket_hub.service.RoomManagerService;
+import com.websocket_hub.validator.RoomValidator;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.TextMessage;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class AbstractRoomManager {
 
+    @Getter
     private final Map<String, Room> rooms = new ConcurrentHashMap<>();
 
     private final MessageSerializer<String> serializer;
@@ -33,7 +35,7 @@ public abstract class AbstractRoomManager {
 
     private final SessionManager sessionManager;
 
-    private final RoomManagerService service;
+    private final RoomValidator validator;
 
     public abstract String getName();
 
@@ -45,7 +47,6 @@ public abstract class AbstractRoomManager {
         return this.getClass().equals(roomType.getManagerClass());
     }
 
-    // todo: разделить логику между создание комнаты и входом в неё
     public void addSession(String roomName, RoomType roomType, UserInfoInternalResponse user, WebSocketSession session) {
         if (!validateManagerType(roomType)) {
             throw new RuntimeException("Room manager type mismatch!");
@@ -54,8 +55,8 @@ public abstract class AbstractRoomManager {
         Room room = rooms.get(roomName);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
-        service.validateRoom(room);
-        service.validateRoomType(room, roomType);
+        validator.validateRoom(room);
+        validator.validateRoomType(room, roomType);
 
         if (client != null && client.validateSession(session)) {
             synchronized (room) {
@@ -69,24 +70,25 @@ public abstract class AbstractRoomManager {
     }
 
     public void removeSession(String roomName, RoomType roomType, UserInfoInternalResponse user, WebSocketSession session) {
-        /*ClientSession client = sessionManager.getByGuid(user.guid());
-        Room room = rooms.getOrDefault(roomName, null);
+        if (!validateManagerType(roomType)) {
+            throw new RuntimeException("Room manager type mismatch!");
+        }
 
-        if (client != null && client.validateSession(session) && room != null && room.getType().equals(roomType)) {
+        Room room = rooms.get(roomName);
+        ClientSession client = sessionManager.getByGuid(user.guid());
+
+        validator.validateRoom(room);
+        validator.validateRoomType(room, roomType);
+
+        if (client != null && client.validateSession(session)) {
             synchronized (room) {
                 room.remove(client);
-
-                if (room.isEmpty()) {
-                    log.info("Room \"{}\" is now empty, removing...", roomName);
-
-                    rooms.remove(roomName);
-                }
             }
-        }*/
+        }
 
         onRemoveSession(user, roomName, session);
 
-        log.info("Session \"{}\" left room \"{}\"", session.getId(), roomName);
+        log.info("Session \"{}\" [user \"{}\"] left room \"{}\"", session.getId(), user.email(), roomName);
     }
 
     public void create(String roomName, RoomType roomType) {
@@ -94,8 +96,8 @@ public abstract class AbstractRoomManager {
             throw new RuntimeException("Room manager type mismatch!");
         }
 
-        if (service.isRoomExists(roomName, rooms)) {
-            return;
+        if (validator.isRoomExists(roomName, rooms)) {
+            throw new RuntimeException("Room already exists!");
         }
 
         rooms.putIfAbsent(roomName, factory.create(roomName, roomType));
@@ -109,11 +111,9 @@ public abstract class AbstractRoomManager {
         Room room = rooms.getOrDefault(roomName, null);
 
         if (room != null && room.isEmpty()) {
-            log.info("Room \"{}\" is now empty, removing...", room.getName());
+            log.info("Room \"{}\" is now empty, removing...", roomName);
 
-            rooms.remove(room.getName());
-        } else {
-            throw new RuntimeException("Cannot delete non-empty room or room does not exist!");
+            rooms.remove(roomName);
         }
     }
 

@@ -76,6 +76,19 @@ public class JwtIdentityProvider implements IdentityProvider {
     }
 
     @Override
+    public String resolveAction(ServerHttpRequest request) {
+        var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
+
+        String action = params.getFirst("action");
+
+        if (action == null || action.isBlank()) {
+            throw new IllegalArgumentException("Missing action parameter!");
+        }
+
+        return action;
+    }
+
+    @Override
     public String resolveToken(ServerHttpRequest request) {
         var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
 
@@ -92,6 +105,7 @@ public class JwtIdentityProvider implements IdentityProvider {
         return token;
     }
 
+    @Override
     public String extractToken(ServerHttpRequest request) {
         return request.getHeaders().getFirst("Authorization");
     }

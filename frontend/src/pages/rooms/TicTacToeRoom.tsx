@@ -276,7 +276,7 @@ export default function TicTacToeRoom() {
                                  variant="ghost"
                                  style={style}
                                  onClick={() => handleClick(index)}
-                                 disabled={!!cell || !!winner}
+                                 disabled={!!cell || !!winner || !isGame}
                               >
                                  {cell}
                               </Button>
