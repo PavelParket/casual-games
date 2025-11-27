@@ -1,26 +1,35 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { WSMessage } from "../types/ws";
 import { getAccessToken } from "../utils/TokenManager";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store/store";
 
-export function useWebSocket<T extends WSMessage = WSMessage>(url: string, roomName: string, roomType: string) {
+export function useWebSocket<T extends WSMessage = WSMessage>(baseUrl: string, handlerUrl: string, roomName: string, roomType: string) {
    const [isConnected, setIsConnected] = useState<boolean>(false);
    const [message, setMessage] = useState<T>();
 
-   const actionRef = useRef<string | null>(localStorage.getItem("action") ?? "join");
+   const lastRoom = useSelector((state: RootState) => state.rooms.lastRoom);
+   const actionRef = useRef<string>(lastRoom?.action ?? "join");
+
+   useEffect(() => {
+      if (lastRoom?.action) {
+         actionRef.current = lastRoom.action;
+      }
+   }, [lastRoom?.action]);
 
    const client = useRef<WebSocket | null>(null);
 
    useEffect(() => {
       const token = getAccessToken();
-      const socket = new WebSocket(`${url}?roomName=${roomName}&roomType=${roomType}&action=${actionRef.current}&token=${token}`);
+      const socket = new WebSocket(
+         `${baseUrl}/${handlerUrl}?roomName=${roomName}&roomType=${roomType}&action=${actionRef.current}&token=${token}`
+      );
 
       socket.onopen = () => {
          setIsConnected(true);
-         localStorage.removeItem("action");
       }
       socket.onclose = () => {
          setIsConnected(false);
-         localStorage.removeItem("action");
       }
 
       socket.onmessage = (event) => {
@@ -37,7 +46,7 @@ export function useWebSocket<T extends WSMessage = WSMessage>(url: string, roomN
       return () => {
          socket.close();
       }
-   }, [url, roomName, roomType]);
+   }, [baseUrl, handlerUrl, roomName, roomType]);
 
    const send = useCallback((message: T) => {
       if (client.current?.readyState === WebSocket.OPEN) {

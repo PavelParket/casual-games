@@ -1,4 +1,4 @@
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Toast, Typography, useThemedIcon } from "../../ui";
@@ -9,23 +9,17 @@ import type { RootState } from "../../store/store";
 
 export default function TicTacToeRoom() {
    const email = useSelector((state: RootState) => state.auth.user?.email);
-   const { roomName } = useParams<string>();
+   const lastRoom = useSelector((state: RootState) => state.rooms.lastRoom);
 
    const navigate = useNavigate();
-   const location = useLocation();
-   const locationRoomType = (location.state as { roomType?: string } | null)?.roomType;
 
-   const [roomType, setRoomType] = useState(() => {
-      const storedType = localStorage.getItem("roomType");
-      return locationRoomType ?? storedType;
-   });
+   const { roomName } = useParams<string>();
+   const [roomType, setRoomType] = useState<string | null>(lastRoom?.roomType ?? null);
+   const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom?.handlerUrl ?? null);
 
    const { getInverseIcon } = useThemedIcon();
 
    const [toast, setToast] = useState<{ text: string } | null>(null);
-
-   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws/game", roomName!, roomType!);
-
    const [isGame, setIsGame] = useState(false);
    const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
    const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
@@ -40,25 +34,28 @@ export default function TicTacToeRoom() {
    const winnerRef = useRef(winner);
    const mySymbolRef = useRef(mySymbol);
 
-   useEffect(() => {
-      if (locationRoomType && locationRoomType !== roomType) {
-         setRoomType(locationRoomType);
-      }
-   }, [locationRoomType, roomType]);
+   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws", handlerUrl!, roomName!, roomType!);
 
    useEffect(() => {
-      if (roomType) {
-         localStorage.setItem("roomType", roomType);
+      if (lastRoom?.roomType && lastRoom.roomType !== roomType) {
+         setRoomType(lastRoom.roomType);
       }
-   }, [roomType]);
+      if (lastRoom?.handlerUrl && lastRoom.handlerUrl !== handlerUrl) {
+         setHandlerUrl(lastRoom.handlerUrl);
+      }
+   }, [lastRoom, roomType, handlerUrl]);
 
    useEffect(() => { emailRef.current = email }, [email]);
    useEffect(() => { winnerRef.current = winner }, [winner]);
    useEffect(() => { mySymbolRef.current = mySymbol }, [mySymbol]);
 
    const fetchPlayers = useCallback(async () => {
+      if (!roomName || !roomType) {
+         return;
+      }
+
       try {
-         const response = await RoomAPI.getPlayersInRoom(roomName!, roomType!);
+         const response = await RoomAPI.getPlayersInRoom(roomName, roomType);
          const data = response.data;
 
          setPlayers(data.map((player: string) => ({ name: player, symbol: "" })));
@@ -69,13 +66,17 @@ export default function TicTacToeRoom() {
    }, [roomName, roomType]);
 
    const fetchReadyPlayers = useCallback(async () => {
+      if (!roomName || !roomType) {
+         return;
+      }
+
       try {
-         const response = await RoomAPI.getReadyPlayers(roomName!, roomType!);
+         const response = await RoomAPI.getReadyPlayers(roomName, roomType);
          const data = response.data;
 
          setReadyCount(data);
       } catch (error) {
-         console.error("Failed to fetch players:", error);
+         console.error("Failed to fetch ready players:", error);
       }
    }, [roomName, roomType]);
 
@@ -204,10 +205,6 @@ export default function TicTacToeRoom() {
    };
 
    const handleLeave = () => {
-      if (roomType) {
-         localStorage.removeItem("roomType");
-      }
-
       navigate("/rooms");
    };
 

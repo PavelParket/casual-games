@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState } from "react";
 import { Box, Button, Card, Container, Icon, Modal, Select, Textfield, Typography, useThemedIcon } from "../../ui";
-import { fetchRooms, fetchTypes, type Room } from "../../store/slices/RoomSlice";
+import { clearLastRoom, fetchRooms, fetchTypes, findTypeByRoomType, setLastRoom, type Room } from "../../store/slices/RoomSlice";
 
 export default function Rooms() {
     const navigate = useNavigate();
@@ -15,8 +15,7 @@ export default function Rooms() {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [newRoomName, setNewRoomName] = useState("");
     const [selectedRoomType, setSelectedRoomType] = useState<string>("");
-    const [infoModalOpen, setInfoModalOpen] = useState(false);
-    const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+    const [roomInfo, setRoomInfo] = useState<Room | null>(null);
 
     const { getIcon, getInverseIcon } = useThemedIcon();
 
@@ -26,12 +25,20 @@ export default function Rooms() {
     useEffect(() => {
         dispatch(fetchRooms());
         dispatch(fetchTypes());
+        dispatch(clearLastRoom());
     }, [dispatch]);
 
-    const goToRoom = (roomName: string, roomType: string, action: "join" | "create") => {
-        localStorage.setItem("action", action);
-        localStorage.setItem("roomType", roomType);
-        navigate(`/room/game/${roomName}`, { state: { roomType: roomType } });
+    const goToRoom = (
+        roomName: string,
+        roomType: string,
+        handlerUrl: string,
+        action: "join" | "create"
+    ) => {
+        dispatch(setLastRoom({ roomName, roomType, handlerUrl, action }));
+
+        navigate(`/room/game/${roomName}`, {
+            state: { roomType: roomType, handlerUrl },
+        });
     };
 
     const handleJoinRoom = (room: Room) => {
@@ -39,7 +46,13 @@ export default function Rooms() {
             return;
         }
 
-        goToRoom(room.name, room.type, "join");
+        const roomType = findTypeByRoomType(types, room.type);
+
+        if (!roomType) {
+            return;
+        }
+
+        goToRoom(room.name, roomType.name, roomType.handlerUrl, "join");
     };
 
     const handleCreateRoom = () => {
@@ -47,13 +60,19 @@ export default function Rooms() {
             return;
         }
 
+        const roomType = findTypeByRoomType(types, selectedRoomType);
+        if (!roomType) {
+            return;
+        }
+
+        setNewRoomName("");
+        setSelectedRoomType("");
         setCreateModalOpen(false);
-        goToRoom(newRoomName, selectedRoomType, "create");
+        goToRoom(newRoomName, selectedRoomType, roomType.handlerUrl, "create");
     };
 
     function handleInfo(room: Room): void {
-        setInfoModalOpen(true);
-        setSelectedRoom(room);
+        setRoomInfo(room);
     }
 
     return (
@@ -169,23 +188,18 @@ export default function Rooms() {
             </Box>
 
             <Modal
-                isOpen={infoModalOpen}
+                isOpen={!!roomInfo}
                 onClose={() => {
-                    setInfoModalOpen(false);
-                    setSelectedRoom(null);
+                    setRoomInfo(null);
                 }}
                 title="Room Info"
             >
-                <Typography variant="h3">{selectedRoom?.name}</Typography>
-                <Typography variant="h3">Type: {selectedRoom?.type}</Typography>
-                <Typography variant="body">Current player count: {selectedRoom?.participantCount}</Typography>
+                <Typography variant="h3">{roomInfo?.name}</Typography>
+                <Typography variant="h3">Type: {roomInfo?.type}</Typography>
+                <Typography variant="body">Current player count: {roomInfo?.participantCount}</Typography>
             </Modal>
 
-            <Modal isOpen={createModalOpen} onClose={() => {
-                setCreateModalOpen(false);
-                setNewRoomName("");
-                setSelectedRoomType("");
-            }} title="Create Room">
+            <Modal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Create Room">
                 <Box style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <Textfield
                         value={newRoomName}
@@ -193,7 +207,10 @@ export default function Rooms() {
                         placeholder="Room name"
                     />
                     <Select
-                        options={types.map(type => ({ value: type, label: type }))}
+                        options={types.map((type) => ({
+                            value: type.name,
+                            label: type.label,
+                        }))}
                         value={selectedRoomType}
                         onChange={setSelectedRoomType}
                         placeholder="Choose room type"

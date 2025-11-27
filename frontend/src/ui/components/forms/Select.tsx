@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import "../styles/select.css";
-
+// === Подумать и переименовать в Combo Box
 type SelectOption = {
     value: string;
     label: string;
 };
-
+// === Todo: Добавить проп transparency! ===
 type SelectProps = {
     options: SelectOption[];
     value?: string;
