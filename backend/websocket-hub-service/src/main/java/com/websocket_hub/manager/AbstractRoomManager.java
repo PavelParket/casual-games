@@ -8,7 +8,6 @@ import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.serializer.MessageSerializer;
 import com.websocket_hub.validator.RoomValidator;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.TextMessage;
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class AbstractRoomManager {
 
-    @Getter
     private final Map<String, Room> rooms = new ConcurrentHashMap<>();
 
     private final MessageSerializer<String> serializer;
@@ -168,6 +166,10 @@ public abstract class AbstractRoomManager {
         } catch (Exception e) {
             log.error("Failed to broadcast message", e);
         }
+    }
+
+    public Map<String, Room> getRooms() {
+        return Map.copyOf(rooms);
     }
 
     public List<Room> getActiveRooms() {

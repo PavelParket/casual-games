@@ -20,6 +20,7 @@ export function useWebSocket<T extends WSMessage = WSMessage>(url: string, roomN
       }
       socket.onclose = () => {
          setIsConnected(false);
+         localStorage.removeItem("action");
       }
 
       socket.onmessage = (event) => {

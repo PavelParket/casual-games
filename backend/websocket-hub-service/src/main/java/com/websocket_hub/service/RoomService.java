@@ -1,10 +1,12 @@
 package com.websocket_hub.service;
 
 import com.websocket_hub.domain.dto.client.RoomInfoResponse;
+import com.websocket_hub.domain.dto.client.RoomTypeResponse;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.mapper.RoomMapper;
+import com.websocket_hub.mapper.RoomTypeMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +24,9 @@ public class RoomService {
 
     private final RoomMapper mapper;
 
-    public RoomService(List<AbstractRoomManager> managers, RoomMapper mapper) {
+    private final RoomTypeMapper roomTypeMapper;
+
+    public RoomService(List<AbstractRoomManager> managers, RoomMapper mapper, RoomTypeMapper roomTypeMapper) {
         this.managers = Arrays.stream(RoomType.values())
                 .collect(Collectors.toMap(
                         type -> type,
@@ -32,6 +36,7 @@ public class RoomService {
                                 .orElseThrow(() -> new RuntimeException("No manager found for room type: " + type))
                 ));
         this.mapper = mapper;
+        this.roomTypeMapper = roomTypeMapper;
     }
 
     public List<RoomInfoResponse> getRooms() {
@@ -43,13 +48,7 @@ public class RoomService {
 
     public Map<String, Room> getRoomsByType(RoomType roomType) {
         return getManager(roomType)
-                /*.map(manager -> manager.getActiveRooms().stream()
-                        .collect(Collectors.toMap(
-                                Room::getName,
-                                room -> room
-                        ))
-                )*/
-                .map(manager -> Map.copyOf(manager.getRooms()))
+                .map(AbstractRoomManager::getRooms)
                 .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType));
     }
 
@@ -65,8 +64,10 @@ public class RoomService {
                 .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType));
     }
 
-    public List<RoomType> getTypes() {
-        return Arrays.stream(RoomType.values()).toList();
+    public List<RoomTypeResponse> getTypes() {
+        return Arrays.stream(RoomType.values())
+                .map(roomTypeMapper::toResponse)
+                .toList();
     }
 
     private Optional<AbstractRoomManager> getManager(RoomType roomType) {

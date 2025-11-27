@@ -28,23 +28,27 @@ export default function Rooms() {
         dispatch(fetchTypes());
     }, [dispatch]);
 
+    const goToRoom = (roomName: string, roomType: string, action: "join" | "create") => {
+        localStorage.setItem("action", action);
+        localStorage.setItem("roomType", roomType);
+        navigate(`/room/game/${roomName}`, { state: { roomType: roomType } });
+    };
+
     const handleJoinRoom = (room: Room) => {
         if (!isAuthenticated) {
             return;
         }
 
-        localStorage.setItem("action", "join");
-        navigate(`/room/game/${room.name}`);
+        goToRoom(room.name, room.type, "join");
     };
 
     const handleCreateRoom = () => {
-        if (!newRoomName.trim() || !selectedRoomType) {
+        if (!isAuthenticated || !newRoomName.trim() || !selectedRoomType) {
             return;
         }
 
-        localStorage.setItem("action", "create");
         setCreateModalOpen(false);
-        navigate(`/room/game/${newRoomName}`);
+        goToRoom(newRoomName, selectedRoomType, "create");
     };
 
     function handleInfo(room: Room): void {

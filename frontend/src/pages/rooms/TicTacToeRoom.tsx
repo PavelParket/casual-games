@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Toast, Typography, useThemedIcon } from "../../ui";
@@ -12,12 +12,19 @@ export default function TicTacToeRoom() {
    const { roomName } = useParams<string>();
 
    const navigate = useNavigate();
+   const location = useLocation();
+   const locationRoomType = (location.state as { roomType?: string } | null)?.roomType;
+
+   const [roomType, setRoomType] = useState(() => {
+      const storedType = localStorage.getItem("roomType");
+      return locationRoomType ?? storedType;
+   });
 
    const { getInverseIcon } = useThemedIcon();
 
    const [toast, setToast] = useState<{ text: string } | null>(null);
 
-   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws/game", roomName!, "TIC_TAC_TOE");
+   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws/game", roomName!, roomType!);
 
    const [isGame, setIsGame] = useState(false);
    const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
@@ -33,13 +40,25 @@ export default function TicTacToeRoom() {
    const winnerRef = useRef(winner);
    const mySymbolRef = useRef(mySymbol);
 
+   useEffect(() => {
+      if (locationRoomType && locationRoomType !== roomType) {
+         setRoomType(locationRoomType);
+      }
+   }, [locationRoomType, roomType]);
+
+   useEffect(() => {
+      if (roomType) {
+         localStorage.setItem("roomType", roomType);
+      }
+   }, [roomType]);
+
    useEffect(() => { emailRef.current = email }, [email]);
    useEffect(() => { winnerRef.current = winner }, [winner]);
    useEffect(() => { mySymbolRef.current = mySymbol }, [mySymbol]);
 
    const fetchPlayers = useCallback(async () => {
       try {
-         const response = await RoomAPI.getPlayersInRoom(roomName!, "TIC_TAC_TOE");
+         const response = await RoomAPI.getPlayersInRoom(roomName!, roomType!);
          const data = response.data;
 
          setPlayers(data.map((player: string) => ({ name: player, symbol: "" })));
@@ -47,18 +66,18 @@ export default function TicTacToeRoom() {
       } catch (error) {
          console.error("Failed to fetch players:", error);
       }
-   }, [roomName]);
+   }, [roomName, roomType]);
 
    const fetchReadyPlayers = useCallback(async () => {
       try {
-         const response = await RoomAPI.getReadyPlayers(roomName!, "TIC_TAC_TOE");
+         const response = await RoomAPI.getReadyPlayers(roomName!, roomType!);
          const data = response.data;
 
          setReadyCount(data);
       } catch (error) {
          console.error("Failed to fetch players:", error);
       }
-   }, [roomName]);
+   }, [roomName, roomType]);
 
    const processReset = useCallback(() => {
       showToast("Your opponent left the room. Waiting for a new player...");
@@ -184,7 +203,13 @@ export default function TicTacToeRoom() {
       setReady(true);
    };
 
-   const handleLeave = () => navigate("/rooms");
+   const handleLeave = () => {
+      if (roomType) {
+         localStorage.removeItem("roomType");
+      }
+
+      navigate("/rooms");
+   };
 
    const showToast = (text: string) => setToast({ text });
 
@@ -266,6 +291,7 @@ export default function TicTacToeRoom() {
                               borderRadius: "0",
                               borderRight: "none",
                               borderBottom: "none",
+                              boxShadow: "0 0 0 var(--color-bg)",
                            };
 
                            if (index % 3 !== 2)

@@ -1,6 +1,7 @@
 package com.websocket_hub.controller;
 
 import com.websocket_hub.domain.dto.client.RoomInfoResponse;
+import com.websocket_hub.domain.dto.client.RoomTypeResponse;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.service.RoomService;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,7 @@ public class RoomController {
     }
 
     @GetMapping("/types")
-    public List<RoomType> getTypes() {
+    public List<RoomTypeResponse> getTypes() {
         return service.getTypes();
     }
 }

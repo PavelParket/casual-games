@@ -26,7 +26,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 .setAllowedOriginPatterns("*")
                 .addInterceptors(handshakeInterceptor);
 
-        registry.addHandler(ticTacToeGameRoomHandler, "/ws/game")
+        registry.addHandler(ticTacToeGameRoomHandler, "/ws/t-t-t")
                 .setAllowedOriginPatterns("*")
                 .addInterceptors(handshakeInterceptor);
     }
