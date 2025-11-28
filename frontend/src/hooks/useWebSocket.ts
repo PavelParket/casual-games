@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { WSMessage } from "../types/ws";
 import { getAccessToken } from "../utils/TokenManager";
+import type { LastRoom } from "../types/room";
 
 export function useWebSocket<T extends WSMessage = WSMessage>(baseUrl: string, handlerUrl: string, roomName: string, roomType: string) {
    const [isConnected, setIsConnected] = useState<boolean>(false);
    const [message, setMessage] = useState<T>();
 
-   const lastRoom: { roomName: string, roomType: string, handlerUrl: string } = JSON.parse(localStorage.getItem("lastRoom")!);
+   const lastRoom: LastRoom = JSON.parse(localStorage.getItem("lastRoom")!);
    const actionRef = useRef<string>(localStorage.getItem("action") ?? "join");
-   const roomNameRef = roomName ? roomName : lastRoom.roomName;
-   const roomTypeRef = roomType ? roomType : lastRoom.roomType;
-   const handlerUrlRef = handlerUrl ? handlerUrl : lastRoom.handlerUrl;
+   const roomNameRef = roomName ? roomName : lastRoom.name;
+   const roomTypeRef = roomType ? roomType : lastRoom.type?.name;
+   const handlerUrlRef = handlerUrl ? handlerUrl : lastRoom.type?.handlerUrl;
 
    const client = useRef<WebSocket | null>(null);
 

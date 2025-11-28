@@ -6,16 +6,17 @@ import type { GameMessage } from "../../types/ws";
 import { RoomAPI } from "../../api/WsHubApi";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
+import type { LastRoom } from "../../types/room";
 
 export default function TicTacToeRoom() {
    const email = useSelector((state: RootState) => state.auth.user?.email);
-   const lastRoom: { roomName: string, roomType: string, handlerUrl: string } = JSON.parse(localStorage.getItem("lastRoom")!);
+   const lastRoom: LastRoom = JSON.parse(localStorage.getItem("lastRoom")!);
 
    const navigate = useNavigate();
 
    const { roomName } = useParams<string>();
-   const [roomType, setRoomType] = useState<string | null>(lastRoom.roomType ?? null);
-   const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom.handlerUrl ?? null);
+   const [roomType, setRoomType] = useState<string | null>(lastRoom.type?.name ?? null);
+   const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom.type?.handlerUrl ?? null);
 
    const { getInverseIcon } = useThemedIcon();
 
@@ -41,11 +42,11 @@ export default function TicTacToeRoom() {
          navigate("/rooms");
       }
 
-      if (lastRoom.roomType && lastRoom.roomType !== roomType) {
-         setRoomType(lastRoom.roomType);
+      if (lastRoom.type?.name && lastRoom.type?.name !== roomType) {
+         setRoomType(lastRoom.type?.name);
       }
-      if (lastRoom.handlerUrl && lastRoom.handlerUrl !== handlerUrl) {
-         setHandlerUrl(lastRoom.handlerUrl);
+      if (lastRoom.type?.handlerUrl && lastRoom.type?.handlerUrl !== handlerUrl) {
+         setHandlerUrl(lastRoom.type?.handlerUrl);
       }
    }, [lastRoom, roomType, handlerUrl, navigate]);
 

@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState } from "react";
 import { Box, Button, Card, Container, Icon, Modal, Select, Textfield, Typography, useThemedIcon } from "../../ui";
-import { fetchRooms, fetchTypes, findTypeByRoomType, type Room } from "../../store/slices/RoomSlice";
+import { fetchRooms, fetchTypes, findTypeByRoomType } from "../../store/slices/RoomSlice";
+import type { LastRoom, Room, RoomType } from "../../types/room";
 
 export default function Rooms() {
     const navigate = useNavigate();
@@ -28,18 +29,18 @@ export default function Rooms() {
     }, [dispatch]);
 
     const goToRoom = (
-        roomName: string,
-        roomType: string,
-        handlerUrl: string,
+        roomId: string | null,
+        roomName: string | null,
+        type: RoomType,
         action: "join" | "create"
     ) => {
-        const lastRoom = JSON.stringify({ roomName, roomType, handlerUrl });
+        const lastRoom: LastRoom = { id: roomId ? roomId : null, name: roomName, type: type };
 
-        localStorage.setItem("lastRoom", lastRoom.toString());
+        localStorage.setItem("lastRoom", JSON.stringify(lastRoom));
         localStorage.setItem("action", "join" === action ? "join" : "create");
 
         navigate(`/room/game/${roomName}`, {
-            state: { roomType, handlerUrl },
+            state: { roomType: type.name, handlerUrl: type.handlerUrl },
         });
     };
 
@@ -48,13 +49,13 @@ export default function Rooms() {
             return;
         }
 
-        const roomType = findTypeByRoomType(types, room.type);
+        const type = findTypeByRoomType(types, room.type!);
 
-        if (!roomType) {
+        if (!type) {
             return;
         }
 
-        goToRoom(room.name, roomType.name, roomType.handlerUrl, "join");
+        goToRoom(room.id, room.name, type, "join");
     };
 
     const handleCreateRoom = () => {
@@ -62,15 +63,15 @@ export default function Rooms() {
             return;
         }
 
-        const roomType = findTypeByRoomType(types, selectedRoomType);
-        if (!roomType) {
+        const type = findTypeByRoomType(types, selectedRoomType);
+        if (!type) {
             return;
         }
 
         setNewRoomName("");
         setSelectedRoomType("");
         setCreateModalOpen(false);
-        goToRoom(newRoomName, selectedRoomType, roomType.handlerUrl, "create");
+        goToRoom(null, newRoomName, type, "create");
     };
 
     function handleInfo(room: Room): void {
