@@ -111,12 +111,13 @@
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
     z-index: 1001;
-    max-height: 300px;
+    max-height: 200px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
 }
 
+/* === Without transparency ===*/
 html:not(.dark) .select-dropdown {
     background: #ffffff;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
@@ -128,8 +129,40 @@ html.dark .select-dropdown {
         0 0 8px rgba(255, 255, 255, 0.2);
 }
 
+/* === Transparency easy: 25% === */
+html:not(.dark) .select-dropdown.transparency-easy {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(3px);
+}
+
+html.dark .select-dropdown.transparency-easy {
+    background: rgba(30, 30, 30, 0.75);
+    backdrop-filter: blur(3px);
+}
+
+/* === Transparency medium: 50% === */
+html:not(.dark) .select-dropdown.transparency-medium {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+html.dark .select-dropdown.transparency-medium {
+    background: rgba(30, 30, 30, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+/* === Transparency hard: 75% === */
+html:not(.dark) .select-dropdown.transparency-hard {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(1.5px);
+}
+
+html.dark .select-dropdown.transparency-hard {
+    background: rgba(30, 30, 30, 0.25);
+    backdrop-filter: blur(1.5px);
+}
+
 .select-options {
-    max-height: 250px;
     overflow-y: auto;
     padding: 0.25rem;
 }

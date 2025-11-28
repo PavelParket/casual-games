@@ -14,7 +14,7 @@ export { Form } from "./components/forms/Form";
 export { FormField } from "./components/forms/FormField";
 export { Icon } from "./components/common/Icon";
 export { Textfield } from "./components/forms/Textfield";
-export { Select } from "./components/forms/Select";
+export { ComboBox } from "./components/forms/ComboBox";
 export { Modal } from "./components/layout/Modal";
 export { Toast } from "./components/common/Toast";
 

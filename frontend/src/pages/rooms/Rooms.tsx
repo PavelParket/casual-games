@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState } from "react";
-import { Box, Button, Card, Container, Icon, Modal, Select, Textfield, Typography, useThemedIcon } from "../../ui";
+import { Box, Button, Card, Container, Icon, Modal, ComboBox, Textfield, Typography, useThemedIcon, Toast } from "../../ui";
 import { fetchRooms, fetchTypes, findTypeByRoomType } from "../../store/slices/RoomSlice";
 import type { LastRoom, Room, RoomType } from "../../types/room";
 
@@ -209,7 +209,7 @@ export default function Rooms() {
                         onChange={setNewRoomName}
                         placeholder="Room name"
                     />
-                    <Select
+                    <ComboBox
                         options={types.map((type) => ({
                             value: type.name,
                             label: type.label,
@@ -222,6 +222,8 @@ export default function Rooms() {
                     <Button variant="solid" onClick={handleCreateRoom}>Create</Button>
                 </Box>
             </Modal>
+
+            <Toast message={"text"} onClose={() => console.log("1")} />
         </>
     );
 }

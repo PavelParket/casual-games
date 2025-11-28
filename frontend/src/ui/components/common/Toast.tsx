@@ -37,7 +37,7 @@ export function Toast({ message, duration = 3000, onClose }: ToastProps) {
          <Typography variant="body">
             {message}
          </Typography>
-         <Button variant="ghost" onClick={onClose} style={{ padding: "0.25rem" }}>
+         <Button variant="ghost" onClick={onClose} style={{ padding: "0.25rem", boxShadow: "none" }}>
             X
          </Button>
       </Box>

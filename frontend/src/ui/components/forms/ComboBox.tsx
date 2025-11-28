@@ -1,28 +1,32 @@
 import { useState, useRef, useEffect } from "react";
-import "../styles/select.css";
-// === Подумать и переименовать в Combo Box
-type SelectOption = {
+import "../styles/combobox.css";
+
+type ComboBoxOption = {
     value: string;
     label: string;
 };
-// === Todo: Добавить проп transparency! ===
-type SelectProps = {
-    options: SelectOption[];
+
+type Transparency = "easy" | "medium" | "hard";
+
+type ComboBoxProps = {
+    options: ComboBoxOption[];
     value?: string;
     onChange: (value: string) => void;
     placeholder?: string;
     searchable?: boolean;
     disabled?: boolean;
+    transparency?: Transparency;
 };
 
-export function Select({
+export function ComboBox({
     options,
     value,
     onChange,
     placeholder = "Nothing chosen",
     searchable,
     disabled = false,
-}: SelectProps) {
+    transparency,
+}: ComboBoxProps) {
     const isSearchable = searchable === true;
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -36,6 +40,14 @@ export function Select({
             opt.label.toLowerCase().includes(searchQuery.toLowerCase())
         )
         : options;
+
+    const getTransparencyClass = () => {
+        if (!transparency) {
+            return "";
+        }
+
+        return `transparency-${transparency}`;
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -80,13 +92,11 @@ export function Select({
                 </div>
             ) : (
                 <div
-                    className={`select-trigger ${disabled ? "disabled" : ""} ${isOpen ? "open" : ""
-                        }`}
+                    className={`select-trigger ${disabled ? "disabled" : ""} ${isOpen ? "open" : ""}`}
                     onClick={() => !disabled && setIsOpen(!isOpen)}
                 >
                     <span
-                        className={`select-value ${!selectedOption ? "placeholder" : ""
-                            }`}
+                        className={`select-value ${!selectedOption ? "placeholder" : ""}`}
                     >
                         {displayValue}
                     </span>
@@ -95,14 +105,13 @@ export function Select({
             )}
 
             {isOpen && (
-                <div className="select-dropdown">
+                <div className={`select-dropdown ${getTransparencyClass()}`}>
                     <div className="select-options">
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map((option) => (
                                 <div
                                     key={option.value}
-                                    className={`select-option ${value === option.value ? "selected" : ""
-                                        }`}
+                                    className={`select-option ${value === option.value ? "selected" : ""}`}
                                     onClick={() => handleSelect(option.value)}
                                 >
                                     {option.label}
@@ -119,3 +128,4 @@ export function Select({
         </div>
     );
 }
+
