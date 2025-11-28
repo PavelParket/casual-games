@@ -9,13 +9,13 @@ import type { RootState } from "../../store/store";
 
 export default function TicTacToeRoom() {
    const email = useSelector((state: RootState) => state.auth.user?.email);
-   const lastRoom = useSelector((state: RootState) => state.rooms.lastRoom);
+   const lastRoom: { roomName: string, roomType: string, handlerUrl: string } = JSON.parse(localStorage.getItem("lastRoom")!);
 
    const navigate = useNavigate();
 
    const { roomName } = useParams<string>();
-   const [roomType, setRoomType] = useState<string | null>(lastRoom?.roomType ?? null);
-   const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom?.handlerUrl ?? null);
+   const [roomType, setRoomType] = useState<string | null>(lastRoom.roomType ?? null);
+   const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom.handlerUrl ?? null);
 
    const { getInverseIcon } = useThemedIcon();
 
@@ -37,13 +37,17 @@ export default function TicTacToeRoom() {
    const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws", handlerUrl!, roomName!, roomType!);
 
    useEffect(() => {
-      if (lastRoom?.roomType && lastRoom.roomType !== roomType) {
+      if (!lastRoom) {
+         navigate("/rooms");
+      }
+
+      if (lastRoom.roomType && lastRoom.roomType !== roomType) {
          setRoomType(lastRoom.roomType);
       }
-      if (lastRoom?.handlerUrl && lastRoom.handlerUrl !== handlerUrl) {
+      if (lastRoom.handlerUrl && lastRoom.handlerUrl !== handlerUrl) {
          setHandlerUrl(lastRoom.handlerUrl);
       }
-   }, [lastRoom, roomType, handlerUrl]);
+   }, [lastRoom, roomType, handlerUrl, navigate]);
 
    useEffect(() => { emailRef.current = email }, [email]);
    useEffect(() => { winnerRef.current = winner }, [winner]);
@@ -205,6 +209,7 @@ export default function TicTacToeRoom() {
    };
 
    const handleLeave = () => {
+      localStorage.removeItem("lastRoom");
       navigate("/rooms");
    };
 

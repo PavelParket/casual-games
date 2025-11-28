@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState } from "react";
 import { Box, Button, Card, Container, Icon, Modal, Select, Textfield, Typography, useThemedIcon } from "../../ui";
-import { clearLastRoom, fetchRooms, fetchTypes, findTypeByRoomType, setLastRoom, type Room } from "../../store/slices/RoomSlice";
+import { fetchRooms, fetchTypes, findTypeByRoomType, type Room } from "../../store/slices/RoomSlice";
 
 export default function Rooms() {
     const navigate = useNavigate();
@@ -25,7 +25,6 @@ export default function Rooms() {
     useEffect(() => {
         dispatch(fetchRooms());
         dispatch(fetchTypes());
-        dispatch(clearLastRoom());
     }, [dispatch]);
 
     const goToRoom = (
@@ -34,10 +33,13 @@ export default function Rooms() {
         handlerUrl: string,
         action: "join" | "create"
     ) => {
-        dispatch(setLastRoom({ roomName, roomType, handlerUrl, action }));
+        const lastRoom = JSON.stringify({ roomName, roomType, handlerUrl });
+
+        localStorage.setItem("lastRoom", lastRoom.toString());
+        localStorage.setItem("action", "join" === action ? "join" : "create");
 
         navigate(`/room/game/${roomName}`, {
-            state: { roomType: roomType, handlerUrl },
+            state: { roomType, handlerUrl },
         });
     };
 

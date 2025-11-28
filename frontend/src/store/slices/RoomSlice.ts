@@ -16,17 +16,9 @@ export interface RoomType {
    handlerUrl: string;
 }
 
-export interface LastRoomState {
-   roomName?: string;
-   roomType?: string;
-   handlerUrl?: string;
-   action?: "join" | "create";
-}
-
 export interface RoomState {
    rooms: Room[];
    types: RoomType[];
-   lastRoom: LastRoomState | null;
    isLoading: boolean;
    error: string | null;
 }
@@ -64,7 +56,6 @@ export const findTypeByRoomType = (types: RoomType[], roomName: string): RoomTyp
 const initialState: RoomState = {
    rooms: [],
    types: [],
-   lastRoom: null,
    isLoading: false,
    error: null,
 };
@@ -76,12 +67,6 @@ const roomSlice = createSlice({
       clearRooms: (state) => {
          state.rooms = [];
          state.error = null;
-      },
-      setLastRoom(state, action: { payload: LastRoomState }) {
-         state.lastRoom = action.payload;
-      },
-      clearLastRoom(state) {
-         state.lastRoom = null;
       },
    },
    extraReducers: (builder) => {
@@ -117,5 +102,5 @@ const roomSlice = createSlice({
    },
 });
 
-export const { clearRooms, setLastRoom, clearLastRoom } = roomSlice.actions;
+export const { clearRooms } = roomSlice.actions;
 export default roomSlice.reducer;

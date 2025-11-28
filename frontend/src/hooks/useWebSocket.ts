@@ -1,35 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { WSMessage } from "../types/ws";
 import { getAccessToken } from "../utils/TokenManager";
-import { useSelector } from "react-redux";
-import type { RootState } from "../store/store";
 
 export function useWebSocket<T extends WSMessage = WSMessage>(baseUrl: string, handlerUrl: string, roomName: string, roomType: string) {
    const [isConnected, setIsConnected] = useState<boolean>(false);
    const [message, setMessage] = useState<T>();
 
-   const lastRoom = useSelector((state: RootState) => state.rooms.lastRoom);
-   const actionRef = useRef<string>(lastRoom?.action ?? "join");
-
-   useEffect(() => {
-      if (lastRoom?.action) {
-         actionRef.current = lastRoom.action;
-      }
-   }, [lastRoom?.action]);
+   const lastRoom: { roomName: string, roomType: string, handlerUrl: string } = JSON.parse(localStorage.getItem("lastRoom")!);
+   const actionRef = useRef<string>(localStorage.getItem("action") ?? "join");
+   const roomNameRef = roomName ? roomName : lastRoom.roomName;
+   const roomTypeRef = roomType ? roomType : lastRoom.roomType;
+   const handlerUrlRef = handlerUrl ? handlerUrl : lastRoom.handlerUrl;
 
    const client = useRef<WebSocket | null>(null);
 
    useEffect(() => {
       const token = getAccessToken();
+
       const socket = new WebSocket(
-         `${baseUrl}/${handlerUrl}?roomName=${roomName}&roomType=${roomType}&action=${actionRef.current}&token=${token}`
+         `${baseUrl}/${handlerUrlRef}?roomName=${roomNameRef}&roomType=${roomTypeRef}&action=${actionRef.current}&token=${token}`
       );
 
       socket.onopen = () => {
          setIsConnected(true);
+         localStorage.removeItem("action");
       }
       socket.onclose = () => {
          setIsConnected(false);
+         localStorage.removeItem("action");
       }
 
       socket.onmessage = (event) => {
@@ -46,7 +44,7 @@ export function useWebSocket<T extends WSMessage = WSMessage>(baseUrl: string, h
       return () => {
          socket.close();
       }
-   }, [baseUrl, handlerUrl, roomName, roomType]);
+   }, [baseUrl, handlerUrlRef, roomNameRef, roomTypeRef]);
 
    const send = useCallback((message: T) => {
       if (client.current?.readyState === WebSocket.OPEN) {
