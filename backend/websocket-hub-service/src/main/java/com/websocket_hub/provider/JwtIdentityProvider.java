@@ -1,5 +1,6 @@
 package com.websocket_hub.provider;
 
+import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.jwt.JwtProvider;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class JwtIdentityProvider implements IdentityProvider {
         String token = params.getFirst("token");
 
         if (!provider.isToken(token)) {
-            throw new JwtException("Missing JWT token");
+            throw new JwtException("Missing JWT token!");
         }
 
         if (!provider.validate(token)) {
@@ -38,7 +39,7 @@ public class JwtIdentityProvider implements IdentityProvider {
         String guid = provider.getGuid(token);
 
         if (guid == null || guid.isBlank()) {
-            throw new JwtException("JWT token does not contain GUID");
+            throw new JwtException("JWT token does not contain GUID!");
         }
 
         try {
@@ -54,7 +55,37 @@ public class JwtIdentityProvider implements IdentityProvider {
 
         String roomName = params.getFirst("roomName");
 
-        return (roomName == null || roomName.isBlank()) ? defaultRoom : roomName;
+        if (roomName == null || roomName.isBlank()) {
+            throw new IllegalArgumentException("Missing room name parameter!");
+        }
+
+        return roomName;
+    }
+
+    @Override
+    public RoomType resolveRoomType(ServerHttpRequest request) {
+        var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
+
+        String roomType = params.getFirst("roomType");
+
+        if (roomType == null || roomType.isBlank()) {
+            throw new IllegalArgumentException("Missing room type parameter!");
+        }
+
+        return RoomType.valueOf(roomType);
+    }
+
+    @Override
+    public String resolveAction(ServerHttpRequest request) {
+        var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
+
+        String action = params.getFirst("action");
+
+        if (action == null || action.isBlank()) {
+            throw new IllegalArgumentException("Missing action parameter!");
+        }
+
+        return action;
     }
 
     @Override
@@ -64,7 +95,7 @@ public class JwtIdentityProvider implements IdentityProvider {
         String token = params.getFirst("token");
 
         if (!provider.isToken(token)) {
-            throw new JwtException("Missing JWT token");
+            throw new JwtException("Missing JWT token!");
         }
 
         if (!provider.validate(token)) {
@@ -72,5 +103,10 @@ public class JwtIdentityProvider implements IdentityProvider {
         }
 
         return token;
+    }
+
+    @Override
+    public String extractToken(ServerHttpRequest request) {
+        return request.getHeaders().getFirst("Authorization");
     }
 }

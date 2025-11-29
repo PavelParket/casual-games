@@ -13,14 +13,14 @@ export default function Header() {
       dispatch(logout());
       setTimeout(() => {
          navigate("/");
-      }, 0);
+      }, 200);
    };
 
    return (
       <Navbar
          brand={(
             <Link to="/" style={{ textDecoration: "none" }}>
-               <Typography variant="h3">WebSockets App</Typography>
+               <Typography variant="h3">Casual Games</Typography>
             </Link>
          )}
          right={(

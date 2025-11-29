@@ -9,6 +9,7 @@ import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
+import com.websocket_hub.validator.RoomValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
@@ -27,17 +28,18 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
     public TicTacToeGameRoomManager(
             MessageSerializer<String> serializer,
-            ObjectFactory<Room> roomFactory,
+            ObjectFactory<Room> factory,
             SessionManager sessionManager,
+            RoomValidator validator,
             TicTacToeGameMessageMapper mapper
     ) {
-        super(serializer, roomFactory, sessionManager);
+        super(serializer, factory, sessionManager, validator);
         this.mapper = mapper;
     }
 
     @Override
     public String getName() {
-        return "gameRoomManager";
+        return "TicTacToeGameRoomManager";
     }
 
     @Override
@@ -57,6 +59,11 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
         });
 
         broadcast(roomName, mapper.toResponse(MessageType.SYSTEM, SystemEvent.LEAVE, roomName, "Player " + user.username() + " has left the room " + roomName));
+    }
+
+    @Override
+    public Integer getReadyPlayerCount(String roomName) {
+        return readyPlayers.getOrDefault(roomName, Set.of()).size();
     }
 
     public void markReady(String roomName, String email) {
@@ -79,9 +86,5 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
         readyPlayers.remove(roomName);
 
         log.info("Cleared ready players for room {}", roomName);
-    }
-
-    public Integer getReadyPlayerCount(String roomName) {
-        return readyPlayers.getOrDefault(roomName, Set.of()).size();
     }
 }

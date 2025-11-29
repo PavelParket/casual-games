@@ -34,9 +34,15 @@ body {
    --radius-md: 12px;
    --radius-lg: 20px;
 
-   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
-   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.15);
-   --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.2);
+   --shadow-sm:
+      0 0 1px rgba(0, 0, 0, 0.1),
+      0 1px 3px rgba(0, 0, 0, 0.12);
+   --shadow-md:
+      0 0 4px rgba(0, 0, 0, 0.12),
+      0 4px 6px rgba(0, 0, 0, 0.15);
+   --shadow-lg:
+      0 0 8px rgba(0, 0, 0, 0.12),
+      0 8px 24px rgba(0, 0, 0, 0.2);
 
    /* Background image tokens (set to an URL from /public if needed) */
    --bg-image: url("../assets/images/bg-light.jpg");
@@ -89,6 +95,16 @@ html.dark {
    /* Link interaction tokens (dark theme): lighten on hover/active */
    --link-hover-color: color-mix(in oklab, var(--color-text) 85%, white 15%);
    --link-active-color: color-mix(in oklab, var(--color-text) 70%, white 30%);
+
+   --shadow-sm:
+      0 0 1px rgba(255, 255, 255, 0.1),
+      0 1px 3px rgba(255, 255, 255, 0.12);
+   --shadow-md:
+      0 0 4px rgba(255, 255, 255, 0.12),
+      0 4px 6px rgba(255, 255, 255, 0.15);
+   --shadow-lg:
+      0 0 8px rgba(255, 255, 255, 0.12),
+      0 8px 24px rgba(255, 255, 255, 0.2);
 }
 
 /* Generic link styling */

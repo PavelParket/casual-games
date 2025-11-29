@@ -1,21 +1,27 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Toast, Typography, useThemedIcon } from "../../ui";
 import type { GameMessage } from "../../types/ws";
 import { RoomAPI } from "../../api/WsHubApi";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
+import type { LastRoom } from "../../types/room";
 
 export default function TicTacToeRoom() {
    const email = useSelector((state: RootState) => state.auth.user?.email);
-   const { roomName } = useParams<string>();
+   const lastRoom: LastRoom = JSON.parse(localStorage.getItem("lastRoom")!);
+
    const navigate = useNavigate();
+
+   const { roomName } = useParams<string>();
+   const [roomType, setRoomType] = useState<string | null>(lastRoom.type?.name ?? null);
+   const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom.type?.handlerUrl ?? null);
+
    const { getInverseIcon } = useThemedIcon();
+
    const [toast, setToast] = useState<{ text: string } | null>(null);
-
-   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws/game", roomName ?? "");
-
+   const [isGame, setIsGame] = useState(false);
    const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
    const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
    const [mySymbol, setMySymbol] = useState<string | null>(null);
@@ -25,113 +31,158 @@ export default function TicTacToeRoom() {
    const [readyCount, setReadyCount] = useState(0);
    const [totalPlayers, setTotalPlayers] = useState(0);
 
+   const emailRef = useRef(email);
+   const winnerRef = useRef(winner);
+   const mySymbolRef = useRef(mySymbol);
+
+   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws", handlerUrl!, roomName!, roomType!);
+
+   useEffect(() => {
+      if (!lastRoom) {
+         navigate("/rooms");
+      }
+
+      if (lastRoom.type?.name && lastRoom.type?.name !== roomType) {
+         setRoomType(lastRoom.type?.name);
+      }
+      if (lastRoom.type?.handlerUrl && lastRoom.type?.handlerUrl !== handlerUrl) {
+         setHandlerUrl(lastRoom.type?.handlerUrl);
+      }
+   }, [lastRoom, roomType, handlerUrl, navigate]);
+
+   useEffect(() => { emailRef.current = email }, [email]);
+   useEffect(() => { winnerRef.current = winner }, [winner]);
+   useEffect(() => { mySymbolRef.current = mySymbol }, [mySymbol]);
+
    const fetchPlayers = useCallback(async () => {
+      if (!roomName || !roomType) {
+         return;
+      }
+
       try {
-         const response = await RoomAPI.getPlayersInRoom(roomName!);
+         const response = await RoomAPI.getPlayersInRoom(roomName, roomType);
          const data = response.data;
 
-         setPlayers(data.map(player => ({ name: player, symbol: "" })));
+         setPlayers(data.map((player: string) => ({ name: player, symbol: "" })));
          setTotalPlayers(data.length);
       } catch (error) {
          console.error("Failed to fetch players:", error);
       }
-   }, [roomName]);
+   }, [roomName, roomType]);
 
    const fetchReadyPlayers = useCallback(async () => {
+      if (!roomName || !roomType) {
+         return;
+      }
+
       try {
-         const response = await RoomAPI.getReadyPlayers(roomName!);
+         const response = await RoomAPI.getReadyPlayers(roomName, roomType);
          const data = response.data;
 
          setReadyCount(data);
       } catch (error) {
-         console.error("Failed to fetch players:", error);
+         console.error("Failed to fetch ready players:", error);
       }
-   }, [roomName]);
+   }, [roomName, roomType]);
+
+   const processReset = useCallback(() => {
+      showToast("Your opponent left the room. Waiting for a new player...");
+      setBoard(Array(9).fill(null));
+      setCurrentPlayer(null);
+      setMySymbol(null);
+      setWinner(null);
+      setReady(false);
+      setIsGame(false);
+   }, []);
+
+   const processStart = useCallback((message: GameMessage) => {
+      setBoard(message.board!);
+      setCurrentPlayer(message.nextPlayer!);
+      setMySymbol(message.playersSymbols![emailRef.current!]);
+      setPlayers(prev =>
+         prev.map(p => ({
+            ...p,
+            symbol: message.playersSymbols![p.name] ?? "",
+         }))
+      );
+      setIsGame(true);
+   }, []);
+
+   const processMove = (message: GameMessage) => {
+      setBoard(message.board!);
+      setCurrentPlayer(message.nextPlayer!);
+   };
+
+   const processWin = useCallback((message: GameMessage) => {
+      setBoard(message.board!);
+      setWinner(message.player!);
+
+      if (winnerRef.current === mySymbolRef.current) {
+         showToast("You are the winner!");
+      } else {
+         showToast(`Your opponent won!`);
+      }
+      setIsGame(false);
+   }, []);
+
+   const processDraw = useCallback((message: GameMessage) => {
+      setBoard(message.board!);
+      setWinner(message.winner!);
+      showToast(message.message!);
+      setIsGame(false);
+   }, []);
 
    useEffect(() => {
-      if (isConnected && message) {
-         switch (message.event) {
-            case "joined":
-               fetchPlayers();
-               fetchReadyPlayers();
+      if (!isConnected || !message) {
+         return;
+      }
+
+      switch (message.event) {
+         case "joined":
+            fetchPlayers();
+            fetchReadyPlayers();
+            showToast(message.message!);
+            break;
+
+         case "left":
+            if (isGame) {
+               processReset();
+            } else {
                showToast(message.message!);
-               break;
-
-            case "left":
-               if (currentPlayer && mySymbol) {
-                  showToast("Your opponent left the room. Waiting for a new player...");
-                  setBoard(Array(9).fill(null));
-                  setCurrentPlayer(null);
-                  setMySymbol(null);
-                  setWinner(null);
-                  setReady(false);
-               } else {
-                  showToast(message.message!);
-               }
-
-               fetchPlayers();
-               fetchReadyPlayers();
-
-               break;
-
-            case "ready":
-               showToast(message.message!);
-               fetchReadyPlayers();
-               break;
-
-            case "start":
-               setBoard(message.board!);
-               setCurrentPlayer(message.nextPlayer!);
-
-               if (message.playersSymbols) {
-                  if (email && message.playersSymbols[email]) {
-                     setMySymbol(message.playersSymbols[email]);
-                  } else {
-                     console.log("Email not found", email, message.playersSymbols);
-                  }
-
-                  setPlayers(prev =>
-                     prev.map(p => ({
-                        ...p,
-                        symbol: message.playersSymbols![p.name] ?? "",
-                     }))
-                  );
-               }
-
-               break;
-
-            case "move":
-               setBoard(message.board!);
-               setCurrentPlayer(message.nextPlayer!);
-
-               break;
-
-            case "winner X":
-            case "winner O": {
-               setBoard(message.board!);
-               setWinner(message.player!);
-
-               if (winner === mySymbol) {
-                  showToast("You are the winner!");
-               } else {
-                  showToast(`Your opponent won!`);
-               }
-
-               break;
             }
 
-            case "draw":
-               setBoard(message.board!);
-               setWinner(message.winner!);
-               showToast(message.message!);
+            fetchPlayers();
+            fetchReadyPlayers();
 
-               break;
+            break;
 
-            default:
-               break;
+         case "ready":
+            fetchReadyPlayers();
+            showToast(message.message!);
+            break;
+
+         case "start":
+            processStart(message);
+            break;
+
+         case "move":
+            processMove(message);
+            break;
+
+         case "winner X":
+         case "winner O": {
+            processWin(message);
+            break;
          }
+
+         case "draw":
+            processDraw(message);
+            break;
+
+         default:
+            break;
       }
-   }, [fetchPlayers, fetchReadyPlayers, email, isConnected, message, currentPlayer, mySymbol, winner, readyCount, totalPlayers]);
+   }, [isConnected, message, fetchPlayers, fetchReadyPlayers, isGame, processStart, processDraw, processReset, processWin]);
 
    const handleClick = (index: number) => {
       if (!isConnected || board[index] || winner || currentPlayer !== mySymbol) {
@@ -158,11 +209,12 @@ export default function TicTacToeRoom() {
       setReady(true);
    };
 
-   const handleLeave = () => navigate("/rooms");
+   const handleLeave = () => {
+      localStorage.removeItem("lastRoom");
+      navigate("/rooms");
+   };
 
    const showToast = (text: string) => setToast({ text });
-
-   const gameStarted = currentPlayer !== null && mySymbol !== null;
 
    return (
       <Box style={{
@@ -192,7 +244,7 @@ export default function TicTacToeRoom() {
                      ? winner === "Draw"
                         ? "Draw!"
                         : `Winner: ${winner}`
-                     : gameStarted
+                     : isGame
                         ? `Turn: ${currentPlayer}`
                         : `Ready players: ${readyCount} / ${totalPlayers}`
                   }
@@ -242,6 +294,7 @@ export default function TicTacToeRoom() {
                               borderRadius: "0",
                               borderRight: "none",
                               borderBottom: "none",
+                              boxShadow: "0 0 0 var(--color-bg)",
                            };
 
                            if (index % 3 !== 2)
@@ -255,7 +308,7 @@ export default function TicTacToeRoom() {
                                  variant="ghost"
                                  style={style}
                                  onClick={() => handleClick(index)}
-                                 disabled={!!cell || !!winner}
+                                 disabled={!!cell || !!winner || !isGame}
                               >
                                  {cell}
                               </Button>

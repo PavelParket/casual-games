@@ -10,8 +10,8 @@ export default function Footer() {
       }}>
          <Container>
             <Stack direction="row" align="center" justify="space-between" style={{ padding: "16px 0", minHeight: "50px" }}>
-               <Typography variant="caption">© {new Date().getFullYear()} WebSockets App</Typography>
-               <Typography variant="caption">Built with custom UI</Typography>
+               <Typography variant="caption">© {new Date().getFullYear()} Casual Games</Typography>
+               <Typography variant="caption">Built with custom UI: Pavel & Timofei</Typography>
             </Stack>
          </Container>
       </footer>
