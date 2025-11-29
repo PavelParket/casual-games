@@ -1,9 +1,8 @@
 package com.game_service.tic_tac_toe.util;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 public class GameLogicUtils {
 
     public static String nextPlayerSymbol(String current) {
@@ -20,18 +19,21 @@ public class GameLogicUtils {
     }
 
     public static String checkWinner(String[] board) {
-        for (int i = 0; i < 3; i = i + 3) {
+        // Rows
+        for (int i = 0; i < 9; i += 3) {
             if (board[i] != null && board[i].equals(board[i + 1]) && board[i + 1].equals(board[i + 2])) {
                 return board[i];
             }
         }
 
+        // Columns
         for (int i = 0; i < 3; i++) {
             if (board[i] != null && board[i].equals(board[i + 3]) && board[i + 3].equals(board[i + 6])) {
                 return board[i];
             }
         }
 
+        // Diagonals
         if (board[0] != null && board[0].equals(board[4]) && board[4].equals(board[8])) {
             return board[0];
         }

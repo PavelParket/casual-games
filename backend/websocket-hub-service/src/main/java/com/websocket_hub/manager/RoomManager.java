@@ -7,6 +7,7 @@ import com.websocket_hub.domain.enums.SystemEvent;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
+import com.websocket_hub.validator.RoomValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -20,17 +21,18 @@ public class RoomManager extends AbstractRoomManager {
 
     public RoomManager(
             MessageSerializer<String> serializer,
-            ObjectFactory<Room> roomFactory,
+            ObjectFactory<Room> factory,
             SessionManager sessionManager,
+            RoomValidator validator,
             @Qualifier("messageMapperImpl") MessageMapper mapper
     ) {
-        super(serializer, roomFactory, sessionManager);
+        super(serializer, factory, sessionManager, validator);
         this.mapper = mapper;
     }
 
     @Override
     public String getName() {
-        return "roomManager";
+        return "RoomManager";
     }
 
     @Override
