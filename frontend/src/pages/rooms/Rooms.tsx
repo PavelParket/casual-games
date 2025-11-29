@@ -39,7 +39,7 @@ export default function Rooms() {
         localStorage.setItem("lastRoom", JSON.stringify(lastRoom));
         localStorage.setItem("action", "join" === action ? "join" : "create");
 
-        navigate(`/room/game/${roomName}`, {
+        navigate(`/room/${type.handlerUrl}/${roomName}`, {
             state: { roomType: type.name, handlerUrl: type.handlerUrl },
         });
     };
