@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState } from "react";
-import { Box, Button, Card, Container, Icon, Modal, ComboBox, Textfield, Typography, useThemedIcon, Toast } from "../../ui";
+import { Box, Button, Card, Container, Icon, Modal, ComboBox, Textfield, Typography, useThemedIcon } from "../../ui";
 import { fetchRooms, fetchTypes, findTypeByRoomType } from "../../store/slices/RoomSlice";
 import type { LastRoom, Room, RoomType } from "../../types/room";
 
@@ -39,7 +39,7 @@ export default function Rooms() {
         localStorage.setItem("lastRoom", JSON.stringify(lastRoom));
         localStorage.setItem("action", "join" === action ? "join" : "create");
 
-        navigate(`/room/game/${roomName}`, {
+        navigate(`/room/${type.handlerUrl}/${roomName}`, {
             state: { roomType: type.name, handlerUrl: type.handlerUrl },
         });
     };
@@ -222,8 +222,6 @@ export default function Rooms() {
                     <Button variant="solid" onClick={handleCreateRoom}>Create</Button>
                 </Box>
             </Modal>
-
-            <Toast message={"text"} onClose={() => console.log("1")} />
         </>
     );
 }

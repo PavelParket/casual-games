@@ -9,7 +9,7 @@ export { List } from "./components/common/List";
 export { ThemeSwitcher } from "./components/common/ThemeSwitcher";
 export { Grid } from "./components/layout/Grid";
 export { Stack } from "./components/layout/Stack";
-export { Navbar } from "./components/navigation/Navbar";
+export { AppBar } from "./components/navigation/AppBar";
 export { Form } from "./components/forms/Form";
 export { FormField } from "./components/forms/FormField";
 export { Icon } from "./components/common/Icon";
