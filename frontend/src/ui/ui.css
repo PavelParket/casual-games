@@ -18,6 +18,7 @@ body {
 /* Light theme by default */
 :root {
    --color-bg: #ffffff;
+   --color-bg-soft: rgba(255, 255, 255, 0.9);
    --color-bg-glass: rgba(255, 255, 255, 0.6);
    /* Unified glass surface + blur preset */
    --glass-surface: rgba(255, 255, 255, 0.6);
@@ -66,6 +67,7 @@ body {
 /* Dark theme */
 html.dark {
    --color-bg: #121212;
+   --color-bg-soft: rgba(0, 0, 0, 0.9);
    --color-bg-glass: rgba(30, 30, 30, 0.7);
    /* Unified glass surface + blur preset */
    --glass-surface: rgba(30, 30, 30, 0.7);

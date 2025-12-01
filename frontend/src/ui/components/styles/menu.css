@@ -1,0 +1,36 @@
+.menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+.menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1000;
+}
+
+.menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--color-bg-soft);
+    backdrop-filter: blur(var(--glass-blur));
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-md);
+    min-width: 200px;
+    padding: 0.5rem 0;
+    margin: 0;
+}
+
+.menu-item {
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    min-height: 2rem;
+    margin: 0 0.5rem;
+    padding: 0 1rem;
+    color: var(--color-text);
+    background: transparent;
+    transition: background-color 0.2s ease;
+}
