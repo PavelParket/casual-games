@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom"
-import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem } from "../ui"
+import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, useThemedIcon, Box, Icon, useTheme } from "../ui"
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
 import { logout } from "../store/slices/AuthSlice";
@@ -8,6 +8,8 @@ export default function Header() {
    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
    const dispatch = useDispatch<AppDispatch>();
    const navigate = useNavigate();
+
+   const { theme, getIcon } = useThemedIcon();
 
    const handleLogout = () => {
       dispatch(logout());
@@ -40,12 +42,24 @@ export default function Header() {
                         <MenuItem onClick={() => navigate("/settings")}>
                            Settings
                         </MenuItem>
+
+                        <Box
+                           style={{
+                              height: "2.5rem",
+                              margin: "0 0.5rem",
+                              padding: "0 1rem",
+                              display: "flex",
+                              alignContent: "center"
+                           }}
+                        >
+                           <ThemeSwitcher
+                              size="md"
+                              icon={<Icon src={theme === "light" ? getIcon("sun") : getIcon("moonStars")} alt="sunOrMoom" size={30} />}
+                           />
+                        </Box>
+
                         <MenuItem onClick={handleLogout}>
                            Logout
-                        </MenuItem>
-
-                        <MenuItem>
-                           <ThemeSwitcher />
                         </MenuItem>
                      </MenuList>
                   </Menu>

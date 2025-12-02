@@ -62,6 +62,10 @@ body {
    /* Link interaction tokens (light theme): darken on hover/active */
    --link-hover-color: color-mix(in oklab, var(--color-text) 85%, black 15%);
    --link-active-color: color-mix(in oklab, var(--color-text) 70%, black 30%);
+
+   /* Switch button tokens */
+   --swtch-btn-bg: rgba(220, 220, 220, 0.9);
+   --swtch-btn-thumb: rgba(0, 0, 0, 0.9);
 }
 
 /* Dark theme */
@@ -107,6 +111,10 @@ html.dark {
    --shadow-lg:
       0 0 8px rgba(255, 255, 255, 0.12),
       0 8px 24px rgba(255, 255, 255, 0.2);
+
+   /* Switch button tokens */
+   --swtch-btn-bg: rgba(90, 90, 90, 0.9);
+   --swtch-btn-thumb: rgba(255, 255, 255, 0.9);
 }
 
 /* Generic link styling */
@@ -139,4 +147,19 @@ html.high-contrast {
 
 .text-color-inverse {
    color: var(--color-text-inverse);
+}
+
+.theme-switch-sm {
+   --thumb-diameter: 16px;
+   --thumb-margin: 2px;
+}
+
+.theme-switch-md {
+   --thumb-diameter: 19px;
+   --thumb-margin: 3px;
+}
+
+.theme-switch-lg {
+   --thumb-diameter: 22px;
+   --thumb-margin: 4px;
 }

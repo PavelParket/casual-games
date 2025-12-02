@@ -30,7 +30,17 @@
     min-height: 2rem;
     margin: 0 0.5rem;
     padding: 0 1rem;
+    border-radius: var(--radius-md);
     color: var(--color-text);
     background: transparent;
+    cursor: pointer;
     transition: background-color 0.2s ease;
+}
+
+.menu-item:hover {
+    background-color: var(--btn-ghost-hover-bg);
+}
+
+.menu-item:active {
+    background-color: var(--btn-ghost-active-bg);
 }
