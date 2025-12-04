@@ -22,3 +22,5 @@ export { Menu, MenuList, MenuItem } from "./components/navigation/Menu";
 export { ThemeProvider } from "./theme/ThemeProvider"
 export { useTheme } from "./theme/useTheme";
 export { useThemedIcon } from "./hooks/useThemedIcon";
+
+export { classNames } from "./utils/classNames";

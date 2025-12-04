@@ -1,0 +1,34 @@
+.app-bar {
+    width: 100%;
+    z-index: 100;
+    background: var(--glass-surface);
+    backdrop-filter: blur(var(--glass-blur));
+    box-shadow: var(--shadow-sm);
+}
+
+.app-bar-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    padding: 0 2rem;
+}
+
+.app-bar-left {
+    flex-shrink: 0;
+}
+
+.app-bar-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 1rem;
+}
+
+.app-bar-right {
+    flex-shrink: 0;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}

@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes } from "react";
 import "../styles/button.css";
+import { classNames } from "../../utils/classNames";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
    variant?: "solid" | "outline" | "ghost";
@@ -7,7 +8,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 export function Button({ variant = "solid", className, children, ...props }: ButtonProps) {
    return (
-      <button {...props} className={`btn btn-${variant} ${className}`}>
+      <button {...props} className={classNames("btn", `btn-${variant}`, className)}>
          {children}
       </button>
    );

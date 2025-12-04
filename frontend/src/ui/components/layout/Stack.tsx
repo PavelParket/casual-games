@@ -1,4 +1,5 @@
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
+import { classNames } from "../../utils/classNames";
 
 type StackProps = HTMLAttributes<HTMLDivElement> & {
    children: ReactNode;
@@ -11,16 +12,18 @@ type StackProps = HTMLAttributes<HTMLDivElement> & {
 
 export function Stack({
    children,
-   style,
    direction = "column",
-   gap,
-   align,
-   justify,
+   gap = "1rem",
+   align = "stretch",
+   justify = "flex-start",
    wrap,
+   style,
+   className,
    ...rest
 }: StackProps) {
    return (
       <div
+         className={classNames(className)}
          style={{
             display: "flex",
             flexDirection: direction,

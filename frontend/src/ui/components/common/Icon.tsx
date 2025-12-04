@@ -1,14 +1,16 @@
 import type { ImgHTMLAttributes } from "react";
+import { classNames } from "../../utils/classNames";
 
 type IconProps = ImgHTMLAttributes<HTMLImageElement> & {
    size?: number;
    rounded?: boolean;
 };
 
-export function Icon({ size = 20, rounded, style, ...rest }: IconProps) {
+export function Icon({ size = 20, rounded, style, className, ...rest }: IconProps) {
    return (
       <img
          {...rest}
+         className={classNames(className)}
          style={{
             width: size,
             height: size,

@@ -1,14 +1,16 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import { useTheme } from "../../theme/useTheme";
 import "../styles/themeswitcher.css";
+import { useTheme } from "../../theme/useTheme";
+import { classNames } from "../../utils/classNames";
 
 type ThemeSwitcherProps = {
    size?: "sm" | "md" | "lg";
    icon?: ReactNode;
    style?: CSSProperties;
+   className?: string;
 };
 
-export function ThemeSwitcher({ size = "sm", icon, style }: ThemeSwitcherProps) {
+export function ThemeSwitcher({ size = "sm", icon, style, className }: ThemeSwitcherProps) {
    const { theme, toggleTheme } = useTheme();
    const [checked, setChecked] = useState(theme === "dark");
 
@@ -21,7 +23,7 @@ export function ThemeSwitcher({ size = "sm", icon, style }: ThemeSwitcherProps) 
    };
 
    return (
-      <label className={`theme-switch theme-switch-${size}`} style={style}>
+      <label className={classNames("theme-switch", `theme-switch-${size}`, className)} style={style}>
          <input
             type="checkbox"
             checked={checked}

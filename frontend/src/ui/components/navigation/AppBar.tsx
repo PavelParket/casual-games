@@ -1,69 +1,56 @@
 import type { HTMLAttributes, ReactNode } from "react";
+import "../styles/appbar.css";
+import { classNames } from "../../utils/classNames";
 
-type AppBarProps = {
+type AppBarProps = HTMLAttributes<HTMLElement> & {
    left?: ReactNode;
    center?: ReactNode;
    right?: ReactNode;
    position?: "static" | "sticky" | "fixed";
    height?: string | number;
    paddingX?: string | number;
-   className?: string;
-   style?: React.CSSProperties;
-} & HTMLAttributes<HTMLElement>;
+};
 
 export function AppBar({
    left,
    center,
    right,
    position = "sticky",
-   height = 60,
-   paddingX = "2rem",
-   className,
+   height,
+   paddingX,
    style,
+   className,
    ...rest
 }: AppBarProps) {
    return (
       <header
-         className={className}
+         className={classNames("app-bar", className)}
          style={{
             position,
             top: position === "sticky" || position === "fixed" ? 0 : undefined,
-            zIndex: 100,
-            width: "100%",
-            background: "var(--glass-surface)",
-            backdropFilter: `blur(var(--glass-blur))`,
-            boxShadow: "var(--shadow-sm)",
             ...style,
          }}
          {...rest}
       >
          <div
+            className="app-bar-content"
             style={{
-               display: "flex",
-               alignItems: "center",
-               justifyContent: "space-between",
                height,
-               padding: `0 ${paddingX}`,
+               paddingLeft: `${paddingX}`,
+               paddingRight: `${paddingX}`,
             }}
          >
-            <div style={{ flexShrink: 0 }}>
+            <div className="app-bar-left">
                {left}
             </div>
 
             {center && (
-               <div
-                  style={{
-                     flex: 1,
-                     display: "flex",
-                     justifyContent: "center",
-                     alignItems: "center"
-                  }}
-               >
+               <div className="app-bar-center">
                   {center}
                </div>
             )}
 
-            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div className="app-bar-right">
                {right}
             </div>
          </div>
