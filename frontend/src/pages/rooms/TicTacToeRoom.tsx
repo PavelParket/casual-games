@@ -229,7 +229,7 @@ export default function TicTacToeRoom() {
          <Container>
             <Box style={{ padding: "2rem 0" }}>
                <Typography variant="h2" style={{ textAlign: "center" }}>
-                  Tic-Tae-Toe
+                  Tic-Tae-Toe: {roomName}
                </Typography>
             </Box>
 

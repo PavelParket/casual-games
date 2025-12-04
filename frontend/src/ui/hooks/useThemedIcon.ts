@@ -13,5 +13,5 @@ export const useThemedIcon = () => {
       return theme === 'dark' ? Icons.dark[iconName] : Icons.light[iconName];
    }, [theme]);
 
-   return { getIcon, getInverseIcon };
+   return { theme, getIcon, getInverseIcon };
 };
