@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Card, Container, Form, FormField, Typography } from "../../ui";
+import { Box, Button, Card, Container, Divider, Form, FormField, Typography } from "../../ui";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
@@ -68,12 +68,14 @@ export default function Login() {
                   </Form>
 
                   {error && (
-                     <Typography variant="caption" style={{ color: "red", marginTop: 10, display: "block" }}>
+                     <Typography variant="caption" style={{ color: "red", marginTop: "1rem", display: "block" }}>
                         {error}
                      </Typography>
                   )}
 
-                  <Typography variant="caption" style={{ marginTop: 20, display: "block" }}>
+                  <Divider variant="middle" style={{ marginTop: "1rem", marginBottom: "1rem" }} />
+
+                  <Typography variant="caption" style={{ display: "block" }}>
                      Don't have an account?
                      <Link to="/register" className="link" style={{ marginLeft: 5 }}>
                         Sign Up
