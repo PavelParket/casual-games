@@ -1,10 +1,9 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 import "../styles/switch.css";
 import { classNames } from "../../utils/classNames";
 
 type SwitchProps = {
     size?: "sm" | "md" | "lg";
-    icon?: ReactNode;
     style?: CSSProperties;
     className?: string;
     checked: boolean;
@@ -14,7 +13,6 @@ type SwitchProps = {
 
 export function Switch({
     size = "sm",
-    icon,
     style,
     className,
     checked,

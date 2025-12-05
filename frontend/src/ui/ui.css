@@ -149,17 +149,17 @@ html.high-contrast {
    color: var(--color-text-inverse);
 }
 
-.theme-switch-sm {
+.switch-sm {
    --thumb-diameter: 16px;
    --thumb-margin: 2px;
 }
 
-.theme-switch-md {
+.switch-md {
    --thumb-diameter: 19px;
    --thumb-margin: 3px;
 }
 
-.theme-switch-lg {
+.switch-lg {
    --thumb-diameter: 22px;
    --thumb-margin: 4px;
 }
