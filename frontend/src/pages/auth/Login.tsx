@@ -59,8 +59,6 @@ export default function Login() {
                         onChange={handleChange}
                         required
                         rounded
-                        endAdornmentSrc={getIcon("safeLock")}
-                        endAdornmentAlt="lock"
                      />
                      <Button type="submit" variant="solid" disabled={isLoading}>
                         {isLoading ? "Loading..." : "Sign In"}
