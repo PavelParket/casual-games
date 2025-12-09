@@ -12,7 +12,7 @@ type Transparency = "easy" | "medium" | "hard";
 type ComboBoxProps = HTMLAttributes<HTMLDivElement> & {
     options: ComboBoxOption[];
     value?: string;
-    onChange: (value: string) => void;
+    onValueChange: (value: string) => void;
     placeholder?: string;
     searchable?: boolean;
     disabled?: boolean;
@@ -22,7 +22,7 @@ type ComboBoxProps = HTMLAttributes<HTMLDivElement> & {
 export function ComboBox({
     options,
     value,
-    onChange,
+    onValueChange,
     placeholder = "Nothing chosen",
     searchable,
     disabled = false,
@@ -73,7 +73,7 @@ export function ComboBox({
     }, [isOpen]);
 
     const handleSelect = (optionValue: string) => {
-        onChange(optionValue);
+        onValueChange(optionValue);
         setIsOpen(false);
         setSearchQuery("");
     };
@@ -131,4 +131,3 @@ export function ComboBox({
         </div>
     );
 }
-

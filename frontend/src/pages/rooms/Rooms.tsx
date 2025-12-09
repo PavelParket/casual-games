@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Box, Button, Card, Container, Icon, Modal, ComboBox, Textfield, Typography, useThemedIcon } from "../../ui";
 import { fetchRooms, fetchTypes, findTypeByRoomType } from "../../store/slices/RoomSlice";
 import type { LastRoom, Room, RoomType } from "../../types/room";
+import { sanitizeRoomName, setSecureLocalStorage } from "../../utils/SecurityUtils";
 
 export default function Rooms() {
     const navigate = useNavigate();
@@ -23,6 +24,8 @@ export default function Rooms() {
     const [hovered, setHovered] = useState(false);
     const [pressed, setPressed] = useState(false);
 
+    const [validationError, setValidationError] = useState<string>("");
+
     useEffect(() => {
         dispatch(fetchRooms());
         dispatch(fetchTypes());
@@ -34,12 +37,19 @@ export default function Rooms() {
         type: RoomType,
         action: "join" | "create"
     ) => {
+        const sanitizedRoomName = sanitizeRoomName(roomName!);
+
+        if (!sanitizedRoomName) {
+            setValidationError("Invalid room name");
+            return;
+        }
+
         const lastRoom: LastRoom = { id: roomId ? roomId : null, name: roomName, type: type };
 
-        localStorage.setItem("lastRoom", JSON.stringify(lastRoom));
-        localStorage.setItem("action", "join" === action ? "join" : "create");
+        setSecureLocalStorage("lastRoom", lastRoom);
+        setSecureLocalStorage("action", "join" === action ? "join" : "create");
 
-        navigate(`/room/${type.handlerUrl}/${roomName}`, {
+        navigate(`/room/${type.handlerUrl}/${encodeURIComponent(sanitizedRoomName)}`, {
             state: { roomType: type.name, handlerUrl: type.handlerUrl },
         });
     };
@@ -59,7 +69,27 @@ export default function Rooms() {
     };
 
     const handleCreateRoom = () => {
-        if (!isAuthenticated || !newRoomName.trim() || !selectedRoomType) {
+        setValidationError("");
+
+        if (!isAuthenticated) {
+            setValidationError("You must be authenticated");
+            return;
+        }
+
+        const sanitizedName = sanitizeRoomName(newRoomName.trim());
+
+        if (!sanitizedName) {
+            setValidationError("Room name is required and must contain only letters, numbers, spaces, hyphens and underscores");
+            return;
+        }
+
+        if (sanitizedName.length < 3) {
+            setValidationError("Room name must be at least 3 characters long");
+            return;
+        }
+
+        if (!selectedRoomType) {
+            setValidationError("Please select a room type");
             return;
         }
 
@@ -70,11 +100,18 @@ export default function Rooms() {
 
         setNewRoomName("");
         setSelectedRoomType("");
+        setValidationError("");
         setCreateModalOpen(false);
         goToRoom(null, newRoomName, type, "create");
     };
 
-    function handleInfo(room: Room): void {
+    const handleRoomNameChange = (value: string): void => {
+        const sanitized = sanitizeRoomName(value);
+        setNewRoomName(sanitized);
+        setValidationError("");
+    };
+
+    const handleInfo = (room: Room): void => {
         setRoomInfo(room);
     }
 
@@ -202,11 +239,18 @@ export default function Rooms() {
                 <Typography variant="body">Current player count: {roomInfo?.participantCount}</Typography>
             </Modal>
 
-            <Modal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Create Room">
+            <Modal
+                isOpen={createModalOpen}
+                onClose={() => {
+                    setCreateModalOpen(false);
+                    setValidationError("");
+                }}
+                title="Create Room"
+            >
                 <Box style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <Textfield
                         value={newRoomName}
-                        onChange={setNewRoomName}
+                        onChange={handleRoomNameChange}
                         placeholder="Room name"
                     />
                     <ComboBox
@@ -215,10 +259,17 @@ export default function Rooms() {
                             label: type.label,
                         }))}
                         value={selectedRoomType}
-                        onChange={setSelectedRoomType}
+                        onValueChange={setSelectedRoomType}
                         placeholder="Choose room type"
                         searchable
                     />
+
+                    {validationError && (
+                        <Typography variant="caption" style={{ color: "red" }}>
+                            {validationError}
+                        </Typography>
+                    )}
+
                     <Button variant="solid" onClick={handleCreateRoom}>Create</Button>
                 </Box>
             </Modal>
