@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom"
-import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, useThemedIcon, Box, Icon } from "../ui"
+import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Box } from "../ui"
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
 import { logout } from "../store/slices/AuthSlice";
@@ -52,10 +52,7 @@ export default function Header() {
                               alignContent: "center"
                            }}
                         >
-                           <ThemeSwitcher
-                              size="md"
-                              icon={<Icon src={theme === "light" ? getIcon("sun") : getIcon("moonStars")} alt="sunOrMoom" size={30} />}
-                           />
+                           <ThemeSwitcher size="md" />
                         </Box>
 
                         <MenuItem onClick={handleLogout}>

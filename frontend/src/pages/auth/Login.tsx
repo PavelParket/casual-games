@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Card, Container, Form, FormField, Typography } from "../../ui";
+import { Box, Button, Card, Container, Divider, Form, FormField, Typography } from "../../ui";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
 import { login } from "../../store/slices/AuthSlice";
 import { useThemedIcon } from "../../ui/hooks/useThemedIcon";
+import { isValidEmail, sanitizeEmail } from "../../utils/SecurityUtils";
 
 export default function Login() {
    const [form, setForm] = useState({ email: "", password: "" });
+   const [validationError, setValidationError] = useState<string>("");
    const { isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth);
 
    const { getIcon } = useThemedIcon();
@@ -15,6 +17,7 @@ export default function Login() {
    const dispatch = useDispatch<AppDispatch>();
    const navigate = useNavigate();
    const location = useLocation();
+
    const from = (location.state as { from?: Location })?.from?.pathname || "/";
 
    useEffect(() => {
@@ -24,11 +27,31 @@ export default function Login() {
    }, [isAuthenticated, navigate, from]);
 
    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm({ ...form, [e.target.name]: e.target.value });
+      const { name, value } = e.target;
+
+      if (name === "email") {
+         const sanitized = sanitizeEmail(value);
+         setForm({ ...form, [name]: sanitized });
+      } else {
+         setForm({ ...form, [name]: value });
+      }
+
+      setValidationError("");
    };
 
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
+      setValidationError("");
+
+      if (!isValidEmail(form.email)) {
+         setValidationError("Please enter a valid email address");
+         return;
+      }
+
+      if (form.password.length < 4) {
+         setValidationError("Password must be at least 4 characters");
+         return;
+      }
 
       await dispatch(login(form)).unwrap();
    };
@@ -59,21 +82,21 @@ export default function Login() {
                         onChange={handleChange}
                         required
                         rounded
-                        endAdornmentSrc={getIcon("safeLock")}
-                        endAdornmentAlt="lock"
                      />
                      <Button type="submit" variant="solid" disabled={isLoading}>
                         {isLoading ? "Loading..." : "Sign In"}
                      </Button>
                   </Form>
 
-                  {error && (
-                     <Typography variant="caption" style={{ color: "red", marginTop: 10, display: "block" }}>
-                        {error}
+                  {(error || validationError) && (
+                     <Typography variant="caption" style={{ color: "red", marginTop: "1rem", display: "block" }}>
+                        {error || validationError}
                      </Typography>
                   )}
 
-                  <Typography variant="caption" style={{ marginTop: 20, display: "block" }}>
+                  <Divider variant="middle" style={{ marginTop: "1rem", marginBottom: "1rem" }} />
+
+                  <Typography variant="caption" style={{ display: "block" }}>
                      Don't have an account?
                      <Link to="/register" className="link" style={{ marginLeft: 5 }}>
                         Sign Up

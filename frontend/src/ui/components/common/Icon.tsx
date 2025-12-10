@@ -6,10 +6,11 @@ type IconProps = ImgHTMLAttributes<HTMLImageElement> & {
    rounded?: boolean;
 };
 
-export function Icon({ size = 20, rounded, style, className, ...rest }: IconProps) {
+export function Icon({ src, alt, size = 20, rounded, style, className, ...rest }: IconProps) {
    return (
       <img
-         {...rest}
+         src={src}
+         alt={alt}
          className={classNames(className)}
          style={{
             width: size,
@@ -18,6 +19,7 @@ export function Icon({ size = 20, rounded, style, className, ...rest }: IconProp
             objectFit: "contain",
             ...style,
          }}
+         {...rest}
       />
    );
 }

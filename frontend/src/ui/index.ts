@@ -18,6 +18,8 @@ export { ComboBox } from "./components/forms/ComboBox";
 export { Modal } from "./components/layout/Modal";
 export { Toast } from "./components/common/Toast";
 export { Menu, MenuList, MenuItem } from "./components/navigation/Menu";
+export { Switch } from "./components/common/Switch";
+export { Divider } from "./components/common/Divider";
 
 export { ThemeProvider } from "./theme/ThemeProvider"
 export { useTheme } from "./theme/useTheme";

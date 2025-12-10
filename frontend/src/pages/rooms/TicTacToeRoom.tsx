@@ -7,16 +7,18 @@ import { RoomAPI } from "../../api/WsHubApi";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 import type { LastRoom } from "../../types/room";
+import { getSecureLocalStorage, sanitizeRoomName, sanitizeToastMessage, sanitizeWSMessage } from "../../utils/SecurityUtils";
 
 export default function TicTacToeRoom() {
    const email = useSelector((state: RootState) => state.auth.user?.email);
-   const lastRoom: LastRoom = JSON.parse(localStorage.getItem("lastRoom")!);
+   const lastRoom: LastRoom | null = getSecureLocalStorage<LastRoom>("lastRoom");
 
    const navigate = useNavigate();
 
-   const { roomName } = useParams<string>();
-   const [roomType, setRoomType] = useState<string | null>(lastRoom.type?.name ?? null);
-   const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom.type?.handlerUrl ?? null);
+   const roomName: string = sanitizeRoomName(useParams<{ roomName?: string }>().roomName ?? "");
+
+   const [roomType, setRoomType] = useState<string | null>(lastRoom?.type?.name ?? null);
+   const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom?.type?.handlerUrl ?? null);
 
    const { getInverseIcon } = useThemedIcon();
 
@@ -38,8 +40,9 @@ export default function TicTacToeRoom() {
    const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws", handlerUrl!, roomName!, roomType!);
 
    useEffect(() => {
-      if (!lastRoom) {
+      if (!lastRoom || !roomName) {
          navigate("/rooms");
+         return;
       }
 
       if (lastRoom.type?.name && lastRoom.type?.name !== roomType) {
@@ -48,7 +51,7 @@ export default function TicTacToeRoom() {
       if (lastRoom.type?.handlerUrl && lastRoom.type?.handlerUrl !== handlerUrl) {
          setHandlerUrl(lastRoom.type?.handlerUrl);
       }
-   }, [lastRoom, roomType, handlerUrl, navigate]);
+   }, [lastRoom, roomName, roomType, handlerUrl, navigate]);
 
    useEffect(() => { emailRef.current = email }, [email]);
    useEffect(() => { winnerRef.current = winner }, [winner]);
@@ -66,7 +69,7 @@ export default function TicTacToeRoom() {
          setPlayers(data.map((player: string) => ({ name: player, symbol: "" })));
          setTotalPlayers(data.length);
       } catch (error) {
-         console.error("Failed to fetch players:", error);
+         console.info("Failed to fetch players:", error);
       }
    }, [roomName, roomType]);
 
@@ -81,7 +84,7 @@ export default function TicTacToeRoom() {
 
          setReadyCount(data);
       } catch (error) {
-         console.error("Failed to fetch ready players:", error);
+         console.info("Failed to fetch ready players:", error);
       }
    }, [roomName, roomType]);
 
@@ -137,18 +140,29 @@ export default function TicTacToeRoom() {
          return;
       }
 
-      switch (message.event) {
+      const sanitizedMessage = sanitizeWSMessage(message, [
+         "type",
+         "event",
+         "message",
+         "board",
+         "nextPlayer",
+         "player",
+         "playersSymbols",
+         "winner"
+      ]) as GameMessage;
+
+      switch (sanitizedMessage.event) {
          case "joined":
             fetchPlayers();
             fetchReadyPlayers();
-            showToast(message.message!);
+            showToast(sanitizedMessage.message!);
             break;
 
          case "left":
             if (isGame) {
                processReset();
             } else {
-               showToast(message.message!);
+               showToast(sanitizedMessage.message!);
             }
 
             fetchPlayers();
@@ -158,25 +172,25 @@ export default function TicTacToeRoom() {
 
          case "ready":
             fetchReadyPlayers();
-            showToast(message.message!);
+            showToast(sanitizedMessage.message!);
             break;
 
          case "start":
-            processStart(message);
+            processStart(sanitizedMessage);
             break;
 
          case "move":
-            processMove(message);
+            processMove(sanitizedMessage);
             break;
 
          case "winner X":
          case "winner O": {
-            processWin(message);
+            processWin(sanitizedMessage);
             break;
          }
 
          case "draw":
-            processDraw(message);
+            processDraw(sanitizedMessage);
             break;
 
          default:
@@ -193,7 +207,7 @@ export default function TicTacToeRoom() {
          type: "message",
          event: "move",
          fromUserId: email,
-         roomName: roomName,
+         roomName: roomName!,
          board: board,
          cell: index,
          player: mySymbol!,
@@ -205,16 +219,32 @@ export default function TicTacToeRoom() {
          return;
       }
 
-      send({ type: "message", event: "ready", roomName: roomName });
+      send({ type: "message", event: "ready", roomName: roomName! });
       setReady(true);
    };
 
    const handleLeave = () => {
       localStorage.removeItem("lastRoom");
+      localStorage.removeItem("action");
       navigate("/rooms");
    };
 
-   const showToast = (text: string) => setToast({ text });
+   const showToast = (text: string): void => {
+      setToast({ text: sanitizeToastMessage(text) })
+   };
+
+   if (!roomName) {
+      return (
+         <Container>
+            <Card style={{ textAlign: "center", padding: "2rem" }}>
+               <Typography variant="h2">Invalid Room</Typography>
+               <Button onClick={() => navigate("/rooms")} style={{ marginTop: "1rem" }}>
+                  Back to Rooms
+               </Button>
+            </Card>
+         </Container>
+      );
+   }
 
    return (
       <Box style={{
