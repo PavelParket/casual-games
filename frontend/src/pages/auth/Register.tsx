@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../store/slices/AuthSlice";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
+import { isValidEmail, sanitizeEmail, sanitizeUsername } from "../../utils/SecurityUtils";
 
 export default function Register() {
    const dispatch = useDispatch<AppDispatch>();
@@ -11,15 +12,55 @@ export default function Register() {
 
    const { isLoading, error } = useSelector((state: RootState) => state.auth);
    const [form, setForm] = useState({ username: "", email: "", password: "", });
+   const [validationError, setValidationError] = useState<string>("");
 
    const { getIcon } = useThemedIcon();
 
    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm({ ...form, [e.target.name]: e.target.value });
+      const { name, value } = e.target;
+
+      if (name === "username") {
+         const sanitized = sanitizeUsername(value);
+         setForm({ ...form, [name]: sanitized });
+      } else if (name === "email") {
+         const sanitized = sanitizeEmail(value);
+         setForm({ ...form, [name]: sanitized });
+      } else {
+         setForm({ ...form, [name]: value });
+      }
+
+      setValidationError("");
    };
 
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
+
+      setValidationError("");
+
+      if (form.username.length < 3) {
+         setValidationError("Username must be at least 3 characters");
+         return;
+      }
+
+      if (form.username.length > 50) {
+         setValidationError("Username must be less than 50 characters");
+         return;
+      }
+
+      if (!isValidEmail(form.email)) {
+         setValidationError("Please enter a valid email address");
+         return;
+      }
+
+      if (form.password.length < 4) {
+         setValidationError("Password must be at least 4 characters");
+         return;
+      }
+
+      if (form.password.length > 100) {
+         setValidationError("Password is too long");
+         return;
+      }
 
       await dispatch(register(form)).unwrap();
       navigate('/');
@@ -65,9 +106,9 @@ export default function Register() {
                      <Button type="submit" variant="solid" disabled={isLoading}>{isLoading ? "Loading..." : "Sign Up"}</Button>
                   </Form>
 
-                  {error && (
+                  {(error || validationError) && (
                      <Typography variant="caption" style={{ color: "red", marginTop: "1rem", display: "block" }}>
-                        {error}
+                        {error || validationError}
                      </Typography>
                   )}
 

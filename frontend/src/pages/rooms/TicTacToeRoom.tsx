@@ -15,16 +15,10 @@ export default function TicTacToeRoom() {
 
    const navigate = useNavigate();
 
-   const params = useParams<{ roomName?: string }>();
-   const roomName = params.roomName ? sanitizeRoomName(params.roomName) : null;
-
-   console.log(lastRoom);
+   const roomName: string = sanitizeRoomName(useParams<{ roomName?: string }>().roomName ?? "");
 
    const [roomType, setRoomType] = useState<string | null>(lastRoom?.type?.name ?? null);
    const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom?.type?.handlerUrl ?? null);
-
-   console.log(roomType);
-   console.log(handlerUrl);
 
    const { getInverseIcon } = useThemedIcon();
 
