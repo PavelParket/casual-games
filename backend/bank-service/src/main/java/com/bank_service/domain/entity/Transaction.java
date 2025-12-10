@@ -1,5 +1,6 @@
 package com.bank_service.domain.entity;
 
+import com.bank_service.domain.enums.RoomType;
 import com.bank_service.domain.enums.TransactionStatus;
 import com.bank_service.domain.enums.TransactionType;
 import jakarta.persistence.Column;
@@ -40,6 +41,13 @@ public class Transaction {
 
     @Column(nullable = false)
     private UUID userGuid;
+
+    @Column(nullable = false)
+    private UUID roomId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RoomType roomType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
