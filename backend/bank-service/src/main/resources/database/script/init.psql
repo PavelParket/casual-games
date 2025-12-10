@@ -1,0 +1,16 @@
+CREATE TYPE transaction_type_enum AS ENUM ('addition', 'subtraction');
+CREATE TYPE transaction_status_enum AS ENUM ('pending', 'success', 'rejected');
+
+CREATE TABLE transactions (
+    id BIGSERIAL PRIMARY KEY,
+    user_guid UUID NOT NULL,
+    type transaction_type_enum NOT NULL,
+    status transaction_status_enum NOT NULL,
+    amount DECIMAL(19, 2) NOT NULL CHECK (amount >= 0),
+    balance_before DECIMAL(19, 2) NOT NULL CHECK (balance_before >= 0),
+    balance_after DECIMAL(19, 2) NOT NULL CHECK (balance_after >= 0),
+    created_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_transactions_user_guid ON transactions(user_guid);
+CREATE INDEX idx_transactions_created_at ON transactions(created_at);
