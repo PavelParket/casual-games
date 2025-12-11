@@ -1,23 +1,18 @@
 package com.bank_service.service;
 
-import com.bank_service.client.UserServiceClient;
 import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.entity.Transaction;
+import com.bank_service.domain.dto.ProcessingResult;
+import com.bank_service.domain.dto.ProcessingResultResponse;
 import com.bank_service.domain.enums.RoomType;
-import com.bank_service.exception.BetsNotFoundException;
-import com.bank_service.exception.ClientInternalRequestException;
-import com.bank_service.exception.UnsupportedFactoryTypeException;
 import com.bank_service.exception.UnsupportedRoomTypeException;
-import com.bank_service.factory.GameTransactionFactory;
-import com.bank_service.mapper.TransactionMapper;
+import com.bank_service.mapper.ProcessingResultMapper;
+import com.bank_service.processor.GameResultProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -25,49 +20,35 @@ import java.util.Objects;
 @Transactional
 public class BankService {
 
-    private final Map<RoomType, GameTransactionFactory> transactionFactories;
+    private final List<GameResultProcessor> processors;
 
-    private final TransactionMapper transactionMapper;
+    private final ProcessingResultMapper processingResultMapper;
 
-    private final UserServiceClient userServiceClient;
+    public ProcessingResultResponse processResults(GameTransactionRequest request) {
+        log.info("Processing game results for room: {}, type: {}", request.roomId(), request.roomType());
 
-    private final TransactionService transactionService;
+        GameResultProcessor processor = findProcessor(request.roomType());
 
-    public void processResults(GameTransactionRequest request) {
-        GameTransactionFactory factory = transactionFactories.get(request.roomType());
+        ProcessingResult result = processor.process(request);
 
-        if (Objects.isNull(factory)) {
-            throw new UnsupportedRoomTypeException("Unsupported room type: " + request.roomType());
-        }
+        logResult(result, request.roomType());
 
-        switch (request.roomType()) {
-            case RoomType.TIC_TAC_TOE -> processTicTacToeGameResults(request, factory);
-            case RoomType.ROOM_TEST -> System.out.println("Everything ok!");
-            default -> throw new UnsupportedFactoryTypeException("Unsupported factory type: " + factory.getClass());
-        }
+        return processingResultMapper.toResponse(result);
     }
 
-    private void processTicTacToeGameResults(GameTransactionRequest request, GameTransactionFactory factory) {
-        // TODO: чё-нить вернуть, чтобы было понятно, что ничья
-        if (Objects.isNull(request.winners()) || request.winners().isEmpty()) {
-            return;
-        }
+    private GameResultProcessor findProcessor(RoomType roomType) {
+        return processors.stream()
+                .filter(processor -> processor.supports(roomType))
+                .findFirst()
+                .orElseThrow(() -> new UnsupportedRoomTypeException("No processor found for room type: " + roomType));
+    }
 
-        if (Objects.isNull(request.playerBets()) || request.playerBets().isEmpty()) {
-            throw new BetsNotFoundException("Player bets are empty!");
-        }
-
-        List<Transaction> transactions = factory.createTransactions(request);
-        List<Transaction> saved = transactionService.pending(transactions);
-
-        try {
-            userServiceClient.sendUpdates(transactionMapper.toShortInfoList(saved));
-            transactionService.success(saved);
-        } catch (ClientInternalRequestException e) {
-            transactionService.reject(saved);
-            log.info("User-service failed, rejecting transactions: {}", e.getMessage(), e);
-
-            throw new ClientInternalRequestException(e.getMessage());
+    private void logResult(ProcessingResult result, RoomType roomType) {
+        switch (result) {
+            case ProcessingResult.Success success -> log.info("Successfully processed {} game, created {} transactions",
+                    roomType, success.transactions().size());
+            case ProcessingResult.Draw draw -> log.info("Game {} ended in draw: {}", roomType, draw.reason());
+            case ProcessingResult.Invalid invalid -> log.warn("Invalid game {} result: {}", roomType, invalid.reason());
         }
     }
 }

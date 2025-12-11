@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -28,20 +29,32 @@ public class TransactionService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void reject(List<Transaction> transactions) {
-        List<Long> ids = transactions.stream()
-                .map(Transaction::getId)
-                .toList();
-
-        List<Transaction> updated = transactionRepository.findAllById(ids).stream()
-                .map(transaction -> {
-                    transaction.setStatus(TransactionStatus.REJECTED);
-                    return transaction;
-                })
-                .toList();
-
-        transactionRepository.saveAll(updated);
+        transactions.forEach(transaction -> transaction.setStatus(TransactionStatus.REJECTED));
+        transactionRepository.saveAll(transactions);
 
         log.info("Transactions marked as REJECTED: {}", transactions.size());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void rejectSafely(List<Transaction> transactions) {
+        try {
+            reject(transactions);
+        } catch (Exception e) {
+            log.error("Failed to reject transactions, attempting recovery", e);
+
+            List<Long> ids = transactions.stream()
+                    .map(Transaction::getId)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            if (!ids.isEmpty()) {
+                List<Transaction> fresh = transactionRepository.findAllById(ids);
+                fresh.forEach(transaction -> transaction.setStatus(TransactionStatus.REJECTED));
+                transactionRepository.saveAll(fresh);
+
+                log.info("Successfully rejected {} transactions on retry", fresh.size());
+            }
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

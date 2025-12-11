@@ -1,6 +1,7 @@
 package com.bank_service.controller;
 
 import com.bank_service.domain.dto.GameTransactionRequest;
+import com.bank_service.domain.dto.ProcessingResultResponse;
 import com.bank_service.service.BankService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ public class BankController {
     private final BankService bankService;
 
     @PostMapping("/save")
-    public void saveResults(@RequestBody @Valid GameTransactionRequest gameTransactionRequest) {
-        bankService.processResults(gameTransactionRequest);
+    public ProcessingResultResponse saveResults(@RequestBody @Valid GameTransactionRequest gameTransactionRequest) {
+        return bankService.processResults(gameTransactionRequest);
     }
 }

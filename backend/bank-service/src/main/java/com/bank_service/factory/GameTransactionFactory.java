@@ -6,9 +6,9 @@ import com.bank_service.domain.enums.RoomType;
 
 import java.util.List;
 
-public interface GameTransactionFactory {
+public interface GameTransactionFactory<T extends GameTransactionRequest> {
 
     RoomType getRoomType();
 
-    List<Transaction> createTransactions(GameTransactionRequest gameTransactionRequest);
+    List<Transaction> createTransactions(T request);
 }

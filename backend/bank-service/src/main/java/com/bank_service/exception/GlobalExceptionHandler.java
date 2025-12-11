@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ClientInternalRequestException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ErrorResponse handleServiceRequestException(ClientInternalRequestException e, HttpServletRequest request) {
-        log.error("Service Dependency Error: {}", e.getMessage(), e);
+        log.error("Service Dependency Error: {}", e.getMessage());
 
         return factory.create(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.SERVICE_DEPENDENCY_ERROR, e.getMessage(), request, null);
     }

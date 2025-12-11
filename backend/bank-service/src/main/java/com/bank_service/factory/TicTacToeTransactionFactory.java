@@ -1,6 +1,7 @@
 package com.bank_service.factory;
 
 import com.bank_service.domain.dto.GameTransactionRequest;
+import com.bank_service.domain.dto.TicTacToeTransactionRequest;
 import com.bank_service.domain.entity.PlayerBet;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-public class TicTacToeTransactionFactory implements GameTransactionFactory {
+public class TicTacToeTransactionFactory implements GameTransactionFactory<TicTacToeTransactionRequest> {
 
     @Override
     public RoomType getRoomType() {
@@ -22,15 +23,15 @@ public class TicTacToeTransactionFactory implements GameTransactionFactory {
     }
 
     @Override
-    public List<Transaction> createTransactions(GameTransactionRequest gameTransactionRequest) {
-        UUID winnerGuid = gameTransactionRequest.winners().getFirst();
+    public List<Transaction> createTransactions(TicTacToeTransactionRequest request) {
+        UUID winnerGuid = request.winner();
 
-        PlayerBet winner = gameTransactionRequest.playerBets().stream()
+        PlayerBet winner = request.playerBets().stream()
                 .filter(playerBet -> playerBet.getGuid().equals(winnerGuid))
                 .findFirst()
                 .orElseThrow(() -> new PlayerNotFoundException("Winner not found!"));
 
-        PlayerBet loser = gameTransactionRequest.playerBets().stream()
+        PlayerBet loser = request.playerBets().stream()
                 .filter(playerBet -> !playerBet.getGuid().equals(winnerGuid))
                 .findFirst()
                 .orElseThrow(() -> new PlayerNotFoundException("Loser not found!"));
@@ -38,8 +39,8 @@ public class TicTacToeTransactionFactory implements GameTransactionFactory {
         BigDecimal reward = loser.getBet();
 
         return List.of(
-                buildTransaction(gameTransactionRequest, winner, TransactionType.ADDITION, reward),
-                buildTransaction(gameTransactionRequest, loser, TransactionType.SUBTRACTION, reward)
+                buildTransaction(request, winner, TransactionType.ADDITION, reward),
+                buildTransaction(request, loser, TransactionType.SUBTRACTION, reward)
         );
     }
 

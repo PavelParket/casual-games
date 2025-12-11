@@ -1,24 +1,21 @@
 package com.bank_service.domain.dto;
 
-import com.bank_service.domain.entity.PlayerBet;
 import com.bank_service.domain.enums.RoomType;
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-@Builder
-public record GameTransactionRequest(
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "roomType")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TicTacToeTransactionRequest.class, name = "TIC_TAC_TOE"),
+        @JsonSubTypes.Type(value = TestRoomTransactionRequest.class, name = "ROOM_TEST")
+})
+public sealed interface GameTransactionRequest permits
+        TicTacToeTransactionRequest,
+        TestRoomTransactionRequest {
 
-        UUID roomId,
+    UUID roomId();
 
-        RoomType roomType,
-
-        List<PlayerBet> playerBets,
-
-        List<UUID> winners,
-
-        Map<String, Object> metadata
-) {
+    RoomType roomType();
 }
