@@ -2,8 +2,6 @@ package com.bank_service.domain.dto;
 
 import com.bank_service.domain.entity.PlayerBet;
 import com.bank_service.domain.enums.RoomType;
-import com.bank_service.domain.enums.TransactionStatus;
-import com.bank_service.domain.enums.TransactionType;
 import lombok.Builder;
 
 import java.util.List;
@@ -16,10 +14,6 @@ public record GameTransactionRequest(
         UUID roomId,
 
         RoomType roomType,
-
-        TransactionType type,
-
-        TransactionStatus status,
 
         List<PlayerBet> playerBets,
 

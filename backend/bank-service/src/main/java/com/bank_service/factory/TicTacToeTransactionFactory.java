@@ -3,6 +3,7 @@ package com.bank_service.factory;
 import com.bank_service.domain.dto.GameTransactionRequest;
 import com.bank_service.domain.entity.PlayerBet;
 import com.bank_service.domain.entity.Transaction;
+import com.bank_service.domain.enums.RoomType;
 import com.bank_service.domain.enums.TransactionStatus;
 import com.bank_service.domain.enums.TransactionType;
 import com.bank_service.exception.PlayerNotFoundException;
@@ -10,18 +11,18 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
-@Component("TicTacToeTransactionFactory")
+@Component
 public class TicTacToeTransactionFactory implements GameTransactionFactory {
 
     @Override
-    public List<Transaction> createTransactions(GameTransactionRequest gameTransactionRequest) {
-        if (Objects.isNull(gameTransactionRequest.winners()) || gameTransactionRequest.winners().isEmpty()) {
-            return List.of();
-        }
+    public RoomType getRoomType() {
+        return RoomType.TIC_TAC_TOE;
+    }
 
+    @Override
+    public List<Transaction> createTransactions(GameTransactionRequest gameTransactionRequest) {
         UUID winnerGuid = gameTransactionRequest.winners().getFirst();
 
         PlayerBet winner = gameTransactionRequest.playerBets().stream()

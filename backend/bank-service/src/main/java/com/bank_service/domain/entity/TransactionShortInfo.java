@@ -16,7 +16,9 @@ import java.util.UUID;
 @Builder
 public class TransactionShortInfo {
 
-    private UUID guid;
+    private Long id;
+
+    private UUID userGuid;
 
     private BigDecimal amount;
 
