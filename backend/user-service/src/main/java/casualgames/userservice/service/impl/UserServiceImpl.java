@@ -4,7 +4,10 @@ import casualgames.userservice.client.SecurityServiceClient;
 import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
+import casualgames.userservice.dto.bank_service.TransactionShortInfoRequest;
 import casualgames.userservice.entity.User;
+import casualgames.userservice.enums.TransactionStatus;
+import casualgames.userservice.enums.TransactionType;
 import casualgames.userservice.exception.ResourceNotFoundException;
 import casualgames.userservice.exception.ServiceUnavailableException;
 import casualgames.userservice.mapper.UserMapper;
@@ -16,8 +19,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -132,5 +139,64 @@ public class UserServiceImpl implements UserService {
     public UserResponse findByGuid(UUID guid) {
         return userMapper.toResponseDto(userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found")));
+    }
+
+    @Override
+    @Transactional
+    public Boolean updateBalances(List<TransactionShortInfoRequest> transactions) {
+        boolean allPending = transactions.stream()
+                .allMatch(transaction -> TransactionStatus.PENDING.equals(transaction.status()));
+
+        if (!allPending) {
+            log.error("Not all transactions are PENDING");
+
+            return false;
+        }
+
+        List<UUID> guids = transactions.stream()
+                .map(TransactionShortInfoRequest::userGuid)
+                .distinct()
+                .toList();
+
+        List<User> users = userRepository.findAllByGuidWithLock(guids);
+
+        if (users.size() != guids.size()) {
+            log.error("Not all users found. Expected: {}, Found: {}", guids.size(), users.size());
+
+            return false;
+        }
+
+        Map<UUID, User> userMap = users.stream()
+                .collect(Collectors.toMap(
+                        User::getGuid,
+                        Function.identity()
+                ));
+
+        boolean allValid = transactions.stream()
+                .allMatch(transaction -> {
+                    User user = userMap.get(transaction.userGuid());
+                    BigDecimal newBalance = TransactionType.ADDITION.equals(transaction.type())
+                            ? user.getBalance().add(transaction.amount())
+                            : user.getBalance().subtract(transaction.amount());
+
+                    if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+                        log.error("Negative balance for user: {}", user.getGuid());
+
+                        return false;
+                    }
+
+                    user.setBalance(newBalance);
+                    return true;
+                });
+
+        if (!allValid) {
+            return false;
+        }
+
+        userRepository.saveAll(users);
+
+        log.info("Updated {} users with {} transactions", users.size(), transactions.size());
+
+        return true;
     }
 }

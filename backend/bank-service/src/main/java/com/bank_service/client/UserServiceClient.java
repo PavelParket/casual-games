@@ -5,6 +5,9 @@ import com.bank_service.exception.ClientInternalRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -30,7 +33,7 @@ public class UserServiceClient {
                 .toUri();
 
         try {
-            /*ResponseEntity<Boolean> response = restTemplate.exchange(
+            ResponseEntity<Boolean> response = restTemplate.exchange(
                     new RequestEntity<>(transactions, HttpMethod.PATCH, uri),
                     Boolean.class
             );
@@ -43,7 +46,7 @@ public class UserServiceClient {
                 throw new ClientInternalRequestException("User-service failed to apply transactions");
             }
 
-            log.info("User info retrieved successfully: {}", response);*/
+            log.info("User info retrieved successfully: {}", response);
         } catch (RestClientException e) {
             log.error("Error calling user-service: {}", e.getMessage(), e);
             throw new ClientInternalRequestException("Failed to update balances, service is unavailable");
