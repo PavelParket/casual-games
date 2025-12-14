@@ -27,7 +27,8 @@ public class GlobalExceptionHandler {
             UnsupportedRoomTypeException.class,
             UnsupportedFactoryTypeException.class,
             BetsNotFoundException.class,
-            PlayerNotFoundException.class
+            PlayerNotFoundException.class,
+            BusinessValidationException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequestExceptions(RuntimeException e, HttpServletRequest request) {

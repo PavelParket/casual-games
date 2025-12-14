@@ -12,6 +12,7 @@ import com.bank_service.factory.TicTacToeTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.service.RoomProcessingService;
 import com.bank_service.service.TransactionService;
+import com.bank_service.validator.TicTacToeBusinessValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,8 @@ public class TicTacToeProcessor implements GameResultProcessor {
 
     private final RoomProcessingService roomProcessingService;
 
+    private final TicTacToeBusinessValidator businessValidator;
+
     @Override
     public boolean supports(RoomType roomType) {
         return RoomType.TIC_TAC_TOE.equals(roomType);
@@ -49,6 +52,8 @@ public class TicTacToeProcessor implements GameResultProcessor {
 
             return new ProcessingResult.Draw("Game ended in a draw");
         }
+
+        businessValidator.validate(ticTacToeTransactionRequest);
 
         boolean marked = roomProcessingService.markRoomAsProcessed(
                 ticTacToeTransactionRequest.roomId(),
