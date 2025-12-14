@@ -10,14 +10,13 @@ import com.bank_service.exception.ClientInternalRequestException;
 import com.bank_service.exception.PlayerNotFoundException;
 import com.bank_service.factory.TicTacToeTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
+import com.bank_service.service.RoomProcessingService;
 import com.bank_service.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -31,6 +30,8 @@ public class TicTacToeProcessor implements GameResultProcessor {
     private final TicTacToeTransactionFactory factory;
 
     private final UserServiceClient userServiceClient;
+
+    private final RoomProcessingService roomProcessingService;
 
     @Override
     public boolean supports(RoomType roomType) {
@@ -49,16 +50,22 @@ public class TicTacToeProcessor implements GameResultProcessor {
             return new ProcessingResult.Draw("Game ended in a draw");
         }
 
+        boolean marked = roomProcessingService.markRoomAsProcessed(
+                ticTacToeTransactionRequest.roomId(),
+                ticTacToeTransactionRequest.roomType(),
+                2
+        );
+
+        if (!marked) {
+            log.info("Room {} already processed, skipping", ticTacToeTransactionRequest.roomId());
+
+            return new ProcessingResult.Draw("Already processed");
+        }
+
         try {
             List<Transaction> transactions = factory.createTransactions(ticTacToeTransactionRequest);
 
-            List<Transaction> saved = savePendingTransactions(transactions, ticTacToeTransactionRequest.roomId());
-
-            if (saved.isEmpty()) {
-                log.info("Transactions already processed for room: {}", ticTacToeTransactionRequest.roomId());
-
-                return new ProcessingResult.Draw("Already processed");
-            }
+            List<Transaction> saved = transactionService.pending(transactions);
 
             try {
                 userServiceClient.sendUpdates(transactionMapper.toShortInfoList(saved));
@@ -78,16 +85,6 @@ public class TicTacToeProcessor implements GameResultProcessor {
             log.error("Player not found in Tic-Tac-Toe game: {}", e.getMessage());
 
             return new ProcessingResult.Invalid(e.getMessage());
-        }
-    }
-
-    private List<Transaction> savePendingTransactions(List<Transaction> transactions, UUID roomId) {
-        try {
-            return transactionService.pending(transactions);
-        } catch (DataIntegrityViolationException e) {
-            log.warn("Duplicate transaction attempt for room: {}. Ignoring.", roomId);
-
-            return List.of();
         }
     }
 }

@@ -19,3 +19,16 @@ CREATE INDEX idx_transactions_room_id ON transactions(room_id);
 CREATE UNIQUE INDEX idx_transactions_room_user_unique
 ON transactions(room_id, user_guid)
 WHERE status IN ('PENDING', 'SUCCESS');
+
+CREATE TABLE processed_rooms (
+    id BIGSERIAL PRIMARY KEY,
+    room_id UUID NOT NULL UNIQUE,
+    room_type VARCHAR(255) NOT NULL,
+    processed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    transaction_count INT NOT NULL,
+
+    CONSTRAINT uq_processed_rooms_room_id UNIQUE (room_id)
+);
+
+CREATE INDEX idx_processed_rooms_type ON processed_rooms(room_type);
+CREATE INDEX idx_processed_rooms_processed_at ON processed_rooms(processed_at);
