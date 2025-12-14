@@ -1,6 +1,6 @@
 package com.bank_service.client;
 
-import com.bank_service.domain.dto.user_service.TransactionShortInfoRequest;
+import com.bank_service.domain.dto.user_service.TransactionShortInfoInternalRequest;
 import com.bank_service.exception.ClientInternalRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class UserServiceClient {
 
     private final RestTemplate restTemplate;
 
-    public void sendUpdates(List<TransactionShortInfoRequest> transactions) {
+    public void sendUpdates(List<TransactionShortInfoInternalRequest> transactions) {
         URI uri = UriComponentsBuilder.fromUriString(userServiceUrl)
                 .path("/users/update-balance")
                 .build()

@@ -1,14 +1,14 @@
-package casualgames.userservice.dto.bank_service;
+package com.bank_service.domain.dto.user_service;
 
-import casualgames.userservice.enums.TransactionStatus;
-import casualgames.userservice.enums.TransactionType;
+import com.bank_service.domain.enums.TransactionStatus;
+import com.bank_service.domain.enums.TransactionType;
 import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Builder
-public record TransactionShortInfoRequest(
+public record TransactionShortInfoInternalRequest(
         Long id,
 
         UUID userGuid,

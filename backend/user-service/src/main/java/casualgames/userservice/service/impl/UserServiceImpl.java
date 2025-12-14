@@ -4,7 +4,7 @@ import casualgames.userservice.client.SecurityServiceClient;
 import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
-import casualgames.userservice.dto.bank_service.TransactionShortInfoRequest;
+import casualgames.userservice.dto.bank_service.TransactionShortInfoInternalRequest;
 import casualgames.userservice.entity.User;
 import casualgames.userservice.enums.TransactionStatus;
 import casualgames.userservice.enums.TransactionType;
@@ -143,7 +143,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public Boolean updateBalances(List<TransactionShortInfoRequest> transactions) {
+    public Boolean updateBalances(List<TransactionShortInfoInternalRequest> transactions) {
         boolean allPending = transactions.stream()
                 .allMatch(transaction -> TransactionStatus.PENDING.equals(transaction.status()));
 
@@ -154,7 +154,7 @@ public class UserServiceImpl implements UserService {
         }
 
         List<UUID> guids = transactions.stream()
-                .map(TransactionShortInfoRequest::userGuid)
+                .map(TransactionShortInfoInternalRequest::userGuid)
                 .distinct()
                 .toList();
 

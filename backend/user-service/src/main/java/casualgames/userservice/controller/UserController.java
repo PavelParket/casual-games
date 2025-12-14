@@ -3,7 +3,7 @@ package casualgames.userservice.controller;
 import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
-import casualgames.userservice.dto.bank_service.TransactionShortInfoRequest;
+import casualgames.userservice.dto.bank_service.TransactionShortInfoInternalRequest;
 import casualgames.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -86,7 +86,7 @@ public class UserController {
 
     @PatchMapping("/update-balance")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Boolean updateBalances(@RequestBody @Valid List<TransactionShortInfoRequest> transactions) {
+    public Boolean updateBalances(@RequestBody @Valid List<TransactionShortInfoInternalRequest> transactions) {
         return userService.updateBalances(transactions);
     }
 }
