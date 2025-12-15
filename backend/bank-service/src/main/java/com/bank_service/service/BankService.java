@@ -7,22 +7,34 @@ import com.bank_service.domain.enums.RoomType;
 import com.bank_service.exception.UnsupportedRoomTypeException;
 import com.bank_service.mapper.ProcessingResultMapper;
 import com.bank_service.processor.GameResultProcessor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Transactional
 public class BankService {
 
-    private final List<GameResultProcessor> processors;
+    private final Map<RoomType, GameResultProcessor> processors;
 
     private final ProcessingResultMapper processingResultMapper;
+
+    public BankService(List<GameResultProcessor> processors, ProcessingResultMapper processingResultMapper) {
+        this.processors = processors.stream()
+                .collect(Collectors.toMap(
+                        GameResultProcessor::getRoomType,
+                        Function.identity()
+                ));
+        this.processingResultMapper = processingResultMapper;
+
+        log.info("Initialized BankService with {} processors: {}", processors.size(), this.processors.keySet());
+    }
 
     public ProcessingResultResponse processResults(GameTransactionRequest request) {
         log.info("Processing game results for room: {}, type: {}", request.roomId(), request.roomType());
@@ -37,10 +49,13 @@ public class BankService {
     }
 
     private GameResultProcessor findProcessor(RoomType roomType) {
-        return processors.stream()
-                .filter(processor -> processor.supports(roomType))
-                .findFirst()
-                .orElseThrow(() -> new UnsupportedRoomTypeException("No processor found for room type: " + roomType));
+        GameResultProcessor processor = processors.get(roomType);
+
+        if (processor == null) {
+            throw new UnsupportedRoomTypeException("No processor found for room type: " + roomType);
+        }
+
+        return processor;
     }
 
     private void logResult(ProcessingResult result, RoomType roomType) {

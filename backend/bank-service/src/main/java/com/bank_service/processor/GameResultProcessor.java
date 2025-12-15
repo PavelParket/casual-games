@@ -8,5 +8,7 @@ public interface GameResultProcessor {
 
     boolean supports(RoomType roomType);
 
+    RoomType getRoomType();
+
     ProcessingResult process(GameTransactionRequest request);
 }

@@ -19,6 +19,11 @@ public class TestRoomProcessor implements GameResultProcessor {
     }
 
     @Override
+    public RoomType getRoomType() {
+        return RoomType.ROOM_TEST;
+    }
+
+    @Override
     public ProcessingResult process(GameTransactionRequest request) {
         if (!(request instanceof TestRoomTransactionRequest testRequest)) {
             return new ProcessingResult.Invalid("Invalid request type for TestRoom");

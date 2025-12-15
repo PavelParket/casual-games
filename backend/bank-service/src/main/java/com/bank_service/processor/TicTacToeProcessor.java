@@ -42,6 +42,11 @@ public class TicTacToeProcessor implements GameResultProcessor {
     }
 
     @Override
+    public RoomType getRoomType() {
+        return RoomType.TIC_TAC_TOE;
+    }
+
+    @Override
     public ProcessingResult process(GameTransactionRequest request) {
         if (!(request instanceof TicTacToeTransactionRequest ticTacToeTransactionRequest)) {
             return new ProcessingResult.Invalid("Invalid request type for Tic-Tac-Toe");
