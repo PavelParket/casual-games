@@ -64,7 +64,7 @@ public class TicTacToeProcessor implements GameResultProcessor {
         if (!marked) {
             log.info("Room {} already processed, skipping", ticTacToeTransactionRequest.roomId());
 
-            return new ProcessingResult.Draw("Already processed");
+            return new ProcessingResult.AlreadyProcessed("Already processed");
         }
 
         try {

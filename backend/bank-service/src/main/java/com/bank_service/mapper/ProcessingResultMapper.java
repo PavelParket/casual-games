@@ -13,6 +13,8 @@ public interface ProcessingResultMapper {
                     new ProcessingResultResponse("SUCCESS", "Transactions processed successfully", success.transactions().size());
             case ProcessingResult.Draw draw -> new ProcessingResultResponse("DRAW", draw.reason(), 0);
             case ProcessingResult.Invalid invalid -> new ProcessingResultResponse("INVALID", invalid.reason(), 0);
+            case ProcessingResult.AlreadyProcessed alreadyProcessed ->
+                    new ProcessingResultResponse("ALREADY_PROCESSED", alreadyProcessed.message(), 0);
         };
     }
 }

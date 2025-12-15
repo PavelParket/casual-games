@@ -1,3 +1,5 @@
+CREATE SEQUENCE IF NOT EXISTS transactions_id_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE transactions (
     id BIGSERIAL PRIMARY KEY,
     room_id UUID NOT NULL,
@@ -19,6 +21,8 @@ CREATE INDEX idx_transactions_room_id ON transactions(room_id);
 CREATE UNIQUE INDEX idx_transactions_room_user_unique
 ON transactions(room_id, user_guid)
 WHERE status IN ('PENDING', 'SUCCESS');
+
+CREATE SEQUENCE IF NOT EXISTS processed_rooms_id_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE processed_rooms (
     id BIGSERIAL PRIMARY KEY,

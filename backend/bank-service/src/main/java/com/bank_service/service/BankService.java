@@ -49,6 +49,8 @@ public class BankService {
                     roomType, success.transactions().size());
             case ProcessingResult.Draw draw -> log.info("Game {} ended in draw: {}", roomType, draw.reason());
             case ProcessingResult.Invalid invalid -> log.warn("Invalid game {} result: {}", roomType, invalid.reason());
+            case ProcessingResult.AlreadyProcessed alreadyProcessed ->
+                    log.debug("Room {} already processed: {}", roomType, alreadyProcessed.message());
         }
     }
 }

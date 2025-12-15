@@ -14,4 +14,8 @@ public sealed interface ProcessingResult {
 
     record Invalid(String reason) implements ProcessingResult {
     }
+
+    record AlreadyProcessed(String message) implements ProcessingResult {
+
+    }
 }
