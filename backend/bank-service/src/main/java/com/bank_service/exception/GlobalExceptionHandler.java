@@ -4,6 +4,8 @@ import com.bank_service.domain.dto.ErrorResponse;
 import com.bank_service.domain.enums.ErrorCode;
 import com.bank_service.factory.ErrorResponseFactory;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -66,6 +68,19 @@ public class GlobalExceptionHandler {
         log.warn("Validation Error: {}", message);
 
         return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, message, request, details);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleConstraintViolationException(ConstraintViolationException e, HttpServletRequest request) {
+        String message = e.getConstraintViolations().stream()
+                .findFirst()
+                .map(ConstraintViolation::getMessage)
+                .orElse("Invalid request parameters");
+
+        log.warn("Constraint Violation: {}", message);
+
+        return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, message, request, null);
     }
 
     @ExceptionHandler(Exception.class)

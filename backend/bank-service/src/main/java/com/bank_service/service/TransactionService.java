@@ -1,16 +1,23 @@
 package com.bank_service.service;
 
+import com.bank_service.domain.dto.TransactionResponse;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.TransactionStatus;
+import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +25,8 @@ import java.util.Objects;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+
+    private final TransactionMapper transactionMapper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void success(List<Transaction> transactions) {
@@ -65,5 +74,17 @@ public class TransactionService {
         log.info("Transactions marked as PENDING: {}", transactions.size());
 
         return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getByUserGuid(UUID userGuid, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Transaction> transactions = transactionRepository.findByUserGuid(userGuid, pageable);
+
+        log.info("Found {} transactions for user: {} (page {}/{})",
+                transactions.getNumberOfElements(), userGuid, page + 1, transactions.getTotalPages());
+
+        return transactions.map(transactionMapper::toResponse);
     }
 }
