@@ -1,5 +1,6 @@
 package com.bank_service.service;
 
+import com.bank_service.domain.dto.PageResponse;
 import com.bank_service.domain.dto.TransactionResponse;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.TransactionStatus;
@@ -77,14 +78,14 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TransactionResponse> getByUserGuid(UUID userGuid, int page, int size) {
+    public PageResponse<TransactionResponse> getByUserGuid(UUID userGuid, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Transaction> transactions = transactionRepository.findByUserGuid(userGuid, pageable);
+        Page<Transaction> transactions = transactionRepository.findByUserGuidAndStatus(userGuid, TransactionStatus.SUCCESS, pageable);
 
         log.info("Found {} transactions for user: {} (page {}/{})",
                 transactions.getNumberOfElements(), userGuid, page + 1, transactions.getTotalPages());
 
-        return transactions.map(transactionMapper::toResponse);
+        return PageResponse.of(transactions.map(transactionMapper::toResponse));
     }
 }

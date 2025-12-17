@@ -1,5 +1,6 @@
 package com.bank_service.controller;
 
+import com.bank_service.domain.dto.PageResponse;
 import com.bank_service.domain.dto.TransactionResponse;
 import com.bank_service.domain.dto.TransactionSummaryFilterRequest;
 import com.bank_service.domain.dto.TransactionSummaryResponse;
@@ -10,7 +11,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,9 +33,9 @@ public class TransactionController {
     private final TransactionSummaryService summaryService;
 
     @GetMapping("/{guid}")
-    public Page<TransactionResponse> getByUserGuid(@PathVariable UUID guid,
-                                                   @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                   @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
+    public PageResponse<TransactionResponse> getByUserGuid(@PathVariable UUID guid,
+                                                           @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                           @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
         return transactionService.getByUserGuid(guid, page, size);
     }
 
