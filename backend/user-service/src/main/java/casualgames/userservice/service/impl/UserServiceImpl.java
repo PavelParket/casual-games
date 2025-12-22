@@ -1,12 +1,16 @@
 package casualgames.userservice.service.impl;
 
 import casualgames.userservice.client.SecurityServiceClient;
+import casualgames.userservice.config.PermissionContext;
 import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
+import casualgames.userservice.dto.UserResponseDto;
 import casualgames.userservice.entity.User;
+import casualgames.userservice.enums.Role;
+import casualgames.userservice.exception.ForbiddenException;
 import casualgames.userservice.exception.ResourceNotFoundException;
-import casualgames.userservice.exception.ServiceUnavailableException;
+import casualgames.userservice.filter.UserSanitizer;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.UserService;
@@ -31,6 +35,8 @@ public class UserServiceImpl implements UserService {
     private final UserValidator userValidator;
 
     private final SecurityServiceClient client;
+
+    private final UserSanitizer userSanitizer;
 
     @Override
     public UserResponse findById(Long id) {
@@ -70,22 +76,44 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserResponse updateByGuid(UUID guid, UpdateUserRequest request) {
-        User user = userRepository.findByGuid(guid)
+    public UserResponseDto updateByGuid(UUID guid, UpdateUserRequest request) {
+        User user = getAuthUser();
+
+        User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with guid: " + guid));
 
         userValidator.validateEmailForUpdate(request.email(), user);
 
-        userMapper.updateEntity(request, user);
+        PermissionContext context = PermissionContext.builder()
+                .isAdmin(user.getRole().equals(Role.ADMIN))
+                .isOwner(user.getGuid().equals(target.getGuid()))
+                .build();
 
-        try {
-            client.update(userMapper.toUpdateUserInternalRequest(user, request.password()));
-        } catch (ServiceUnavailableException e) {
-            log.error("UserService is unavailable: {}", e.getMessage(), e);
-            throw e;
+        if (!(context.canUpdateAnyProfile() || context.canUpdateOwnProfile())) {
+            throw new ForbiddenException("You do not have permission to update this profile");
         }
 
-        return userMapper.toResponseDto(userRepository.save(user));
+        updateEntity(request, user);
+
+        client.update(userMapper.toUpdateUserInternalRequest(user, request.password()));
+
+        User saved = userRepository.save(user);
+
+        UserResponseDto response = userMapper.toDto(saved);
+
+        userSanitizer.sanitize(response, context);
+
+        return response;
+    }
+
+    private void updateEntity(UpdateUserRequest request, User user) {
+        if (request.username() != null) {
+            user.setUsername(request.username());
+        }
+
+        if (request.email() != null) {
+            user.setEmail(request.email());
+        }
     }
 
     @Transactional
@@ -104,12 +132,7 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("User not found");
         }
 
-        try {
-            client.delete(guid);
-        } catch (ServiceUnavailableException e) {
-            log.error("UserService is unavailable: {}", e.getMessage(), e);
-            throw e;
-        }
+        client.delete(guid);
 
         userRepository.deleteByGuid(guid);
     }
@@ -129,8 +152,25 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse findByGuid(UUID guid) {
-        return userMapper.toResponseDto(userRepository.findByGuid(guid)
-                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found")));
+    public UserResponseDto findByGuid(UUID guid) {
+        User user = getAuthUser();
+
+        User target = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
+
+        PermissionContext context = PermissionContext.builder()
+                .isAdmin(user.getRole().equals(Role.ADMIN))
+                .isOwner(user.getGuid().equals(target.getGuid()))
+                .build();
+
+        UserResponseDto response = userMapper.toDto(target);
+
+        userSanitizer.sanitize(response, context);
+
+        return response;
+    }
+
+    private User getAuthUser() {
+        return userRepository.findById(5L).orElse(null);
     }
 }

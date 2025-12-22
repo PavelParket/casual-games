@@ -3,6 +3,7 @@ package casualgames.userservice.controller;
 import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
+import casualgames.userservice.dto.UserResponseDto;
 import casualgames.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +49,7 @@ public class UserController {
     }
 
     @GetMapping("/guid={guid}")
-    public UserResponse findByGuid(@PathVariable UUID guid) {
+    public UserResponseDto findByGuid(@PathVariable UUID guid) {
         return userService.findByGuid(guid);
     }
 
@@ -65,8 +66,8 @@ public class UserController {
     }
 
     @PutMapping("/guid={id}")
-    public UserResponse updateByGuid(@PathVariable("id") UUID guid,
-                                     @Valid @RequestBody UpdateUserRequest userRequest) {
+    public UserResponseDto updateByGuid(@PathVariable("id") UUID guid,
+                                        @Valid @RequestBody UpdateUserRequest userRequest) {
         return userService.updateByGuid(guid, userRequest);
     }
 
