@@ -26,4 +26,8 @@ public class PermissionContext {
     public boolean canUpdateOwnProfile() {
         return isOwner;
     }
+
+    public boolean canUpdateRole() {
+        return isAdmin;
+    }
 }

@@ -2,6 +2,8 @@ package casualgames.userservice.client;
 
 import casualgames.userservice.dto.security_service.UpdateUserInternalRequest;
 import casualgames.userservice.dto.security_service.UpdateUserInternalResponse;
+import casualgames.userservice.entity.User;
+import casualgames.userservice.enums.Role;
 import casualgames.userservice.exception.ServiceUnavailableException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -67,6 +70,32 @@ public class SecurityServiceClient {
         } catch (RestClientException e) {
             log.error("Failed to call User Service: {}", e.getMessage(), e);
             throw new ServiceUnavailableException("Failed to delete user: " + e.getMessage());
+        }
+    }
+
+    public void updateRole(User author, User target, Role role) {
+        URI uri = UriComponentsBuilder.fromUriString(securityServiceUrl)
+                .path("/users/update-role")
+                .queryParam("author", author)
+                .queryParam("guid", target.getGuid())
+                .queryParam("role", role)
+                .build()
+                .toUri();
+
+        try {
+            ResponseEntity<UpdateUserInternalResponse> response = restTemplate.exchange(
+                    new RequestEntity<>(HttpMethod.PUT, uri),
+                    UpdateUserInternalResponse.class
+            );
+
+            if (Optional.ofNullable(response.getBody()).isEmpty()) {
+                throw new RestClientException("Failed to update user role");
+            }
+        } catch (HttpClientErrorException e) {
+            throw new ServiceUnavailableException(e.getResponseBodyAsString());
+        } catch (RestClientException e) {
+            log.error("Failed to call User Service: {}", e.getMessage());
+            throw new ServiceUnavailableException("Failed to update user: " + e.getMessage());
         }
     }
 }

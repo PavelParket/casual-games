@@ -82,10 +82,10 @@ public class UserServiceImpl implements UserService {
         User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with guid: " + guid));
 
-        userValidator.validateEmailForUpdate(request.email(), user);
+        userValidator.validateEmailForUpdate(request.email(), target);
 
         PermissionContext context = PermissionContext.builder()
-                .isAdmin(user.getRole().equals(Role.ADMIN))
+                .isAdmin(Role.ADMIN.equals(user.getRole()))
                 .isOwner(user.getGuid().equals(target.getGuid()))
                 .build();
 
@@ -93,11 +93,11 @@ public class UserServiceImpl implements UserService {
             throw new ForbiddenException("You do not have permission to update this profile");
         }
 
-        updateEntity(request, user);
+        updateEntity(request, target);
 
-        client.update(userMapper.toUpdateUserInternalRequest(user, request.password()));
+        User saved = userRepository.save(target);
 
-        User saved = userRepository.save(user);
+        client.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
 
         UserResponseDto response = userMapper.toDto(saved);
 
@@ -159,7 +159,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
 
         PermissionContext context = PermissionContext.builder()
-                .isAdmin(user.getRole().equals(Role.ADMIN))
+                .isAdmin(Role.ADMIN.equals(user.getRole()))
                 .isOwner(user.getGuid().equals(target.getGuid()))
                 .build();
 
@@ -172,5 +172,35 @@ public class UserServiceImpl implements UserService {
 
     private User getAuthUser() {
         return userRepository.findById(5L).orElse(null);
+    }
+
+    @Transactional
+    public UserResponseDto updateRole(UUID guid, Role role) {
+        User user = getAuthUser();
+
+        User target = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
+
+        PermissionContext context = PermissionContext.builder()
+                .isAdmin(Role.ADMIN.equals(user.getRole()))
+                .isOwner(user.getGuid().equals(target.getGuid()))
+                .build();
+
+        if (!context.canUpdateRole()) {
+            throw new ForbiddenException("You do not have permission to update role");
+        }
+
+        target.setRole(role);
+
+        User saved = userRepository.save(target);
+
+        // todo: переделать потом, а то ничего не сработает
+        client.updateRole(user, saved, role);
+
+        UserResponseDto response = userMapper.toDto(saved);
+
+        userSanitizer.sanitize(response, context);
+
+        return response;
     }
 }

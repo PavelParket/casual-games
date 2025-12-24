@@ -4,6 +4,7 @@ import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.dto.UserResponseDto;
+import casualgames.userservice.enums.Role;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,4 +24,6 @@ public interface UserService extends Service<UserResponse, Long> {
     UserResponseDto findByGuid(UUID guid);
 
     void deleteByGuid(UUID id);
+
+    UserResponseDto updateRole(UUID guid, Role role);
 }
