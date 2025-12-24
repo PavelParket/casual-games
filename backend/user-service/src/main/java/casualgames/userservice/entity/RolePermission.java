@@ -1,10 +1,8 @@
 package casualgames.userservice.entity;
 
-
-import casualgames.userservice.annotation.Permission;
+import casualgames.userservice.enums.Operation;
 import casualgames.userservice.enums.Permissions;
 import casualgames.userservice.enums.Role;
-import casualgames.userservice.enums.Status;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,49 +11,43 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
+@Table(name = "role_permission")
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "users")
-public class User {
+@Builder
+public class RolePermission {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    @Permission(Permissions.GUID)
-    private UUID guid;
-
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Permission(Permissions.USERNAME)
-    private String username;
-
-    @Column(unique = true, nullable = false)
-    @Permission(Permissions.EMAIL)
-    private String email;
-
-    @Column(precision = 19, scale = 2)
-    @Permission(Permissions.BALANCE)
-    private BigDecimal balance = BigDecimal.ZERO;
+    private Role role;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Permission(Permissions.ROLE)
-    private Role role = Role.USER;
+    private Permissions permission;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Permission(Permissions.STATUS)
-    private Status status = Status.DEFAULT;
+    private Operation operation;
+
+    @Column(nullable = false)
+    private boolean forMe;
+
+    @Column(nullable = false)
+    private boolean forAll;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

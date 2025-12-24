@@ -8,12 +8,11 @@ import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.dto.UserResponseDto;
 import casualgames.userservice.entity.User;
 import casualgames.userservice.enums.Role;
-import casualgames.userservice.exception.ForbiddenException;
 import casualgames.userservice.exception.ResourceNotFoundException;
-import casualgames.userservice.filter.UserSanitizer;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.UserService;
+import casualgames.userservice.validator.PermissionValidator;
 import casualgames.userservice.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +35,7 @@ public class UserServiceImpl implements UserService {
 
     private final SecurityServiceClient client;
 
-    private final UserSanitizer userSanitizer;
+    private final PermissionValidator permissionValidator;
 
     @Override
     public UserResponse findById(Long id) {
@@ -60,6 +59,7 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponseDto(userRepository.save(user));
     }
 
+    @Deprecated
     @Transactional
     @Override
     public UserResponse update(Long userId, UpdateUserRequest userRequest) {
@@ -85,15 +85,11 @@ public class UserServiceImpl implements UserService {
         userValidator.validateEmailForUpdate(request.email(), target);
 
         PermissionContext context = PermissionContext.builder()
-                .isAdmin(Role.ADMIN.equals(user.getRole()))
+                .role(user.getRole())
                 .isOwner(user.getGuid().equals(target.getGuid()))
                 .build();
 
-        if (!(context.canUpdateAnyProfile() || context.canUpdateOwnProfile())) {
-            throw new ForbiddenException("You do not have permission to update this profile");
-        }
-
-        updateEntity(request, target);
+        permissionValidator.updateObject(request, target, context);
 
         User saved = userRepository.save(target);
 
@@ -101,21 +97,12 @@ public class UserServiceImpl implements UserService {
 
         UserResponseDto response = userMapper.toDto(saved);
 
-        userSanitizer.sanitize(response, context);
+        permissionValidator.readObject(response, context);
 
         return response;
     }
 
-    private void updateEntity(UpdateUserRequest request, User user) {
-        if (request.username() != null) {
-            user.setUsername(request.username());
-        }
-
-        if (request.email() != null) {
-            user.setEmail(request.email());
-        }
-    }
-
+    @Deprecated
     @Transactional
     @Override
     public void delete(Long id) {
@@ -159,13 +146,13 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
 
         PermissionContext context = PermissionContext.builder()
-                .isAdmin(Role.ADMIN.equals(user.getRole()))
+                .role(user.getRole())
                 .isOwner(user.getGuid().equals(target.getGuid()))
                 .build();
 
         UserResponseDto response = userMapper.toDto(target);
 
-        userSanitizer.sanitize(response, context);
+        permissionValidator.readObject(response, context);
 
         return response;
     }
@@ -182,13 +169,9 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
 
         PermissionContext context = PermissionContext.builder()
-                .isAdmin(Role.ADMIN.equals(user.getRole()))
+                .role(user.getRole())
                 .isOwner(user.getGuid().equals(target.getGuid()))
                 .build();
-
-        if (!context.canUpdateRole()) {
-            throw new ForbiddenException("You do not have permission to update role");
-        }
 
         target.setRole(role);
 
@@ -199,7 +182,7 @@ public class UserServiceImpl implements UserService {
 
         UserResponseDto response = userMapper.toDto(saved);
 
-        userSanitizer.sanitize(response, context);
+        permissionValidator.readObject(target, context);
 
         return response;
     }

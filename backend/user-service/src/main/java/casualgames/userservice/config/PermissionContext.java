@@ -1,5 +1,6 @@
 package casualgames.userservice.config;
 
+import casualgames.userservice.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,23 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PermissionContext {
 
-    private boolean isAdmin;
+    private Role role;
 
     private boolean isOwner;
-
-    public boolean canSeePrivateFields() {
-        return isAdmin || isOwner;
-    }
-
-    public boolean canUpdateAnyProfile() {
-        return isAdmin;
-    }
-
-    public boolean canUpdateOwnProfile() {
-        return isOwner;
-    }
-
-    public boolean canUpdateRole() {
-        return isAdmin;
-    }
 }

@@ -1,6 +1,6 @@
 package casualgames.userservice.enums;
 
-public enum Permission {
+public enum Permissions {
 
     GUID,
     USERNAME,
