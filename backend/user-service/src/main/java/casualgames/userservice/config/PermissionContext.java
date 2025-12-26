@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,4 +17,8 @@ public class PermissionContext {
     private Role role;
 
     private boolean isOwner;
+
+    UUID actorGuid;
+
+    UUID targetGuid;
 }

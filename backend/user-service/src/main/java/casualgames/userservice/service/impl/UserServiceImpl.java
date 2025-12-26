@@ -7,8 +7,12 @@ import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.dto.UserResponseDto;
 import casualgames.userservice.entity.User;
+import casualgames.userservice.enums.Operation;
+import casualgames.userservice.enums.Permissions;
 import casualgames.userservice.enums.Role;
+import casualgames.userservice.exception.ForbiddenException;
 import casualgames.userservice.exception.ResourceNotFoundException;
+import casualgames.userservice.factory.PermissionContextFactory;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.UserService;
@@ -77,23 +81,25 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public UserResponseDto updateByGuid(UUID guid, UpdateUserRequest request) {
-        User user = getAuthUser();
+        User actor = getAuthUser();
 
         User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with guid: " + guid));
 
         userValidator.validateEmailForUpdate(request.email(), target);
 
-        PermissionContext context = PermissionContext.builder()
-                .role(user.getRole())
-                .isOwner(user.getGuid().equals(target.getGuid()))
-                .build();
+        PermissionContext context = PermissionContextFactory.create(
+                actor.getRole(),
+                actor.getGuid().equals(target.getGuid()),
+                actor.getGuid(),
+                target.getGuid()
+        );
 
         permissionValidator.updateObject(request, target, context);
 
         User saved = userRepository.save(target);
 
-        client.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
+        //client.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
 
         UserResponseDto response = userMapper.toDto(saved);
 
@@ -140,15 +146,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto findByGuid(UUID guid) {
-        User user = getAuthUser();
+        User actor = getAuthUser();
 
         User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
 
-        PermissionContext context = PermissionContext.builder()
-                .role(user.getRole())
-                .isOwner(user.getGuid().equals(target.getGuid()))
-                .build();
+        PermissionContext context = PermissionContextFactory.create(
+                actor.getRole(),
+                actor.getGuid().equals(target.getGuid()),
+                actor.getGuid(),
+                target.getGuid()
+        );
 
         UserResponseDto response = userMapper.toDto(target);
 
@@ -158,31 +166,38 @@ public class UserServiceImpl implements UserService {
     }
 
     private User getAuthUser() {
-        return userRepository.findById(5L).orElse(null);
+        return userRepository.findById(3L).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     @Transactional
     public UserResponseDto updateRole(UUID guid, Role role) {
-        User user = getAuthUser();
+        User actor = getAuthUser();
 
         User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
 
-        PermissionContext context = PermissionContext.builder()
-                .role(user.getRole())
-                .isOwner(user.getGuid().equals(target.getGuid()))
-                .build();
+        PermissionContext context = PermissionContextFactory.create(
+                actor.getRole(),
+                actor.getGuid().equals(target.getGuid()),
+                actor.getGuid(),
+                target.getGuid()
+        );
+
+        if (!permissionValidator.can(Permissions.ROLE, Operation.UPDATE, context)) {
+            throw new ForbiddenException("You do not have permission to update role");
+        }
 
         target.setRole(role);
 
         User saved = userRepository.save(target);
 
         // todo: переделать потом, а то ничего не сработает
-        client.updateRole(user, saved, role);
+        // todo: вероятно пора добавлять outbox паттерн
+        //client.updateRole(actor, saved, role);
 
         UserResponseDto response = userMapper.toDto(saved);
 
-        permissionValidator.readObject(target, context);
+        permissionValidator.readObject(response, context);
 
         return response;
     }
