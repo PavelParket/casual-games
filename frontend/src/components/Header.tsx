@@ -9,8 +9,6 @@ export default function Header() {
    const dispatch = useDispatch<AppDispatch>();
    const navigate = useNavigate();
 
-   const { theme, getIcon } = useThemedIcon();
-
    const handleLogout = () => {
       dispatch(logout());
       setTimeout(() => {

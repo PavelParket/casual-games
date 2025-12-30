@@ -3,6 +3,7 @@ package casualgames.userservice.service;
 import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
+import casualgames.userservice.dto.bank_service.TransactionShortInfoInternalRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,4 +23,6 @@ public interface UserService extends Service<UserResponse, Long> {
     UserResponse findByGuid(UUID guid);
 
     void deleteByGuid(UUID id);
+
+    Boolean updateBalances(List<TransactionShortInfoInternalRequest> transactions);
 }
