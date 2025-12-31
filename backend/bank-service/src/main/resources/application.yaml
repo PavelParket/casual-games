@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: bank-service
+
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: jdbc:postgresql://${BANK_POSTGRES_HOST}:${BANK_POSTGRES_PORT}/${BANK_POSTGRES_DB}
+    username: ${BANK_POSTGRES_USERNAME}
+    password: ${BANK_POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 15
+        order_inserts: true
+        order_updates: true
+        batch_versioned_data: true
+
+server:
+  port: 8084
+
+app:
+  user-service:
+    url: http://localhost:8083
+
+logging:
+  level:
+    org.springframework.web: DEBUG

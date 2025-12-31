@@ -5,6 +5,7 @@ import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.dto.UserResponseDto;
 import casualgames.userservice.enums.Role;
+import casualgames.userservice.dto.bank_service.TransactionShortInfoInternalRequest;
 import casualgames.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -89,5 +90,11 @@ public class UserController {
     @PatchMapping("/guid={guid}")
     public UserResponseDto updateRole(@PathVariable UUID guid, @RequestParam Role role) {
         return userService.updateRole(guid, role);
+    }
+
+    @PatchMapping("/update-balance")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Boolean updateBalances(@RequestBody @Valid List<TransactionShortInfoInternalRequest> transactions) {
+        return userService.updateBalances(transactions);
     }
 }

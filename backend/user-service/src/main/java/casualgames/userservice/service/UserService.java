@@ -25,5 +25,7 @@ public interface UserService extends Service<UserResponse, Long> {
 
     void deleteByGuid(UUID id);
 
+    Boolean updateBalances(List<TransactionShortInfoInternalRequest> transactions);
+
     UserResponseDto updateRole(UUID guid, Role role);
 }
