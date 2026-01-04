@@ -11,9 +11,9 @@ import casualgames.userservice.entity.User;
 import casualgames.userservice.enums.Operation;
 import casualgames.userservice.enums.Permissions;
 import casualgames.userservice.enums.Role;
-import casualgames.userservice.exception.ForbiddenException;
 import casualgames.userservice.enums.TransactionStatus;
 import casualgames.userservice.enums.TransactionType;
+import casualgames.userservice.exception.ForbiddenException;
 import casualgames.userservice.exception.ResourceNotFoundException;
 import casualgames.userservice.factory.PermissionContextFactory;
 import casualgames.userservice.mapper.UserMapper;
@@ -97,6 +97,7 @@ public class UserServiceImpl implements UserService {
 
         PermissionContext context = PermissionContextFactory.create(
                 actor.getRole(),
+                actor.getStatus(),
                 actor.getGuid().equals(target.getGuid()),
                 actor.getGuid(),
                 target.getGuid()
@@ -160,6 +161,7 @@ public class UserServiceImpl implements UserService {
 
         PermissionContext context = PermissionContextFactory.create(
                 actor.getRole(),
+                actor.getStatus(),
                 actor.getGuid().equals(target.getGuid()),
                 actor.getGuid(),
                 target.getGuid()
@@ -173,7 +175,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private User getAuthUser() {
-        return userRepository.findById(3L).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return userRepository.findById(1L).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     @Transactional
@@ -185,6 +187,7 @@ public class UserServiceImpl implements UserService {
 
         PermissionContext context = PermissionContextFactory.create(
                 actor.getRole(),
+                actor.getStatus(),
                 actor.getGuid().equals(target.getGuid()),
                 actor.getGuid(),
                 target.getGuid()

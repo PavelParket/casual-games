@@ -17,6 +17,8 @@ import java.util.UUID;
 @Builder
 public class UserResponseDto {
 
+    private Long id;
+
     @Permission(Permissions.GUID)
     private UUID guid;
 
