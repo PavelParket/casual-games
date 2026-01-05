@@ -141,6 +141,10 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found")));
     }
 
+    /*todo: пофиксить баг при котором на банк сервис возвращается null, а не boolean из-за чего транзакция
+       с отрицательным балансом помечается как success, вместо reject
+       Также есть проблема с тем что нормальная транзакция меняет баланс и он фиксируется в базе,
+       а отрицательный - нет, возникает несогласованность*/
     @Override
     @Transactional
     public Boolean updateBalances(List<TransactionShortInfoInternalRequest> transactions) {
