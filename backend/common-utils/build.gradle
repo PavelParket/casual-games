@@ -41,24 +41,21 @@ subprojects {
             mavenJava(MavenPublication) {
                 from components.java
 
-                groupId = project.group
-                artifactId = project.name
-                version = project.version
-
-                pom {
-                    withXml {
-                        def depMgmt = asNode().appendNode('dependencyManagement')
-                                .appendNode('dependencies')
-
-                        def bom = depMgmt.appendNode('dependency')
-                        bom.appendNode('groupId', 'org.springframework.boot')
-                        bom.appendNode('artifactId', 'spring-boot-dependencies')
-                        bom.appendNode('version', SpringBootPlugin.BOM_VERSION)
-                        bom.appendNode('type', 'pom')
-                        bom.appendNode('scope', 'import')
+                versionMapping {
+                    usage('java-api') {
+                        fromResolutionOf('runtimeClasspath')
+                    }
+                    usage('java-runtime') {
+                        fromResolutionResult()
                     }
                 }
             }
+        }
+    }
+
+    tasks.withType(GenerateModuleMetadata).tap {
+        configureEach {
+            suppressedValidationErrors.add('dependencies-without-versions')
         }
     }
 }

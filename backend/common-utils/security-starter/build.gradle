@@ -1,7 +1,13 @@
 plugins {
     id 'java-library'
+    id 'org.springframework.boot' version '3.5.9'
     id 'io.spring.dependency-management'
     id 'maven-publish'
+
+}
+
+bootJar {
+    enabled = false
 }
 
 jar {
@@ -10,9 +16,9 @@ jar {
 
 dependencies {
     // Spring Boot dependencies
-    api 'org.springframework.boot:spring-boot-starter-web'
-    api 'org.springframework.boot:spring-boot-starter-aop'
-    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
     // Optional config processor
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'

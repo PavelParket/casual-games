@@ -2,9 +2,9 @@ package com.security_starter.validator;
 
 import com.security_starter.annotation.Permission;
 import com.security_starter.config.PermissionContext;
+import com.security_starter.entity.RolePermissionRepository;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
-import com.security_starter.temp.RolePermissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

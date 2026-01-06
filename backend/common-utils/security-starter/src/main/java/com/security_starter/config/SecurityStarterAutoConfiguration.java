@@ -1,7 +1,7 @@
 package com.security_starter.config;
 
+import com.security_starter.entity.RolePermissionRepository;
 import com.security_starter.factory.PermissionContextFactory;
-import com.security_starter.temp.RolePermissionRepository;
 import com.security_starter.validator.PermissionValidator;
 import jakarta.persistence.EntityManager;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -15,8 +15,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @AutoConfiguration
 @ConditionalOnClass(EntityManager.class)
-@EntityScan(basePackages = "com.security_starter.temp")
-@EnableJpaRepositories(basePackages = "com.security_starter.temp")
+@EntityScan(basePackages = "com.security_starter.entity")
+@EnableJpaRepositories(basePackages = "com.security_starter.entity")
 @EnableAspectJAutoProxy
 @Import({PermissionContextFactory.class})
 public class SecurityStarterAutoConfiguration {
