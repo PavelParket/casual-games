@@ -5,7 +5,7 @@ import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.dto.UserResponseDto;
 import casualgames.userservice.dto.bank_service.TransactionShortInfoInternalRequest;
-import casualgames.userservice.enums.Role;
+import com.security_starter.enums.Role;
 
 import java.util.List;
 import java.util.UUID;

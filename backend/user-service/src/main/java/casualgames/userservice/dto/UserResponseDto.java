@@ -1,7 +1,7 @@
 package casualgames.userservice.dto;
 
-import casualgames.userservice.annotation.Permission;
-import casualgames.userservice.enums.Permissions;
+import com.security_starter.annotation.Permission;
+import com.security_starter.enums.Permissions;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

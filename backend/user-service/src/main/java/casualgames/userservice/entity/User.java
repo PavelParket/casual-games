@@ -1,10 +1,9 @@
 package casualgames.userservice.entity;
 
-
-import casualgames.userservice.annotation.Permission;
-import casualgames.userservice.enums.Permissions;
-import casualgames.userservice.enums.Role;
-import casualgames.userservice.enums.Status;
+import com.security_starter.annotation.Permission;
+import com.security_starter.enums.Permissions;
+import com.security_starter.enums.Role;
+import com.security_starter.enums.Status;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
