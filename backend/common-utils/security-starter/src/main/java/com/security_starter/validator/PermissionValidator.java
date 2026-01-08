@@ -2,8 +2,6 @@ package com.security_starter.validator;
 
 import com.security_starter.annotation.Permission;
 import com.security_starter.config.PermissionContext;
-import com.security_starter.entity.RolePermissionRepository;
-import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,23 +17,21 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class PermissionValidator {
 
-    private final RolePermissionRepository rolePermissionRepository;
-
-    public boolean can(Permissions permissions, Operation operation, PermissionContext context) {
+    /*public boolean can(Permissions permissions, Operation operation, PermissionContext context) {
         return rolePermissionRepository.can(
                 context.getRole().name(),
                 permissions.name(),
                 operation.name(),
                 context.isOwner()
         );
-    }
+    }*/
 
     public void readObject(Object object, PermissionContext context) {
         allFields(object.getClass()).forEach(field -> {
             if (field.isAnnotationPresent(Permission.class)) {
-                if (!can(field.getAnnotation(Permission.class).value(), Operation.READ, context)) {
+                /*if (!can(field.getAnnotation(Permission.class).value(), Operation.READ, context)) {
                     setNull(field, object);
-                }
+                }*/
             }
         });
     }
@@ -61,7 +57,7 @@ public class PermissionValidator {
                     .map(Permission::value)
                     .orElse(null);
 
-            if (permission == null || !can(permission, Operation.UPDATE, context)) {
+            if (permission == null/* || !can(permission, Operation.UPDATE, context)*/) {
                 return;
             }
 
