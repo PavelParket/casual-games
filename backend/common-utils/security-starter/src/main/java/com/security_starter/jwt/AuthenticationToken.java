@@ -1,54 +1,59 @@
 package com.security_starter.jwt;
 
-import lombok.Getter;
+import com.security_starter.enums.Role;
+import com.security_starter.enums.Status;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class AuthenticationToken extends AbstractAuthenticationToken {
-
-    @Getter
-    private Set<String> roles;
-
-    @Getter
-    private String status;
 
     private Object principal;
 
     private Object credentials;
 
-    @Getter
-    private Set<String> permissions;
+    private final UUID guid;
 
-    @Getter
-    private Map<String, Set<String>> roleAndPermissionsMap;
+    private final String email;
 
-    @Getter
-    private String email;
+    private final Status status;
+
+    private final Set<String> roles;
+
+    private final Set<String> permissions;
+
+    private final Map<String, Set<String>> roleAndPermissionsMap;
 
     public AuthenticationToken(
-            String status,
-            Object principal,
+            UUID guid,
+            String email,
+            Status status,
             Set<String> permissions,
             Map<String, Set<String>> roleAndPermissionsMap,
-            String email,
             Collection<? extends GrantedAuthority> authorities
     ) {
         super(authorities);
+        this.guid = guid;
+        this.email = email;
         this.status = status;
-        this.principal = principal;
-        this.credentials = null;
         this.permissions = permissions;
         this.roleAndPermissionsMap = roleAndPermissionsMap;
-        this.email = email;
-        if (!authorities.isEmpty()) {
-            this.roles = authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+        this.principal = guid;
+        this.credentials = null;
+
+        if (authorities != null && !authorities.isEmpty()) {
+            this.roles = authorities.stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toSet());
             super.setAuthenticated(true);
         } else {
+            this.roles = Set.of();
             super.setAuthenticated(false);
         }
     }
@@ -64,11 +69,6 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
     }
 
     @Override
-    public void eraseCredentials() {
-        super.eraseCredentials();
-        credentials = null;
-    }
-
     public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
         if (isAuthenticated) {
             throw new IllegalArgumentException(
@@ -76,5 +76,42 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
         }
 
         super.setAuthenticated(false);
+    }
+
+    @Override
+    public void eraseCredentials() {
+        super.eraseCredentials();
+        credentials = null;
+    }
+
+    public boolean hasRole(Role role) {
+        return roles.contains(role.name());
+    }
+
+    public boolean hasPermission(String permission) {
+        return permissions.contains(permission);
+    }
+
+    public Set<String> getPermissionsForRole(String role) {
+        return roleAndPermissionsMap.getOrDefault(role, Set.of());
+    }
+
+    public static AuthenticationToken unauthenticated() {
+        return new AuthenticationToken(null, null, null, Set.of(), Map.of(), Set.of());
+    }
+
+    public static AuthenticationToken authenticated(
+            UUID guid,
+            String email,
+            Status status,
+            Set<String> roles,
+            Set<String> permissions,
+            Map<String, Set<String>> roleAndPermissionsMap
+    ) {
+        Collection<GrantedAuthority> authorities = roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toSet());
+
+        return new AuthenticationToken(guid, email, status, permissions, roleAndPermissionsMap, authorities);
     }
 }

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
+@Deprecated(forRemoval = true)
 //@Entity
 //@Table(name = "role_permission")
 @Data
