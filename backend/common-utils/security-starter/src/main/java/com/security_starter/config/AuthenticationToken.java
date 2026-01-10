@@ -1,7 +1,8 @@
-package com.security_starter.jwt;
+package com.security_starter.config;
 
 import com.security_starter.enums.Role;
 import com.security_starter.enums.Status;
+import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -12,6 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Getter
 public class AuthenticationToken extends AbstractAuthenticationToken {
 
     private Object principal;
