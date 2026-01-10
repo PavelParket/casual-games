@@ -1,6 +1,6 @@
 package com.websocket_hub.mapper;
 
-import com.websocket_hub.domain.dto.client.RoomInfoResponse;
+import com.websocket_hub.domain.dto.RoomInfoResponse;
 import com.websocket_hub.domain.entity.Room;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

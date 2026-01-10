@@ -1,7 +1,7 @@
 package com.websocket_hub.handler;
 
 import com.websocket_hub.client.GameServiceClient;
-import com.websocket_hub.domain.dto.TicTacToeGameMessage;
+import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
 import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
@@ -63,6 +63,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             switch (event) {
                 case READY -> handlePlayerReady(roomName, user.email());
                 case MOVE -> handleGameMove(roomName, ticTacToeGameMessage);
+                case BET -> handlePlayerBet(roomName, ticTacToeGameMessage, user);
                 default -> log.warn("Unknown game message event: {}", event);
             }
         } catch (Exception e) {
@@ -116,9 +117,15 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             TicTacToeGameMessage moveResponse = gameServiceClient.processMove(moveRequest)
                     .orElseThrow(() -> new RuntimeException(("Empty state")));
 
+            //todo: куда-то сюда всунуть обновление баланса
+
             roomManager.broadcast(moveResponse.roomName(), moveResponse);
         } catch (Exception e) {
             log.error("Failed to process move in room {}", roomName, e);
         }
+    }
+
+    private void handlePlayerBet(String roomName, TicTacToeGameMessage ticTacToeGameMessage, UserInfoInternalResponse user) {
+        roomManager.markPlayerBet(roomName, user, ticTacToeGameMessage.bet());
     }
 }

@@ -1,7 +1,7 @@
 package com.websocket_hub.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.websocket_hub.domain.dto.Message;
+import com.websocket_hub.domain.dto.message.Message;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,6 @@
 package com.websocket_hub.serializer;
 
-import com.websocket_hub.domain.dto.Message;
+import com.websocket_hub.domain.dto.message.Message;
 
 public interface MessageSerializer<T> {
 

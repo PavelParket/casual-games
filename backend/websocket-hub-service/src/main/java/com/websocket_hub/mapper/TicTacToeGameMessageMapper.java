@@ -1,6 +1,6 @@
 package com.websocket_hub.mapper;
 
-import com.websocket_hub.domain.dto.TicTacToeGameMessage;
+import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import org.mapstruct.Mapper;

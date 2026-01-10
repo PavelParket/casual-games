@@ -1,6 +1,6 @@
 package com.websocket_hub.client;
 
-import com.websocket_hub.domain.dto.TicTacToeGameMessage;
+import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,7 +1,7 @@
 package com.websocket_hub.service;
 
-import com.websocket_hub.domain.dto.client.RoomInfoResponse;
-import com.websocket_hub.domain.dto.client.RoomTypeResponse;
+import com.websocket_hub.domain.dto.RoomInfoResponse;
+import com.websocket_hub.domain.dto.RoomTypeResponse;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.manager.AbstractRoomManager;

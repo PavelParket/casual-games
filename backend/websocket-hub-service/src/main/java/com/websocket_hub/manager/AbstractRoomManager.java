@@ -1,6 +1,6 @@
 package com.websocket_hub.manager;
 
-import com.websocket_hub.domain.dto.Message;
+import com.websocket_hub.domain.dto.message.Message;
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;

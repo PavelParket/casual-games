@@ -1,6 +1,6 @@
 package com.websocket_hub.mapper;
 
-import com.websocket_hub.domain.dto.RoomMessage;
+import com.websocket_hub.domain.dto.message.RoomMessage;
 import com.websocket_hub.domain.enums.EventType;
 import com.websocket_hub.domain.enums.MessageType;
 import org.mapstruct.InjectionStrategy;

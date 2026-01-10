@@ -1,12 +1,14 @@
-package com.websocket_hub.domain.dto;
+package com.websocket_hub.domain.dto.message;
 
 import lombok.Builder;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 
 @Builder
 public record TicTacToeGameMessage(
+
         String type,
 
         String event,
@@ -30,6 +32,8 @@ public record TicTacToeGameMessage(
         Set<String> players,
 
         String winner,
+
+        BigDecimal bet,
 
         String message
 ) implements Message {

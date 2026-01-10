@@ -1,7 +1,7 @@
 package com.websocket_hub.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.websocket_hub.domain.dto.RoomMessage;
+import com.websocket_hub.domain.dto.message.RoomMessage;
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
 import com.websocket_hub.manager.RoomManager;
 import com.websocket_hub.manager.SessionManager;

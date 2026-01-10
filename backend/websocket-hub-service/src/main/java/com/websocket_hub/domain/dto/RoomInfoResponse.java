@@ -1,4 +1,4 @@
-package com.websocket_hub.domain.dto.client;
+package com.websocket_hub.domain.dto;
 
 import com.websocket_hub.domain.enums.RoomType;
 

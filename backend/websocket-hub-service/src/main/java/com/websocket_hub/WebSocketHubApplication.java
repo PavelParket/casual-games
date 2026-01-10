@@ -6,8 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
-public class Main {
+public class WebSocketHubApplication {
     public static void main(String[] args) {
-        SpringApplication.run(Main.class, args);
+        SpringApplication.run(WebSocketHubApplication.class, args);
     }
 }

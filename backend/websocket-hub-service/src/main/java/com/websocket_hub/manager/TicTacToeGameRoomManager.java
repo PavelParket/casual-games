@@ -1,5 +1,6 @@
 package com.websocket_hub.manager;
 
+import com.websocket_hub.domain.dto.bank_service.PlayerBet;
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
@@ -14,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,17 +27,23 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
     private final Map<String, Set<String>> readyPlayers = new ConcurrentHashMap<>();
 
+    private final Map<String, List<PlayerBet>> playerBets = new ConcurrentHashMap<>();
+
     private final MessageMapper mapper;
+
+    private final ObjectFactory<PlayerBet> playerBetFactory;
 
     public TicTacToeGameRoomManager(
             MessageSerializer<String> serializer,
             ObjectFactory<Room> factory,
             SessionManager sessionManager,
             RoomValidator validator,
-            TicTacToeGameMessageMapper mapper
+            TicTacToeGameMessageMapper mapper,
+            ObjectFactory<PlayerBet> playerBetFactory
     ) {
         super(serializer, factory, sessionManager, validator);
         this.mapper = mapper;
+        this.playerBetFactory = playerBetFactory;
     }
 
     @Override
@@ -86,5 +95,14 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
         readyPlayers.remove(roomName);
 
         log.info("Cleared ready players for room {}", roomName);
+    }
+
+    public void markPlayerBet(String roomName, UserInfoInternalResponse user, BigDecimal bet) {
+        PlayerBet playerBet = playerBetFactory.create(user.guid(), bet, user.balance());
+
+        List<PlayerBet> bets = playerBets.computeIfAbsent(roomName, key -> new java.util.concurrent.CopyOnWriteArrayList<>());
+        bets.add(playerBet);
+
+
     }
 }
