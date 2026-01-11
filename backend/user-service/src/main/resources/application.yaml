@@ -55,6 +55,10 @@ spring:
       enabled: ${SERVICE_WHITELIST_ENABLED:true}
       hosts: [ "127.0.0.1" ]
 
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+
 server:
   port: 8083
   forward-headers-strategy: framework
