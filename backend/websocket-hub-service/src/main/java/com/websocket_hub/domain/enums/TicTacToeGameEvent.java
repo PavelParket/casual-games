@@ -13,7 +13,9 @@ public enum TicTacToeGameEvent implements EventType {
     WINNER_X("winner X"),
     WINNER_O("winner O"),
     DRAW("draw"),
-    BET("bet");
+    BET("bet"),
+    BET_REJECT("bet reject"),
+    BET_OUTBID("bet outbid");
 
     private final String description;
 

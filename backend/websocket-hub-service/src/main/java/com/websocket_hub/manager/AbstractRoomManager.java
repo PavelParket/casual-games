@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -215,7 +216,7 @@ public abstract class AbstractRoomManager {
         return 0;
     }
 
-    protected void sendToSession(ClientSession client, Message message) {
+    public void sendToSession(ClientSession client, Message message) {
         if (client == null || !client.isOpen()) {
             return;
         }
@@ -225,5 +226,9 @@ public abstract class AbstractRoomManager {
         } catch (Exception e) {
             log.error("Failed to send private message to session \"{}\": {}", client.getEmail(), e.getMessage());
         }
+    }
+
+    protected ClientSession getClientSessionByGuid(UUID guid) {
+        return sessionManager.getByGuid(guid);
     }
 }
