@@ -35,6 +35,9 @@ dependencies {
 
     runtimeOnly 'org.postgresql:postgresql:42.7.7'
 
+    implementation 'org.liquibase:liquibase-core'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+
     compileOnly 'org.projectlombok:lombok:1.18.38'
     annotationProcessor 'org.projectlombok:lombok:1.18.38'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
