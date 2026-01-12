@@ -25,7 +25,8 @@ public class JwtGenerator {
                 .claim("email", email)
                 .claim("roles", roles)
                 .claim("status", status)
-                .issuedAt(new Date(System.currentTimeMillis() + jwtProperties.accessExpiration()))
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtProperties.accessExpiration()))
                 .signWith(key)
                 .compact();
     }

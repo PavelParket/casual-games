@@ -2,7 +2,9 @@ package com.security_starter.validator;
 
 import com.security_starter.annotation.Permission;
 import com.security_starter.config.PermissionContext;
+import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
+import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,21 +19,28 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class PermissionValidator {
 
-    /*public boolean can(Permissions permissions, Operation operation, PermissionContext context) {
-        return rolePermissionRepository.can(
-                context.getRole().name(),
-                permissions.name(),
-                operation.name(),
-                context.isOwner()
-        );
-    }*/
+    public boolean can(Permissions permissions, Operation operation, PermissionContext context) {
+        if (context == null || context.getRole() == null) {
+            return false;
+        }
+
+        if (Role.ADMIN.equals(context.getRole())) {
+            return true;
+        }
+
+        if (Role.USER.equals(context.getRole())) {
+            return context.isOwner();
+        }
+
+        return false;
+    }
 
     public void readObject(Object object, PermissionContext context) {
         allFields(object.getClass()).forEach(field -> {
             if (field.isAnnotationPresent(Permission.class)) {
-                /*if (!can(field.getAnnotation(Permission.class).value(), Operation.READ, context)) {
+                if (!can(field.getAnnotation(Permission.class).value(), Operation.READ, context)) {
                     setNull(field, object);
-                }*/
+                }
             }
         });
     }
@@ -57,7 +66,7 @@ public class PermissionValidator {
                     .map(Permission::value)
                     .orElse(null);
 
-            if (permission == null/* || !can(permission, Operation.UPDATE, context)*/) {
+            if (permission == null || !can(permission, Operation.UPDATE, context)) {
                 return;
             }
 

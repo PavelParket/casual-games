@@ -19,7 +19,7 @@ import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
 import com.security_starter.enums.Role;
 import com.security_starter.exception.ForbiddenException;
-import com.security_starter.factory.PermissionContextFactory;
+import com.security_starter.helper.PermissionContextHelper;
 import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,12 +62,13 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserResponse create(CreateUserRequest request) {
+    public UserResponseDto create(CreateUserRequest request) {
 
         userValidator.validateForCreation(request);
 
         User user = userMapper.toEntity(request);
-        return userMapper.toResponseDto(userRepository.save(user));
+
+        return userMapper.toDto(userRepository.save(user));
     }
 
     @Deprecated
@@ -88,30 +89,26 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public UserResponseDto updateByGuid(UUID guid, UpdateUserRequest request) {
-        User actor = getAuthUser();
-
         User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with guid: " + guid));
 
         userValidator.validateEmailForUpdate(request.email(), target);
 
-        PermissionContext context = PermissionContextFactory.create(
-                actor.getRole(),
-                actor.getStatus(),
-                actor.getGuid().equals(target.getGuid()),
-                actor.getGuid(),
-                target.getGuid()
-        );
+        PermissionContext permissionContext = PermissionContextHelper.createContextFromAuthentication(target.getGuid());
 
-        permissionValidator.updateObject(request, target, context);
+        if (permissionContext == null) {
+            throw new ForbiddenException("Unable to update user");
+        }
+
+        permissionValidator.updateObject(request, target, permissionContext);
 
         User saved = userRepository.save(target);
 
-        //client.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
+        client.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
 
         UserResponseDto response = userMapper.toDto(saved);
 
-        permissionValidator.readObject(response, context);
+        permissionValidator.readObject(response, permissionContext);
 
         return response;
     }
@@ -154,46 +151,30 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto findByGuid(UUID guid) {
-        User actor = getAuthUser();
-
         User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
 
-        PermissionContext context = PermissionContextFactory.create(
-                actor.getRole(),
-                actor.getStatus(),
-                actor.getGuid().equals(target.getGuid()),
-                actor.getGuid(),
-                target.getGuid()
-        );
+        PermissionContext permissionContext = PermissionContextHelper.createContextFromAuthentication(target.getGuid());
+
+        if (permissionContext == null) {
+            throw new ForbiddenException("Unable to update user");
+        }
 
         UserResponseDto response = userMapper.toDto(target);
 
-        permissionValidator.readObject(response, context);
+        permissionValidator.readObject(response, permissionContext);
 
         return response;
     }
 
-    private User getAuthUser() {
-        return userRepository.findById(1L).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-    }
-
     @Transactional
     public UserResponseDto updateRole(UUID guid, Role role) {
-        User actor = getAuthUser();
-
         User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
 
-        PermissionContext context = PermissionContextFactory.create(
-                actor.getRole(),
-                actor.getStatus(),
-                actor.getGuid().equals(target.getGuid()),
-                actor.getGuid(),
-                target.getGuid()
-        );
+        PermissionContext permissionContext = PermissionContextHelper.createContextFromAuthentication(target.getGuid());
 
-        if (!permissionValidator.can(Permissions.ROLE, Operation.UPDATE, context)) {
+        if (permissionContext == null || !permissionValidator.can(Permissions.ROLE, Operation.UPDATE, permissionContext)) {
             throw new ForbiddenException("You do not have permission to update role");
         }
 
@@ -207,7 +188,7 @@ public class UserServiceImpl implements UserService {
 
         UserResponseDto response = userMapper.toDto(saved);
 
-        permissionValidator.readObject(response, context);
+        permissionValidator.readObject(response, permissionContext);
 
         return response;
     }

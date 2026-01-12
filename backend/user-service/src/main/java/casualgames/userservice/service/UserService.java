@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public interface UserService extends Service<UserResponse, Long> {
 
-    UserResponse create(CreateUserRequest request);
+    UserResponseDto create(CreateUserRequest request);
 
     UserResponse update(Long userId, UpdateUserRequest request);
 
