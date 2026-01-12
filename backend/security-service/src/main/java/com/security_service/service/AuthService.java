@@ -5,6 +5,7 @@ import com.security_service.domain.dto.LoginRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.mapper.AuthMapper;
+import com.security_service.scheduler.PermissionSyncScheduler;
 import com.security_starter.enums.Status;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,6 +29,8 @@ public class AuthService {
     private final AuthMapper mapper;
 
     private final AuthenticationManager authenticationManager;
+
+    private final PermissionSyncScheduler permissionSyncScheduler;
 
     public AuthResponse register(RegisterRequest request, HttpServletResponse response) {
         UserResponse user = userService.create(request);
@@ -72,5 +75,9 @@ public class AuthService {
         cookieService.addRefreshToken(response, refreshToken);
 
         return mapper.toResponse(user, accessToken);
+    }
+
+    public void manualSync() {
+        permissionSyncScheduler.manualSync();
     }
 }

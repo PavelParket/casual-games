@@ -1,6 +1,7 @@
 package com.security_starter.provider;
 
 import com.security_starter.repository.RedisPermissionRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -18,6 +19,11 @@ import java.util.Set;
 public class DefaultPermissionProvider implements PermissionProvider {
 
     private final RedisPermissionRepository repository;
+
+    @PostConstruct
+    public void init() {
+        System.out.println("Permission provider is ready");
+    }
 
     @Override
     public Map<String, Set<String>> getPermissions(Set<String> roles, String email) {

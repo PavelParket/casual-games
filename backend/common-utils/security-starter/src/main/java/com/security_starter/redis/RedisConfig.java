@@ -12,7 +12,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "spring.data.redis", name = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "app.redis", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class RedisConfig {
 
     private final RedisProperties redisProperties;
@@ -29,6 +29,8 @@ public class RedisConfig {
             config.setPassword(redisProperties.password());
         }
 
+        System.out.println("Redis connection factory is ready");
+
         return new LettuceConnectionFactory(config);
     }
 
@@ -41,6 +43,8 @@ public class RedisConfig {
         template.setHashKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(new StringRedisSerializer());
         template.afterPropertiesSet();
+
+        System.out.println("Redis template is ready");
 
         return template;
     }

@@ -4,6 +4,7 @@ import com.security_service.repository.PermissionRepository;
 import com.security_service.repository.RolePermissionRepository;
 import com.security_service.repository.RoleRepository;
 import com.security_starter.repository.RedisPermissionRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -31,6 +32,11 @@ public class PermissionSyncScheduler {
     private final RolePermissionRepository rolePermissionRepository;
 
     private final RedisPermissionRepository redisRepository;
+
+    @PostConstruct
+    public void init() {
+        System.out.println("Scheduler is ready");
+    }
 
     /**
      * Sync all role permissions from database to Redis

@@ -15,19 +15,18 @@ import com.security_starter.repository.RedisPermissionRepository;
 import com.security_starter.validator.JwtValidator;
 import com.security_starter.validator.PermissionValidator;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.web.SecurityFilterChain;
 
 @AutoConfiguration
-@ConditionalOnClass(SecurityFilterChain.class)
 @EnableAspectJAutoProxy
 @EnableConfigurationProperties({JwtProperties.class, RedisProperties.class})
 @Import({
+        RedisConfig.class,
+        RedisPermissionRepository.class,
         PermissionContextFactory.class,
         JwtDecoder.class,
         JwtValidator.class,
@@ -38,8 +37,6 @@ import org.springframework.security.web.SecurityFilterChain;
         SecurityExceptionHandler.class,
         DefaultPermissionProvider.class,
         PermissionValidator.class,
-        RedisConfig.class,
-        RedisPermissionRepository.class,
 })
 public class SecurityAutoConfiguration {
 
