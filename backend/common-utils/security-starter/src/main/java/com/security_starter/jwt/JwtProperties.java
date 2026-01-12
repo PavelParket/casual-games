@@ -2,7 +2,7 @@ package com.security_starter.jwt;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "app.security.jwt")
+@ConfigurationProperties(prefix = "spring.security.jwt")
 public record JwtProperties(
         String secret,
 

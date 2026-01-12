@@ -5,12 +5,15 @@ import com.security_service.domain.dto.LoginRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.mapper.AuthMapper;
+import com.security_starter.enums.Status;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +60,13 @@ public class AuthService {
     }
 
     private AuthResponse generateTokens(UserResponse user, HttpServletResponse response) {
-        String accessToken = tokenService.generateAccessToken(user.guid());
+        String accessToken = tokenService.generateAccessToken(
+                user.guid(),
+                user.email(),
+                List.of(user.role()),
+                Status.DEFAULT
+        );
+
         String refreshToken = tokenService.generateRefreshToken(user.guid());
 
         cookieService.addRefreshToken(response, refreshToken);
