@@ -1,6 +1,7 @@
 package com.websocket_hub.service;
 
-import com.websocket_hub.domain.dto.RoomInfoResponse;
+import com.websocket_hub.domain.dto.RoomRequest;
+import com.websocket_hub.domain.dto.RoomResponse;
 import com.websocket_hub.domain.dto.RoomTypeResponse;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomType;
@@ -39,7 +40,7 @@ public class RoomService {
         this.roomTypeMapper = roomTypeMapper;
     }
 
-    public List<RoomInfoResponse> getRooms() {
+    public List<RoomResponse> getRooms() {
         return managers.values().stream()
                 .flatMap(manager -> manager.getActiveRooms().stream())
                 .map(mapper::toResponse)
@@ -72,5 +73,11 @@ public class RoomService {
 
     private Optional<AbstractRoomManager> getManager(RoomType roomType) {
         return Optional.ofNullable(managers.get(roomType));
+    }
+
+    public RoomResponse create(RoomRequest roomRequest) {
+        return mapper.toResponse(getManager(roomRequest.roomType())
+                .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomRequest.roomType()))
+                .create(roomRequest));
     }
 }

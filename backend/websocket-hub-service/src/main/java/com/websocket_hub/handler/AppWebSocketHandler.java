@@ -35,7 +35,7 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
         sessionManager.register(guid, user, session, connectedAt);
 
         if ("create".equals(action)) {
-            roomManager.create(roomName, roomType);
+            //roomManager.create(roomName, roomType);
             roomManager.addSession(roomName, roomType, user, session);
         } else if ("join".equals(action)) {
             roomManager.addSession(roomName, roomType, user, session);

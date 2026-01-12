@@ -1,5 +1,6 @@
 package com.websocket_hub.manager;
 
+import com.websocket_hub.domain.dto.RoomRequest;
 import com.websocket_hub.domain.dto.message.Message;
 import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
@@ -92,16 +93,16 @@ public abstract class AbstractRoomManager {
         log.info("Session \"{}\" [user \"{}\"] left room \"{}\"", session.getId(), user.email(), roomName);
     }
 
-    public void create(String roomName, RoomType roomType) {
-        if (!validateManagerType(roomType)) {
+    public Room create(RoomRequest roomRequest) {
+        if (!validateManagerType(roomRequest.roomType())) {
             throw new RuntimeException("Room manager type mismatch!");
         }
 
-        if (validator.isRoomExists(roomName, rooms)) {
+        if (validator.isRoomExists(roomRequest.roomName(), rooms)) {
             throw new RuntimeException("Room already exists!");
         }
 
-        rooms.putIfAbsent(roomName, factory.create(roomName, roomType));
+        return rooms.putIfAbsent(roomRequest.roomName(), factory.create(roomRequest.roomName(), roomRequest.roomType()));
     }
 
     public void delete(String roomName, RoomType roomType) {

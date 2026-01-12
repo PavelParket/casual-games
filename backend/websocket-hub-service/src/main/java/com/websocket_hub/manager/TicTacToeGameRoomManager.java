@@ -8,6 +8,7 @@ import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.SystemEvent;
 import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import com.websocket_hub.factory.ObjectFactory;
+import com.websocket_hub.factory.PlayerBetFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
@@ -47,7 +48,9 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
             SessionManager sessionManager,
             RoomValidator validator,
             TicTacToeGameMessageMapper mapper,
-            ObjectFactory<PlayerBet> playerBetFactory, PlayerBetValidator playerBetValidator, PlayerBetService playerBetService
+            PlayerBetFactory playerBetFactory,
+            PlayerBetValidator playerBetValidator,
+            PlayerBetService playerBetService
     ) {
         super(serializer, factory, sessionManager, validator);
         this.mapper = mapper;

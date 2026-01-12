@@ -7,6 +7,7 @@ import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.mapper.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 @Slf4j
 public class PlayerBetService {
 
+    @Qualifier("messageMapperImpl")
     private final MessageMapper messageMapper;
 
     public void notifyBetAccepted(String roomName, ClientSession client, BigDecimal bet, AbstractRoomManager roomManager) {
