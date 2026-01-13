@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset Timofei:V0.1.07012026_1226__create_processed_rooms_table
+--changeset Timofei:V0.1.09012026_2048__create_processed_rooms_table
 --preconditions onFail:MARK_RAN
 --precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'processed_rooms'
 

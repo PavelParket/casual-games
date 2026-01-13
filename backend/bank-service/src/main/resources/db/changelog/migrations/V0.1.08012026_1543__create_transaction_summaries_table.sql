@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset Timofei:V0.1.07012026_1226__create_transaction_summaries_table
+--changeset Timofei:V0.1.08012026_1543__create_transaction_summaries_table
 --preconditions onFail:MARK_RAN
 --precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'transaction_summaries'
 

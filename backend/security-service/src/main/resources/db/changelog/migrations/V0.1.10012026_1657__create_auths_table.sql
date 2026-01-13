@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset Timofei:V0.1.07012026_1226__create_auths_table
+--changeset Timofei:V0.1.10012026_1657__create_auths_table
 --preconditions onFail:MARK_RAN
 --precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'auths'
 
