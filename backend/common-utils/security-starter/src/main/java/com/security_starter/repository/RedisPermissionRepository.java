@@ -3,7 +3,7 @@ package com.security_starter.repository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
-@ConditionalOnBean(RedisTemplate.class)
+@ConditionalOnProperty(prefix = "spring.data.redis", name = "enabled", havingValue = "true")
 @Slf4j
 public class RedisPermissionRepository {
 
@@ -27,7 +27,7 @@ public class RedisPermissionRepository {
 
     @PostConstruct
     public void init() {
-        System.out.println("Role-permission repository is ready");
+        System.out.println("Redis permission repository is ready");
     }
 
     /**

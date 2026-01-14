@@ -21,11 +21,17 @@ spring:
 
   data:
     redis:
-      enabled: ${REDIS_ENABLED:false}
+      enabled: ${REDIS_ENABLED:true}
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       database: ${REDIS_DATABASE:0}
       password: ${REDIS_PASSWORD:}  # optional
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      access-expiration: ${JWT_ACCESS_EXPIRATION:900000}      # 15 minutes default
+      refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
 
 server:
   port: 8083
@@ -37,3 +43,4 @@ app:
 logging:
   level:
     org.springframework.web: DEBUG
+    org.springframework.security: DEBUG

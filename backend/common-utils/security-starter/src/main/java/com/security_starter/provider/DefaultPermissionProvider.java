@@ -4,17 +4,13 @@ import com.security_starter.repository.RedisPermissionRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@Component
 @RequiredArgsConstructor
-@ConditionalOnBean(RedisPermissionRepository.class)
 @Slf4j
 public class DefaultPermissionProvider implements PermissionProvider {
 
@@ -22,7 +18,7 @@ public class DefaultPermissionProvider implements PermissionProvider {
 
     @PostConstruct
     public void init() {
-        System.out.println("Permission provider is ready");
+        System.out.println("Default permission provider is ready");
     }
 
     @Override

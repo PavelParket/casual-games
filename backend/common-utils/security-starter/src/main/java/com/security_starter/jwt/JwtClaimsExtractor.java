@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,9 +34,9 @@ public class JwtClaimsExtractor {
         Claims claims = jwtDecoder.decode(token);
 
         @SuppressWarnings("unchecked")
-        Set<String> roles = claims.get("roles", Set.class);
+        List<String> roles = claims.get("roles", List.class);
 
-        return roles != null ? roles : Set.of();
+        return roles != null ? new HashSet<>(roles) : Set.of();
     }
 
     public Role extractRole(String token) {

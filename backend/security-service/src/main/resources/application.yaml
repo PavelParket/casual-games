@@ -16,6 +16,14 @@ spring:
       ddl-auto: none
     show-sql: true
 
+  data:
+    redis:
+      enabled: ${REDIS_ENABLED:true}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      password: ${REDIS_PASSWORD:}  # optional
+
   security:
     jwt:
       secret: ${JWT_SECRET}
@@ -28,15 +36,14 @@ server:
 app:
   user-service:
     url: http://localhost:8083
-  redis:
-    enabled: ${REDIS_ENABLED:true}
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    database: ${REDIS_DATABASE:0}
-    password: ${REDIS_PASSWORD:}  # optional
+#  redis:
+#    enabled: ${REDIS_ENABLED:true}
+#    host: ${REDIS_HOST:localhost}
+#    port: ${REDIS_PORT:6379}
+#    database: ${REDIS_DATABASE:0}
+#    password: ${REDIS_PASSWORD:}  # optional
 
 logging:
   level:
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
-    com.security_starter: DEBUG

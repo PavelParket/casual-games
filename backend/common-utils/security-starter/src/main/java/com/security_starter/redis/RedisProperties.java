@@ -2,18 +2,15 @@ package com.security_starter.redis;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "app.redis")
-public record RedisProperties(String host, Integer port, String password, Integer database) {
+@ConfigurationProperties(prefix = "spring.data.redis")
+public record RedisProperties(
 
-    public RedisProperties {
-        if (host == null || host.isBlank()) {
-            host = "localhost";
-        }
-        if (port == null) {
-            port = 6379;
-        }
-        if (database == null) {
-            database = 0;
-        }
-    }
+        String host,
+
+        Integer port,
+
+        String password,
+
+        Integer database
+) {
 }
