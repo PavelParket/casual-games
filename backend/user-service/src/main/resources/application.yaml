@@ -32,6 +32,10 @@ spring:
       secret: ${JWT_SECRET}
       access-expiration: ${JWT_ACCESS_EXPIRATION:900000}      # 15 minutes default
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
+      
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
 
 server:
   port: 8083
