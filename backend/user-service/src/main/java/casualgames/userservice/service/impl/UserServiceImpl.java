@@ -14,13 +14,7 @@ import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.UserService;
 import casualgames.userservice.validator.UserValidator;
-import com.security_starter.config.PermissionContext;
-import com.security_starter.enums.Operation;
-import com.security_starter.enums.Permissions;
 import com.security_starter.enums.Role;
-import com.security_starter.exception.ForbiddenException;
-import com.security_starter.helper.PermissionContextHelper;
-import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,8 +39,6 @@ public class UserServiceImpl implements UserService {
     private final UserValidator userValidator;
 
     private final SecurityServiceClient client;
-
-    private final PermissionValidator permissionValidator;
 
     @Override
     public UserResponse findById(Long id) {
@@ -94,23 +86,11 @@ public class UserServiceImpl implements UserService {
 
         userValidator.validateEmailForUpdate(request.email(), target);
 
-        PermissionContext permissionContext = PermissionContextHelper.createContextFromAuthentication(target.getGuid());
-
-        if (permissionContext == null) {
-            throw new ForbiddenException("Unable to update user");
-        }
-
-        permissionValidator.updateObject(request, target, permissionContext);
-
         User saved = userRepository.save(target);
 
         client.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
 
-        UserResponseDto response = userMapper.toDto(saved);
-
-        permissionValidator.readObject(response, permissionContext);
-
-        return response;
+        return userMapper.toDto(saved);
     }
 
     @Deprecated
@@ -154,29 +134,13 @@ public class UserServiceImpl implements UserService {
         User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
 
-        PermissionContext permissionContext = PermissionContextHelper.createContextFromAuthentication(target.getGuid());
-
-        if (permissionContext == null) {
-            throw new ForbiddenException("Unable to update user");
-        }
-
-        UserResponseDto response = userMapper.toDto(target);
-
-        permissionValidator.readObject(response, permissionContext);
-
-        return response;
+        return userMapper.toDto(target);
     }
 
     @Transactional
     public UserResponseDto updateRole(UUID guid, Role role) {
         User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
-
-        PermissionContext permissionContext = PermissionContextHelper.createContextFromAuthentication(target.getGuid());
-
-        if (permissionContext == null || !permissionValidator.can(Permissions.ROLE, Operation.UPDATE, permissionContext)) {
-            throw new ForbiddenException("You do not have permission to update role");
-        }
 
         target.setRole(role);
 
@@ -186,11 +150,7 @@ public class UserServiceImpl implements UserService {
         // todo: вероятно пора добавлять outbox паттерн
         //client.updateRole(actor, saved, role);
 
-        UserResponseDto response = userMapper.toDto(saved);
-
-        permissionValidator.readObject(response, permissionContext);
-
-        return response;
+        return userMapper.toDto(saved);
     }
 
     @Override
