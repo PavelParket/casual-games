@@ -1,12 +1,17 @@
--- Insert default roles
+--liquibase formatted sql
+
+--changeset Pavel:V0.1.01012026_1657__temp_init_test_data
+--preconditions onFail:MARK_RAN
+--precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'roles'
+--precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'role_permission'
+--precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'permissions'
+
 INSERT INTO roles (name, created_at) VALUES
     ('USER', CURRENT_TIMESTAMP),
     ('ADMIN', CURRENT_TIMESTAMP)
 ON CONFLICT (name) DO NOTHING;
 
--- Insert default permissions
 INSERT INTO permissions (attribute, operation, created_at) VALUES
-    -- User attributes
     ('GUID', 'READ', CURRENT_TIMESTAMP),
     ('USERNAME', 'READ', CURRENT_TIMESTAMP),
     ('USERNAME', 'UPDATE', CURRENT_TIMESTAMP),
@@ -19,20 +24,18 @@ INSERT INTO permissions (attribute, operation, created_at) VALUES
     ('STATUS', 'READ', CURRENT_TIMESTAMP),
     ('STATUS', 'UPDATE', CURRENT_TIMESTAMP),
 
-    -- User management
     ('USER', 'CREATE', CURRENT_TIMESTAMP),
     ('USER', 'READ', CURRENT_TIMESTAMP),
     ('USER', 'UPDATE', CURRENT_TIMESTAMP),
     ('USER', 'DELETE', CURRENT_TIMESTAMP)
 ON CONFLICT (attribute, operation) DO NOTHING;
 
--- Assign permissions to USER role (basic access)
 INSERT INTO role_permission (role_id, permission_id, for_me, for_all, created_at)
 SELECT
     r.id,
     p.id,
-    true,  -- for_me: can access own data
-    false, -- for_all: cannot access others' data
+    true,
+    false,
     CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
@@ -46,25 +49,23 @@ WHERE r.name = 'USER'
       OR (p.attribute = 'BALANCE' AND p.operation = 'READ')
       OR (p.attribute = 'ROLE' AND p.operation = 'READ')
       OR (p.attribute = 'STATUS' AND p.operation = 'READ')
-      OR (p.attribute = 'USER' AND p.operation = 'READ') -- can read own profile
-      OR (p.attribute = 'USER' AND p.operation = 'UPDATE') -- can update own profile
+      OR (p.attribute = 'USER' AND p.operation = 'READ')
+      OR (p.attribute = 'USER' AND p.operation = 'UPDATE')
   )
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
--- Assign permissions to ADMIN role (full access)
 INSERT INTO role_permission (role_id, permission_id, for_me, for_all, created_at)
 SELECT
     r.id,
     p.id,
-    true,  -- for_me
-    true,  -- for_all: can access everything
+    true,
+    true,
     CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.name = 'ADMIN'
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
--- Verify data
 SELECT
     r.name as role,
     COUNT(*) as permission_count
