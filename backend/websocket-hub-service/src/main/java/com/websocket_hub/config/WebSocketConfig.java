@@ -2,7 +2,7 @@ package com.websocket_hub.config;
 
 import com.websocket_hub.handler.RoomHandler;
 import com.websocket_hub.handler.TicTacToeGameRoomHandler;
-import com.websocket_hub.interceptor.UserHandshakeInterceptor;
+import com.websocket_hub.interceptor.AppHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -18,7 +18,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final TicTacToeGameRoomHandler ticTacToeGameRoomHandler;
 
-    private final UserHandshakeInterceptor handshakeInterceptor;
+    private final AppHandshakeInterceptor handshakeInterceptor;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {

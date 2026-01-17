@@ -1,16 +1,20 @@
 package com.websocket_hub.domain.dto.message;
 
-public interface Message {
+import com.websocket_hub.domain.enums.MessageType;
 
-    String type();
+import java.util.UUID;
 
-    String event();
+public interface Message<T> {
 
-    String fromUserId();
+    MessageType type();
 
-    String toUserId();
+    T event();
 
-    String roomName();
+    UUID fromUserId();
+
+    UUID toUserId();
+
+    UUID roomId();
 
     String message();
 }

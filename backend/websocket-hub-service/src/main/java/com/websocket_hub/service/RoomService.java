@@ -3,7 +3,7 @@ package com.websocket_hub.service;
 import com.websocket_hub.domain.dto.RoomRequest;
 import com.websocket_hub.domain.dto.RoomResponse;
 import com.websocket_hub.domain.dto.RoomTypeResponse;
-import com.websocket_hub.domain.entity.Room;
+import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.mapper.RoomMapper;
@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,7 +24,7 @@ public class RoomService {
 
     private final Map<RoomType, AbstractRoomManager> managers;
 
-    private final RoomMapper mapper;
+    private final RoomMapper roomMapper;
 
     private final RoomTypeMapper roomTypeMapper;
 
@@ -32,37 +33,45 @@ public class RoomService {
                 .collect(Collectors.toMap(
                         type -> type,
                         type -> managers.stream()
-                                .filter(manager -> type.getManagerClass().isAssignableFrom(manager.getClass()))
+                                .filter(manager -> type.equals(manager.getRoomType()))
                                 .findFirst()
                                 .orElseThrow(() -> new RuntimeException("No manager found for room type: " + type))
                 ));
-        this.mapper = mapper;
+        this.roomMapper = mapper;
         this.roomTypeMapper = roomTypeMapper;
+
+        log.warn("Map of managers: {}", managers);
     }
 
     public List<RoomResponse> getRooms() {
         return managers.values().stream()
-                .flatMap(manager -> manager.getActiveRooms().stream())
-                .map(mapper::toResponse)
+                .flatMap(manager -> manager.getRoomsList().stream())
+                .map(roomMapper::toResponse)
                 .toList();
     }
 
-    public Map<String, Room> getRoomsByType(RoomType roomType) {
+    public List<RoomResponse> getRoomsByType(RoomType roomType) {
         return getManager(roomType)
-                .map(AbstractRoomManager::getRooms)
-                .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType));
+                .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType))
+                .getRoomsList().stream()
+                .map(roomMapper::toResponse)
+                .toList();
     }
 
-    public List<String> getPlayerEmailsInRoom(String roomName, RoomType roomType) {
+    public Map<UUID, String> getUsernamesInRoom(UUID roomId, RoomType roomType) {
         return getManager(roomType)
-                .map(manager -> manager.getUserEmails(roomName).stream().toList())
-                .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType));
+                .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType))
+                .getUsersInRoom(roomId).stream()
+                .collect(Collectors.toMap(
+                        ClientSession::getGuid,
+                        ClientSession::getUsername
+                ));
     }
 
-    public Integer getReadyPlayerCount(String roomName, RoomType roomType) {
+    public Integer getReadyPlayerCount(UUID roomId, RoomType roomType) {
         return getManager(roomType)
-                .map(manager -> manager.getReadyPlayerCount(roomName))
-                .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType));
+                .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType))
+                .getReadyPlayerCount(roomId);
     }
 
     public List<RoomTypeResponse> getTypes() {
@@ -76,7 +85,7 @@ public class RoomService {
     }
 
     public RoomResponse create(RoomRequest roomRequest) {
-        return mapper.toResponse(getManager(roomRequest.roomType())
+        return roomMapper.toResponse(getManager(roomRequest.roomType())
                 .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomRequest.roomType()))
                 .create(roomRequest));
     }

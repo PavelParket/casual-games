@@ -1,40 +1,44 @@
 package com.websocket_hub.domain.dto.message;
 
+import com.websocket_hub.domain.enums.MessageType;
+import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 @Builder
 public record TicTacToeGameMessage(
 
-        String type,
+        MessageType type,
 
-        String event,
+        TicTacToeGameEvent event,
 
-        String fromUserId,
+        UUID fromUserId,
 
-        String toUserId,
+        UUID toUserId,
 
-        String roomName,
+        UUID roomId,
+
+        String message,
 
         String[] board,
 
         Integer cell,
 
-        String player,
+        String currentPlayerSymbol,
 
-        String nextPlayer,
+        String nextPlayerSymbol,
 
-        Map<String, String> playersSymbols,
+        Map<UUID, String> playersSymbols,
 
-        Set<String> players,
+        Set<UUID> players,
 
-        String winner,
+        UUID winner,
 
-        BigDecimal bet,
+        BigDecimal bet
 
-        String message
-) implements Message {
+) implements Message<TicTacToeGameEvent> {
 }

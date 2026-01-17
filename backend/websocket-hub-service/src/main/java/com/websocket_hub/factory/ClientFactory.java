@@ -1,6 +1,6 @@
 package com.websocket_hub.factory;
 
-import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
+import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
@@ -15,7 +15,7 @@ public class ClientFactory implements ObjectFactory<ClientSession> {
     public ClientSession create(Object... objects) {
         if (objects.length != 4
                 || !(objects[0] instanceof UUID guid)
-                || !(objects[1] instanceof UserInfoInternalResponse user)
+                || !(objects[1] instanceof UserInternalResponse user)
                 || !(objects[2] instanceof WebSocketSession session)
                 || !(objects[3] instanceof Instant connectedAt)) {
             throw new IllegalArgumentException("Invalid arguments for ClientSession creation");
@@ -26,7 +26,7 @@ public class ClientFactory implements ObjectFactory<ClientSession> {
 
     private ClientSession create(
             UUID guid,
-            UserInfoInternalResponse user,
+            UserInternalResponse user,
             WebSocketSession session,
             Instant connectedAt
     ) {

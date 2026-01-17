@@ -5,7 +5,6 @@ import com.websocket_hub.jwt.JwtProvider;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -15,26 +14,13 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class JwtIdentityProvider implements IdentityProvider {
+public class DefaultIdentityProvider implements IdentityProvider {
 
     private final JwtProvider provider;
 
-    @Value("${app.websocket.default-room}")
-    private String defaultRoom;
-
     @Override
     public UUID resolveGuid(ServerHttpRequest request) {
-        var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
-
-        String token = params.getFirst("token");
-
-        if (!provider.isToken(token)) {
-            throw new JwtException("Missing JWT token!");
-        }
-
-        if (!provider.validate(token)) {
-            throw new JwtException("Invalid JWT token!");
-        }
+        String token = resolveToken(request);
 
         String guid = provider.getGuid(token);
 
@@ -50,21 +36,21 @@ public class JwtIdentityProvider implements IdentityProvider {
     }
 
     @Override
-    public String resolveRoomName(ServerHttpRequest request) {
+    public UUID resolveRoomId(ServerHttpRequest request) {
         var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
 
-        String roomName = params.getFirst("roomName");
+        String roomId = params.getFirst("roomId");
 
-        if (roomName == null || roomName.isBlank()) {
+        if (roomId == null || roomId.isBlank()) {
             throw new IllegalArgumentException("Missing room name parameter!");
         }
 
-        return roomName;
+        return UUID.fromString(roomId);
     }
 
     @Override
     public RoomType resolveRoomType(ServerHttpRequest request) {
-        var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
+        /*var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
 
         String roomType = params.getFirst("roomType");
 
@@ -72,20 +58,8 @@ public class JwtIdentityProvider implements IdentityProvider {
             throw new IllegalArgumentException("Missing room type parameter!");
         }
 
-        return RoomType.valueOf(roomType);
-    }
-
-    @Override
-    public String resolveAction(ServerHttpRequest request) {
-        var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
-
-        String action = params.getFirst("action");
-
-        if (action == null || action.isBlank()) {
-            throw new IllegalArgumentException("Missing action parameter!");
-        }
-
-        return action;
+        return RoomType.valueOf(roomType);*/
+        return null;
     }
 
     @Override

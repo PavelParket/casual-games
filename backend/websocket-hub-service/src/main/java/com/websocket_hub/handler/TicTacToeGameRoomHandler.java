@@ -2,7 +2,8 @@ package com.websocket_hub.handler;
 
 import com.websocket_hub.client.GameServiceClient;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
-import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
+import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
@@ -17,6 +18,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -43,28 +46,27 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
     @Override
     public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
-        if (message.getPayload().isEmpty()) {
+        String payload = message.getPayload();
+
+        if (payload.isBlank()) {
             log.warn("Received empty message from session {}", session.getId());
 
             return;
         }
-
-        String payload = message.getPayload();
 
         try {
             TicTacToeGameMessage ticTacToeGameMessage = deserializer.deserialize(payload, TicTacToeGameMessage.class);
 
             log.info("Received game message: {}", ticTacToeGameMessage);
 
-            TicTacToeGameEvent event = TicTacToeGameEvent.fromDescription(ticTacToeGameMessage.event());
-            String roomName = WebSocketUtil.getRoomName(session);
-            UserInfoInternalResponse user = WebSocketUtil.getUser(session);
+            switch (ticTacToeGameMessage.event()) {
+                case READY -> handlePlayerReady(ticTacToeGameMessage, WebSocketUtil.getUser(session));
 
-            switch (event) {
-                case READY -> handlePlayerReady(roomName, user.email());
-                case MOVE -> handleGameMove(roomName, ticTacToeGameMessage);
-                case BET -> handlePlayerBet(roomName, ticTacToeGameMessage, user);
-                default -> log.warn("Unknown game message event: {}", event);
+                case MOVE -> handleGameMove(ticTacToeGameMessage);
+
+                //case BET -> handlePlayerBet(ticTacToeGameMessage, WebSocketUtil.getUser(session));
+
+                default -> log.warn("Unknown game message event: {}", ticTacToeGameMessage.event());
             }
         } catch (Exception e) {
             log.error("Failed to handle game message", e);
@@ -72,60 +74,79 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
     }
 
     @Override
-    protected void onJoin(String roomName, UserInfoInternalResponse user) {
+    protected void onJoin(UUID roomId, UserInternalResponse user) {
 
     }
 
     @Override
-    protected void onLeave(String roomName, UserInfoInternalResponse user) {
+    protected void onLeave(UUID roomId, UserInternalResponse user) {
 
     }
 
-    private void handlePlayerReady(String roomName, String email) {
-        roomManager.markReady(roomName, email);
+    private void handlePlayerReady(TicTacToeGameMessage ticTacToeGameMessage, UserInternalResponse user) {
+        roomManager.markReady(ticTacToeGameMessage.roomId(), user);
 
-        log.info("Player= \"{}\" is ready", email);
+        log.info("Player= \"{}\" is ready", user.username());
 
-        if (roomManager.areBothPlayersReady(roomName)) {
-            startGame(roomName);
+        if (roomManager.areBothPlayersReady(ticTacToeGameMessage.roomId())) {
+            startGame(ticTacToeGameMessage.roomId());
 
-            roomManager.clearReadyPlayers(roomName);
+            roomManager.clearReadyPlayers(ticTacToeGameMessage.roomId());
         }
     }
 
-    private void startGame(String roomName) {
+    private void startGame(UUID roomId) {
         try {
-            Set<String> players = roomManager.getUserEmails(roomName);
+            Set<ClientSession> players = roomManager.getUsersInRoom(roomId);
 
-            log.info("Starting game in room {} with players: {}", roomName, players);
+            if (players == null || players.isEmpty()) {
+                throw new IllegalStateException("Room is empty!");
+            }
 
-            TicTacToeGameMessage startRequest = mapper.toGameStartMessageFromParams(TicTacToeGameEvent.START, roomName, players);
+            log.info("Starting game in room {} with players: {}", roomId, players);
 
-            TicTacToeGameMessage startResponse = gameServiceClient.startGame(startRequest)
+            TicTacToeGameMessage startGameRequest = mapper.toGameStartMessageFromParams(
+                    TicTacToeGameEvent.START,
+                    roomId,
+                    players.stream()
+                            .map(ClientSession::getGuid)
+                            .collect(Collectors.toSet())
+            );
+
+            TicTacToeGameMessage startGameResponse = gameServiceClient.startGame(startGameRequest)
                     .orElseThrow(() -> new RuntimeException("Empty state"));
 
-            roomManager.broadcast(startResponse.roomName(), startResponse);
+            roomManager.broadcast(startGameResponse.roomId(), startGameResponse);
         } catch (Exception e) {
-            log.error("Failed to start game in room {}", roomName, e);
+            log.error("Failed to start game in room {}", roomId, e);
         }
     }
 
-    private void handleGameMove(String roomName, TicTacToeGameMessage message) {
+    private void handleGameMove(TicTacToeGameMessage ticTacToeGameMessage) {
         try {
-            TicTacToeGameMessage moveRequest = mapper.toGameMoveMessage(TicTacToeGameEvent.MOVE, roomName, message.board(), message.cell(), message.player());
+            TicTacToeGameMessage moveGameRequest = mapper.toGameMoveMessage(
+                    TicTacToeGameEvent.MOVE,
+                    ticTacToeGameMessage.fromUserId(),
+                    ticTacToeGameMessage.roomId(),
+                    ticTacToeGameMessage.board(),
+                    ticTacToeGameMessage.cell(),
+                    ticTacToeGameMessage.currentPlayerSymbol(),
+                    ticTacToeGameMessage.playersSymbols(),
+                    ticTacToeGameMessage.players()
+            );
 
-            TicTacToeGameMessage moveResponse = gameServiceClient.processMove(moveRequest)
+            TicTacToeGameMessage moveGameResponse = gameServiceClient.processMove(moveGameRequest)
                     .orElseThrow(() -> new RuntimeException(("Empty state")));
 
             //todo: куда-то сюда всунуть обновление баланса
 
-            roomManager.broadcast(moveResponse.roomName(), moveResponse);
+            roomManager.broadcast(moveGameResponse.roomId(), moveGameResponse);
         } catch (Exception e) {
-            log.error("Failed to process move in room {}", roomName, e);
+            log.error("Failed to process move in room {}", ticTacToeGameMessage.roomId(), e);
         }
     }
 
-    private void handlePlayerBet(String roomName, TicTacToeGameMessage ticTacToeGameMessage, UserInfoInternalResponse user) {
-        roomManager.markPlayerBet(roomName, user, ticTacToeGameMessage.bet());
-    }
+    /*private void handlePlayerBet(TicTacToeGameMessage ticTacToeGameMessage, UserInternalResponse user) {
+        roomManager.markPlayerBet(ticTacToeGameMessage.roomId(), user, ticTacToeGameMessage.bet());
+    }*/
 }

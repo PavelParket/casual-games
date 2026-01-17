@@ -2,11 +2,13 @@ package com.websocket_hub.manager;
 
 import com.websocket_hub.domain.dto.RoomRequest;
 import com.websocket_hub.domain.dto.message.Message;
-import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
+import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
+import com.websocket_hub.domain.enums.EventType;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.factory.ObjectFactory;
+import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
 import com.websocket_hub.validator.RoomValidator;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class AbstractRoomManager {
 
-    private final Map<String, Room> rooms = new ConcurrentHashMap<>();
+    private final Map<UUID, Room> rooms = new ConcurrentHashMap<>();
 
     private final MessageSerializer<String> serializer;
 
@@ -37,93 +39,84 @@ public abstract class AbstractRoomManager {
 
     private final RoomValidator validator;
 
-    public abstract String getName();
+    public abstract RoomType getRoomType();
 
-    protected abstract void onAddSession(UserInfoInternalResponse user, String roomName, WebSocketSession session);
+    public abstract MessageMapper getMapper();
 
-    protected abstract void onRemoveSession(UserInfoInternalResponse user, String roomName, WebSocketSession session);
+    protected abstract void onAddSession(UserInternalResponse user, Room room, WebSocketSession session);
 
-    public boolean validateManagerType(RoomType roomType) {
-        return this.getClass().equals(roomType.getManagerClass());
-    }
+    protected abstract void onRemoveSession(UserInternalResponse user, Room room, WebSocketSession session);
 
-    public void addSession(String roomName, RoomType roomType, UserInfoInternalResponse user, WebSocketSession session) {
-        if (!validateManagerType(roomType)) {
-            throw new RuntimeException("Room manager type mismatch!");
-        }
-
-        Room room = rooms.get(roomName);
+    public void addSession(UUID roomId, UserInternalResponse user, WebSocketSession session) {
+        Room room = rooms.get(roomId);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
-        if (room == null || !validator.validateRoomType(room, roomType)) {
-            return;
-        }
-
-        if (client != null && client.validateSession(session)) {
+        if (room != null && client != null && client.validateSession(session)) {
             synchronized (room) {
                 room.add(client);
             }
-        }
-
-        onAddSession(user, roomName, session);
-
-        log.info("Session \"{}\" [user \"{}\"] joined room \"{}\"", session.getId(), user.email(), roomName);
-    }
-
-    public void removeSession(String roomName, RoomType roomType, UserInfoInternalResponse user, WebSocketSession session) {
-        if (!validateManagerType(roomType)) {
-            throw new RuntimeException("Room manager type mismatch!");
-        }
-
-        Room room = rooms.get(roomName);
-        ClientSession client = sessionManager.getByGuid(user.guid());
-
-        if (room == null || !validator.validateRoomType(room, roomType)) {
+        } else {
             return;
         }
 
-        if (client != null && client.validateSession(session)) {
+        onAddSession(user, room, session);
+
+        log.info("Session \"{}\" [user \"{}\"] joined room \"{}\"", session.getId(), user.email(), room.getName());
+    }
+
+    public void removeSession(UUID roomId, UserInternalResponse user, WebSocketSession session) {
+        Room room = rooms.get(roomId);
+        ClientSession client = sessionManager.getByGuid(user.guid());
+
+        if (room != null && client != null && client.validateSession(session)) {
             synchronized (room) {
                 room.remove(client);
             }
+        } else {
+            return;
         }
 
-        onRemoveSession(user, roomName, session);
+        onRemoveSession(user, room, session);
 
-        log.info("Session \"{}\" [user \"{}\"] left room \"{}\"", session.getId(), user.email(), roomName);
+        log.info("Session \"{}\" [user \"{}\"] left room \"{}\"", session.getId(), user.email(), room.getName());
     }
 
     public Room create(RoomRequest roomRequest) {
-        if (!validateManagerType(roomRequest.roomType())) {
-            throw new RuntimeException("Room manager type mismatch!");
-        }
+        synchronized (rooms) {
+            if (validator.isRoomExists(roomRequest, rooms)) {
+                throw new RuntimeException("Room with name: " + roomRequest.roomName() + " already exists!");
+            }
 
-        if (validator.isRoomExists(roomRequest.roomName(), rooms)) {
-            throw new RuntimeException("Room already exists!");
-        }
+            Room room = factory.create(roomRequest.roomName(), roomRequest.roomType());
+            rooms.put(room.getId(), room);
 
-        return rooms.putIfAbsent(roomRequest.roomName(), factory.create(roomRequest.roomName(), roomRequest.roomType()));
-    }
+            log.info("Room name={} id={} was created", room.getName(), room.getId());
 
-    public void delete(String roomName, RoomType roomType) {
-        if (!validateManagerType(roomType)) {
-            throw new RuntimeException("Room manager type mismatch!");
-        }
-
-        Room room = rooms.getOrDefault(roomName, null);
-
-        if (room != null && room.isEmpty()) {
-            log.info("Room \"{}\" is now empty, removing...", roomName);
-
-            rooms.remove(roomName);
+            return room;
         }
     }
 
-    public void broadcast(String roomName, Message message) {
+    public void delete(UUID roomId) {
+        synchronized (rooms) {
+            Room room = rooms.getOrDefault(roomId, null);
+
+            if (room == null) {
+                log.warn("Room id={} not found", roomId);
+
+                return;
+            }
+
+            rooms.remove(roomId);
+
+            log.info("Room name={} id={} was deleted", room.getName(), room.getId());
+        }
+    }
+
+    public void broadcast(UUID roomId, Message<? extends EventType> message) {
         try {
             String json = serializer.serialize(message);
 
-            Room room = rooms.get(roomName);
+            Room room = rooms.get(roomId);
 
             if (room == null || room.isEmpty()) {
                 return;
@@ -157,37 +150,39 @@ public abstract class AbstractRoomManager {
                     room.getParticipants().removeAll(dead);
 
                     if (room.isEmpty()) {
-                        rooms.remove(roomName);
+                        rooms.remove(roomId);
 
-                        log.info("Room \"{}\" removed due to all sessions being closed", roomName);
+                        log.info("Room \"{}\" removed due to all sessions being closed", roomId);
                     }
                 }
             }
 
-            log.info("Broadcast in room \"{}\" from {} → {} recipients", roomName, message.fromUserId(), room.size());
+            log.info("Broadcast in room \"{}\" from {} → {} recipients", roomId, message.fromUserId(), room.size());
         } catch (Exception e) {
             log.error("Failed to broadcast message", e);
         }
     }
 
-    public Map<String, Room> getRooms() {
+    public Map<UUID, Room> getRoomsMap() {
         return Map.copyOf(rooms);
     }
 
-    public List<Room> getActiveRooms() {
+    public List<Room> getRoomsList() {
         return rooms.values().stream().toList();
     }
 
-    public Set<String> getActiveRoomsNames() {
-        return rooms.keySet();
-    }
+    public Set<ClientSession> getUsersInRoom(UUID roomId) {
+        Room room = rooms.getOrDefault(roomId, null);
 
-    public Set<String> getUserEmails(String roomName) {
-        if (roomName == null || roomName.isEmpty()) {
+        if (room == null) {
             return Set.of();
         }
 
-        Room room = rooms.get(roomName);
+        return room.getParticipants();
+    }
+
+    public Set<String> getUserEmails(UUID roomId) {
+        Room room = rooms.getOrDefault(roomId, null);
 
         if (room == null) {
             return Set.of();
@@ -199,12 +194,8 @@ public abstract class AbstractRoomManager {
                 .collect(Collectors.toSet());
     }
 
-    public Set<String> getUserNames(String roomName) {
-        if (roomName == null || roomName.isEmpty()) {
-            return Set.of();
-        }
-
-        Room room = rooms.get(roomName);
+    public Set<String> getUsernamesInRoom(UUID roomId) {
+        Room room = rooms.getOrDefault(roomId, null);
 
         if (room == null) {
             return Set.of();
@@ -213,20 +204,18 @@ public abstract class AbstractRoomManager {
         return room.getParticipants().stream().map(ClientSession::getUsername).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
-    public Integer getReadyPlayerCount(String roomName) {
-        return 0;
+    public Integer getPlayerCount(UUID roomId) {
+        Room room = rooms.getOrDefault(roomId, null);
+
+        if (room == null) {
+            return 0;
+        }
+
+        return room.size();
     }
 
-    public void sendToSession(ClientSession client, Message message) {
-        if (client == null || !client.isOpen()) {
-            return;
-        }
-
-        try {
-            client.sendMessage(new TextMessage(serializer.serialize(message)));
-        } catch (Exception e) {
-            log.error("Failed to send private message to session \"{}\": {}", client.getEmail(), e.getMessage());
-        }
+    public Integer getReadyPlayerCount(UUID roomId) {
+        return 0;
     }
 
     protected ClientSession getClientSessionByGuid(UUID guid) {
