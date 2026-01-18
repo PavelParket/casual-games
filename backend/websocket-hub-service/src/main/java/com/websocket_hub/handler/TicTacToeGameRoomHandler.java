@@ -56,13 +56,15 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
         try {
             TicTacToeGameMessage ticTacToeGameMessage = deserializer.deserialize(payload, TicTacToeGameMessage.class);
+            UUID roomId = WebSocketUtil.getRoomId(session);
+            UserInternalResponse user = WebSocketUtil.getUser(session);
 
             log.info("Received game message: {}", ticTacToeGameMessage);
 
             switch (ticTacToeGameMessage.event()) {
-                case READY -> handlePlayerReady(ticTacToeGameMessage, WebSocketUtil.getUser(session));
+                case READY -> handlePlayerReady(roomId, user);
 
-                case MOVE -> handleGameMove(ticTacToeGameMessage);
+                case MOVE -> handleGameMove(ticTacToeGameMessage, roomId);
 
                 //case BET -> handlePlayerBet(ticTacToeGameMessage, WebSocketUtil.getUser(session));
 
@@ -83,15 +85,15 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
     }
 
-    private void handlePlayerReady(TicTacToeGameMessage ticTacToeGameMessage, UserInternalResponse user) {
-        roomManager.markReady(ticTacToeGameMessage.roomId(), user);
+    private void handlePlayerReady(UUID roomId, UserInternalResponse user) {
+        roomManager.markReady(roomId, user);
 
         log.info("Player= \"{}\" is ready", user.username());
 
-        if (roomManager.areBothPlayersReady(ticTacToeGameMessage.roomId())) {
-            startGame(ticTacToeGameMessage.roomId());
+        if (roomManager.areBothPlayersReady(roomId)) {
+            startGame(roomId);
 
-            roomManager.clearReadyPlayers(ticTacToeGameMessage.roomId());
+            roomManager.clearReadyPlayers(roomId);
         }
     }
 
@@ -116,18 +118,18 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             TicTacToeGameMessage startGameResponse = gameServiceClient.startGame(startGameRequest)
                     .orElseThrow(() -> new RuntimeException("Empty state"));
 
-            roomManager.broadcast(startGameResponse.roomId(), startGameResponse);
+            roomManager.broadcast(roomId, startGameResponse);
         } catch (Exception e) {
             log.error("Failed to start game in room {}", roomId, e);
         }
     }
 
-    private void handleGameMove(TicTacToeGameMessage ticTacToeGameMessage) {
+    private void handleGameMove(TicTacToeGameMessage ticTacToeGameMessage, UUID roomId) {
         try {
             TicTacToeGameMessage moveGameRequest = mapper.toGameMoveMessage(
                     TicTacToeGameEvent.MOVE,
                     ticTacToeGameMessage.fromUserId(),
-                    ticTacToeGameMessage.roomId(),
+                    roomId,
                     ticTacToeGameMessage.board(),
                     ticTacToeGameMessage.cell(),
                     ticTacToeGameMessage.currentPlayerSymbol(),
@@ -140,9 +142,9 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
             //todo: куда-то сюда всунуть обновление баланса
 
-            roomManager.broadcast(moveGameResponse.roomId(), moveGameResponse);
+            roomManager.broadcast(roomId, moveGameResponse);
         } catch (Exception e) {
-            log.error("Failed to process move in room {}", ticTacToeGameMessage.roomId(), e);
+            log.error("Failed to process move in room {}", roomId, e);
         }
     }
 
