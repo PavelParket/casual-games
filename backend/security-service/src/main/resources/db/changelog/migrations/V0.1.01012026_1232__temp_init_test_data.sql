@@ -2,9 +2,10 @@
 
 --changeset Pavel:V0.1.01012026_1657__temp_init_test_data
 --preconditions onFail:MARK_RAN
---precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'roles'
---precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'role_permission'
---precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'permissions'
+--precondition-sql-check expectedResult:3
+--  SELECT COUNT(*) FROM information_schema.tables
+--  WHERE table_schema = 'public'
+--  AND table_name IN ('roles', 'permissions', 'role_permission')
 
 INSERT INTO roles (name, created_at) VALUES
     ('USER', CURRENT_TIMESTAMP),
@@ -65,11 +66,3 @@ FROM roles r
 CROSS JOIN permissions p
 WHERE r.name = 'ADMIN'
 ON CONFLICT (role_id, permission_id) DO NOTHING;
-
-SELECT
-    r.name as role,
-    COUNT(*) as permission_count
-FROM role_permission rp
-JOIN roles r ON rp.role_id = r.id
-GROUP BY r.name
-ORDER BY r.name;
