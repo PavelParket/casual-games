@@ -1,11 +1,6 @@
 --liquibase formatted sql
 
---changeset Pavel:V0.1.01012026_1657__temp_init_test_data
---preconditions onFail:MARK_RAN
---precondition-sql-check expectedResult:3
---  SELECT COUNT(*) FROM information_schema.tables
---  WHERE table_schema = 'public'
---  AND table_name IN ('roles', 'permissions', 'role_permission')
+--changeset Pavel:V0.1.01012026_1232__temp_init_test_data
 
 INSERT INTO roles (name, created_at) VALUES
     ('USER', CURRENT_TIMESTAMP),

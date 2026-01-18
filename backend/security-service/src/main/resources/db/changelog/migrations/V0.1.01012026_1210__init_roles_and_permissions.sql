@@ -1,11 +1,6 @@
 --liquibase formatted sql
 
---changeset Pavel:V0.1.01012026_1657__init_roles_and_permissions
---preconditions onFail:MARK_RAN
---precondition-sql-check expectedResult:0
---  SELECT COUNT(*) FROM information_schema.tables
---  WHERE table_schema = 'public'
---  AND table_name IN ('roles', 'permissions', 'role_permission')
+--changeset Pavel:V0.1.01012026_1210__init_roles_and_permissions
 
 CREATE TABLE roles (
     id BIGSERIAL PRIMARY KEY,
