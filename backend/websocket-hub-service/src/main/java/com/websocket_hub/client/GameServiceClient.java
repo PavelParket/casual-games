@@ -46,7 +46,7 @@ public class GameServiceClient {
 
             return Optional.ofNullable(response.getBody());
         } catch (Exception e) {
-            log.error("Failed to start game {}", e.getMessage(), e);
+            log.error("Failed to start game {}", e.getMessage());
             throw new RuntimeException("Failed to start game" + e.getMessage(), e);
         }
     }
@@ -72,7 +72,7 @@ public class GameServiceClient {
 
             return Optional.ofNullable(response.getBody());
         } catch (Exception e) {
-            log.error("Failed to process move {}", e.getMessage(), e);
+            log.error("Failed to process move {}", e.getMessage());
             throw new RuntimeException("Failed to process move" + e.getMessage(), e);
         }
     }
