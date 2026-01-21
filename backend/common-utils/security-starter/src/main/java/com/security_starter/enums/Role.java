@@ -1,4 +1,4 @@
-package casualgames.userservice.enums;
+package com.security_starter.enums;
 
 public enum Role {
 

@@ -3,8 +3,10 @@ package casualgames.userservice.controller;
 import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
+import casualgames.userservice.dto.UserResponseDto;
 import casualgames.userservice.dto.bank_service.TransactionShortInfoInternalRequest;
 import casualgames.userservice.service.UserService;
+import com.security_starter.enums.Role;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -50,13 +53,13 @@ public class UserController {
     }
 
     @GetMapping("/guid={guid}")
-    public UserResponse findByGuid(@PathVariable UUID guid) {
+    public UserResponseDto findByGuid(@PathVariable UUID guid) {
         return userService.findByGuid(guid);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse create(@Valid @RequestBody CreateUserRequest userRequest) {
+    public UserResponseDto create(@Valid @RequestBody CreateUserRequest userRequest) {
         return userService.create(userRequest);
     }
 
@@ -67,8 +70,8 @@ public class UserController {
     }
 
     @PutMapping("/guid={id}")
-    public UserResponse updateByGuid(@PathVariable("id") UUID guid,
-                                     @Valid @RequestBody UpdateUserRequest userRequest) {
+    public UserResponseDto updateByGuid(@PathVariable("id") UUID guid,
+                                        @Valid @RequestBody UpdateUserRequest userRequest) {
         return userService.updateByGuid(guid, userRequest);
     }
 
@@ -82,6 +85,11 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
         userService.deleteByGuid(id);
+    }
+
+    @PatchMapping("/guid={guid}")
+    public UserResponseDto updateRole(@PathVariable UUID guid, @RequestParam Role role) {
+        return userService.updateRole(guid, role);
     }
 
     @PatchMapping("/update-balance")

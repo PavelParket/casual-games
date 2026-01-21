@@ -2,12 +2,12 @@ package com.security_service.validator;
 
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UpdateRequest;
-import com.security_service.domain.enums.Role;
 import com.security_service.exception.EmailAlreadyExistsException;
 import com.security_service.exception.InvalidEmailFormatException;
 import com.security_service.exception.InvalidRoleException;
 import com.security_service.exception.UserNotFoundException;
 import com.security_service.repository.UserRepository;
+import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -41,10 +41,10 @@ public class UserValidator implements Validator {
         }
     }
 
-    public void validateRoleExists(String role) {
+    public void validateRoleExists(String roleName) {
         if (Arrays.stream(Role.values())
-                .noneMatch(r -> r.name().equals(role))) {
-            throw new InvalidRoleException("Role " + role + " not found!");
+                .noneMatch(role -> role.name().equals(roleName))) {
+            throw new InvalidRoleException("Role " + roleName + " not found!");
         }
     }
 

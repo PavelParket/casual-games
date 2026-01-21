@@ -1,6 +1,6 @@
 package com.security_service.domain.entity;
 
-import com.security_service.domain.enums.Role;
+import com.security_starter.enums.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;

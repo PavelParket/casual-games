@@ -1,4 +1,4 @@
-package com.security_service.jwt;
+package com.security_starter.jwt;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
