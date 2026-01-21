@@ -1,17 +1,15 @@
-package com.websocket_hub.domain.dto.message;
+package com.game_service.tic_tac_toe.dto;
 
-import com.websocket_hub.domain.dto.game_service.PlayerInternalRequest;
-import com.websocket_hub.domain.enums.MessageType;
-import com.websocket_hub.domain.enums.TicTacToeGameEvent;
+import com.game_service.tic_tac_toe.enums.MessageType;
+import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
 import lombok.Builder;
 
-import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 @Builder
-public record TicTacToeGameMessage(
+public record TicTacToeGameRequest(
 
         MessageType type,
 
@@ -37,9 +35,6 @@ public record TicTacToeGameMessage(
 
         Set<PlayerInternalRequest> players,
 
-        UUID winner,
-
-        BigDecimal bet
-
-) implements Message<TicTacToeGameEvent> {
+        UUID winner
+) {
 }

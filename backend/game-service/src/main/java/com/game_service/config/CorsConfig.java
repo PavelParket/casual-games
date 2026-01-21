@@ -1,4 +1,4 @@
-package com.game_service.tic_tac_toe.config;
+package com.game_service.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
