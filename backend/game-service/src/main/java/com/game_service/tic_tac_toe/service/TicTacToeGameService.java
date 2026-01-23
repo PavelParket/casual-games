@@ -1,6 +1,5 @@
 package com.game_service.tic_tac_toe.service;
 
-import com.game_service.tic_tac_toe.dto.PlayerInternalRequest;
 import com.game_service.tic_tac_toe.dto.TicTacToeGameRequest;
 import com.game_service.tic_tac_toe.dto.TicTacToeGameResponse;
 import com.game_service.tic_tac_toe.enums.MessageType;
@@ -38,9 +37,7 @@ public class TicTacToeGameService {
 
         String[] board = new String[9];
 
-        List<UUID> players = new ArrayList<>(request.players().stream()
-                .map(PlayerInternalRequest::guid)
-                .toList());
+        List<UUID> players = new ArrayList<>(request.players().keySet());
 
         Collections.shuffle(players, random);
 
@@ -85,7 +82,7 @@ public class TicTacToeGameService {
 
         if (TicTacToeGameEvent.WINNER_X.equals(event) || TicTacToeGameEvent.WINNER_O.equals(event)) {
             String winnerSymbol = TicTacToeGameUtils.getWinnerSymbol(event);
-            UUID winnerId = request.playersSymbols().entrySet().stream()
+            winner = request.playersSymbols().entrySet().stream()
                     .filter(playerId -> playerId.getValue().equals(winnerSymbol))
                     .map(Map.Entry::getKey)
                     .findFirst()
@@ -93,15 +90,7 @@ public class TicTacToeGameService {
                             new GameValidationException("Winner symbol exists but player not found")
                     );
 
-            PlayerInternalRequest winnerPlayer = request.players().stream()
-                    .filter(player -> player.guid().equals(winnerId))
-                    .findFirst()
-                    .orElseThrow(() ->
-                            new GameValidationException("Winner player not found in players list")
-                    );
-
-            winner = winnerId;
-            message = "Player " + winnerPlayer.username() + " wins!";
+            message = "Player " + request.players().get(winner) + " wins!";
         } else if (TicTacToeGameEvent.DRAW.equals(event)) {
             message = "It's a draw!";
         } else {

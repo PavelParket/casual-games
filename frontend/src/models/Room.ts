@@ -2,7 +2,7 @@ export interface Room {
     id: string;
     name: string;
     type: string;
-    participantEmails: string[];
+    participantGuids: string[];
     participantCount: number;
 }
 

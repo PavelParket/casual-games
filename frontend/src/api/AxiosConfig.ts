@@ -1,5 +1,6 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { getAccessToken, notifyTokenRefresh, setAccessToken } from '../utils/TokenManager';
+import { store } from '../store/store';
+import { logout, refresh } from '../store/slices/AuthSlice';
 
 const API_BASE_URL = 'http://localhost:8080';
 
@@ -11,36 +12,15 @@ export const client = axios.create({
    },
 });
 
-let isRefreshing = false;
-let failedQueue: Array<{
-   resolve: (value: unknown) => void;
-   reject: (reason?: unknown) => void;
-}> = [];
+client.interceptors.request.use((config) => {
+   const token = store.getState().auth.user?.accessToken;
 
-const processQueue = (error: unknown, token: string | null = null) => {
-   failedQueue.forEach(prom => {
-      if (error) {
-         prom.reject(error);
-      } else {
-         prom.resolve(token);
-      }
-   });
+   if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`
+   }
 
-   failedQueue = [];
-};
-
-client.interceptors.request.use(
-   (config: InternalAxiosRequestConfig) => {
-      const token = getAccessToken();
-
-      if (token && config.headers) {
-         config.headers.Authorization = `Bearer ${token}`;
-      }
-
-      return config;
-   },
-   (error) => Promise.reject(error)
-);
+   return config;
+});
 
 client.interceptors.response.use(
    (response) => response,
@@ -48,43 +28,26 @@ client.interceptors.response.use(
       const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
       if (error.response?.status === 401 && !originalRequest._retry) {
-         if (isRefreshing) {
-            return new Promise((resolve, reject) => {
-               failedQueue.push({ resolve, reject });
-            }).then(token => {
+         originalRequest._retry = true;
+
+         try {
+            const action = await store.dispatch(refresh());
+
+            if (refresh.fulfilled.match(action)) {
+               const newToken = action.payload.accessToken;
+
                if (originalRequest.headers) {
-                  originalRequest.headers.Authorization = `Bearer ${token}`;
+                  originalRequest.headers.Authorization = `Bearer ${newToken}`;
                }
 
                return client(originalRequest);
-            }).catch(error => {
-               return Promise.reject(error);
-            });
-         }
-
-         originalRequest._retry = true;
-         isRefreshing = true;
-
-         try {
-            const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
-            const newToken = (response.data as { accessToken: string }).accessToken;
-
-            setAccessToken(newToken);
-            notifyTokenRefresh(newToken);
-
-            processQueue(null, newToken);
-
-            if (originalRequest.headers) {
-               originalRequest.headers.Authorization = `Bearer ${newToken}`;
             }
 
-            return client(originalRequest);
-         } catch (refreshError) {
-            processQueue(refreshError, null);
-            notifyTokenRefresh(null);
-            return Promise.reject(refreshError);
-         } finally {
-            isRefreshing = false;
+            store.dispatch(logout());
+            return Promise.reject(error);
+         } catch {
+            store.dispatch(logout());
+            return Promise.reject(error);
          }
       }
 

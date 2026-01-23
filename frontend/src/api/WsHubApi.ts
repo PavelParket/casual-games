@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { RoomTypeInfo } from "../types/rooms";
+import type { RoomTypeInfo } from "../models/rooms";
 
 const WS_HUB_URL = 'http://localhost:8081/ws';
 

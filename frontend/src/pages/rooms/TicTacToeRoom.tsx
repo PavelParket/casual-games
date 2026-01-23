@@ -2,11 +2,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Toast, Typography, useThemedIcon } from "../../ui";
-import type { GameMessage } from "../../types/ws";
+import type { GameMessage } from "../../models/WsMessage";
 import { RoomAPI } from "../../api/WsHubApi";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
-import type { LastRoom } from "../../types/room";
+import type { LastRoom } from "../../models/room";
 import { getSecureLocalStorage, sanitizeRoomName, sanitizeToastMessage, sanitizeWSMessage } from "../../utils/SecurityUtils";
 
 export default function TicTacToeRoom() {
@@ -22,12 +22,12 @@ export default function TicTacToeRoom() {
 
    const { getInverseIcon } = useThemedIcon();
 
-   const [toast, setToast] = useState<{ text: string } | null>(null);
+   const [toast, setToast] = useState<{ text: string }>();
    const [isGame, setIsGame] = useState(false);
-   const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
-   const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
-   const [mySymbol, setMySymbol] = useState<string | null>(null);
-   const [winner, setWinner] = useState<string | null>(null);
+   const [board, setBoard] = useState<(string)[]>(Array(9).fill(null));
+   const [currentPlayer, setCurrentPlayer] = useState<string>();
+   const [mySymbol, setMySymbol] = useState<string>();
+   const [winner, setWinner] = useState<string>();
    const [players, setPlayers] = useState<{ name: string; symbol: string }[]>([]);
    const [ready, setReady] = useState(false);
    const [readyCount, setReadyCount] = useState(0);
@@ -91,7 +91,7 @@ export default function TicTacToeRoom() {
    const processReset = useCallback(() => {
       showToast("Your opponent left the room. Waiting for a new player...");
       setBoard(Array(9).fill(null));
-      setCurrentPlayer(null);
+      setCurrentPlayer();
       setMySymbol(null);
       setWinner(null);
       setReady(false);

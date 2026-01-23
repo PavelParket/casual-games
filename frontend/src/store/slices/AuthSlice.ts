@@ -1,55 +1,19 @@
 import type { AxiosError } from 'axios';
-import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AuthAPI } from '../../api/AuthApi';
-import { setAccessToken as setGlobalToken, startTokenTimer, stopTokenTimer } from '../../utils/TokenManager';
-
-export interface User {
-   id: number;
-   username: string;
-   email: string;
-   role: string;
-}
+import { setTokenForManager, startTokenTimer, stopTokenTimer } from '../../utils/TokenManager';
+import type { AuthUser, LoginRequest, RegisterRequest } from '../../models/Security';
+import { ApiHelper } from '../../helpers/ApiHelper';
 
 export interface AuthState {
-   user: User | null;
-   accessToken: string | null;
+   user?: AuthUser;
    isAuthenticated: boolean;
-   isLoading: boolean;
-   error: string | null;
+   error?: string;
 }
-
-export interface LoginRequest {
-   email: string;
-   password: string;
-}
-
-export interface RegisterRequest {
-   username: string;
-   email: string;
-   password: string;
-}
-
-export interface AuthResponse {
-   id: number;
-   username: string;
-   email: string;
-   role: string;
-   accessToken: string;
-}
-
-const mapAuthResponseToState = (data: AuthResponse): { user: User; accessToken: string } => ({
-   user: {
-      id: data.id,
-      username: data.username,
-      email: data.email,
-      role: data.role,
-   },
-   accessToken: data.accessToken,
-});
 
 // ------------------ Thunks ------------------
 
-export const login = createAsyncThunk<AuthResponse, LoginRequest, { rejectValue: string }>(
+export const login = createAsyncThunk<AuthUser, LoginRequest, { rejectValue: string }>(
    "auth/login",
    async (credentials, { rejectWithValue }) => {
       try {
@@ -62,7 +26,7 @@ export const login = createAsyncThunk<AuthResponse, LoginRequest, { rejectValue:
    }
 );
 
-export const register = createAsyncThunk<AuthResponse, RegisterRequest, { rejectValue: string }>(
+export const register = createAsyncThunk<AuthUser, RegisterRequest, { rejectValue: string }>(
    "auth/register",
    async (credentials, { rejectWithValue }) => {
       try {
@@ -84,21 +48,17 @@ export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
          const error = err as AxiosError<{ message?: string }>;
          return rejectWithValue(error.response?.data?.message ?? "Logout failed");
       } finally {
-         setGlobalToken(null);
+         setTokenForManager();
          stopTokenTimer();
       }
    }
 );
 
-export const refresh = createAsyncThunk<AuthResponse, void, { rejectValue: string }>(
+export const refresh = createAsyncThunk<AuthUser, void, { rejectValue: string }>(
    "auth/refresh",
    async (_, { rejectWithValue }) => {
       try {
-         const response = await AuthAPI.refresh();
-         if (response.status === 204 || !response.data) {
-            return rejectWithValue("");
-         }
-         return response.data;
+         return await ApiHelper.refresh();
       } catch (err: unknown) {
          const error = err as AxiosError<{ message?: string }>;
          return rejectWithValue(error.response?.data?.message ?? "");
@@ -109,11 +69,9 @@ export const refresh = createAsyncThunk<AuthResponse, void, { rejectValue: strin
 // ------------------ Slice ------------------
 
 const initialState: AuthState = {
-   user: null,
-   accessToken: null,
+   user: undefined,
    isAuthenticated: false,
-   isLoading: false,
-   error: null,
+   error: undefined,
 };
 
 const authSlice = createSlice({
@@ -121,94 +79,70 @@ const authSlice = createSlice({
    initialState,
    reducers: {
       clearError: (state) => {
-         state.error = null;
-      },
-      setAccessToken: (state, action: PayloadAction<string>) => {
-         state.accessToken = action.payload;
-         state.isAuthenticated = true;
-         setGlobalToken(action.payload);
+         state.error = undefined;
       },
    },
    extraReducers: (builder) => {
       builder
-         // Login
+
+         /* === Login === */
          .addCase(login.pending, (state) => {
-            state.isLoading = true;
-            state.error = null;
+            state.error = undefined;
          })
          .addCase(login.fulfilled, (state, action) => {
-            const { user, accessToken } = mapAuthResponseToState(action.payload);
-            state.isLoading = false;
-            state.user = user;
-            state.accessToken = accessToken;
+            state.user = action.payload;
             state.isAuthenticated = true;
-            setGlobalToken(accessToken);
-            startTokenTimer(accessToken);
+            setTokenForManager(action.payload.accessToken);
+            startTokenTimer(action.payload.accessToken);
          })
          .addCase(login.rejected, (state, action) => {
-            state.isLoading = false;
             state.error = action.payload ?? "Login failed";
          })
-         // Register
+
+         /* === Register === */
          .addCase(register.pending, (state) => {
-            state.isLoading = true;
-            state.error = null;
+            state.error = undefined;
          })
          .addCase(register.fulfilled, (state, action) => {
-            const { user, accessToken } = mapAuthResponseToState(action.payload);
-            state.isLoading = false;
-            state.user = user;
-            state.accessToken = accessToken;
+            state.user = action.payload;
             state.isAuthenticated = true;
-            setGlobalToken(accessToken);
-            startTokenTimer(accessToken);
+            setTokenForManager(action.payload.accessToken);
+            startTokenTimer(action.payload.accessToken);
          })
          .addCase(register.rejected, (state, action) => {
-            state.isLoading = false;
             state.error = action.payload ?? "Registration failed";
          })
-         // Logout
-         .addCase(logout.pending, (state) => {
-            state.isLoading = true;
-         })
+
+         /* === Logout === */
          .addCase(logout.fulfilled, (state) => {
-            state.isLoading = false;
-            state.user = null;
-            state.accessToken = null;
+            state.user = undefined;
             state.isAuthenticated = false;
-            state.error = null;
+            state.error = undefined;
          })
          .addCase(logout.rejected, (state) => {
-            state.isLoading = false;
-            state.user = null;
-            state.accessToken = null;
+            state.user = undefined;
             state.isAuthenticated = false;
-            state.error = null;
+            state.error = undefined;
          })
-         // Refresh
+
+         /* === Refresh === */
          .addCase(refresh.pending, (state) => {
-            state.isLoading = true;
-            state.error = null;
+            state.error = undefined;
          })
          .addCase(refresh.fulfilled, (state, action) => {
-            const { user, accessToken } = mapAuthResponseToState(action.payload);
-            state.isLoading = false;
-            state.user = user;
-            state.accessToken = accessToken;
+            state.user = action.payload;
             state.isAuthenticated = true;
-            setGlobalToken(accessToken);
-            startTokenTimer(accessToken);
+            setTokenForManager(action.payload.accessToken);
+            startTokenTimer(action.payload.accessToken);
          })
          .addCase(refresh.rejected, (state, action) => {
-            state.isLoading = false;
-            state.user = null;
-            state.accessToken = null;
+            state.user = undefined;
             state.isAuthenticated = false;
             state.error = action.payload ?? "Session expired";
          });
    },
 });
 
-export const { clearError, setAccessToken } = authSlice.actions;
+export const { clearError } = authSlice.actions;
 
 export default authSlice.reducer;
