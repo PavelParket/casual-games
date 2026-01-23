@@ -22,7 +22,7 @@ export default function TicTacToeRoom() {
 
    const { getInverseIcon } = useThemedIcon();
 
-   const [toast, setToast] = useState<{ text: string }>();
+   const [toast, setToast] = useState<{ text: string } | null>(null);
    const [isGame, setIsGame] = useState(false);
    const [board, setBoard] = useState<(string)[]>(Array(9).fill(null));
    const [currentPlayer, setCurrentPlayer] = useState<string>();
