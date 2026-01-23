@@ -1,7 +1,8 @@
 package com.websocket_hub.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.websocket_hub.domain.dto.Message;
+import com.websocket_hub.domain.dto.message.Message;
+import com.websocket_hub.domain.enums.EventType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +13,7 @@ public class JsonSerializer implements MessageSerializer<String> {
     private final ObjectMapper mapper;
 
     @Override
-    public String serialize(Message message) throws Exception {
+    public String serialize(Message<? extends EventType> message) throws Exception {
         return mapper.writeValueAsString(message);
     }
 }

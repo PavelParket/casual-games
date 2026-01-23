@@ -9,11 +9,9 @@ public interface IdentityProvider {
 
     UUID resolveGuid(ServerHttpRequest request);
 
-    String resolveRoomName(ServerHttpRequest request);
+    UUID resolveRoomId(ServerHttpRequest request);
 
     RoomType resolveRoomType(ServerHttpRequest request);
-
-    String resolveAction(ServerHttpRequest request);
 
     String resolveToken(ServerHttpRequest request);
 

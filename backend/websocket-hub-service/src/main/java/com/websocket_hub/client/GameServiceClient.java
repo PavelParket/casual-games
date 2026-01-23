@@ -1,6 +1,6 @@
 package com.websocket_hub.client;
 
-import com.websocket_hub.domain.dto.TicTacToeGameMessage;
+import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +46,7 @@ public class GameServiceClient {
 
             return Optional.ofNullable(response.getBody());
         } catch (Exception e) {
-            log.error("Failed to start game {}", e.getMessage(), e);
+            log.error("Failed to start game {}", e.getMessage());
             throw new RuntimeException("Failed to start game" + e.getMessage(), e);
         }
     }
@@ -72,7 +72,7 @@ public class GameServiceClient {
 
             return Optional.ofNullable(response.getBody());
         } catch (Exception e) {
-            log.error("Failed to process move {}", e.getMessage(), e);
+            log.error("Failed to process move {}", e.getMessage());
             throw new RuntimeException("Failed to process move" + e.getMessage(), e);
         }
     }

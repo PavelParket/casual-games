@@ -1,8 +1,8 @@
 package com.game_service.tic_tac_toe.controller;
 
-import com.game_service.tic_tac_toe.dto.GameRequest;
-import com.game_service.tic_tac_toe.dto.GameResponse;
-import com.game_service.tic_tac_toe.service.GameService;
+import com.game_service.tic_tac_toe.dto.TicTacToeGameRequest;
+import com.game_service.tic_tac_toe.dto.TicTacToeGameResponse;
+import com.game_service.tic_tac_toe.service.TicTacToeGameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,19 +14,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/game/t-t-t")
 @RequiredArgsConstructor
-public class GameController {
+public class TicTacToeGameController {
 
-    private final GameService service;
+    private final TicTacToeGameService ticTacToeGameService;
 
     @PostMapping("/start")
     @ResponseStatus(HttpStatus.OK)
-    public GameResponse processStart(@RequestBody GameRequest request) {
-        return service.processStart(request);
+    public TicTacToeGameResponse processStart(@RequestBody TicTacToeGameRequest request) {
+        return ticTacToeGameService.processStart(request);
     }
 
     @PostMapping("/move")
     @ResponseStatus(HttpStatus.OK)
-    public GameResponse processMove(@RequestBody GameRequest request) {
-        return service.processMove(request);
+    public TicTacToeGameResponse processMove(@RequestBody TicTacToeGameRequest request) {
+        return ticTacToeGameService.processMove(request);
     }
 }

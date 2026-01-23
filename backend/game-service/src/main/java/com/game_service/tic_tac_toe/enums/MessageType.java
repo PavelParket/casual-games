@@ -1,4 +1,4 @@
-package com.websocket_hub.domain.enums;
+package com.game_service.tic_tac_toe.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
