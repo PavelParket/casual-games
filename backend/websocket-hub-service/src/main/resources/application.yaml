@@ -80,8 +80,6 @@ kafka:
     room-lifecycle: ${KAFKA_ROOM_LIFECYCLE_TOPIC:room-lifecycle}
 
 app:
-  websocket:
-    default-room: default
   game-service:
     url: http://localhost:8082
   user-service:

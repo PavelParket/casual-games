@@ -1,22 +1,26 @@
 package com.websocket_hub.domain.enums;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-@Getter
-@RequiredArgsConstructor
 public enum TicTacToeGameEvent implements EventType {
 
-    START("start"),
-    READY("ready"),
-    MOVE("move"),
-    WINNER_X("winner X"),
-    WINNER_O("winner O"),
-    DRAW("draw");
+    JOIN,
+    LEAVE,
+    START,
+    READY,
+    MOVE,
+    WINNER_X,
+    WINNER_O,
+    DRAW,
+    BET,
+    BET_REJECT,
+    BET_OUTBID;
 
-    private final String description;
+    @Override
+    public String join() {
+        return JOIN.name();
+    }
 
-    public static TicTacToeGameEvent fromDescription(String description) {
-        return EventType.fromDescription(description, TicTacToeGameEvent.class);
+    @Override
+    public String leave() {
+        return LEAVE.name();
     }
 }

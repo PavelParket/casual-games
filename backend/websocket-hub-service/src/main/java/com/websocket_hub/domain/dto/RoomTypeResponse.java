@@ -1,4 +1,4 @@
-package com.websocket_hub.domain.dto.client;
+package com.websocket_hub.domain.dto;
 
 import lombok.Builder;
 
