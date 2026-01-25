@@ -4,6 +4,7 @@ import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -26,17 +27,20 @@ public class UserServiceClient {
 
     private final RestTemplate restTemplate;
 
-    public UserInternalResponse getUserByGuid(UUID guid) {
+    public UserInternalResponse getUserByGuid(UUID guid, String token) {
         URI uri = UriComponentsBuilder.fromUriString(userServiceUrl)
                 .path("/users/guid={guid}")
                 .buildAndExpand(guid)
                 .toUri();
 
-        log.info("Calling game-service to start game: {}", guid);
+        log.info("Calling user-service to get user: {}", guid);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
 
         try {
             ResponseEntity<UserInternalResponse> response = restTemplate.exchange(
-                    new RequestEntity<>(HttpMethod.GET, uri),
+                    new RequestEntity<>(headers, HttpMethod.GET, uri),
                     UserInternalResponse.class
             );
 

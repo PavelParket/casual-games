@@ -7,15 +7,13 @@ export const RoomAPI = {
 
    getTypes: () => axios.get<RoomType[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/types`),
 
-   getPlayersInRoom: (roomId: string, roomType: RoomType) =>
-      axios.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/${roomId}/players`, {
-         params: { roomType }
-      }),
+   getUsernamesInRoom: (roomId: string, roomType: RoomType) =>
+      axios.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/players/${roomId}/${roomType}`),
 
    getReadyPlayers: (roomId: string, roomType: RoomType) =>
-      axios.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/${roomId}/ready-count`, {
-         params: { roomType }
-      }),
+      axios.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/ready-count/${roomId}/${roomType}`),
 
    createRoom: (room: RoomRequest) => axios.post<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms`, room),
+
+   getRoomById: (roomId?: string) => axios.get<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/${roomId}`),
 };

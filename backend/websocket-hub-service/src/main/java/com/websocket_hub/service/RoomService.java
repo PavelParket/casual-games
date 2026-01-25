@@ -20,12 +20,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RoomService {
 
-    private final Map<RoomType, AbstractRoomManager> managers;
+    private final Map<RoomType, AbstractRoomManager> roomManagers;
 
     private final RoomMapper roomMapper;
 
     public RoomService(List<AbstractRoomManager> managers, RoomMapper roomMapper) {
-        this.managers = Arrays.stream(RoomType.values())
+        this.roomManagers = Arrays.stream(RoomType.values())
                 .collect(Collectors.toMap(
                         type -> type,
                         type -> managers.stream()
@@ -39,7 +39,7 @@ public class RoomService {
     }
 
     public List<RoomResponse> getRooms() {
-        return managers.values().stream()
+        return roomManagers.values().stream()
                 .flatMap(manager -> manager.getRoomsList().stream())
                 .map(roomMapper::toResponse)
                 .toList();
@@ -74,12 +74,21 @@ public class RoomService {
     }
 
     private Optional<AbstractRoomManager> getManager(RoomType roomType) {
-        return Optional.ofNullable(managers.get(roomType));
+        return Optional.ofNullable(roomManagers.get(roomType));
     }
 
     public RoomResponse create(RoomRequest roomRequest) {
         return roomMapper.toResponse(getManager(roomRequest.roomType())
                 .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomRequest.roomType()))
                 .create(roomRequest));
+    }
+
+    public RoomResponse getById(UUID id) {
+        return roomMapper.toResponse(roomManagers.values().stream()
+                .flatMap(manager -> manager.getRoomsList().stream())
+                .filter(room -> room.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Room id=" + id + " not found"))
+        );
     }
 }

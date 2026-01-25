@@ -10,7 +10,7 @@ import Forbidden from './pages/error/Forbidden';
 import NotFound from './pages/error/NotFound';
 import { ProtectedRoute } from './router/ProtectedRoute';
 import Rooms from './pages/rooms/Rooms';
-//import TicTacToeRoom from './pages/rooms/TicTacToeRoom';
+import TicTacToeRoom from './pages/rooms/TicTacToeRoom';
 import type { AppDispatch } from './store/store';
 import { setOnRefreshRequired } from './utils/TokenManager';
 import { refresh } from './store/slices/AuthSlice';
@@ -65,7 +65,7 @@ export default function App() {
                <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>
                   <Route element={<Layout />}>
                      <Route path="/rooms" element={<Rooms />} />
-                     {/*    <Route path="/room/t-t-t/:roomName&:roomId" element={<TicTacToeRoom />} />*/}
+                     <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
                   </Route>
                </Route>
 

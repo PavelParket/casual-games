@@ -3,7 +3,7 @@ export interface WSMessage {
    event: string;
    fromUserId?: string;
    toUserId?: string;
-   roomName: string;
+   roomId: string;
    message?: string;
 }
 

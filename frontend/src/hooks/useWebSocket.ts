@@ -10,19 +10,19 @@ export type ConnectionState = "connecting" | "connected" | "disconnected" | "err
 export interface UseWebSocketReturn<T extends WSMessage> {
    isConnected: boolean;
    connectionState: ConnectionState;
-   message: T | undefined;
-   error: string | null;
+   message?: T;
+   error?: string;
    send: (message: T) => void;
 }
 
 export function useWebSocket<T extends WSMessage = WSMessage>(
-   roomId: string,
-   roomType: string
+   roomId?: string,
+   roomType?: string
 ): UseWebSocketReturn<T> {
    const [isConnected, setIsConnected] = useState<boolean>(false);
    const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
    const [message, setMessage] = useState<T>();
-   const [error, setError] = useState<string | null>(null);
+   const [error, setError] = useState<string>();
 
    const accessToken = useSelector((state: RootState) => state.auth.user?.accessToken);
 
@@ -30,7 +30,7 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
 
    useEffect(() => {
       if (!roomId || !roomType || !accessToken) {
-         setConnectionState("disconnected");
+         setConnectionState("error");
          setError("Missing required params!");
          return;
       }
@@ -46,14 +46,14 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
       const wsUrl = `${WEBSOCKET_HUB_SERVICE_URL_WS}/ws/${handlerUrl}?roomId=${roomId}&token=${accessToken}`;
 
       setConnectionState('connecting');
-      setError(null);
+      setError("");
 
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
          setIsConnected(true);
          setConnectionState("connected");
-         setError(null);
+         setError("");
       };
 
       socket.onclose = () => {

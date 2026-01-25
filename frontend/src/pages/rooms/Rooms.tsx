@@ -67,19 +67,13 @@ export default function Rooms() {
         });
     }; */
 
-    /* const handleJoinRoom = (room: Room) => {
-        if (!authentication.isAuthenticated) {
+    const handleJoinRoom = (room: Room) => {
+        if (!authentication.isAuthenticated || !room) {
             return;
         }
 
-        const type = findTypeByRoomType(types, room.type!);
-
-        if (!type) {
-            return;
-        }
-
-        goToRoom(room.id, room.name, type, "join");
-    }; */
+        navigateToRoom(room);
+    };
 
     const handleCreateRoom = async () => {
         setError("");
@@ -136,7 +130,7 @@ export default function Rooms() {
             return;
         }
 
-        navigate(`/room/${ROOM_TYPE_HANDLERS[room.type]}/${room.name}&${room.id}`);
+        navigate(`/room/${ROOM_TYPE_HANDLERS[room.type]}/${encodeURIComponent(room.name)}/${room.id}`);
     };
 
     return (
@@ -209,7 +203,7 @@ export default function Rooms() {
                                 }}
                             >
                                 <Typography variant="h3">{room.name}</Typography>
-                                {/* <Button variant="outline" onClick={() => handleJoinRoom(room)}>Join</Button> */}
+                                <Button variant="outline" onClick={() => handleJoinRoom(room)}>Join</Button>
                                 <Button variant="ghost" onClick={() => handleInfo(room)}>Info</Button>
                             </Card>
                         ))}

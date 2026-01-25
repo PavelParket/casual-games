@@ -1,134 +1,153 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Toast, Typography, useThemedIcon } from "../../ui";
 import type { GameMessage } from "../../models/WsMessage";
 import { RoomAPI } from "../../api/WsHubApi";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
+import type { Room } from "../../models/Room";
+import { validateToastMessage, validateWSMessage } from "../../utils/SecurityUtils";
 
-/* export default function TicTacToeRoom() {
-   const email = useSelector((state: RootState) => state.auth.user?.email);
-   const lastRoom: LastRoom | null = getSecureLocalStorage<LastRoom>("lastRoom");
-
-   const navigate = useNavigate();
-
-   const roomName: string = sanitizeRoomName(useParams<{ roomName?: string }>().roomName ?? "");
-
-   const [roomType, setRoomType] = useState<string | null>(lastRoom?.type?.name ?? null);
-   const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom?.type?.handlerUrl ?? null);
-
+export default function TicTacToeRoom() {
    const { getInverseIcon } = useThemedIcon();
 
+   const authentication = useSelector((state: RootState) => state.auth.user);
+   const navigate = useNavigate();
+
+   const roomId: string | undefined = useParams<{ roomId?: string }>().roomId;
+   const [room, setRoom] = useState<Room>();
+
    const [toast, setToast] = useState<{ text: string } | null>(null);
+
+   const [ready, setReady] = useState<boolean>(false);
+   const [readyCount, setReadyCount] = useState<number>(0);
+   const [totalPlayers, setTotalPlayers] = useState<number>(0);
+
    const [isGame, setIsGame] = useState(false);
-   const [board, setBoard] = useState<(string)[]>(Array(9).fill(null));
-   const [currentPlayer, setCurrentPlayer] = useState<string>();
+   const [board, setBoard] = useState<string[]>(Array(9).fill(null));
    const [mySymbol, setMySymbol] = useState<string>();
+   const [currentPlayerSymbol, setCurrentPlayerSymbol] = useState<string>();
+   const [playersSymbols, setPlayersSymbols] = useState<Record<string, string>>();
+   const [players, setPlayers] = useState<Record<string, string>>();
+   const [playersWithSymbols, setPlayersWithSymbols] = useState<Record<string, string>>({});
    const [winner, setWinner] = useState<string>();
-   const [players, setPlayers] = useState<{ name: string; symbol: string }[]>([]);
-   const [ready, setReady] = useState(false);
-   const [readyCount, setReadyCount] = useState(0);
-   const [totalPlayers, setTotalPlayers] = useState(0);
 
-   const emailRef = useRef(email);
-   const winnerRef = useRef(winner);
-   const mySymbolRef = useRef(mySymbol);
+   const { isConnected, message, send } = useWebSocket<GameMessage>(room?.id, room?.type);
 
-   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws", handlerUrl!, roomName!, roomType!);
+   const fetchRoom = async (roomId: string) => {
+      try {
+         const response = (await RoomAPI.getRoomById(roomId));
+         setRoom(response.data);
+      } catch {
+         setRoom(undefined);
+      }
+   };
+
+   const fetchPlayers = useCallback(async () => {
+      if (!roomId || !room) {
+         return;
+      }
+
+      try {
+         const response = (await RoomAPI.getUsernamesInRoom(roomId, room.type));
+
+         setPlayers(response.data);
+         setTotalPlayers(Object.keys(response.data).length);
+      } catch (error) {
+         console.info("Failed to fetch players:", error);
+      }
+   }, [room, roomId]);
+
+   const fetchReadyPlayers = useCallback(async () => {
+      if (!roomId || !room) {
+         return;
+      }
+
+      try {
+         const response = await RoomAPI.getReadyPlayers(roomId, room.type);
+
+         setReadyCount(response.data);
+      } catch (error) {
+         console.info("Failed to fetch ready players:", error);
+      }
+   }, [room, roomId]);
 
    useEffect(() => {
-      if (!lastRoom || !roomName) {
+      if (!roomId) {
          navigate("/rooms");
          return;
       }
 
-      if (lastRoom.type?.name && lastRoom.type?.name !== roomType) {
-         setRoomType(lastRoom.type?.name);
-      }
-      if (lastRoom.type?.handlerUrl && lastRoom.type?.handlerUrl !== handlerUrl) {
-         setHandlerUrl(lastRoom.type?.handlerUrl);
-      }
-   }, [lastRoom, roomName, roomType, handlerUrl, navigate]);
+      fetchRoom(roomId);
+   }, [navigate, roomId]);
 
-   useEffect(() => { emailRef.current = email }, [email]);
-   useEffect(() => { winnerRef.current = winner }, [winner]);
-   useEffect(() => { mySymbolRef.current = mySymbol }, [mySymbol]);
-
-   const fetchPlayers = useCallback(async () => {
-      if (!roomName || !roomType) {
+   useEffect(() => {
+      if (!room) {
          return;
       }
 
-      try {
-         const response = await RoomAPI.getPlayersInRoom(roomName, roomType);
-         const data = response.data;
-
-         setPlayers(data.map((player: string) => ({ name: player, symbol: "" })));
-         setTotalPlayers(data.length);
-      } catch (error) {
-         console.info("Failed to fetch players:", error);
-      }
-   }, [roomName, roomType]);
-
-   const fetchReadyPlayers = useCallback(async () => {
-      if (!roomName || !roomType) {
-         return;
-      }
-
-      try {
-         const response = await RoomAPI.getReadyPlayers(roomName, roomType);
-         const data = response.data;
-
-         setReadyCount(data);
-      } catch (error) {
-         console.info("Failed to fetch ready players:", error);
-      }
-   }, [roomName, roomType]);
+      fetchPlayers();
+      fetchReadyPlayers();
+   }, [room, fetchPlayers, fetchReadyPlayers]);
 
    const processReset = useCallback(() => {
       showToast("Your opponent left the room. Waiting for a new player...");
       setBoard(Array(9).fill(null));
-      setCurrentPlayer();
-      setMySymbol(null);
-      setWinner(null);
+      setCurrentPlayerSymbol(undefined);
+      setMySymbol(undefined);
+      setPlayersWithSymbols({});
+      setWinner(undefined);
       setReady(false);
       setIsGame(false);
    }, []);
 
    const processStart = useCallback((message: GameMessage) => {
       setBoard(message.board!);
-      setCurrentPlayer(message.nextPlayer!);
-      setMySymbol(message.playersSymbols![emailRef.current!]);
-      setPlayers(prev =>
-         prev.map(p => ({
-            ...p,
-            symbol: message.playersSymbols![p.name] ?? "",
-         }))
-      );
+      setCurrentPlayerSymbol(message.nextPlayerSymbol);
+      setPlayersSymbols(message.playersSymbols);
+
+      const playersMap = message.players || {};
+      const symbolsMap = message.playersSymbols || {};
+      const combinedMap: Record<string, string> = {};
+
+      Object.keys(playersMap).forEach(guid => {
+         const username = playersMap[guid];
+         const symbol = symbolsMap[guid];
+         if (username && symbol) {
+            combinedMap[username] = symbol;
+         }
+      });
+
+      setPlayersWithSymbols(combinedMap);
+
+      if (authentication?.guid) {
+         setMySymbol(symbolsMap[authentication.guid]);
+      }
+
       setIsGame(true);
-   }, []);
+   }, [authentication]);
 
    const processMove = (message: GameMessage) => {
       setBoard(message.board!);
-      setCurrentPlayer(message.nextPlayer!);
+      setCurrentPlayerSymbol(message.nextPlayerSymbol);
    };
 
    const processWin = useCallback((message: GameMessage) => {
       setBoard(message.board!);
-      setWinner(message.player!);
+      setWinner(message.winner);
 
-      if (winnerRef.current === mySymbolRef.current) {
+      if (message.winner === mySymbol) {
          showToast("You are the winner!");
       } else {
          showToast(`Your opponent won!`);
       }
       setIsGame(false);
-   }, []);
+   }, [mySymbol]);
 
    const processDraw = useCallback((message: GameMessage) => {
       setBoard(message.board!);
-      setWinner(message.winner!);
+      setWinner(message.winner);
       showToast(message.message!);
       setIsGame(false);
    }, []);
@@ -138,29 +157,35 @@ import type { RootState } from "../../store/store";
          return;
       }
 
-      const sanitizedMessage = sanitizeWSMessage(message, [
+      const validatedMessage = validateWSMessage(message, [
          "type",
          "event",
+         "fromUserId",
+         "toUserId",
+         "roomId",
          "message",
          "board",
-         "nextPlayer",
-         "player",
+         "cell",
+         "currentPlayerSymbol",
+         "nextPlayerSymbol",
          "playersSymbols",
-         "winner"
+         "players",
+         "winner",
+         "bet",
       ]) as GameMessage;
 
-      switch (sanitizedMessage.event) {
-         case "joined":
+      switch (validatedMessage.event) {
+         case "JOIN":
             fetchPlayers();
             fetchReadyPlayers();
-            showToast(sanitizedMessage.message!);
+            showToast(validatedMessage.message!);
             break;
 
-         case "left":
+         case "LEAVE":
             if (isGame) {
                processReset();
             } else {
-               showToast(sanitizedMessage.message!);
+               showToast(validatedMessage.message!);
             }
 
             fetchPlayers();
@@ -168,27 +193,36 @@ import type { RootState } from "../../store/store";
 
             break;
 
-         case "ready":
+         case "START":
+            processStart(validatedMessage);
+            break;
+
+         case "READY":
             fetchReadyPlayers();
-            showToast(sanitizedMessage.message!);
+            showToast(validatedMessage.message!);
             break;
 
-         case "start":
-            processStart(sanitizedMessage);
+         case "MOVE":
+            processMove(validatedMessage);
             break;
 
-         case "move":
-            processMove(sanitizedMessage);
-            break;
-
-         case "winner X":
-         case "winner O": {
-            processWin(sanitizedMessage);
+         case "WINNER_X":
+         case "WINNER_O": {
+            processWin(validatedMessage);
             break;
          }
 
-         case "draw":
-            processDraw(sanitizedMessage);
+         case "DRAW":
+            processDraw(validatedMessage);
+            break;
+
+         case "BET":
+            break;
+
+         case "BET_REJECT":
+            break;
+
+         case "BET_OUTBID":
             break;
 
          default:
@@ -197,41 +231,44 @@ import type { RootState } from "../../store/store";
    }, [isConnected, message, fetchPlayers, fetchReadyPlayers, isGame, processStart, processDraw, processReset, processWin]);
 
    const handleClick = (index: number) => {
-      if (!isConnected || board[index] || winner || currentPlayer !== mySymbol) {
+      if (!authentication || !room || !isConnected || board[index] || winner || currentPlayerSymbol !== mySymbol) {
          return;
       }
 
       send({
-         type: "message",
-         event: "move",
-         fromUserId: email,
-         roomName: roomName!,
+         type: "USER_MESSAGE",
+         event: "MOVE",
+         fromUserId: authentication.guid,
+         roomId: room.id,
          board: board,
          cell: index,
-         player: mySymbol!,
+         currentPlayerSymbol: mySymbol,
+         playersSymbols,
       });
    };
 
    const handleReady = () => {
-      if (!isConnected || ready) {
+      if (!room || !isConnected || ready) {
          return;
       }
 
-      send({ type: "message", event: "ready", roomName: roomName! });
+      send({
+         type: "USER_MESSAGE",
+         event: "READY",
+         roomId: room.id,
+      });
       setReady(true);
    };
 
    const handleLeave = () => {
-      localStorage.removeItem("lastRoom");
-      localStorage.removeItem("action");
       navigate("/rooms");
    };
 
    const showToast = (text: string): void => {
-      setToast({ text: sanitizeToastMessage(text) })
+      setToast({ text: validateToastMessage(text) })
    };
 
-   if (!roomName) {
+   if (!roomId || !room) {
       return (
          <Container>
             <Card style={{ textAlign: "center", padding: "2rem" }}>
@@ -257,7 +294,7 @@ import type { RootState } from "../../store/store";
          <Container>
             <Box style={{ padding: "2rem 0" }}>
                <Typography variant="h2" style={{ textAlign: "center" }}>
-                  Tic-Tae-Toe: {roomName}
+                  Tic-Tac-Toe: {room.name}
                </Typography>
             </Box>
 
@@ -273,7 +310,7 @@ import type { RootState } from "../../store/store";
                         ? "Draw!"
                         : `Winner: ${winner}`
                      : isGame
-                        ? `Turn: ${currentPlayer}`
+                        ? `Turn: ${currentPlayerSymbol}`
                         : `Ready players: ${readyCount} / ${totalPlayers}`
                   }
                </Typography>
@@ -292,11 +329,19 @@ import type { RootState } from "../../store/store";
                      justifyContent: "center",
                      rowGap: "1.5rem",
                   }}>
-                     {players.map((User, index) => (
-                        <Typography key={index} variant="h2">
-                           {User.name}: {User.symbol}
-                        </Typography>
-                     ))}
+                     {isGame ? (
+                        Object.entries(playersWithSymbols).map(([username, symbol]) => (
+                           <Typography key={username} variant="h2">
+                              {username}: {symbol}
+                           </Typography>
+                        ))
+                     ) : (
+                        Object.values(players || {}).map((username) => (
+                           <Typography key={username} variant="h2">
+                              {username}
+                           </Typography>
+                        ))
+                     )}
                   </Box>
 
                   <Box style={{
@@ -383,4 +428,4 @@ import type { RootState } from "../../store/store";
          )}
       </Box>
    );
-} */
+}

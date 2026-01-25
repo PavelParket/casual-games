@@ -1,5 +1,5 @@
 import { AuthAPI } from "../api/AuthApi";
-import type { AuthUser } from "../models/Security";
+import type { AuthUser } from "../models/AuthenticationUser";
 
 const createApiHelper = () => {
     let refreshPromise: Promise<AuthUser> | null = null;

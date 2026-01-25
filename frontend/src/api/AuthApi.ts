@@ -1,4 +1,4 @@
-import type { AuthUser, LoginRequest, RegisterRequest } from "../models/Security";
+import type { AuthUser, LoginRequest, RegisterRequest } from "../models/AuthenticationUser";
 import { client } from "./AxiosConfig";
 
 export const AuthAPI = {

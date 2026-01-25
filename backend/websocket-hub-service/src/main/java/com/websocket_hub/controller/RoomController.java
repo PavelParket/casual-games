@@ -52,4 +52,9 @@ public class RoomController {
     public RoomResponse create(@RequestBody RoomRequest roomRequest) {
         return roomService.create(roomRequest);
     }
+
+    @GetMapping("{id}")
+    public RoomResponse getById(@PathVariable UUID id) {
+        return roomService.getById(id);
+    }
 }
