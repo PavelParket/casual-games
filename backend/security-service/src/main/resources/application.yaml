@@ -11,16 +11,28 @@ spring:
     password: ${SECURITY_POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+
   jpa:
     hibernate:
       ddl-auto: none
     show-sql: true
 
+  data:
+    redis:
+      enabled: ${REDIS_ENABLED:true}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      password: ${REDIS_PASSWORD:}  # optional
+
   security:
     jwt:
       secret: ${JWT_SECRET}
-      access-expiration: ${JWT_ACCESS_EXPIRATION}
-      refresh-expiration: ${JWT_REFRESH_EXPIRATION}
+      access-expiration: ${JWT_ACCESS_EXPIRATION:900000}      # 15 minutes default
+      refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
 
 server:
   port: 8080
@@ -28,6 +40,12 @@ server:
 app:
   user-service:
     url: http://localhost:8083
+#  redis:
+#    enabled: ${REDIS_ENABLED:true}
+#    host: ${REDIS_HOST:localhost}
+#    port: ${REDIS_PORT:6379}
+#    database: ${REDIS_DATABASE:0}
+#    password: ${REDIS_PASSWORD:}  # optional
 
 logging:
   level:

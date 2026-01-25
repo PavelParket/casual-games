@@ -4,16 +4,17 @@ import casualgames.userservice.client.SecurityServiceClient;
 import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
+import casualgames.userservice.dto.UserResponseDto;
 import casualgames.userservice.dto.bank_service.TransactionShortInfoInternalRequest;
 import casualgames.userservice.entity.User;
 import casualgames.userservice.enums.TransactionStatus;
 import casualgames.userservice.enums.TransactionType;
 import casualgames.userservice.exception.ResourceNotFoundException;
-import casualgames.userservice.exception.ServiceUnavailableException;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.UserService;
 import casualgames.userservice.validator.UserValidator;
+import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,14 +54,16 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserResponse create(CreateUserRequest request) {
+    public UserResponseDto create(CreateUserRequest request) {
 
         userValidator.validateForCreation(request);
 
         User user = userMapper.toEntity(request);
-        return userMapper.toResponseDto(userRepository.save(user));
+
+        return userMapper.toDto(userRepository.save(user));
     }
 
+    @Deprecated
     @Transactional
     @Override
     public UserResponse update(Long userId, UpdateUserRequest userRequest) {
@@ -77,24 +80,20 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserResponse updateByGuid(UUID guid, UpdateUserRequest request) {
-        User user = userRepository.findByGuid(guid)
+    public UserResponseDto updateByGuid(UUID guid, UpdateUserRequest request) {
+        User target = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with guid: " + guid));
 
-        userValidator.validateEmailForUpdate(request.email(), user);
+        userValidator.validateEmailForUpdate(request.email(), target);
 
-        userMapper.updateEntity(request, user);
+        User saved = userRepository.save(target);
 
-        try {
-            client.update(userMapper.toUpdateUserInternalRequest(user, request.password()));
-        } catch (ServiceUnavailableException e) {
-            log.error("UserService is unavailable: {}", e.getMessage(), e);
-            throw e;
-        }
+        client.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
 
-        return userMapper.toResponseDto(userRepository.save(user));
+        return userMapper.toDto(saved);
     }
 
+    @Deprecated
     @Transactional
     @Override
     public void delete(Long id) {
@@ -111,12 +110,7 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("User not found");
         }
 
-        try {
-            client.delete(guid);
-        } catch (ServiceUnavailableException e) {
-            log.error("UserService is unavailable: {}", e.getMessage(), e);
-            throw e;
-        }
+        client.delete(guid);
 
         userRepository.deleteByGuid(guid);
     }
@@ -136,11 +130,33 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse findByGuid(UUID guid) {
-        return userMapper.toResponseDto(userRepository.findByGuid(guid)
-                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found")));
+    public UserResponseDto findByGuid(UUID guid) {
+        User target = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
+
+        return userMapper.toDto(target);
     }
 
+    @Transactional
+    public UserResponseDto updateRole(UUID guid, Role role) {
+        User target = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
+
+        target.setRole(role);
+
+        User saved = userRepository.save(target);
+
+        // todo: переделать потом, а то ничего не сработает
+        // todo: вероятно пора добавлять outbox паттерн
+        //client.updateRole(actor, saved, role);
+
+        return userMapper.toDto(saved);
+    }
+
+    /*todo: пофиксить баг при котором на банк сервис возвращается null, а не boolean из-за чего транзакция
+       с отрицательным балансом помечается как success, вместо reject
+       Также есть проблема с тем что нормальная транзакция меняет баланс и он фиксируется в базе,
+       а отрицательный - нет, возникает несогласованность*/
     @Override
     @Transactional
     public Boolean updateBalances(List<TransactionShortInfoInternalRequest> transactions) {
