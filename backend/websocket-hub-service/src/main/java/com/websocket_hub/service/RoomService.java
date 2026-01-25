@@ -2,12 +2,10 @@ package com.websocket_hub.service;
 
 import com.websocket_hub.domain.dto.RoomRequest;
 import com.websocket_hub.domain.dto.RoomResponse;
-import com.websocket_hub.domain.dto.RoomTypeResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.mapper.RoomMapper;
-import com.websocket_hub.mapper.RoomTypeMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -26,9 +24,7 @@ public class RoomService {
 
     private final RoomMapper roomMapper;
 
-    private final RoomTypeMapper roomTypeMapper;
-
-    public RoomService(List<AbstractRoomManager> managers, RoomMapper mapper, RoomTypeMapper roomTypeMapper) {
+    public RoomService(List<AbstractRoomManager> managers, RoomMapper roomMapper) {
         this.managers = Arrays.stream(RoomType.values())
                 .collect(Collectors.toMap(
                         type -> type,
@@ -37,8 +33,7 @@ public class RoomService {
                                 .findFirst()
                                 .orElseThrow(() -> new RuntimeException("No manager found for room type: " + type))
                 ));
-        this.roomMapper = mapper;
-        this.roomTypeMapper = roomTypeMapper;
+        this.roomMapper = roomMapper;
 
         log.warn("Map of managers: {}", managers);
     }
@@ -74,10 +69,8 @@ public class RoomService {
                 .getReadyPlayerCount(roomId);
     }
 
-    public List<RoomTypeResponse> getTypes() {
-        return Arrays.stream(RoomType.values())
-                .map(roomTypeMapper::toResponse)
-                .toList();
+    public List<RoomType> getTypes() {
+        return List.of(RoomType.values());
     }
 
     private Optional<AbstractRoomManager> getManager(RoomType roomType) {

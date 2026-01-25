@@ -6,10 +6,8 @@ import type { GameMessage } from "../../models/WsMessage";
 import { RoomAPI } from "../../api/WsHubApi";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
-import type { LastRoom } from "../../models/room";
-import { getSecureLocalStorage, sanitizeRoomName, sanitizeToastMessage, sanitizeWSMessage } from "../../utils/SecurityUtils";
 
-export default function TicTacToeRoom() {
+/* export default function TicTacToeRoom() {
    const email = useSelector((state: RootState) => state.auth.user?.email);
    const lastRoom: LastRoom | null = getSecureLocalStorage<LastRoom>("lastRoom");
 
@@ -385,4 +383,4 @@ export default function TicTacToeRoom() {
          )}
       </Box>
    );
-}
+} */

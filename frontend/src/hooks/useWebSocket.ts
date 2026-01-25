@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { WSMessage } from "../models/WsMessage";
 import { type RootState } from "../store/store";
 import { useSelector } from "react-redux";
-import { ROOM_TYPE_HANDLERS } from "../models/room";
+import { ROOM_TYPE_HANDLERS } from "../models/Room";
 import { WEBSOCKET_HUB_SERVICE_URL_WS } from "../api/ApiDictionary";
 
 export type ConnectionState = "connecting" | "connected" | "disconnected" | "error";
