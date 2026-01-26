@@ -13,6 +13,8 @@ import { refresh } from './store/slices/AuthSlice'
 import { ProtectedRoute } from './router/ProtectedRoute'
 import Rooms from './pages/rooms/Rooms'
 import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
+import DeCoderRoom from './pages/rooms/DeCoderRoom'
+import Profile from './pages/Profile'
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
@@ -35,6 +37,9 @@ export default function App() {
                   <Route element={<Layout />}>
                      <Route path="/rooms" element={<Rooms />} />
                      <Route path="/room/t-t-t/:roomName" element={<TicTacToeRoom />} />
+                     <Route path="/room/de-coder/:roomName" element={<DeCoderRoom />} />
+
+                     <Route path="/profile" element={<Profile />} />
                   </Route>
                </Route>
 
