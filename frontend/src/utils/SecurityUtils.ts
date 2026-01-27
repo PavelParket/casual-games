@@ -82,18 +82,43 @@ export const validateWSMessage = <T extends WSMessage>(
     for (const field of allowedFields) {
         const value = message[field];
 
-        if (value === undefined) {
-            continue
+        if (value === undefined || value === null) {
+            continue;
         }
 
-        if (typeof value === "string") {
-            validated[field] = validateInput(value) as T[keyof T];
-        } else {
-            validated[field] = value;
-        }
+        validated[field] = validateValue(value) as T[keyof T];
     }
 
     return validated;
+};
+
+const validateValue = (value: unknown): unknown => {
+    if (typeof value === "string") {
+        return validateInput(value);
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+        return value;
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(item => validateValue(item));
+    }
+
+    if (typeof value === "object" && value !== null) {
+        const obj = value as Record<string, unknown>;
+        const validatedObj: Record<string, unknown> = {};
+
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                validatedObj[key] = validateValue(obj[key]);
+            }
+        }
+
+        return validatedObj;
+    }
+
+    return value;
 };
 
 export const getSecureLocalStorage = <T>(key: string): T | null => {

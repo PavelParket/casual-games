@@ -16,17 +16,20 @@ public class PlayerBetValidator {
             throw new IllegalArgumentException("Bet is null!");
         }
 
-        if (playerBet.getBet() == null || playerBet.getBet().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Bet must be positive!");
-        }
-
         if (playerBet.getGuid() == null) {
             throw new IllegalArgumentException("User is missing!");
         }
 
-        if (playerBet.getBalanceBefore() == null
-                || playerBet.getBet().compareTo(playerBet.getBalanceBefore()) > 0) {
-            throw new IllegalArgumentException("Insufficient balance for bet!");
+        if (playerBet.getBet() == null || playerBet.getBet().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Bet must be positive!");
+        }
+
+        if (playerBet.getBalanceBefore() == null || playerBet.getBalanceBefore().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Balance must be greater than 0 (zero)!");
+        }
+
+        if (playerBet.getBet().compareTo(playerBet.getBalanceBefore()) > 0) {
+            throw new IllegalArgumentException("Bet must not be less than balance!");
         }
     }
 

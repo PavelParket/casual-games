@@ -64,9 +64,7 @@ const roomSlice = createSlice({
       clearRoomTypes: (state) => {
          state.roomTypes = [];
       },
-      clearAllStates: (state) => {
-         clearRooms();
-         clearRoomTypes();
+      clearError: (state) => {
          state.error = undefined;
       }
    },
@@ -110,6 +108,6 @@ const roomSlice = createSlice({
    },
 });
 
-export const { clearRooms, clearRoomTypes, clearAllStates } = roomSlice.actions;
+export const { clearRooms, clearRoomTypes, clearError } = roomSlice.actions;
 
 export default roomSlice.reducer;

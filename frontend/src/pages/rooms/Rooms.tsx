@@ -44,29 +44,6 @@ export default function Rooms() {
         setIsRoomInfoModalOpen(true);
     }
 
-    /* const goToRoom = (
-        roomId: string | null,
-        roomName: string | null,
-        type: RoomType,
-        action: "join" | "create"
-    ) => {
-        const sanitizedRoomName = sanitizeRoomName(roomName!);
-
-        if (!sanitizedRoomName) {
-            setError("Invalid room name");
-            return;
-        }
-
-        const lastRoom: LastRoom = { id: roomId ? roomId : null, name: roomName, type: type };
-
-        setSecureLocalStorage("lastRoom", lastRoom);
-        setSecureLocalStorage("action", "join" === action ? "join" : "create");
-
-        navigate(`/room/${type.handlerUrl}/${encodeURIComponent(sanitizedRoomName)}`, {
-            state: { roomType: type.name, handlerUrl: type.handlerUrl },
-        });
-    }; */
-
     const handleJoinRoom = (room: Room) => {
         if (!authentication.isAuthenticated || !room) {
             return;
@@ -88,7 +65,7 @@ export default function Rooms() {
             return;
         }
 
-        const validatedName = validateRoomName(roomName.trim());
+        const validatedName = validateRoomName(roomName);
 
         if (!validatedName) {
             setError("Room name is required and must contain only letters, numbers, spaces, hyphens and underscores!");
@@ -114,7 +91,7 @@ export default function Rooms() {
             const roomResponse = await dispatch(createRoom(roomRequest)).unwrap();
 
             setRoomName("");
-            setRoomType("");
+            setRoomType(undefined);
             setError("");
             setIsCreateRoomModalOpen(false);
             navigateToRoom(roomResponse);
@@ -176,7 +153,7 @@ export default function Rooms() {
                     </Box>
 
                     <Box style={{ textAlign: "center" }}>
-                        {rooms && rooms.length === 0 && (
+                        {!rooms || rooms.length === 0 && (
                             <Typography>No rooms available. Try to create something!</Typography>
                         )}
                     </Box>

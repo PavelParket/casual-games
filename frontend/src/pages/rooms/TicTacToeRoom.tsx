@@ -33,17 +33,6 @@ export default function TicTacToeRoom() {
    const [playersWithSymbols, setPlayersWithSymbols] = useState<Record<string, string>>({});
    const [winner, setWinner] = useState<string>();
 
-   const { isConnected, message, send } = useWebSocket<GameMessage>(room?.id, room?.type);
-
-   const fetchRoom = async (roomId: string) => {
-      try {
-         const response = (await RoomAPI.getRoomById(roomId));
-         setRoom(response.data);
-      } catch {
-         setRoom(undefined);
-      }
-   };
-
    const fetchPlayers = useCallback(async () => {
       if (!roomId || !room) {
          return;
@@ -79,8 +68,23 @@ export default function TicTacToeRoom() {
          return;
       }
 
+      const fetchRoom = async (roomId: string) => {
+         try {
+            const response = (await RoomAPI.getRoomById(roomId));
+            setRoom(response.data);
+         } catch {
+            setRoom(undefined);
+            showToast("Room not found or server unavailable")
+         }
+      };
+
       fetchRoom(roomId);
    }, [navigate, roomId]);
+
+   const { isConnected, message, send } = useWebSocket<GameMessage>(
+      room?.id ?? undefined,
+      room?.type ?? undefined,
+   );
 
    useEffect(() => {
       if (!room) {
@@ -89,7 +93,7 @@ export default function TicTacToeRoom() {
 
       fetchPlayers();
       fetchReadyPlayers();
-   }, [room, fetchPlayers, fetchReadyPlayers]);
+   }, [fetchPlayers, fetchReadyPlayers, room]);
 
    const processReset = useCallback(() => {
       showToast("Your opponent left the room. Waiting for a new player...");
@@ -104,7 +108,7 @@ export default function TicTacToeRoom() {
 
    const processStart = useCallback((message: GameMessage) => {
       setBoard(message.board!);
-      setCurrentPlayerSymbol(message.nextPlayerSymbol);
+      setCurrentPlayerSymbol(message.currentPlayerSymbol);
       setPlayersSymbols(message.playersSymbols);
 
       const playersMap = message.players || {};
@@ -135,7 +139,7 @@ export default function TicTacToeRoom() {
 
    const processWin = useCallback((message: GameMessage) => {
       setBoard(message.board!);
-      setWinner(message.winner);
+      setWinner(players?.[message.winner!]);
 
       if (message.winner === mySymbol) {
          showToast("You are the winner!");
@@ -143,7 +147,7 @@ export default function TicTacToeRoom() {
          showToast(`Your opponent won!`);
       }
       setIsGame(false);
-   }, [mySymbol]);
+   }, [mySymbol, players]);
 
    const processDraw = useCallback((message: GameMessage) => {
       setBoard(message.board!);
@@ -268,6 +272,7 @@ export default function TicTacToeRoom() {
       setToast({ text: validateToastMessage(text) })
    };
 
+   // todo: Сделать нормальный компонент-страницу с сообщение о несуществующей комнате
    if (!roomId || !room) {
       return (
          <Container>
@@ -316,13 +321,13 @@ export default function TicTacToeRoom() {
                </Typography>
 
                <Box style={{
+                  width: "100%",
                   display: "grid",
                   gridTemplateColumns: "repeat(3, 1fr)",
                   alignItems: "center",
                   justifyContent: "center",
                }}>
                   <Box style={{
-                     marginRight: "5rem",
                      display: "flex",
                      flexDirection: "column",
                      alignItems: "center",

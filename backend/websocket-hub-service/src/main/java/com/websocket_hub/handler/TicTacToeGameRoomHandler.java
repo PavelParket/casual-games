@@ -67,7 +67,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
                 case MOVE -> handleGameMove(ticTacToeGameMessage, roomId, user);
 
-                //case BET -> handlePlayerBet(ticTacToeGameMessage, WebSocketUtil.getUser(session));
+                case BET -> handlePlayerBet(ticTacToeGameMessage, roomId, user);
 
                 default -> log.warn("Unknown game message event: {}", ticTacToeGameMessage.event());
             }
@@ -154,7 +154,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         }
     }
 
-    /*private void handlePlayerBet(TicTacToeGameMessage ticTacToeGameMessage, UserInternalResponse user) {
-        roomManager.markPlayerBet(ticTacToeGameMessage.roomId(), user, ticTacToeGameMessage.bet());
-    }*/
+    private void handlePlayerBet(TicTacToeGameMessage ticTacToeGameMessage, UUID roomId, UserInternalResponse user) {
+        roomManager.markPlayerBet(roomId, user, ticTacToeGameMessage.bet());
+    }
 }

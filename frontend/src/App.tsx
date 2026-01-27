@@ -12,7 +12,7 @@ import { ProtectedRoute } from './router/ProtectedRoute';
 import Rooms from './pages/rooms/Rooms';
 import TicTacToeRoom from './pages/rooms/TicTacToeRoom';
 import type { AppDispatch } from './store/store';
-import { setOnRefreshRequired } from './utils/TokenManager';
+//import { setOnRefreshRequired } from './utils/TokenManager';
 import { refresh } from './store/slices/AuthSlice';
 
 export default function App() {
@@ -20,9 +20,10 @@ export default function App() {
    const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
    useEffect(() => {
-      setOnRefreshRequired(() => {
+      // todo: Переделать обновление токена и его прокид при вебсокетном подключении
+      /* setOnRefreshRequired(() => {
          dispatch(refresh());
-      });
+      }); */
 
       const initialize = async () => {
          try {
