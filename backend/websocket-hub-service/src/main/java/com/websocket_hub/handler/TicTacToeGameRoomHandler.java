@@ -200,6 +200,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
             TicTacToeTransactionInternalRequest transactionRequest = ticTacToeTransactionMapper.toInternalRequest(
                     roomId,
+                    roomManager.getRoomType(),
                     bets,
                     moveGameResponse.winner()
             );
@@ -214,8 +215,6 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             } else {
                 log.warn("Bank service returned null response for room {}", roomId);
             }
-
-            roomManager.clearPlayerBets(roomId);
         } catch (Exception e) {
             log.error("Failed to process game results for room {}", roomId, e);
         } finally {

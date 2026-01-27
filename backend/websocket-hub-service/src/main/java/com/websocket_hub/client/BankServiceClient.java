@@ -5,6 +5,7 @@ import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalRes
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -33,9 +34,12 @@ public class BankServiceClient {
 
         log.info("Calling bank-service to process game results: roomId={}, winner={}", request.roomId(), request.winner());
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJiYWM1MTU2OS1kZDExLTQzMzktYmY1MC1iOTJjMmYxZmUwMTkiLCJlbWFpbCI6InBhdmVsQGdtYWlsLmNvbSIsInJvbGVzIjpbIkFETUlOIl0sInN0YXR1cyI6IkRFRkFVTFQiLCJpYXQiOjE3Njk1NTAwMjksImV4cCI6MTc2OTU1MzYyOX0.dFGyvQn9wzLYY0ptZnKZ_ellIbo1LYydQbzM2UwvRBTYDTJyq6YdGKHttKB9eALUpdoYNSqfhTiDK1lUcnSWig");
+
         try {
             ResponseEntity<TicTacToeTransactionInternalResponse> response = restTemplate.exchange(
-                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    new RequestEntity<>(request, headers, HttpMethod.POST, uri),
                     TicTacToeTransactionInternalResponse.class
             );
 
