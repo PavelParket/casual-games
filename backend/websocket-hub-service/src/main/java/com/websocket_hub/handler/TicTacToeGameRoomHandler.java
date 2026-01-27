@@ -1,6 +1,10 @@
 package com.websocket_hub.handler;
 
+import com.websocket_hub.client.BankServiceClient;
 import com.websocket_hub.client.GameServiceClient;
+import com.websocket_hub.domain.dto.bank_service.PlayerBet;
+import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalRequest;
+import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
@@ -9,6 +13,7 @@ import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
+import com.websocket_hub.mapper.TicTacToeTransactionMapper;
 import com.websocket_hub.serializer.JsonDeserializer;
 import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.util.WebSocketUtil;
@@ -18,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,19 +36,27 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
     private final TicTacToeGameMessageMapper ticTacToeGameMessageMapper;
 
+    private final TicTacToeTransactionMapper ticTacToeTransactionMapper;
+
     private final GameServiceClient gameServiceClient;
+
+    private final BankServiceClient bankServiceClient;
 
     public TicTacToeGameRoomHandler(
             SessionManager sessionManager,
             TicTacToeGameRoomManager roomManager,
             JsonDeserializer deserializer,
             TicTacToeGameMessageMapper ticTacToeGameMessageMapper,
-            GameServiceClient gameServiceClient
+            TicTacToeTransactionMapper ticTacToeTransactionMapper,
+            GameServiceClient gameServiceClient,
+            BankServiceClient bankServiceClient
     ) {
         super(sessionManager, roomManager);
         this.deserializer = deserializer;
         this.ticTacToeGameMessageMapper = ticTacToeGameMessageMapper;
+        this.ticTacToeTransactionMapper = ticTacToeTransactionMapper;
         this.gameServiceClient = gameServiceClient;
+        this.bankServiceClient = bankServiceClient;
     }
 
     @Override
@@ -100,6 +114,8 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
     private void startGame(UUID roomId) {
         try {
+            roomManager.validateBetsForGameStart(roomId);
+
             Map<UUID, String> players = roomManager.getUsersInRoom(roomId).stream()
                     .collect(Collectors.toMap(
                             ClientSession::getGuid,
@@ -112,12 +128,30 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
             log.info("Starting game in room {} with players: {}", roomId, players);
 
-            TicTacToeGameMessage startGameRequest = ticTacToeGameMessageMapper.toGameStartMessage(MessageType.SYSTEM, TicTacToeGameEvent.START, roomId, players);
+            TicTacToeGameMessage startGameRequest = ticTacToeGameMessageMapper.toGameStartMessage(
+                    MessageType.SYSTEM,
+                    TicTacToeGameEvent.START,
+                    roomId,
+                    players
+            );
 
             TicTacToeGameMessage startGameResponse = gameServiceClient.startGame(startGameRequest)
                     .orElseThrow(() -> new RuntimeException("Empty state"));
 
             roomManager.broadcast(roomId, startGameResponse);
+        } catch (IllegalStateException e) {
+            log.warn("Cannot start game in room {}: {}", roomId, e.getMessage());
+
+            roomManager.clearReadyPlayers(roomId);
+
+            roomManager.broadcast(roomId, ticTacToeGameMessageMapper.toResponse(
+                    MessageType.SYSTEM,
+                    TicTacToeGameEvent.BET_REJECT,
+                    null,
+                    null,
+                    roomId,
+                    e.getMessage()
+            ));
         } catch (Exception e) {
             log.error("Failed to start game in room {}", roomId);
         }
@@ -146,11 +180,46 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             TicTacToeGameMessage moveGameResponse = gameServiceClient.processMove(moveGameRequest)
                     .orElseThrow(() -> new RuntimeException(("Empty state")));
 
-            //todo: куда-то сюда всунуть обновление баланса
-
-            roomManager.broadcast(roomId, moveGameResponse);
+            if (moveGameResponse.winner() != null
+                    && (TicTacToeGameEvent.WINNER_X.equals(moveGameResponse.event())
+                    || TicTacToeGameEvent.WINNER_O.equals(moveGameResponse.event()))) {
+                processGameEnd(roomId, moveGameResponse);
+            } else {
+                roomManager.broadcast(roomId, moveGameResponse);
+            }
         } catch (Exception e) {
             log.error("Failed to process move in room {}", roomId, e);
+        }
+    }
+
+    private void processGameEnd(UUID roomId, TicTacToeGameMessage moveGameResponse) {
+        roomManager.broadcast(roomId, moveGameResponse);
+
+        try {
+            List<PlayerBet> bets = roomManager.getPlayerBets(roomId);
+
+            TicTacToeTransactionInternalRequest transactionRequest = ticTacToeTransactionMapper.toInternalRequest(
+                    roomId,
+                    bets,
+                    moveGameResponse.winner()
+            );
+
+            TicTacToeTransactionInternalResponse transactionResponse = bankServiceClient.sendTicTacToeGameResults(transactionRequest);
+
+            if (transactionResponse != null) {
+                log.info("Bank service response: status={}, message={}, transactions={}",
+                        transactionResponse.status(),
+                        transactionResponse.message(),
+                        transactionResponse.transactionsCreated());
+            } else {
+                log.warn("Bank service returned null response for room {}", roomId);
+            }
+
+            roomManager.clearPlayerBets(roomId);
+        } catch (Exception e) {
+            log.error("Failed to process game results for room {}", roomId, e);
+        } finally {
+            roomManager.clearPlayerBets(roomId);
         }
     }
 

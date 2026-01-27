@@ -9,10 +9,10 @@ import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.factory.PlayerBetFactory;
+import com.websocket_hub.helper.WebSocketHelper;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
-import com.websocket_hub.service.WebSocketHelper;
 import com.websocket_hub.validator.PlayerBetValidator;
 import com.websocket_hub.validator.RoomValidator;
 import lombok.extern.slf4j.Slf4j;
@@ -102,6 +102,18 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
                 room.getId(),
                 "Player " + user.username() + " has left the room " + room.getName()
         ));
+
+        playerBets.computeIfPresent(room.getId(), (key, bets) -> {
+            bets.removeIf(bet -> bet.getGuid().equals(user.guid()));
+
+            if (bets.size() == 1) {
+                PlayerBet remainingBet = bets.getFirst();
+                ClientSession remainingClient = getClientSessionByGuid(remainingBet.getGuid());
+                webSocketHelper.notifyBetAccepted(room.getId(), remainingClient, remainingBet.getBet());
+            }
+
+            return bets.isEmpty() ? null : bets;
+        });
     }
 
     @Override
@@ -114,6 +126,15 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
         if (room == null) {
             throw new IllegalArgumentException("Room id=" + roomId + " not found!");
+        }
+
+        List<PlayerBet> bets = playerBets.getOrDefault(roomId, List.of());
+        if (!playerBetValidator.hasPlayerPlacedBet(bets, user.guid())) {
+            log.warn("Player {} tried to ready without placing a bet", user.username());
+
+            ClientSession client = getClientSessionByGuid(user.guid());
+            webSocketHelper.notifyBetRequired(roomId, client);
+            return;
         }
 
         Set<UUID> ready = readyPlayers.computeIfAbsent(roomId, key -> ConcurrentHashMap.newKeySet());
@@ -147,7 +168,6 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
     public void markPlayerBet(UUID roomId, UserInternalResponse user, BigDecimal bet) {
         PlayerBet newPlayerBet = playerBetFactory.create(user.guid(), bet, user.balance());
-
         playerBetValidator.validateBet(newPlayerBet);
 
         ClientSession newClient = getClientSessionByGuid(user.guid());
@@ -158,32 +178,26 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
             if (bets.isEmpty()) {
                 bets.add(newPlayerBet);
-                webSocketHelper.notifyBetAccepted(roomId, newClient, bet, this);
+                webSocketHelper.notifyBetAccepted(roomId, newClient, bet);
                 return;
             }
 
-            if (bets.size() == 1) {
-                PlayerBet oldPlayerBet = bets.getFirst();
-                ClientSession oldClient = getClientSessionByGuid(oldPlayerBet.getGuid());
+            PlayerBet existingBet = bets.getFirst();
+            ClientSession existingClient = getClientSessionByGuid(existingBet.getGuid());
 
-                if (newPlayerBet.getBet().compareTo(oldPlayerBet.getBet()) < 0) {
-                    webSocketHelper.notifyBetRejected(roomId, newClient, newPlayerBet.getBet(), this);
-                    return;
-                } else if (newPlayerBet.getBet().compareTo(oldPlayerBet.getBet()) > 0) {
-                    bets.clear();
-                    bets.add(newPlayerBet);
+            int compareBets = newPlayerBet.getBet().compareTo(existingBet.getBet());
 
-                    webSocketHelper.notifyOutbid(roomId, oldClient, newPlayerBet.getBet(), this);
-                    webSocketHelper.notifyBetAccepted(roomId, newClient, bet, this);
-
-                    return;
-                }
-
+            if (compareBets < 0) {
+                webSocketHelper.notifyBetRejected(roomId, newClient, newPlayerBet.getBet());
+            } else if (compareBets > 0) {
+                bets.clear();
                 bets.add(newPlayerBet);
-                webSocketHelper.notifyBetAccepted(roomId, newClient, bet, this);
+                webSocketHelper.notifyBetAccepted(roomId, newClient, bet);
+                webSocketHelper.notifyOutbid(roomId, existingClient, newPlayerBet.getBet());
+            } else {
+                bets.add(newPlayerBet);
+                webSocketHelper.notifyBetAccepted(roomId, newClient, bet);
             }
-
-            webSocketHelper.notifyBetRejected(roomId, newClient, null, this);
         }
     }
 
@@ -191,5 +205,28 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
         playerBets.remove(roomId);
 
         log.info("Cleared players bets in room {}", roomId);
+    }
+
+    public List<PlayerBet> getPlayerBets(UUID roomId) {
+        return playerBets.getOrDefault(roomId, List.of());
+    }
+
+    public BigDecimal getPlayerBet(UUID roomId, UUID playerGuid) {
+        List<PlayerBet> bets = getPlayerBets(roomId);
+
+        if (bets == null || bets.isEmpty()) {
+            return null;
+        }
+
+        return bets.stream()
+                .filter(bet -> bet.getGuid().equals(playerGuid))
+                .map(PlayerBet::getBet)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public void validateBetsForGameStart(UUID roomId) {
+        List<PlayerBet> bets = getPlayerBets(roomId);
+        playerBetValidator.validateBetsForGameStart(bets);
     }
 }

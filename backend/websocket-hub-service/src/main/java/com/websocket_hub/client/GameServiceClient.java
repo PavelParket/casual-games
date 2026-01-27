@@ -19,10 +19,10 @@ import java.util.Optional;
 @Slf4j
 public class GameServiceClient {
 
-    private final RestTemplate restTemplate;
-
     @Value("${app.game-service.url}")
     private String gameServiceUrl;
+
+    private final RestTemplate restTemplate;
 
     public Optional<TicTacToeGameMessage> startGame(TicTacToeGameMessage request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
