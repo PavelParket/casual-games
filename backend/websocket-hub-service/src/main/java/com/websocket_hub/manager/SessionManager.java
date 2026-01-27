@@ -1,12 +1,16 @@
 package com.websocket_hub.manager;
 
-import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
+import com.websocket_hub.domain.dto.message.Message;
+import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
+import com.websocket_hub.domain.enums.EventType;
 import com.websocket_hub.factory.ObjectFactory;
+import com.websocket_hub.serializer.MessageSerializer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
@@ -24,7 +28,9 @@ public class SessionManager {
 
     private final ObjectFactory<ClientSession> factory;
 
-    public void register(UUID guid, UserInfoInternalResponse user, WebSocketSession session, Instant connectedAt) {
+    private final MessageSerializer<String> serializer;
+
+    public void register(UUID guid, UserInternalResponse user, WebSocketSession session, Instant connectedAt) {
         if (guid == null || user == null || session == null) {
             log.warn("Invalid registration attempt: userId={}, session={}", guid, session);
             return;
@@ -64,6 +70,18 @@ public class SessionManager {
         }
     }
 
+    public void sendToSession(ClientSession client, Message<? extends EventType> message) {
+        if (client == null || !client.isOpen()) {
+            return;
+        }
+
+        try {
+            client.sendMessage(new TextMessage(serializer.serialize(message)));
+        } catch (Exception e) {
+            log.error("Failed to send private message to session \"{}\": {}", client.getEmail(), e.getMessage());
+        }
+    }
+
     public Map<UUID, ClientSession> getAll() {
         return sessions;
     }
@@ -78,17 +96,6 @@ public class SessionManager {
         }
 
         return client;
-    }
-
-    public ClientSession getByEmail(String email) {
-        if (email == null) {
-            return null;
-        }
-
-        return sessions.values().stream()
-                .filter(client -> email.equals(client.getEmail()) && isActive(client.getGuid()))
-                .findFirst()
-                .orElse(null);
     }
 
     public boolean isActive(UUID guid) {

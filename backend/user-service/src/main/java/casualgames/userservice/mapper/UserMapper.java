@@ -3,6 +3,7 @@ package casualgames.userservice.mapper;
 import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
+import casualgames.userservice.dto.UserResponseDto;
 import casualgames.userservice.dto.security_service.UpdateUserInternalRequest;
 import casualgames.userservice.entity.User;
 import org.mapstruct.BeanMapping;
@@ -37,4 +38,6 @@ public interface UserMapper {
     void updateEntity(UpdateUserRequest updateUserRequest, @MappingTarget User user);
 
     UpdateUserInternalRequest toUpdateUserInternalRequest(User user, String password);
+
+    UserResponseDto toDto(User user);
 }

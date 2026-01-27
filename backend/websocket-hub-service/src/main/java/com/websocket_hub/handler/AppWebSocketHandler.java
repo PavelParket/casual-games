@@ -1,7 +1,6 @@
 package com.websocket_hub.handler;
 
-import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
-import com.websocket_hub.domain.enums.RoomType;
+import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.util.WebSocketUtil;
@@ -25,47 +24,30 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
-        UUID guid = WebSocketUtil.getGuid(session);
-        UserInfoInternalResponse user = WebSocketUtil.getUser(session);
-        String roomName = WebSocketUtil.getRoomName(session);
-        RoomType roomType = WebSocketUtil.getRoomType(session);
+        UserInternalResponse user = WebSocketUtil.getUser(session);
+        UUID roomId = WebSocketUtil.getRoomId(session);
         Instant connectedAt = WebSocketUtil.getConnectedAt(session);
-        String action = WebSocketUtil.getAction(session);
 
-        sessionManager.register(guid, user, session, connectedAt);
+        sessionManager.register(user.guid(), user, session, connectedAt);
 
-        if ("create".equals(action)) {
-            roomManager.create(roomName, roomType);
-            roomManager.addSession(roomName, roomType, user, session);
-        } else if ("join".equals(action)) {
-            roomManager.addSession(roomName, roomType, user, session);
-        } else {
-            log.warn("Unknown action '{}' for user {} in room {}", action, user.email(), roomName);
-            session.close(CloseStatus.BAD_DATA);
-            sessionManager.remove(guid);
-            return;
-        }
+        roomManager.addSession(roomId, user, session);
 
-        onJoin(roomName, user);
+        onJoin(roomId, user);
     }
 
     @Override
     public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) throws Exception {
-        UUID guid = WebSocketUtil.getGuid(session);
-        UserInfoInternalResponse user = WebSocketUtil.getUser(session);
-        String roomName = WebSocketUtil.getRoomName(session);
-        RoomType roomType = WebSocketUtil.getRoomType(session);
+        UserInternalResponse user = WebSocketUtil.getUser(session);
+        UUID roomId = WebSocketUtil.getRoomId(session);
 
-        roomManager.removeSession(roomName, roomType, user, session);
+        roomManager.removeSession(roomId, user, session);
 
-        sessionManager.remove(guid);
+        sessionManager.remove(user.guid());
 
-        roomManager.delete(roomName, roomType);
-
-        onLeave(roomName, user);
+        onLeave(roomId, user);
     }
 
-    protected abstract void onJoin(String roomName, UserInfoInternalResponse user);
+    protected abstract void onJoin(UUID roomId, UserInternalResponse user);
 
-    protected abstract void onLeave(String roomName, UserInfoInternalResponse user);
+    protected abstract void onLeave(UUID roomId, UserInternalResponse user);
 }

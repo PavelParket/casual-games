@@ -7,7 +7,5 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum MessageType {
 
-    SYSTEM("system");
-
-    private final String type;
+    SYSTEM
 }

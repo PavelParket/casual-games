@@ -1,6 +1,6 @@
 package com.websocket_hub.client;
 
-import com.websocket_hub.domain.dto.user_service.UserInfoInternalResponse;
+import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +26,7 @@ public class UserServiceClient {
 
     private final RestTemplate restTemplate;
 
-    public UserInfoInternalResponse getUserByGuid(UUID guid) {
+    public UserInternalResponse getUserByGuid(UUID guid) {
         URI uri = UriComponentsBuilder.fromUriString(userServiceUrl)
                 .path("/users/guid={guid}")
                 .buildAndExpand(guid)
@@ -35,9 +35,9 @@ public class UserServiceClient {
         log.info("Calling game-service to start game: {}", guid);
 
         try {
-            ResponseEntity<UserInfoInternalResponse> response = restTemplate.exchange(
+            ResponseEntity<UserInternalResponse> response = restTemplate.exchange(
                     new RequestEntity<>(HttpMethod.GET, uri),
-                    UserInfoInternalResponse.class
+                    UserInternalResponse.class
             );
 
             log.info("User info retrieved successfully: {}", response);
