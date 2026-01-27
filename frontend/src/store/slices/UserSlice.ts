@@ -3,6 +3,7 @@ import type { AxiosError } from "axios";
 import { UserAPI } from "../../api/UserApi";
 import type { UpdateUserRequest, User } from "../../models/User";
 import type { RootState } from "../store";
+import { deposit } from './BankSlice';
 
 export interface UserState {
    profile: User | null;
@@ -98,6 +99,11 @@ const userSlice = createSlice({
          .addCase(update.rejected, (state, action) => {
             state.isLoading = false;
             state.error = action.payload ?? "Update failed";
+         })
+         .addCase(deposit.fulfilled, (state, action) => {
+            if (state.profile) {
+                state.profile.balance = action.payload.balanceAfter;
+            }
          });
    },
 });

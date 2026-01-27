@@ -2,14 +2,19 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
 import { findByGuid, update } from "../store/slices/UserSlice";
+import { deposit } from "../store/slices/BankSlice";
 import type { Icons } from "../assets/icons";
 
 import {
     Box, Container, Card, Typography, Button,
-    Stack, Divider, Grid, Icon, Textfield, Modal, Img, Input
+    Stack, Divider, Grid, Icon, Textfield, Modal, Img, Input,
+    Toast,
+    FormField
 } from "../ui";
 
 import { useThemedIcon } from "../ui";
+
+import { sanitizeUsername } from "../utils/SecurityUtils";
 
 const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
@@ -19,17 +24,24 @@ export default function Profile() {
     const dispatch = useDispatch<AppDispatch>();
     
     const { profile, isLoading } = useSelector((state: RootState) => state.user);
+    const { isDepositing, error: bankError } = useSelector((state: RootState) => state.bank);
     
     const { getInverseIcon } = useThemedIcon();
 
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [tempUsername, setTempUsername] = useState("");
 
+    const [validationError, setValidationError] = useState<string | null>(null);
+    const [toast, setToast] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isAvatarHovered, setIsAvatarHovered] = useState(false);
 
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [achievementsModalOpen, setAchievementsModalOpen] = useState(false);
+
+    const [depositModalOpen, setDepositModalOpen] = useState(false);
+    const [depositAmount, setDepositAmount] = useState("");
 
     useEffect(() => {
         dispatch(findByGuid());
@@ -42,25 +54,67 @@ export default function Profile() {
     }, [profile]);
 
 
-    const handleEditClick = () => setIsEditingUsername(true);
+    const handleEditClick = () => {
+        setValidationError(null);
+        setIsEditingUsername(true);
+    };
     const handleSaveUsername = () => {
-        if (tempUsername.trim() && tempUsername !== profile?.username) {
-            dispatch(update({ username: tempUsername }))
-                .unwrap()
-                .then(() => {
-                    console.log("Username updated successfully!");
-                })
-                .catch((error) => {
-                    console.error("Failed to update username:", error);
-                });
+        const sanitizedUsername = sanitizeUsername(tempUsername);
+
+        if (sanitizedUsername.length < 3) {
+            setToast({ text:"Username must be at least 3 characters long.", type: 'error' });
+            return;
         }
+        
+        if (sanitizedUsername === profile?.username) {
+            setIsEditingUsername(false);
+            return;
+        }
+
+        dispatch(update({ username: sanitizedUsername }))
+            .unwrap()
+            .then(() => {
+                setToast({ text: "Username updated successfully!", type: 'success' });
+            })
+            .catch((error) => {
+                setToast({ text: `Update failed: ${error}`, type: 'error' });
+            });
+
         setIsEditingUsername(false);
+        setValidationError(null);
+    };
+
+    const handleUsernameChange = (value: string) => {
+        const sanitized = sanitizeUsername(value);
+        setTempUsername(sanitized);
+        
+        if (validationError) {
+            setValidationError(null);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
             setAvatarPreview(URL.createObjectURL(e.target.files[0]));
         }
+    };
+
+    const handleDeposit = () => {
+        const amount = parseFloat(depositAmount);
+        if (isNaN(amount) || amount <= 0) {
+            return;
+        }
+
+        dispatch(deposit({ amount }))
+            .unwrap()
+            .then(() => {
+                setToast({ text: "Deposit successful!", type: 'success' });
+                setDepositModalOpen(false);
+                setDepositAmount("");
+            })
+            .catch((err) => {
+                setToast({ text: `Deposit failed: ${err}`, type: 'error' });
+            });
     };
 
 
@@ -203,13 +257,31 @@ export default function Profile() {
                                             <Typography variant="caption" style={{ opacity: 0.7 }}>Username:</Typography>
                                             
                                             {isEditingUsername ? (
-                                                <Textfield 
-                                                    value={tempUsername} 
-                                                    onChange={setTempUsername} 
-                                                    placeholder="Enter username"
-                                                />
+                                                <>
+                                                    <Textfield 
+                                                        value={tempUsername} 
+                                                        onChange={handleUsernameChange} 
+                                                        placeholder="Enter username"
+                                                    />
+                                                    {validationError && (
+                                                        <Typography variant="caption" style={{ color: 'red', marginTop: '4px' }}>
+                                                            {validationError}
+                                                        </Typography>
+                                                    )}
+                                                </>
                                             ) : (
-                                                <Typography variant="h3">{username}</Typography>
+                                                <Typography 
+                                                    variant="h3"
+                                                    title={username} 
+                                                    style={{
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                    display: 'block', 
+                                                    maxWidth: '150px'
+                                                }}
+                                                >
+                                                    {username}
+                                                </Typography>
                                             )}
                                         </Box>
                                         
@@ -217,7 +289,6 @@ export default function Profile() {
                                             <Button 
                                                 variant="solid" 
                                                 onClick={handleSaveUsername}
-                                                // Добавим disabled, пока идет загрузка
                                                 disabled={isLoading} 
                                                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
                                             >
@@ -250,7 +321,7 @@ export default function Profile() {
                                                 <Typography variant="caption" style={{ marginLeft: "5px" }}>CG Coins</Typography>
                                             </Typography>
                                         </Box>
-                                        <Button variant="ghost">
+                                        <Button variant="ghost" onClick={() => setDepositModalOpen(true)}>
                                             Пополнить
                                         </Button>
                                     </Box>
@@ -351,6 +422,12 @@ export default function Profile() {
                 </Card>
             </Container>
 
+            {toast && (
+                <Toast 
+                    message={toast.text} 
+                    onClose={() => setToast(null)}
+                />
+            )}
             <Modal isOpen={achievementsModalOpen} onClose={() => setAchievementsModalOpen(false)} title="All Achievements">
                 <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap", padding: "1rem 0" }}>
                     {achievements.map((ach, i) => (
@@ -374,6 +451,36 @@ export default function Profile() {
                     ))}
                 </Stack>
             </Modal>
+            <Modal 
+                    isOpen={depositModalOpen} 
+                    onClose={() => setDepositModalOpen(false)} 
+                    title="Deposit Funds"
+                >
+                    <Stack gap="1rem">
+                        <Typography variant="body">
+                            Enter the amount you wish to add to your balance.
+                        </Typography>
+                        <FormField
+                        type="number"
+                        value={depositAmount}
+                        onChange={(e) => setDepositAmount(e.target.value)}
+                        placeholder="Amount (e.g., 500)"
+                        rounded
+                    />
+                        {bankError && (
+                            <Typography variant="caption" style={{ color: 'red' }}>
+                                {bankError}
+                            </Typography>
+                        )}
+                        <Button 
+                            variant="solid" 
+                            onClick={handleDeposit} 
+                            disabled={isDepositing}
+                        >
+                            {isDepositing ? "Processing..." : "Confirm Deposit"}
+                        </Button>
+                    </Stack>
+                </Modal>
         </Box>
     );
 }

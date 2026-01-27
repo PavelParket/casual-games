@@ -32,7 +32,15 @@ export default function Header() {
                      trigger={
                         <Button variant="ghost">
                            <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <Typography>
+                              <Typography
+                                 variant="body"
+                                 title={user?.username || "User"}
+                                 style={{
+                                 overflow: "hidden",
+                                 textOverflow: "ellipsis",
+                                 display: 'block', 
+                                 maxWidth: '150px'}}
+                              >
                                  {user?.username || "User"} 
                               </Typography>
                               <Icon 

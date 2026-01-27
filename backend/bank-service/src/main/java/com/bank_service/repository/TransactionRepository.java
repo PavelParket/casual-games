@@ -7,10 +7,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
     Page<Transaction> findByUserGuidAndStatus(UUID userGuid, TransactionStatus status, Pageable pageable);
+
+    Optional<Transaction> findFirstByUserGuidAndStatusOrderByCreatedAtDesc(UUID userGuid, TransactionStatus status);
 }
