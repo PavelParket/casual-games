@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { AxiosError } from "axios";
-import type { RootState } from "../store";
 import { BankAPI } from "../../api/BankApi";
 import type { TransactionResponse } from "../../models/Bank";
 
@@ -16,18 +15,16 @@ const initialState: BankState = {
 
 // ------------------ Thunks ------------------
 
-export const deposit = createAsyncThunk<TransactionResponse, { amount: number }, { state: RootState; rejectValue: string }>(
+export const deposit = createAsyncThunk<TransactionResponse, { userGuid: string; amount: number }, { rejectValue: string }
+>(
     "bank/deposit",
-    async ({ amount }, { getState, rejectWithValue }) => {
+    async ({ userGuid, amount }, { rejectWithValue }) => {
         try {
-            const state = getState();
-            const guid = state.auth.user?.guid;
-
-            if (!guid) {
-                return rejectWithValue("Cannot deposit: no user GUID");
+            if (!userGuid) {
+                return rejectWithValue("Cannot deposit: no user GUID provided");
             }
             
-            const response = await BankAPI.deposit({ userGuid: guid, amount });
+            const response = await BankAPI.deposit({ userGuid, amount });
             return response.data;
 
         } catch (err: unknown) {

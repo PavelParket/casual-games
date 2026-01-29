@@ -5,9 +5,8 @@ import com.bank_service.domain.dto.DepositRequest;
 import com.bank_service.domain.dto.PageResponse;
 import com.bank_service.domain.dto.TransactionResponse;
 import com.bank_service.domain.entity.Transaction;
-import com.bank_service.domain.enums.RoomType;
 import com.bank_service.domain.enums.TransactionStatus;
-import com.bank_service.domain.enums.TransactionType;
+import com.bank_service.factory.DefaultTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +34,8 @@ public class TransactionService {
     private final TransactionMapper transactionMapper;
 
     private final UserServiceClient userServiceClient;
+
+    private final DefaultTransactionFactory defaultTransactionFactory;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void success(List<Transaction> transactions) {
@@ -103,25 +104,14 @@ public class TransactionService {
                 .map(Transaction::getBalanceAfter)
                 .orElse(BigDecimal.ZERO);
 
-        BigDecimal balanceAfter = balanceBefore.add(request.amount());
+        Transaction transaction = defaultTransactionFactory.createTransaction(request, balanceBefore);
 
-        Transaction transaction = Transaction.builder()
-                .userGuid(request.userGuid())
-                .amount(request.amount())
-                .balanceBefore(balanceBefore)
-                .balanceAfter(balanceAfter)
-                .status(TransactionStatus.PENDING)
-                .type(TransactionType.ADDITION)
-                .roomType(RoomType.SYSTEM)
-                .roomId(UUID.randomUUID())
-                .build();
-
-        List<Transaction> pendingTransactions = this.pending(List.of(transaction));
+        List<Transaction> pendingTransactions = pending(List.of(transaction));
 
         try {
             userServiceClient.sendUpdates(transactionMapper.toShortInfoList(pendingTransactions));
 
-            this.success(pendingTransactions);
+            success(pendingTransactions);
 
             return transactionMapper.toResponse(pendingTransactions.getFirst());
 

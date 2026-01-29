@@ -9,7 +9,7 @@ export default function Header() {
    const dispatch = useDispatch<AppDispatch>();
    const navigate = useNavigate();
 
-   const { getInverseIcon } = useThemedIcon();
+   const { getIcon } = useThemedIcon();
 
    const handleLogout = () => {
       dispatch(logout());
@@ -44,7 +44,7 @@ export default function Header() {
                                  {user?.username || "User"} 
                               </Typography>
                               <Icon 
-                                 src={getInverseIcon("expandMore")}
+                                 src={getIcon("expandMore")}
                                  alt="menu" 
                                  size={16}
                                  className="menu-chevron-icon"

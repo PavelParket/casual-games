@@ -2,7 +2,6 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { AxiosError } from "axios";
 import { UserAPI } from "../../api/UserApi";
 import type { UpdateUserRequest, User } from "../../models/User";
-import type { RootState } from "../store";
 import { deposit } from './BankSlice';
 
 export interface UserState {
@@ -19,14 +18,10 @@ const initialState: UserState = {
 
 // ------------------ Thunks ------------------
 
-export const findByGuid = createAsyncThunk<User, void, { state: RootState; rejectValue: string }>(
+export const findByGuid = createAsyncThunk<User, string, { rejectValue: string }>(
    "user/findByGuid",
-   async (_, { getState, rejectWithValue }) => {
+   async (guid, { rejectWithValue }) => {
       try {
-         const state = getState();
-         const guid = state.auth.user?.guid;
-
-
          if (!guid) {
             return rejectWithValue("No user GUID found in auth state");
          }
@@ -41,13 +36,10 @@ export const findByGuid = createAsyncThunk<User, void, { state: RootState; rejec
    }
 );
 
-export const update = createAsyncThunk<User, UpdateUserRequest, { state: RootState; rejectValue: string }>(
+export const update = createAsyncThunk<User, { guid: string; updateData: UpdateUserRequest }, { rejectValue: string }>(
     "user/updateProfile",
-    async (updateData, { getState, rejectWithValue }) => {
+    async ({ guid, updateData }, { rejectWithValue }) => {
         try {
-            const state = getState();
-            const guid = state.auth.user?.guid;
-
             if (!guid) {
                 return rejectWithValue("Cannot update profile: no user GUID");
             }

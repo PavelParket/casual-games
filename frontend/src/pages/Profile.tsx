@@ -24,9 +24,10 @@ export default function Profile() {
     const dispatch = useDispatch<AppDispatch>();
     
     const { profile, isLoading } = useSelector((state: RootState) => state.user);
+    const authUser = useSelector((state: RootState) => state.auth.user);
     const { isDepositing, error: bankError } = useSelector((state: RootState) => state.bank);
     
-    const { getInverseIcon } = useThemedIcon();
+    const { getIcon } = useThemedIcon();
 
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [tempUsername, setTempUsername] = useState("");
@@ -44,8 +45,10 @@ export default function Profile() {
     const [depositAmount, setDepositAmount] = useState("");
 
     useEffect(() => {
-        dispatch(findByGuid());
-    }, [dispatch]);
+        if (authUser?.guid) {
+            dispatch(findByGuid(authUser.guid));
+        }
+    }, [dispatch, authUser?.guid]);
 
     useEffect(() => {
         if (profile?.username) {
@@ -58,7 +61,7 @@ export default function Profile() {
         setValidationError(null);
         setIsEditingUsername(true);
     };
-    const handleSaveUsername = () => {
+    const handleSaveUsername = async () => {
         const sanitizedUsername = sanitizeUsername(tempUsername);
 
         if (sanitizedUsername.length < 3) {
@@ -71,17 +74,23 @@ export default function Profile() {
             return;
         }
 
-        dispatch(update({ username: sanitizedUsername }))
-            .unwrap()
-            .then(() => {
-                setToast({ text: "Username updated successfully!", type: 'success' });
-            })
-            .catch((error) => {
-                setToast({ text: `Update failed: ${error}`, type: 'error' });
-            });
+        if (!authUser?.guid) {
+            setToast({ text: "User not authenticated", type: 'error' });
+            return;
+        }
 
-        setIsEditingUsername(false);
-        setValidationError(null);
+        try {
+            await dispatch(update({ 
+                guid: authUser.guid, 
+                updateData: { username: sanitizedUsername } 
+            })).unwrap();
+            setToast({ text: "Username updated successfully!", type: 'success' });
+        } catch(error) {
+            setToast({ text: `Update failed: ${error}`, type: 'error' });
+        } finally {
+            setIsEditingUsername(false);
+            setValidationError(null);
+        }
     };
 
     const handleUsernameChange = (value: string) => {
@@ -99,23 +108,22 @@ export default function Profile() {
         }
     };
 
-    const handleDeposit = () => {
+    const handleDeposit = async () => {
         const amount = parseFloat(depositAmount);
+
         if (isNaN(amount) || amount <= 0) {
             return;
         }
 
-        dispatch(deposit({ amount }))
-            .unwrap()
-            .then(() => {
-                setToast({ text: "Deposit successful!", type: 'success' });
-                setDepositModalOpen(false);
-                setDepositAmount("");
-            })
-            .catch((err) => {
-                setToast({ text: `Deposit failed: ${err}`, type: 'error' });
-            });
-    };
+        try {
+            await dispatch(deposit({ amount })).unwrap();
+            setToast({ text: "Deposit successful!", type: 'success' });
+            setDepositModalOpen(false);
+            setDepositAmount("");
+        } catch (err) {
+            setToast({ text: `Deposit failed: ${err}`, type: 'error' });
+        }
+};
 
 
     const username = profile?.username || "User";
@@ -130,7 +138,7 @@ export default function Profile() {
         : "Unknown";
 
     const statusIconName = getStatusIconName(status);
-    const statusIconSrc = getInverseIcon(statusIconName) || getInverseIcon("defaultStatus");
+    const statusIconSrc = getIcon(statusIconName) || getIcon("defaultStatus");
 
     const infoBlockStyle = {
         background: "var(--color-bg-glass)", 
@@ -188,7 +196,7 @@ export default function Profile() {
                                         style={{ width: "100%", height: "100%", objectFit: "cover" }} 
                                     />
                                     ) : (
-                                        username.substring(0, 2).toUpperCase()
+                                        username.substring(0, 1).toUpperCase()
                                     )}
                                 </Box>
 
@@ -207,7 +215,7 @@ export default function Profile() {
                                             transition: "all 0.2s ease"
                                         }}
                                     >
-                                        <Icon src={getInverseIcon("edit")} alt="edit avatar" size={20} />
+                                        <Icon src={getIcon("edit")} alt="edit avatar" size={20} />
                                     </Box>
                                 </label>
 
@@ -301,7 +309,7 @@ export default function Profile() {
                                                 style={{ display: "flex", gap: "8px", alignItems: "center" }}
                                             >
                                                 EDIT
-                                                <Icon src={getInverseIcon("edit")} alt="edit" size={16} />
+                                                <Icon src={getIcon("edit")} alt="edit" size={16} />
                                             </Button>
                                         )}
                                     </Box>
