@@ -48,6 +48,20 @@ spring:
       enabled: ${SERVICE_WHITELIST_ENABLED:true}
       hosts: [ "127.0.0.1" ]
 
+  data:
+    redis:
+      enabled: ${REDIS_ENABLED:true}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      password: ${REDIS_PASSWORD:}
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      access-expiration: ${JWT_ACCESS_EXPIRATION:900000}      # 15 minutes default
+      refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}
+
 server:
   port: 8084
   forward-headers-strategy: framework
