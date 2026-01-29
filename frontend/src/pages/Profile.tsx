@@ -115,15 +115,20 @@ export default function Profile() {
             return;
         }
 
+        if (!authUser?.guid) {
+            setToast({ text: "User not identified", type: 'error' });
+            return;
+        }
+
         try {
-            await dispatch(deposit({ amount })).unwrap();
+            await dispatch(deposit({ userGuid: authUser.guid, amount })).unwrap();
             setToast({ text: "Deposit successful!", type: 'success' });
             setDepositModalOpen(false);
             setDepositAmount("");
         } catch (err) {
             setToast({ text: `Deposit failed: ${err}`, type: 'error' });
         }
-};
+    };
 
 
     const username = profile?.username || "User";
