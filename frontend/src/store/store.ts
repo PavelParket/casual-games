@@ -1,12 +1,16 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer, { logout, setAccessToken } from "./slices/AuthSlice";
 import roomReducer from "./slices/RoomSlice";
+import userReducer, { clearUser } from "./slices/UserSlice";
+import bankReducer from "./slices/BankSlice";
 import { setOnTokenRefresh } from "../utils/TokenManager";
 
 export const store = configureStore({
    reducer: {
       auth: authReducer,
       rooms: roomReducer,
+      user: userReducer,
+      bank: bankReducer,
    },
 });
 
@@ -20,5 +24,6 @@ setOnTokenRefresh((token) => {
       store.dispatch(setAccessToken(token));
    } else {
       store.dispatch(logout());
+      store.dispatch(clearUser());
    }
 });

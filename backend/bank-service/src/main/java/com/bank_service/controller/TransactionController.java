@@ -1,9 +1,6 @@
 package com.bank_service.controller;
 
-import com.bank_service.domain.dto.PageResponse;
-import com.bank_service.domain.dto.TransactionResponse;
-import com.bank_service.domain.dto.TransactionSummaryFilterRequest;
-import com.bank_service.domain.dto.TransactionSummaryResponse;
+import com.bank_service.domain.dto.*;
 import com.bank_service.service.TransactionService;
 import com.bank_service.service.TransactionSummaryService;
 import jakarta.validation.Valid;
@@ -42,5 +39,11 @@ public class TransactionController {
     @PostMapping("/summary/search")
     public List<TransactionSummaryResponse> getByUserGuid(@RequestBody @Valid TransactionSummaryFilterRequest request) {
         return summaryService.getByUserGuid(request);
+    }
+
+    @PostMapping("/deposit")
+    public TransactionResponse deposit(@RequestBody @Valid DepositRequest request) {
+        log.info("Received deposit request for user: {} with amount: {}", request.userGuid(), request.amount());
+        return transactionService.processDeposit(request);
     }
 }

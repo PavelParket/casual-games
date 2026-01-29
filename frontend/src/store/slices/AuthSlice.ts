@@ -2,9 +2,10 @@ import type { AxiosError } from 'axios';
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { AuthAPI } from '../../api/AuthApi';
 import { setAccessToken as setGlobalToken, startTokenTimer, stopTokenTimer } from '../../utils/TokenManager';
+import { update } from './UserSlice';
 
 export interface User {
-   id: number;
+   guid: string;
    username: string;
    email: string;
    role: string;
@@ -30,7 +31,7 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-   id: number;
+   guid: string;
    username: string;
    email: string;
    role: string;
@@ -39,7 +40,7 @@ export interface AuthResponse {
 
 const mapAuthResponseToState = (data: AuthResponse): { user: User; accessToken: string } => ({
    user: {
-      id: data.id,
+      guid: data.guid,
       username: data.username,
       email: data.email,
       role: data.role,
@@ -205,6 +206,12 @@ const authSlice = createSlice({
             state.accessToken = null;
             state.isAuthenticated = false;
             state.error = action.payload ?? "Session expired";
+         })
+         // If update username
+         .addCase(update.fulfilled, (state, action) => {
+            if (state.user) {
+                state.user.username = action.payload.username;
+            }
          });
    },
 });
