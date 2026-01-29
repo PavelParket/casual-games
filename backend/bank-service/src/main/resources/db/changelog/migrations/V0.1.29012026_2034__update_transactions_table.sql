@@ -14,8 +14,3 @@ DROP INDEX IF EXISTS idx_transactions_room_user_unique;
 CREATE UNIQUE INDEX idx_transactions_room_user_unique
     ON transactions(room_id, user_guid)
     WHERE status IN ('PENDING', 'SUCCESS') AND room_id IS NOT NULL;
-
-DROP INDEX IF EXISTS idx_transactions_user_global_unique;
-CREATE UNIQUE INDEX idx_transactions_user_global_unique
-    ON transactions(user_guid)
-    WHERE status IN ('PENDING', 'SUCCESS') AND room_id IS NULL;
