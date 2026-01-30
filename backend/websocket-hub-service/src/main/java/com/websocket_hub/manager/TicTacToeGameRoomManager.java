@@ -106,11 +106,17 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
         playerBets.computeIfPresent(room.getId(), (key, bets) -> {
             bets.removeIf(bet -> bet.getGuid().equals(user.guid()));
 
-            if (bets.size() == 1) {
+            /*if (bets.size() == 1) {
                 PlayerBet remainingBet = bets.getFirst();
                 ClientSession remainingClient = getClientSessionByGuid(remainingBet.getGuid());
-                webSocketHelper.notifyBetAccepted(room.getId(), remainingClient, remainingBet.getBet());
-            }
+
+                Set<ClientSession> players = getPlayersInRoom(room.getId());
+                players.removeIf(player -> player.getGuid().equals(remainingBet.getGuid()));
+
+                webSocketHelper.notifyBetAccepted(room.getId(), remainingClient, players, remainingBet.getBet());
+
+                log.info("Auto-accepted remaining bet {} for player {} after opponent left", remainingBet.getBet(), remainingClient.getUsername());
+            }*/
 
             return bets.isEmpty() ? null : bets;
         });
@@ -154,16 +160,28 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
     public boolean areBothPlayersReady(UUID roomId) {
         Set<UUID> ready = readyPlayers.get(roomId);
-        Set<ClientSession> players = getUsersInRoom(roomId);
+        Set<ClientSession> players = getPlayersInRoom(roomId);
 
         return ready != null && ready.size() == 2 && players.size() == 2
                 && ready.containsAll(players.stream().map(ClientSession::getGuid).collect(Collectors.toSet()));
     }
 
-    public void clearReadyPlayers(UUID roomId) {
+    public void removeReadyPlayers(UUID roomId) {
         readyPlayers.remove(roomId);
 
         log.info("Cleared ready players for room {}", roomId);
+    }
+
+    private void removeReadyPlayer(UUID roomId, UUID playerGuid) {
+        readyPlayers.computeIfPresent(roomId, (key, players) -> {
+            boolean removed = players.remove(playerGuid);
+
+            if (removed) {
+                log.info("Removed ready status for player {} in room {} (bet was outbid)", playerGuid, roomId);
+            }
+
+            return players.isEmpty() ? null : players;
+        });
     }
 
     public void markPlayerBet(UUID roomId, UserInternalResponse user, BigDecimal bet) {
@@ -173,12 +191,17 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
         ClientSession newClient = getClientSessionByGuid(user.guid());
         List<PlayerBet> bets = playerBets.computeIfAbsent(roomId, key -> new ArrayList<>());
 
+        Set<ClientSession> players = getPlayersInRoom(roomId).stream()
+                .filter(player -> !player.getGuid().equals(newClient.getGuid()))
+                .collect(Collectors.toSet());
+
         synchronized (bets) {
             bets.removeIf(playerBet -> playerBet.getGuid().equals(user.guid()));
 
             if (bets.isEmpty()) {
                 bets.add(newPlayerBet);
-                webSocketHelper.notifyBetAccepted(roomId, newClient, bet);
+                webSocketHelper.notifyBetAccepted(roomId, newClient, players, bet);
+                log.info("First bet in room {} by player {}: {}", roomId, user.username(), bet);
                 return;
             }
 
@@ -189,29 +212,42 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
             if (compareBets < 0) {
                 webSocketHelper.notifyBetRejected(roomId, newClient, newPlayerBet.getBet());
-            } else if (compareBets > 0) {
+                log.info("Bet rejected in room {} for player {}: {} (existing: {})", roomId, user.username(), bet, existingBet.getBet());
+                return;
+            }
+
+            if (compareBets > 0) {
                 bets.clear();
                 bets.add(newPlayerBet);
-                webSocketHelper.notifyBetAccepted(roomId, newClient, bet);
+
+                webSocketHelper.notifyBetAccepted(roomId, newClient, players, bet);
                 webSocketHelper.notifyOutbid(roomId, existingClient, newPlayerBet.getBet());
-            } else {
-                bets.add(newPlayerBet);
-                webSocketHelper.notifyBetAccepted(roomId, newClient, bet);
+
+                removeReadyPlayer(roomId, existingClient.getGuid());
+
+                log.info("Bet accepted (outbid) in room {} by player {}: {} (outbid player: {}, ready status reset)", roomId, user.username(), bet, existingClient.getUsername());
+
+                return;
             }
+
+            bets.add(newPlayerBet);
+            webSocketHelper.notifyBetAccepted(roomId, newClient, players, bet);
+
+            log.info("Bet accepted (equal) in room {} by player {}: {} (both players ready to start)", roomId, user.username(), bet);
         }
     }
 
-    public void clearPlayerBets(UUID roomId) {
+    public void removePlayerBets(UUID roomId) {
         playerBets.remove(roomId);
 
         log.info("Cleared players bets in room {}", roomId);
     }
 
     public List<PlayerBet> getPlayerBets(UUID roomId) {
-        return playerBets.getOrDefault(roomId, List.of());
+        return new ArrayList<>(playerBets.getOrDefault(roomId, List.of()));
     }
 
-    public BigDecimal getPlayerBet(UUID roomId, UUID playerGuid) {
+    public PlayerBet getPlayerBet(UUID roomId, UUID playerGuid) {
         List<PlayerBet> bets = getPlayerBets(roomId);
 
         if (bets == null || bets.isEmpty()) {
@@ -220,8 +256,8 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
         return bets.stream()
                 .filter(bet -> bet.getGuid().equals(playerGuid))
-                .map(PlayerBet::getBet)
                 .findFirst()
+                .map(playerBet -> new PlayerBet(playerBet.getGuid(), playerBet.getBet(), null))
                 .orElse(null);
     }
 

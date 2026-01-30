@@ -74,12 +74,15 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             UUID roomId = WebSocketUtil.getRoomId(session);
             UserInternalResponse user = WebSocketUtil.getUser(session);
 
+            //todo: token
+            String token = WebSocketUtil.getToken(session);
+
             log.info("Received game message: {}", ticTacToeGameMessage);
 
             switch (ticTacToeGameMessage.event()) {
                 case READY -> handlePlayerReady(roomId, user);
 
-                case MOVE -> handleGameMove(ticTacToeGameMessage, roomId, user);
+                case MOVE -> handleGameMove(ticTacToeGameMessage, roomId, user, token);
 
                 case BET -> handlePlayerBet(ticTacToeGameMessage, roomId, user);
 
@@ -108,7 +111,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         if (roomManager.areBothPlayersReady(roomId)) {
             startGame(roomId);
 
-            roomManager.clearReadyPlayers(roomId);
+            roomManager.removeReadyPlayers(roomId);
         }
     }
 
@@ -116,7 +119,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         try {
             roomManager.validateBetsForGameStart(roomId);
 
-            Map<UUID, String> players = roomManager.getUsersInRoom(roomId).stream()
+            Map<UUID, String> players = roomManager.getPlayersInRoom(roomId).stream()
                     .collect(Collectors.toMap(
                             ClientSession::getGuid,
                             ClientSession::getUsername
@@ -142,7 +145,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         } catch (IllegalStateException e) {
             log.warn("Cannot start game in room {}: {}", roomId, e.getMessage());
 
-            roomManager.clearReadyPlayers(roomId);
+            roomManager.removeReadyPlayers(roomId);
 
             roomManager.broadcast(roomId, ticTacToeGameMessageMapper.toResponse(
                     MessageType.SYSTEM,
@@ -157,9 +160,9 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         }
     }
 
-    private void handleGameMove(TicTacToeGameMessage ticTacToeGameMessage, UUID roomId, UserInternalResponse user) {
+    private void handleGameMove(TicTacToeGameMessage ticTacToeGameMessage, UUID roomId, UserInternalResponse user, String token) {
         try {
-            Map<UUID, String> players = roomManager.getUsersInRoom(roomId).stream()
+            Map<UUID, String> players = roomManager.getPlayersInRoom(roomId).stream()
                     .collect(Collectors.toMap(
                             ClientSession::getGuid,
                             ClientSession::getUsername
@@ -183,7 +186,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             if (moveGameResponse.winner() != null
                     && (TicTacToeGameEvent.WINNER_X.equals(moveGameResponse.event())
                     || TicTacToeGameEvent.WINNER_O.equals(moveGameResponse.event()))) {
-                processGameEnd(roomId, moveGameResponse);
+                processGameEnd(roomId, moveGameResponse, token);
             } else {
                 roomManager.broadcast(roomId, moveGameResponse);
             }
@@ -192,7 +195,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         }
     }
 
-    private void processGameEnd(UUID roomId, TicTacToeGameMessage moveGameResponse) {
+    private void processGameEnd(UUID roomId, TicTacToeGameMessage moveGameResponse, String token) {
         roomManager.broadcast(roomId, moveGameResponse);
 
         try {
@@ -205,7 +208,8 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
                     moveGameResponse.winner()
             );
 
-            TicTacToeTransactionInternalResponse transactionResponse = bankServiceClient.sendTicTacToeGameResults(transactionRequest);
+            //todo: костыль с токеном, переделать потом!
+            TicTacToeTransactionInternalResponse transactionResponse = bankServiceClient.sendTicTacToeGameResults(transactionRequest, token);
 
             if (transactionResponse != null) {
                 log.info("Bank service response: status={}, message={}, transactions={}",
@@ -218,7 +222,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         } catch (Exception e) {
             log.error("Failed to process game results for room {}", roomId, e);
         } finally {
-            roomManager.clearPlayerBets(roomId);
+            roomManager.removePlayerBets(roomId);
         }
     }
 

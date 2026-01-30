@@ -1,3 +1,6 @@
+/* ============================= */
+/* ========== GENERAL ========== */
+/* ============================= */
 export interface Room {
     id: string;
     name: string;
@@ -21,3 +24,11 @@ export const ROOM_TYPE_LABELS: Record<string, string> = {
 } as const;
 
 export type RoomType = keyof typeof ROOM_TYPE_HANDLERS;
+
+/* ============================ */
+/* ===== TIC TAC TOE ROOM ===== */
+/* ============================ */
+export interface PlayerBet {
+    guid: string;
+    bet: number;
+};

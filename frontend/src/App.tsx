@@ -14,6 +14,7 @@ import TicTacToeRoom from './pages/rooms/TicTacToeRoom';
 import type { AppDispatch } from './store/store';
 //import { setOnRefreshRequired } from './utils/TokenManager';
 import { refresh } from './store/slices/AuthSlice';
+import ExperimentalPage from './pages/ExperimentalPage';
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
@@ -67,6 +68,7 @@ export default function App() {
                   <Route element={<Layout />}>
                      <Route path="/rooms" element={<Rooms />} />
                      <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
+                     <Route path="/ws" element={<ExperimentalPage />} />
                   </Route>
                </Route>
 

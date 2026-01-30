@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -23,7 +24,7 @@ public class WebSocketHelper {
 
     private final SessionManager sessionManager;
 
-    public void notifyBetAccepted(UUID roomId, ClientSession client, BigDecimal bet) {
+    public void notifyBetAccepted(UUID roomId, ClientSession client, Set<ClientSession> clients, BigDecimal bet) {
         if (client == null) {
             log.warn("Cannot notify bet accepted - client is null");
             return;
@@ -37,6 +38,21 @@ public class WebSocketHelper {
                 roomId,
                 "Your bet has been accepted: " + bet
         ));
+
+        if (clients != null && !clients.isEmpty()) {
+            clients.forEach(otherClient -> {
+                if (otherClient != null && !otherClient.getGuid().equals(client.getGuid())) {
+                    sessionManager.sendToSession(otherClient, messageMapper.toResponse(
+                            MessageType.SYSTEM,
+                            TicTacToeGameEvent.BET,
+                            client.getGuid(),
+                            otherClient.getGuid(),
+                            roomId,
+                            "Player " + client.getUsername() + " made the bet: " + bet
+                    ));
+                }
+            });
+        }
     }
 
     public void notifyBetRejected(UUID roomId, ClientSession client, BigDecimal bet) {
@@ -79,7 +95,7 @@ public class WebSocketHelper {
 
         sessionManager.sendToSession(client, messageMapper.toResponse(
                 MessageType.SYSTEM,
-                TicTacToeGameEvent.BET_REJECT,
+                TicTacToeGameEvent.BET_REQUIRED,
                 null,
                 client.getGuid(),
                 roomId,

@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
-import { Box, Button, Card, Container, Icon, Toast, Typography, useThemedIcon } from "../../ui";
+import { Box, Button, Card, Container, Icon, Input, Toast, Typography, useThemedIcon } from "../../ui";
 import type { GameMessage } from "../../models/WsMessage";
 import { RoomAPI } from "../../api/WsHubApi";
 import { useSelector } from "react-redux";
@@ -33,34 +33,16 @@ export default function TicTacToeRoom() {
    const [playersWithSymbols, setPlayersWithSymbols] = useState<Record<string, string>>({});
    const [winner, setWinner] = useState<string>();
 
-   const fetchPlayers = useCallback(async () => {
-      if (!roomId || !room) {
-         return;
-      }
+   const [betInput, setBetInput] = useState<string>("");
+   const [betPlaced, setBetPlaced] = useState<boolean>(false);
+   const [playerBets, setPlayerBets] = useState<Record<string, number>>({});
 
-      try {
-         const response = (await RoomAPI.getUsernamesInRoom(roomId, room.type));
+   const balance: number = 1000;
 
-         setPlayers(response.data);
-         setTotalPlayers(Object.keys(response.data).length);
-      } catch (error) {
-         console.info("Failed to fetch players:", error);
-      }
-   }, [room, roomId]);
-
-   const fetchReadyPlayers = useCallback(async () => {
-      if (!roomId || !room) {
-         return;
-      }
-
-      try {
-         const response = await RoomAPI.getReadyPlayers(roomId, room.type);
-
-         setReadyCount(response.data);
-      } catch (error) {
-         console.info("Failed to fetch ready players:", error);
-      }
-   }, [room, roomId]);
+   const { isConnected, message, send } = useWebSocket<GameMessage>(
+      room?.id ?? undefined,
+      room?.type ?? undefined,
+   );
 
    useEffect(() => {
       if (!roomId) {
@@ -81,19 +63,58 @@ export default function TicTacToeRoom() {
       fetchRoom(roomId);
    }, [navigate, roomId]);
 
-   const { isConnected, message, send } = useWebSocket<GameMessage>(
-      room?.id ?? undefined,
-      room?.type ?? undefined,
-   );
+   const fetchPlayers = useCallback(async () => {
+      if (!roomId || !room?.type) {
+         return;
+      }
+
+      try {
+         const response = await RoomAPI.getUsernamesInRoom(roomId, room.type);
+
+         setPlayers(response.data);
+         setTotalPlayers(Object.keys(response.data).length);
+      } catch (error) {
+         console.info("Failed to fetch players:", error);
+      }
+   }, [room?.type, roomId]);
+
+   const fetchReadyPlayers = useCallback(async () => {
+      if (!roomId || !room?.type) {
+         return;
+      }
+
+      try {
+         const response = await RoomAPI.getReadyPlayers(roomId, room.type);
+
+         setReadyCount(response.data);
+      } catch (error) {
+         console.info("Failed to fetch ready players:", error);
+      }
+   }, [room?.type, roomId]);
+
+   const fetchPlayerBets = useCallback(async () => {
+      if (!roomId || !room?.type) {
+         return;
+      }
+
+      try {
+         const betsMap: Record<string, number> = {};
+
+         setPlayerBets(betsMap);
+      } catch (error) {
+         console.error("Failed to fetch player bets:", error);
+      }
+   }, [room?.type, roomId]);
 
    useEffect(() => {
-      if (!room) {
+      if (!roomId || !room?.type) {
          return;
       }
 
       fetchPlayers();
       fetchReadyPlayers();
-   }, [fetchPlayers, fetchReadyPlayers, room]);
+      fetchPlayerBets()
+   }, [room?.type, roomId]);
 
    const processReset = useCallback(() => {
       showToast("Your opponent left the room. Waiting for a new player...");
@@ -104,6 +125,8 @@ export default function TicTacToeRoom() {
       setWinner(undefined);
       setReady(false);
       setIsGame(false);
+      setBetPlaced(false);
+      setBetInput("");
    }, []);
 
    const processStart = useCallback((message: GameMessage) => {
@@ -132,32 +155,45 @@ export default function TicTacToeRoom() {
       setIsGame(true);
    }, [authentication]);
 
-   const processMove = (message: GameMessage) => {
-      setBoard(message.board!);
+   const processMove = useCallback((message: GameMessage) => {
+      if (!message.board) {
+         return;
+      }
+
+      setBoard(message.board);
       setCurrentPlayerSymbol(message.nextPlayerSymbol);
-   };
+   }, []);
 
    const processWin = useCallback((message: GameMessage) => {
-      setBoard(message.board!);
-      setWinner(players?.[message.winner!]);
+      if (!message.board || !message.winner) {
+         return;
+      }
+
+      setBoard(message.board);
+      setWinner(players?.[message.winner]);
 
       if (message.winner === mySymbol) {
          showToast("You are the winner!");
       } else {
          showToast(`Your opponent won!`);
       }
+
       setIsGame(false);
    }, [mySymbol, players]);
 
    const processDraw = useCallback((message: GameMessage) => {
-      setBoard(message.board!);
+      if (!message.board || !message.message) {
+         return;
+      }
+
+      setBoard(message.board);
       setWinner(message.winner);
-      showToast(message.message!);
+      showToast(message.message);
       setIsGame(false);
    }, []);
 
    useEffect(() => {
-      if (!isConnected || !message) {
+      if (!isConnected || !message || !authentication?.guid) {
          return;
       }
 
@@ -182,6 +218,7 @@ export default function TicTacToeRoom() {
          case "JOIN":
             fetchPlayers();
             fetchReadyPlayers();
+            fetchPlayerBets();
             showToast(validatedMessage.message!);
             break;
 
@@ -194,7 +231,7 @@ export default function TicTacToeRoom() {
 
             fetchPlayers();
             fetchReadyPlayers();
-
+            fetchPlayerBets();
             break;
 
          case "START":
@@ -221,18 +258,37 @@ export default function TicTacToeRoom() {
             break;
 
          case "BET":
+            if (validatedMessage.toUserId === authentication.guid) {
+               setBetPlaced(true);
+               showToast(validatedMessage.message || "Your bet has been accepted!");
+            } else {
+               showToast(validatedMessage.message || "Opponent placed a bet");
+            }
+
+            fetchPlayerBets();
             break;
 
          case "BET_REJECT":
+            setBetPlaced(false);
+            showToast(validatedMessage.message || "Your bet was rejected. Please increase your bet.");
+            fetchPlayerBets();
             break;
 
          case "BET_OUTBID":
+            setBetPlaced(false);
+            setReady(false);
+            showToast(validatedMessage.message || "You have been outbid! Please place a new bet.");
+            fetchPlayerBets();
+            break;
+
+         case "BET_REQUIRED":
+            showToast(validatedMessage.message || "You must place a bet before becoming ready");
             break;
 
          default:
             break;
       }
-   }, [isConnected, message, fetchPlayers, fetchReadyPlayers, isGame, processStart, processDraw, processReset, processWin]);
+   }, [isConnected, message, authentication?.guid, isGame]);
 
    const handleClick = (index: number) => {
       if (!authentication || !room || !isConnected || board[index] || winner || currentPlayerSymbol !== mySymbol) {
@@ -256,12 +312,43 @@ export default function TicTacToeRoom() {
          return;
       }
 
+      if (!betPlaced) {
+         showToast("You must place a bet before becoming ready!");
+         return;
+      }
+
       send({
          type: "USER_MESSAGE",
          event: "READY",
          roomId: room.id,
       });
+
       setReady(true);
+   };
+
+   const handlePlaceBet = () => {
+      if (!room || !isConnected || !authentication) {
+         return;
+      }
+
+      const betAmount = parseFloat(betInput);
+
+      if (isNaN(betAmount) || betAmount <= 0) {
+         showToast("Please enter a valid bet amount greater than 0");
+         return;
+      }
+
+      if (balance && betAmount > balance) {
+         showToast("Insufficient balance");
+         return;
+      }
+
+      send({
+         type: "USER_MESSAGE",
+         event: "BET",
+         roomId: room.id,
+         bet: betAmount,
+      });
    };
 
    const handleLeave = () => {
@@ -394,6 +481,125 @@ export default function TicTacToeRoom() {
                         })}
                      </Box>
                   </Box>
+
+                  <Box style={{
+                     display: "flex",
+                     flexDirection: "column",
+                     alignItems: "flex-start",
+                     gap: "1rem",
+                     padding: "1rem",
+                     background: "var(--color-bg-secondary)",
+                     borderRadius: "var(--radius-md)",
+                     boxShadow: "var(--shadow-md)",
+                  }}>
+                     {Object.keys(playerBets).length > 0 && (
+                        <>
+                           <Typography variant="h3">Current Bets</Typography>
+                           <Box style={{
+                              width: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "0.5rem",
+                              padding: "0.75rem",
+                              background: "var(--color-bg)",
+                              borderRadius: "var(--radius-sm)",
+                              border: "1px solid var(--color-border)",
+                           }}>
+                              {Object.entries(playerBets).map(([username, bet]) => (
+                                 <Box key={username} style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center"
+                                 }}>
+                                    <Typography variant="body" style={{ fontWeight: 500 }}>
+                                       {username}
+                                    </Typography>
+                                    <Typography variant="body" style={{ color: "var(--color-success)" }}>
+                                       ${bet}
+                                    </Typography>
+                                 </Box>
+                              ))}
+                           </Box>
+
+                           <Box style={{
+                              width: "100%",
+                              height: "1px",
+                              background: "var(--color-border)",
+                              margin: "0.5rem 0"
+                           }} />
+                        </>
+                     )}
+
+                     <Typography variant="h3">Place Your Bet</Typography>
+
+                     {balance !== undefined && (
+                        <Typography variant="body" style={{ color: "var(--color-text-secondary)" }}>
+                           Balance: ${balance.toFixed(2)}
+                        </Typography>
+                     )}
+
+                     {betPlaced && (
+                        <Box style={{
+                           display: "flex",
+                           alignItems: "center",
+                           gap: "0.5rem",
+                           padding: "0.5rem",
+                           background: "var(--color-success-bg)",
+                           borderRadius: "var(--radius-sm)",
+                           width: "100%"
+                        }}>
+                           <Icon src={getInverseIcon("check")} alt="check" size={16} />
+                           <Typography variant="caption" style={{ color: "var(--color-success)" }}>
+                              Bet placed: ${betInput}
+                           </Typography>
+                        </Box>
+                     )}
+
+                     <Box style={{ width: "100%" }}>
+                        <Input
+                           type="number"
+                           value={betInput}
+                           onChange={(e) => setBetInput(e.target.value)}
+                           placeholder="Enter bet amount"
+                           disabled={betPlaced || isGame}
+                           style={{
+                              width: "100%",
+                              padding: "0.75rem",
+                              borderRadius: "var(--radius-sm)",
+                              border: "1px solid var(--color-border)",
+                              background: betPlaced || isGame ? "var(--color-bg-disabled)" : "var(--color-bg)",
+                              color: "var(--color-text)",
+                              fontSize: "1rem",
+                              opacity: betPlaced || isGame ? 0.6 : 1,
+                           }}
+                        />
+                     </Box>
+
+                     <Button
+                        onClick={handlePlaceBet}
+                        disabled={betPlaced || isGame || !betInput}
+                        style={{
+                           width: "100%",
+                           opacity: (betPlaced || isGame || !betInput) ? 0.5 : 1,
+                        }}
+                     >
+                        Place Bet
+                     </Button>
+
+                     <Typography
+                        variant="caption"
+                        style={{
+                           color: "var(--color-text-secondary)",
+                           fontSize: "0.875rem",
+                           lineHeight: "1.4"
+                        }}
+                     >
+                        {betPlaced
+                           ? "Your bet has been accepted. You can now get ready!"
+                           : "You must place a bet before becoming ready"
+                        }
+                     </Typography>
+                  </Box>
                </Box>
 
                <Box style={{
@@ -407,12 +613,13 @@ export default function TicTacToeRoom() {
 
                   <Button
                      onClick={handleReady}
-                     disabled={ready}
+                     disabled={ready || !betPlaced}
                      style={{
                         margin: "2rem",
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px"
+                        gap: "8px",
+                        opacity: (!betPlaced || ready) ? 0.5 : 1,
                      }}
                   >
                      {ready ? (

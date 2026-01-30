@@ -26,7 +26,7 @@ public class BankServiceClient {
 
     private final RestTemplate restTemplate;
 
-    public TicTacToeTransactionInternalResponse sendTicTacToeGameResults(TicTacToeTransactionInternalRequest request) {
+    public TicTacToeTransactionInternalResponse sendTicTacToeGameResults(TicTacToeTransactionInternalRequest request, String token) {
         URI uri = UriComponentsBuilder.fromUriString(bankServiceUrl)
                 .path("/bank/save")
                 .build()
@@ -34,8 +34,9 @@ public class BankServiceClient {
 
         log.info("Calling bank-service to process game results: roomId={}, winner={}", request.roomId(), request.winner());
 
+        //todo: token
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJiYWM1MTU2OS1kZDExLTQzMzktYmY1MC1iOTJjMmYxZmUwMTkiLCJlbWFpbCI6InBhdmVsQGdtYWlsLmNvbSIsInJvbGVzIjpbIkFETUlOIl0sInN0YXR1cyI6IkRFRkFVTFQiLCJpYXQiOjE3Njk1NTAwMjksImV4cCI6MTc2OTU1MzYyOX0.dFGyvQn9wzLYY0ptZnKZ_ellIbo1LYydQbzM2UwvRBTYDTJyq6YdGKHttKB9eALUpdoYNSqfhTiDK1lUcnSWig");
+        headers.set("Authorization", "Bearer " + token);
 
         try {
             ResponseEntity<TicTacToeTransactionInternalResponse> response = restTemplate.exchange(

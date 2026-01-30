@@ -24,7 +24,6 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
 
     private final IdentityProvider identityProvider;
 
-    //todo: вместо запроса на сервис попробовать вытащить всю инфу из токена, вроде все нужные поля в нем есть
     private final UserServiceClient client;
 
     @Override
@@ -41,6 +40,9 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
         attributes.put("roomId", roomId);
         attributes.put("roomType", roomType);
         attributes.put("connectedAt", Instant.now());
+
+        //todo: token
+        attributes.put("token", token);
 
         log.info("Preparing handshake for user={} room={} type={} ip={}", user.email(), roomId, roomType, ip);
 

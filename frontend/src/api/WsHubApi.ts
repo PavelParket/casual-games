@@ -1,6 +1,6 @@
 import axios from "axios";
 import { WEBSOCKET_HUB_SERVICE_URL } from "./ApiDictionary";
-import type { Room, RoomRequest, RoomType } from "../models/Room";
+import type { PlayerBet, Room, RoomRequest, RoomType } from "../models/Room";
 
 export const RoomAPI = {
    getRooms: () => axios.get<Room[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/all`),
@@ -15,5 +15,9 @@ export const RoomAPI = {
 
    createRoom: (room: RoomRequest) => axios.post<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms`, room),
 
-   getRoomById: (roomId?: string) => axios.get<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/${roomId}`),
+   getRoomById: (roomId: string) => axios.get<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/${roomId}`),
+};
+
+export const TicTacTioeRoomApi = {
+   getPlayersBets: (roomId: string) => axios.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/player-bet/${roomId}`),
 };

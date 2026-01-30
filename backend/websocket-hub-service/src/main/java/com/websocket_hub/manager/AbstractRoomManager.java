@@ -169,7 +169,7 @@ public abstract class AbstractRoomManager {
         return rooms.values().stream().toList();
     }
 
-    public Set<ClientSession> getUsersInRoom(UUID roomId) {
+    public Set<ClientSession> getPlayersInRoom(UUID roomId) {
         Room room = rooms.getOrDefault(roomId, null);
 
         if (room == null) {

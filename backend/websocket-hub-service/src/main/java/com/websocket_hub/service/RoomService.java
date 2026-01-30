@@ -56,7 +56,7 @@ public class RoomService {
     public Map<UUID, String> getUsernamesInRoom(UUID roomId, RoomType roomType) {
         return getManager(roomType)
                 .orElseThrow(() -> new RuntimeException("No manager found for room type: " + roomType))
-                .getUsersInRoom(roomId).stream()
+                .getPlayersInRoom(roomId).stream()
                 .collect(Collectors.toMap(
                         ClientSession::getGuid,
                         ClientSession::getUsername
