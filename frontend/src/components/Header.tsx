@@ -1,13 +1,15 @@
 import { Link, useNavigate } from "react-router-dom"
-import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Box } from "../ui"
+import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Icon, useThemedIcon, Box } from "../ui"
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
 import { logout } from "../store/slices/AuthSlice";
 
 export default function Header() {
-   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
    const dispatch = useDispatch<AppDispatch>();
    const navigate = useNavigate();
+
+   const { getIcon } = useThemedIcon();
 
    const handleLogout = () => {
       dispatch(logout());
@@ -29,7 +31,25 @@ export default function Header() {
                   <Menu
                      trigger={
                         <Button variant="ghost">
-                           User ▼
+                           <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Typography
+                                 variant="body"
+                                 title={user?.username || "User"}
+                                 style={{
+                                 overflow: "hidden",
+                                 textOverflow: "ellipsis",
+                                 display: 'block', 
+                                 maxWidth: '150px'}}
+                              >
+                                 {user?.username || "User"} 
+                              </Typography>
+                              <Icon 
+                                 src={getIcon("expandMore")}
+                                 alt="menu" 
+                                 size={16}
+                                 className="menu-chevron-icon"
+                              />
+                           </Box>
                         </Button>
                      }
                   >

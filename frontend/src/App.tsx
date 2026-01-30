@@ -1,20 +1,18 @@
-import { useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { ThemeProvider } from './ui';
-import Home from './pages/Home';
-import Layout from './components/Layout';
-import Register from './pages/auth/Register';
-import Login from './pages/auth/Login';
-import Forbidden from './pages/error/Forbidden';
-import NotFound from './pages/error/NotFound';
-import { ProtectedRoute } from './router/ProtectedRoute';
-import Rooms from './pages/rooms/Rooms';
-import TicTacToeRoom from './pages/rooms/TicTacToeRoom';
-import type { AppDispatch } from './store/store';
-//import { setOnRefreshRequired } from './utils/TokenManager';
-import { refresh } from './store/slices/AuthSlice';
-import ExperimentalPage from './pages/ExperimentalPage';
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { ThemeProvider } from './ui'
+import Home from './pages/Home'
+import Layout from './components/Layout'
+import Register from './pages/auth/Register'
+import Login from './pages/auth/Login'
+import Forbidden from './pages/error/Forbidden'
+import NotFound from './pages/error/NotFound'
+import type { AppDispatch } from './store/store'
+import { useDispatch } from 'react-redux'
+import { useEffect } from 'react'
+import { refresh } from './store/slices/AuthSlice'
+import { ProtectedRoute } from './router/ProtectedRoute'
+import Rooms from './pages/rooms/Rooms'
+import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
@@ -67,8 +65,10 @@ export default function App() {
                <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>
                   <Route element={<Layout />}>
                      <Route path="/rooms" element={<Rooms />} />
-                     <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
-                     <Route path="/ws" element={<ExperimentalPage />} />
+                     <Route path="/room/t-t-t/:roomName" element={<TicTacToeRoom />} />
+                     <Route path="/room/de-coder/:roomName" element={<DeCoderRoom />} />
+
+                     <Route path="/profile" element={<Profile />} />
                   </Route>
                </Route>
 

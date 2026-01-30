@@ -4,6 +4,15 @@ import { AuthAPI } from '../../api/AuthApi';
 import { setTokenForManager, startTokenTimer, stopTokenTimer } from '../../utils/TokenManager';
 import type { AuthUser, LoginRequest, RegisterRequest } from '../../models/AuthenticationUser';
 import { ApiHelper } from '../../helpers/ApiHelper';
+import { setAccessToken as setGlobalToken, startTokenTimer, stopTokenTimer } from '../../utils/TokenManager';
+import { update } from './UserSlice';
+
+export interface User {
+   guid: string;
+   username: string;
+   email: string;
+   role: string;
+}
 
 export interface AuthState {
    user?: AuthUser;
@@ -138,6 +147,13 @@ const authSlice = createSlice({
          .addCase(refresh.rejected, (state) => {
             state.user = undefined;
             state.isAuthenticated = false;
+            state.error = action.payload ?? "Session expired";
+         })
+         // If update username
+         .addCase(update.fulfilled, (state, action) => {
+            if (state.user) {
+                state.user.username = action.payload.username;
+            }
          });
    },
 });
