@@ -6,13 +6,13 @@ import type { GameMessage } from "../../models/WsMessage";
 import { RoomAPI } from "../../api/WsHubApi";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import { validateToastMessage, validateWSMessage } from "../../utils/SecurityUtils";
+import { validateToastMessage } from "../../utils/SecurityUtils";
 import { getRoomById } from "../../store/slices/RoomSlice";
 
 export default function TicTacToeRoom() {
    const { getInverseIcon } = useThemedIcon();
 
-   const authentication = useSelector((state: RootState) => state.auth.user);
+   const guid = useSelector((state: RootState) => state.auth.user?.guid);
    const navigate = useNavigate();
    const dispatch = useDispatch<AppDispatch>();
 
@@ -40,11 +40,6 @@ export default function TicTacToeRoom() {
 
    const balance: number = 1000;
 
-   const { isConnected, message, send } = useWebSocket<GameMessage>(
-      room?.id ?? undefined,
-      room?.type ?? undefined,
-   );
-
    useEffect(() => {
       if (!roomId) {
          navigate("/rooms");
@@ -53,6 +48,11 @@ export default function TicTacToeRoom() {
 
       dispatch(getRoomById({ roomId }));
    }, [dispatch, navigate, roomId]);
+
+   const { isConnected, message, send } = useWebSocket<GameMessage>(
+      roomId,
+      room?.type,
+   );
 
    const fetchPlayers = useCallback(async () => {
       if (!roomId || !room?.type) {
@@ -89,21 +89,11 @@ export default function TicTacToeRoom() {
       }
 
       try {
-         console.log("ok");
+         console.log();
       } catch (error) {
          console.error("Failed to fetch player bets:", error);
       }
    }, [room?.type, roomId]);
-
-   /* useEffect(() => {
-      if (!roomId || !room?.type) {
-         return;
-      }
-
-      fetchPlayers();
-      fetchReadyPlayers();
-      fetchPlayerBets()
-   }, [room?.type, roomId]); */
 
    const processReset = useCallback(() => {
       showToast("Your opponent left the room. Waiting for a new player...");
@@ -137,12 +127,12 @@ export default function TicTacToeRoom() {
 
       setPlayersWithSymbols(combinedMap);
 
-      if (authentication?.guid) {
-         setMySymbol(symbolsMap[authentication.guid]);
+      if (guid) {
+         setMySymbol(symbolsMap[guid]);
       }
 
       setIsGame(true);
-   }, [authentication]);
+   }, [guid]);
 
    const processMove = useCallback((message: GameMessage) => {
       if (!message.board) {
@@ -154,12 +144,12 @@ export default function TicTacToeRoom() {
    }, []);
 
    const processWin = useCallback((message: GameMessage) => {
-      if (!message.board || !message.winner) {
+      if (!message.board || !message.winner || !message.players) {
          return;
       }
 
       setBoard(message.board);
-      setWinner(players?.[message.winner]);
+      setWinner(message.players[message.winner]);
 
       if (message.winner === mySymbol) {
          showToast("You are the winner!");
@@ -168,7 +158,7 @@ export default function TicTacToeRoom() {
       }
 
       setIsGame(false);
-   }, [mySymbol, players]);
+   }, [mySymbol]);
 
    const processDraw = useCallback((message: GameMessage) => {
       if (!message.board || !message.message) {
@@ -182,40 +172,23 @@ export default function TicTacToeRoom() {
    }, []);
 
    useEffect(() => {
-      if (!isConnected || !message || !authentication?.guid) {
+      if (!isConnected || !message || !guid) {
          return;
       }
 
-      const validatedMessage = validateWSMessage(message, [
-         "type",
-         "event",
-         "fromUserId",
-         "toUserId",
-         "roomId",
-         "message",
-         "board",
-         "cell",
-         "currentPlayerSymbol",
-         "nextPlayerSymbol",
-         "playersSymbols",
-         "players",
-         "winner",
-         "bet",
-      ]) as GameMessage;
-
-      switch (validatedMessage.event) {
+      switch (message.event) {
          case "JOIN":
+            showToast(message.message ?? "Player join the room");
             fetchPlayers();
             fetchReadyPlayers();
             fetchPlayerBets();
-            showToast(validatedMessage.message!);
             break;
 
          case "LEAVE":
             if (isGame) {
                processReset();
             } else {
-               showToast(validatedMessage.message!);
+               showToast(message.message ?? "Player leave the room");
             }
 
             fetchPlayers();
@@ -224,34 +197,34 @@ export default function TicTacToeRoom() {
             break;
 
          case "START":
-            processStart(validatedMessage);
+            processStart(message);
             break;
 
          case "READY":
             fetchReadyPlayers();
-            showToast(validatedMessage.message!);
+            showToast(message.message ?? "Player is ready");
             break;
 
          case "MOVE":
-            processMove(validatedMessage);
+            processMove(message);
             break;
 
          case "WINNER_X":
          case "WINNER_O": {
-            processWin(validatedMessage);
+            processWin(message);
             break;
          }
 
          case "DRAW":
-            processDraw(validatedMessage);
+            processDraw(message);
             break;
 
          case "BET":
-            if (validatedMessage.toUserId === authentication.guid) {
+            if (message.toUserId === guid) {
                setBetPlaced(true);
-               showToast(validatedMessage.message || "Your bet has been accepted!");
+               showToast(message.message || "Your bet has been accepted!");
             } else {
-               showToast(validatedMessage.message || "Opponent placed a bet");
+               showToast(message.message || "Opponent placed a bet");
             }
 
             fetchPlayerBets();
@@ -260,36 +233,36 @@ export default function TicTacToeRoom() {
 
          case "BET_REJECT":
             setBetPlaced(false);
-            showToast(validatedMessage.message || "Your bet was rejected. Please increase your bet.");
+            showToast(message.message || "Your bet was rejected. Please increase your bet.");
             fetchPlayerBets();
             break;
 
          case "BET_OUTBID":
             setBetPlaced(false);
             setReady(false);
-            showToast(validatedMessage.message || "You have been outbid! Please place a new bet.");
+            showToast(message.message || "You have been outbid! Please place a new bet.");
             fetchPlayerBets();
             fetchReadyPlayers();
             break;
 
          case "BET_REQUIRED":
-            showToast(validatedMessage.message || "You must place a bet before becoming ready");
+            showToast(message.message || "You must place a bet before becoming ready");
             break;
 
          default:
             break;
       }
-   }, [isConnected, message, authentication?.guid, isGame]);
+   }, [isConnected, message, guid, isGame, fetchPlayers, fetchReadyPlayers, fetchPlayerBets, processStart, processReset, processMove, processDraw, processWin]);
 
    const handleClick = (index: number) => {
-      if (!authentication || !room || !isConnected || board[index] || winner || currentPlayerSymbol !== mySymbol) {
+      if (!guid || !room || !isConnected || board[index] || winner || currentPlayerSymbol !== mySymbol) {
          return;
       }
 
       send({
          type: "USER_MESSAGE",
          event: "MOVE",
-         fromUserId: authentication.guid,
+         fromUserId: guid,
          roomId: room.id,
          board: board,
          cell: index,
@@ -318,7 +291,7 @@ export default function TicTacToeRoom() {
    };
 
    const handlePlaceBet = () => {
-      if (!room || !isConnected || !authentication) {
+      if (!room || !isConnected || !guid) {
          return;
       }
 
@@ -337,6 +310,7 @@ export default function TicTacToeRoom() {
       send({
          type: "USER_MESSAGE",
          event: "BET",
+         fromUserId: guid,
          roomId: room.id,
          bet: betAmount,
       });

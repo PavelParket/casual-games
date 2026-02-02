@@ -8,11 +8,13 @@ import Forbidden from './pages/error/Forbidden'
 import NotFound from './pages/error/NotFound'
 import type { AppDispatch } from './store/store'
 import { useDispatch } from 'react-redux'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { refresh } from './store/slices/AuthSlice'
 import { ProtectedRoute } from './router/ProtectedRoute'
 import Rooms from './pages/rooms/Rooms'
 import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
+import Profile from './pages/Profile'
+import ExperimentalPage from './pages/ExperimentalPage'
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
@@ -64,11 +66,13 @@ export default function App() {
                {/* Protected Routes */}
                <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>
                   <Route element={<Layout />}>
-                     <Route path="/rooms" element={<Rooms />} />
-                     <Route path="/room/t-t-t/:roomName" element={<TicTacToeRoom />} />
-                     <Route path="/room/de-coder/:roomName" element={<DeCoderRoom />} />
-
                      <Route path="/profile" element={<Profile />} />
+                     <Route path="/rooms" element={<Rooms />} />
+                     <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
+                     {/* <Route path="/room/de-coder/:roomName" element={<DeCoderRoom />} /> */}
+
+                     {/* ===== Experiment Room ===== */}
+                     <Route path="/ws" element={<ExperimentalPage />} />
                   </Route>
                </Route>
 

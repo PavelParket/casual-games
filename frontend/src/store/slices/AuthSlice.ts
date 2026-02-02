@@ -4,7 +4,6 @@ import { AuthAPI } from '../../api/AuthApi';
 import { setTokenForManager, startTokenTimer, stopTokenTimer } from '../../utils/TokenManager';
 import type { AuthUser, LoginRequest, RegisterRequest } from '../../models/AuthenticationUser';
 import { ApiHelper } from '../../helpers/ApiHelper';
-import { setAccessToken as setGlobalToken, startTokenTimer, stopTokenTimer } from '../../utils/TokenManager';
 import { update } from './UserSlice';
 
 export interface User {
@@ -152,7 +151,7 @@ const authSlice = createSlice({
          // If update username
          .addCase(update.fulfilled, (state, action) => {
             if (state.user) {
-                state.user.username = action.payload.username;
+               state.user.username = action.payload.username;
             }
          });
    },
