@@ -4,7 +4,7 @@
 export interface Room {
     id: string;
     name: string;
-    type: string;
+    type: RoomType;
     participantGuids: string[];
     participantCount: number;
 }

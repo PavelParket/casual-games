@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -96,5 +97,10 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Boolean updateBalances(@RequestBody @Valid List<TransactionShortInfoInternalRequest> transactions) {
         return userService.updateBalances(transactions);
+    }
+
+    @GetMapping("/balance/{guid}")
+    public BigDecimal getBalance(@PathVariable UUID guid) {
+        return userService.getBalance(guid);
     }
 }

@@ -18,6 +18,6 @@ export const RoomAPI = {
    getRoomById: (roomId: string) => axios.get<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/${roomId}`),
 };
 
-export const TicTacTioeRoomApi = {
-   getPlayersBets: (roomId: string) => axios.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/player-bet/${roomId}`),
+export const TicTacToeRoomApi = {
+   getPlayersBets: (roomId: string) => axios.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/t-t-t/player-bets/${roomId}`),
 };

@@ -13,7 +13,7 @@ export function Container({ children, maxWidth = "1200px", className, ...rest }:
          style={{
             maxWidth,
             margin: "0 auto",
-            padding: "0 1rem",
+            padding: "0 1rem 1.5rem 1rem",
          }}
          {...rest}
       >

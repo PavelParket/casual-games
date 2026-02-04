@@ -22,7 +22,7 @@ public class TicTacToeGameUtils {
 
     public static boolean isDraw(String[] board) {
         return Arrays.stream(board)
-                .noneMatch(cell -> cell != null && !cell.isBlank());
+                .allMatch(cell -> cell != null && !cell.isBlank());
     }
 
     public static TicTacToeGameEvent checkWinner(String[] board) {

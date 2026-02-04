@@ -15,7 +15,7 @@ const getStatusIconName = (status: string): keyof typeof Icons.light => {
 export default function Profile() {
     const dispatch = useDispatch<AppDispatch>();
 
-    const { profile, isLoading } = useSelector((state: RootState) => state.user);
+    const { user, isLoading } = useSelector((state: RootState) => state.user);
     const authUser = useSelector((state: RootState) => state.auth.user);
     const { isDepositing, error: bankError } = useSelector((state: RootState) => state.bank);
 
@@ -43,10 +43,10 @@ export default function Profile() {
     }, [dispatch, authUser?.guid]);
 
     useEffect(() => {
-        if (profile?.username) {
-            setTempUsername(profile.username);
+        if (user?.username) {
+            setTempUsername(user.username);
         }
-    }, [profile]);
+    }, [user]);
 
 
     const handleEditClick = () => {
@@ -61,7 +61,7 @@ export default function Profile() {
             return;
         }
 
-        if (sanitizedUsername === profile?.username) {
+        if (sanitizedUsername === user?.username) {
             setIsEditingUsername(false);
             return;
         }
@@ -123,15 +123,15 @@ export default function Profile() {
     };
 
 
-    const username = profile?.username || "User";
-    const email = profile?.email || "";
-    const balance = profile?.balance ?? 0;
-    const status = profile?.status || "default";
-    const achievements = profile?.achievements || [];
-    const history = profile?.history || [];
+    const username = user?.username || "User";
+    const email = user?.email || "";
+    const balance = user?.balance ?? 0;
+    const status = user?.status || "default";
+    const achievements = user?.achievements || [];
+    const history = user?.history || [];
 
-    const formattedDate = profile?.createdAt
-        ? new Date(profile.createdAt).toLocaleDateString()
+    const formattedDate = user?.createdAt
+        ? new Date(user.createdAt).toLocaleDateString()
         : "Unknown";
 
     const statusIconName = getStatusIconName(status);
@@ -146,7 +146,7 @@ export default function Profile() {
         boxShadow: "var(--shadow-sm)"
     };
 
-    if (isLoading && !profile) {
+    if (isLoading && !user) {
         return (
             <Box style={{ padding: "4rem 0", display: "flex", justifyContent: "center" }}>
                 <Typography variant="h2">Loading profile...</Typography>
@@ -186,9 +186,9 @@ export default function Profile() {
                                         position: "relative",
                                         cursor: "pointer"
                                     }}>
-                                        {avatarPreview || profile?.avatarUrl ? (
+                                        {avatarPreview || user?.avatarUrl ? (
                                             <Img
-                                                src={avatarPreview || profile?.avatarUrl || ""}
+                                                src={avatarPreview || user?.avatarUrl || ""}
                                                 alt="Avatar"
                                                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
                                             />
@@ -257,7 +257,7 @@ export default function Profile() {
 
                             <Box style={infoBlockStyle}>
                                 <Stack gap="1rem">
-                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: "40px" }}>
+                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: "45px" }}>
                                         <Box style={{ flex: 1, marginRight: "1rem" }}>
                                             <Typography variant="caption" style={{ opacity: 0.7 }}>Username:</Typography>
 
@@ -291,21 +291,35 @@ export default function Profile() {
                                         </Box>
 
                                         {isEditingUsername ? (
-                                            <Button
-                                                variant="solid"
-                                                onClick={handleSaveUsername}
-                                                disabled={isLoading}
-                                                style={{ display: "flex", alignItems: "center", gap: "5px" }}
-                                            >
-                                                {isLoading ? "Saving..." : "Save"}
-                                            </Button>
+                                            <Stack
+                                                direction="row">
+                                                <Button
+                                                    variant="solid"
+                                                    onClick={handleSaveUsername}
+                                                    disabled={isLoading}
+                                                    style={{ display: "flex", alignItems: "center", gap: "5px" }}
+                                                >
+                                                    {isLoading ? "Saving..." : "Save"}
+                                                </Button>
+
+                                                <Button
+                                                    variant="outline"
+                                                    disabled={isLoading}
+                                                    onClick={() => {
+                                                        setIsEditingUsername(false);
+                                                        setValidationError(null);
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </Stack>
                                         ) : (
                                             <Button
                                                 variant="outline"
                                                 onClick={handleEditClick}
                                                 style={{ display: "flex", gap: "8px", alignItems: "center" }}
                                             >
-                                                EDIT
+                                                Edit
                                                 <Icon src={getIcon("edit")} alt="edit" size={16} />
                                             </Button>
                                         )}

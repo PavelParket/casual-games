@@ -33,7 +33,7 @@ public class WebSocketHelper {
         sessionManager.sendToSession(client, messageMapper.toResponse(
                 MessageType.SYSTEM,
                 TicTacToeGameEvent.BET,
-                null,
+                client.getGuid(),
                 client.getGuid(),
                 roomId,
                 "Your bet has been accepted: " + bet
@@ -64,7 +64,7 @@ public class WebSocketHelper {
         sessionManager.sendToSession(client, messageMapper.toResponse(
                 MessageType.SYSTEM,
                 TicTacToeGameEvent.BET_REJECT,
-                null,
+                client.getGuid(),
                 client.getGuid(),
                 roomId,
                 "Your bet has been rejected: " + bet
@@ -80,7 +80,7 @@ public class WebSocketHelper {
         sessionManager.sendToSession(client, messageMapper.toResponse(
                 MessageType.SYSTEM,
                 TicTacToeGameEvent.BET_OUTBID,
-                null,
+                client.getGuid(),
                 client.getGuid(),
                 roomId,
                 "Your bet has been outbid by: " + bet + ", please, make new"
@@ -96,7 +96,7 @@ public class WebSocketHelper {
         sessionManager.sendToSession(client, messageMapper.toResponse(
                 MessageType.SYSTEM,
                 TicTacToeGameEvent.BET_REQUIRED,
-                null,
+                client.getGuid(),
                 client.getGuid(),
                 roomId,
                 "You must place a bet before becoming ready"

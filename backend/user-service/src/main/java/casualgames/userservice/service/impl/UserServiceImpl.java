@@ -155,6 +155,13 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(saved);
     }
 
+    @Override
+    public BigDecimal getBalance(UUID guid) {
+        return userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"))
+                .getBalance();
+    }
+
     /* todo: пофиксить баг при котором на банк сервис возвращается null, а не boolean из-за чего транзакция
         с отрицательным балансом помечается как success, вместо reject
         Также есть проблема с тем что нормальная транзакция меняет баланс и он фиксируется в базе,

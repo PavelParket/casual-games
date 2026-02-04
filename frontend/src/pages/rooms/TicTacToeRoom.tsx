@@ -3,97 +3,52 @@ import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Input, Toast, Typography, useThemedIcon } from "../../ui";
 import type { GameMessage } from "../../models/WsMessage";
-import { RoomAPI } from "../../api/WsHubApi";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
 import { validateToastMessage } from "../../utils/SecurityUtils";
-import { getRoomById } from "../../store/slices/RoomSlice";
+import { findByGuid } from "../../store/slices/UserSlice";
+import { getPlayersBets, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/TicTacToeRoomSlice";
 
 export default function TicTacToeRoom() {
    const { getInverseIcon } = useThemedIcon();
 
    const guid = useSelector((state: RootState) => state.auth.user?.guid);
+   const balance = useSelector((state: RootState) => state.user.user?.balance);
    const navigate = useNavigate();
    const dispatch = useDispatch<AppDispatch>();
 
    const roomId: string | undefined = useParams<{ roomId?: string }>().roomId;
-   const room = useSelector((state: RootState) => state.rooms.room);
+   const { room, players, readyPlayersCount, totalPlayersCount, playerBetMap } = useSelector((state: RootState) => state.ticTacToeRoom);
 
    const [toast, setToast] = useState<{ text: string } | null>(null);
 
    const [ready, setReady] = useState<boolean>(false);
-   const [readyCount, setReadyCount] = useState<number>(0);
-   const [totalPlayers, setTotalPlayers] = useState<number>(0);
 
    const [isGame, setIsGame] = useState(false);
    const [board, setBoard] = useState<string[]>(Array(9).fill(null));
    const [mySymbol, setMySymbol] = useState<string>();
    const [currentPlayerSymbol, setCurrentPlayerSymbol] = useState<string>();
    const [playersSymbols, setPlayersSymbols] = useState<Record<string, string>>();
-   const [players, setPlayers] = useState<Record<string, string>>();
    const [playersWithSymbols, setPlayersWithSymbols] = useState<Record<string, string>>({});
    const [winner, setWinner] = useState<string>();
 
    const [betInput, setBetInput] = useState<string>("");
    const [betPlaced, setBetPlaced] = useState<boolean>(false);
-   const [playerBets, setPlayerBets] = useState<Record<string, number>>({});
-
-   const balance: number = 1000;
 
    useEffect(() => {
-      if (!roomId) {
+      if (!roomId || !guid) {
          navigate("/rooms");
          return;
       }
 
       dispatch(getRoomById({ roomId }));
-   }, [dispatch, navigate, roomId]);
+      dispatch(findByGuid(guid));
+   }, [dispatch, guid, navigate, roomId]);
 
    const { isConnected, message, send } = useWebSocket<GameMessage>(
       roomId,
       room?.type,
    );
-
-   const fetchPlayers = useCallback(async () => {
-      if (!roomId || !room?.type) {
-         return;
-      }
-
-      try {
-         const response = await RoomAPI.getUsernamesInRoom(roomId, room.type);
-
-         setPlayers(response.data);
-         setTotalPlayers(Object.keys(response.data).length);
-      } catch (error) {
-         console.info("Failed to fetch players:", error);
-      }
-   }, [room?.type, roomId]);
-
-   const fetchReadyPlayers = useCallback(async () => {
-      if (!roomId || !room?.type) {
-         return;
-      }
-
-      try {
-         const response = await RoomAPI.getReadyPlayers(roomId, room.type);
-
-         setReadyCount(response.data);
-      } catch (error) {
-         console.info("Failed to fetch ready players:", error);
-      }
-   }, [room?.type, roomId]);
-
-   const fetchPlayerBets = useCallback(async () => {
-      if (!roomId || !room?.type) {
-         return;
-      }
-
-      try {
-         console.log();
-      } catch (error) {
-         console.error("Failed to fetch player bets:", error);
-      }
-   }, [room?.type, roomId]);
 
    const processReset = useCallback(() => {
       showToast("Your opponent left the room. Waiting for a new player...");
@@ -172,16 +127,14 @@ export default function TicTacToeRoom() {
    }, []);
 
    useEffect(() => {
-      if (!isConnected || !message || !guid) {
+      if (!isConnected || !message || !guid || !roomId || !room) {
          return;
       }
 
       switch (message.event) {
          case "JOIN":
             showToast(message.message ?? "Player join the room");
-            fetchPlayers();
-            fetchReadyPlayers();
-            fetchPlayerBets();
+            dispatch(syncRoomState({ roomId, roomType: room.type }));
             break;
 
          case "LEAVE":
@@ -191,9 +144,7 @@ export default function TicTacToeRoom() {
                showToast(message.message ?? "Player leave the room");
             }
 
-            fetchPlayers();
-            fetchReadyPlayers();
-            fetchPlayerBets();
+            dispatch(syncRoomState({ roomId, roomType: room.type }));
             break;
 
          case "START":
@@ -201,8 +152,8 @@ export default function TicTacToeRoom() {
             break;
 
          case "READY":
-            fetchReadyPlayers();
             showToast(message.message ?? "Player is ready");
+            dispatch(syncReadiness({ roomId, roomType: room.type }));
             break;
 
          case "MOVE":
@@ -220,29 +171,28 @@ export default function TicTacToeRoom() {
             break;
 
          case "BET":
-            if (message.toUserId === guid) {
+            if (message.fromUserId === guid) {
                setBetPlaced(true);
                showToast(message.message || "Your bet has been accepted!");
             } else {
                showToast(message.message || "Opponent placed a bet");
             }
 
-            fetchPlayerBets();
-            fetchReadyPlayers();
+            dispatch(syncReadiness({ roomId, roomType: room.type }));
             break;
 
          case "BET_REJECT":
             setBetPlaced(false);
             showToast(message.message || "Your bet was rejected. Please increase your bet.");
-            fetchPlayerBets();
+            dispatch(getPlayersBets({ roomId }));
             break;
 
          case "BET_OUTBID":
             setBetPlaced(false);
             setReady(false);
             showToast(message.message || "You have been outbid! Please place a new bet.");
-            fetchPlayerBets();
-            fetchReadyPlayers();
+
+            dispatch(syncReadiness({ roomId, roomType: room.type }));
             break;
 
          case "BET_REQUIRED":
@@ -252,7 +202,7 @@ export default function TicTacToeRoom() {
          default:
             break;
       }
-   }, [isConnected, message, guid, isGame, fetchPlayers, fetchReadyPlayers, fetchPlayerBets, processStart, processReset, processMove, processDraw, processWin]);
+   }, [dispatch, guid, isConnected, isGame, message, processDraw, processMove, processReset, processStart, processWin, room, roomId]);
 
    const handleClick = (index: number) => {
       if (!guid || !room || !isConnected || board[index] || winner || currentPlayerSymbol !== mySymbol) {
@@ -368,7 +318,7 @@ export default function TicTacToeRoom() {
                         : `Winner: ${winner}`
                      : isGame
                         ? `Turn: ${currentPlayerSymbol}`
-                        : `Ready players: ${readyCount} / ${totalPlayers}`
+                        : `Ready players: ${readyPlayersCount} / ${totalPlayersCount}`
                   }
                </Typography>
 
@@ -452,12 +402,13 @@ export default function TicTacToeRoom() {
                      flexDirection: "column",
                      alignItems: "flex-start",
                      gap: "1rem",
+                     marginRight: "1.5rem",
                      padding: "1rem",
                      background: "var(--color-bg-secondary)",
                      borderRadius: "var(--radius-md)",
                      boxShadow: "var(--shadow-md)",
                   }}>
-                     {Object.keys(playerBets).length > 0 && (
+                     {playerBetMap && Object.keys(playerBetMap).length > 0 && (
                         <>
                            <Typography variant="h3">Current Bets</Typography>
                            <Box style={{
@@ -470,7 +421,7 @@ export default function TicTacToeRoom() {
                               borderRadius: "var(--radius-sm)",
                               border: "1px solid var(--color-border)",
                            }}>
-                              {Object.entries(playerBets).map(([username, bet]) => (
+                              {Object.entries(playerBetMap).map(([username, bet]) => (
                                  <Box key={username} style={{
                                     display: "flex",
                                     justifyContent: "space-between",
@@ -501,23 +452,6 @@ export default function TicTacToeRoom() {
                         <Typography variant="body" style={{ color: "var(--color-text-secondary)" }}>
                            Balance: ${balance.toFixed(2)}
                         </Typography>
-                     )}
-
-                     {betPlaced && (
-                        <Box style={{
-                           display: "flex",
-                           alignItems: "center",
-                           gap: "0.5rem",
-                           padding: "0.5rem",
-                           background: "var(--color-success-bg)",
-                           borderRadius: "var(--radius-sm)",
-                           width: "100%"
-                        }}>
-                           <Icon src={getInverseIcon("check")} alt="check" size={16} />
-                           <Typography variant="caption" style={{ color: "var(--color-success)" }}>
-                              Bet placed: ${betInput}
-                           </Typography>
-                        </Box>
                      )}
 
                      <Box style={{ width: "100%" }}>

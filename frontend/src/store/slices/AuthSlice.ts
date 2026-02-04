@@ -6,13 +6,6 @@ import type { AuthUser, LoginRequest, RegisterRequest } from '../../models/Authe
 import { ApiHelper } from '../../helpers/ApiHelper';
 import { update } from './UserSlice';
 
-export interface User {
-   guid: string;
-   username: string;
-   email: string;
-   role: string;
-}
-
 export interface AuthState {
    user?: AuthUser;
    isAuthenticated: boolean;
@@ -143,12 +136,13 @@ const authSlice = createSlice({
             setTokenForManager(action.payload.accessToken);
             startTokenTimer(action.payload.accessToken);
          })
-         .addCase(refresh.rejected, (state) => {
+         .addCase(refresh.rejected, (state, action) => {
             state.user = undefined;
             state.isAuthenticated = false;
             state.error = action.payload ?? "Session expired";
          })
-         // If update username
+
+         /* === On Update Username === */
          .addCase(update.fulfilled, (state, action) => {
             if (state.user) {
                state.user.username = action.payload.username;

@@ -4,11 +4,12 @@ import type { AxiosError } from "axios";
 import type { Room, RoomRequest, RoomType } from "../../models/Room";
 
 export interface RoomState {
-   room?: Room;
    rooms?: Room[];
    roomTypes?: RoomType[];
    error?: string;
 }
+
+// ------------------ Thunks ------------------
 
 export const getRooms = createAsyncThunk<Room[], void, { rejectValue: string }>(
    "rooms/getRooms",
@@ -49,21 +50,9 @@ export const createRoom = createAsyncThunk<Room, RoomRequest, { rejectValue: str
    }
 );
 
-export const getRoomById = createAsyncThunk<Room, { roomId: string }, { rejectValue: string }>(
-   "rooms/getRoom",
-   async ({ roomId }, { rejectWithValue }) => {
-      try {
-         const response = await RoomAPI.getRoomById(roomId);
-         return response.data;
-      } catch (err: unknown) {
-         const error = err as AxiosError<{ message?: string }>;
-         return rejectWithValue(error.response?.data?.message ?? "Failed to fetch room");
-      }
-   }
-);
+// ------------------ Slice ------------------
 
 const initialState: RoomState = {
-   room: undefined,
    rooms: [],
    roomTypes: [],
    error: undefined,
@@ -119,17 +108,6 @@ const roomSlice = createSlice({
          })
          .addCase(createRoom.rejected, (state, action) => {
             state.error = action.payload ?? "Failed to create room";
-         })
-
-         /* === Get Room === */
-         .addCase(getRoomById.pending, (state) => {
-            state.error = undefined;
-         })
-         .addCase(getRoomById.fulfilled, (state, action) => {
-            state.room = action.payload;
-         })
-         .addCase(getRoomById.rejected, (state, action) => {
-            state.error = action.payload ?? "Failed to fetch room";
          });
    },
 });
