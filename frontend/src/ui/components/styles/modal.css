@@ -37,20 +37,16 @@ html.dark .modal-overlay {
    color: var(--color-text);
    transition: transform 0.25s ease, opacity 0.25s ease;
    animation: modalFadeIn 0.25s ease;
+   box-shadow: var(--shadow-lg);
 }
 
 html:not(.dark) .modal-content {
    background: rgba(255, 255, 255, 0.9);
-   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 html.dark .modal-content {
    background: rgba(30, 30, 30, 0.9);
-   box-shadow: 0 8px 24px rgba(255, 255, 255, 0.12);
    border: 1px solid rgba(255, 255, 255, 0.01);
-   box-shadow:
-      0 8px 24px rgba(255, 255, 255, 0.12),
-      0 0 8px rgba(255, 255, 255, 0.2);
 }
 
 .modal-title {

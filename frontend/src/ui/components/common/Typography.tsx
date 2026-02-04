@@ -1,5 +1,6 @@
 import type { ComponentPropsWithoutRef, JSX } from "react";
 import "../styles/typography.css";
+import { classNames } from "../../utils/classNames";
 
 export function Typography(props: { variant: "h1"; inverse?: boolean } & ComponentPropsWithoutRef<"h1">): JSX.Element;
 export function Typography(props: { variant: "h2"; inverse?: boolean } & ComponentPropsWithoutRef<"h2">): JSX.Element;
@@ -24,11 +25,9 @@ export function Typography(
             ? "span"
             : variant;
 
-   const inverseClass = inverse ? "text-color-inverse" : "";
-
    return (
       <Tag
-         className={`typography ${variant}${inverseClass ? ` ${inverseClass}` : ""}${className ? ` ${className}` : ""}`}
+         className={classNames("typography", variant, inverse && "text-color-inverse", className)}
          {...rest}
       >
          {children}

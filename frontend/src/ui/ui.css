@@ -18,6 +18,7 @@ body {
 /* Light theme by default */
 :root {
    --color-bg: #ffffff;
+   --color-bg-soft: rgba(255, 255, 255, 0.9);
    --color-bg-glass: rgba(255, 255, 255, 0.6);
    /* Unified glass surface + blur preset */
    --glass-surface: rgba(255, 255, 255, 0.6);
@@ -34,9 +35,15 @@ body {
    --radius-md: 12px;
    --radius-lg: 20px;
 
-   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
-   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.15);
-   --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.2);
+   --shadow-sm:
+      0 0 1px rgba(0, 0, 0, 0.1),
+      0 1px 3px rgba(0, 0, 0, 0.12);
+   --shadow-md:
+      0 0 4px rgba(0, 0, 0, 0.12),
+      0 4px 6px rgba(0, 0, 0, 0.15);
+   --shadow-lg:
+      0 0 8px rgba(0, 0, 0, 0.12),
+      0 8px 24px rgba(0, 0, 0, 0.2);
 
    /* Background image tokens (set to an URL from /public if needed) */
    --bg-image: url("../assets/images/bg-light.jpg");
@@ -55,11 +62,16 @@ body {
    /* Link interaction tokens (light theme): darken on hover/active */
    --link-hover-color: color-mix(in oklab, var(--color-text) 85%, black 15%);
    --link-active-color: color-mix(in oklab, var(--color-text) 70%, black 30%);
+
+   /* Switch button tokens */
+   --swtch-btn-bg: rgba(220, 220, 220, 0.9);
+   --swtch-btn-thumb: rgba(0, 0, 0, 0.9);
 }
 
 /* Dark theme */
 html.dark {
    --color-bg: #121212;
+   --color-bg-soft: rgba(0, 0, 0, 0.9);
    --color-bg-glass: rgba(30, 30, 30, 0.7);
    /* Unified glass surface + blur preset */
    --glass-surface: rgba(30, 30, 30, 0.7);
@@ -89,6 +101,20 @@ html.dark {
    /* Link interaction tokens (dark theme): lighten on hover/active */
    --link-hover-color: color-mix(in oklab, var(--color-text) 85%, white 15%);
    --link-active-color: color-mix(in oklab, var(--color-text) 70%, white 30%);
+
+   --shadow-sm:
+      0 0 1px rgba(255, 255, 255, 0.1),
+      0 1px 3px rgba(255, 255, 255, 0.12);
+   --shadow-md:
+      0 0 4px rgba(255, 255, 255, 0.12),
+      0 4px 6px rgba(255, 255, 255, 0.15);
+   --shadow-lg:
+      0 0 8px rgba(255, 255, 255, 0.12),
+      0 8px 24px rgba(255, 255, 255, 0.2);
+
+   /* Switch button tokens */
+   --swtch-btn-bg: rgba(90, 90, 90, 0.9);
+   --swtch-btn-thumb: rgba(255, 255, 255, 0.9);
 }
 
 /* Generic link styling */
@@ -121,4 +147,19 @@ html.high-contrast {
 
 .text-color-inverse {
    color: var(--color-text-inverse);
+}
+
+.switch-sm {
+   --thumb-diameter: 16px;
+   --thumb-margin: 2px;
+}
+
+.switch-md {
+   --thumb-diameter: 19px;
+   --thumb-margin: 3px;
+}
+
+.switch-lg {
+   --thumb-diameter: 22px;
+   --thumb-margin: 4px;
 }

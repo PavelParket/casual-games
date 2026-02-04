@@ -3,10 +3,11 @@ package com.security_service.domain.dto;
 import lombok.Builder;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Builder
 public record UserResponse(
-        Long id,
+        UUID guid,
         String username,
         String email,
         String role,

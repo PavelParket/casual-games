@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -28,28 +27,32 @@ public class GlobalExceptionHandler {
     private final ErrorFactory factory;
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException e, HttpServletRequest request) {
-        log.warn("User not found: {}", e.getMessage());
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleUserNotFound(UserNotFoundException e, HttpServletRequest request) {
+        log.warn("User not found: {}", e.getMessage(), e);
 
-        return new ResponseEntity<>(factory.create(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, e.getMessage(), request), HttpStatus.NOT_FOUND);
+        return factory.create(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, e.getMessage(), request);
     }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleEmailExists(EmailAlreadyExistsException e, HttpServletRequest request) {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleEmailExists(EmailAlreadyExistsException e, HttpServletRequest request) {
         log.warn("Email already exists: {}", e.getMessage(), e);
 
-        return new ResponseEntity<>(factory.create(HttpStatus.BAD_REQUEST, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request), HttpStatus.BAD_REQUEST);
+        return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request);
     }
 
     @ExceptionHandler(InvalidRoleException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidRole(InvalidRoleException e, HttpServletRequest request) {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleInvalidRole(InvalidRoleException e, HttpServletRequest request) {
         log.warn("Invalid role: {}", e.getMessage(), e);
 
-        return new ResponseEntity<>(factory.create(HttpStatus.BAD_REQUEST, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request), HttpStatus.BAD_REQUEST);
+        return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException e, HttpServletRequest request) {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidationErrors(MethodArgumentNotValidException e, HttpServletRequest request) {
         Map<String, List<String>> details = e.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -60,21 +63,23 @@ public class GlobalExceptionHandler {
 
         log.warn("Validation errors: {}", details);
 
-        return new ResponseEntity<>(factory.create(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, "Validation failed", request, details), HttpStatus.BAD_REQUEST);
+        return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, "Validation failed", request, details);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
         log.warn("Access denied: {}", e.getMessage());
 
-        return new ResponseEntity<>(factory.create(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED, e.getMessage(), request), HttpStatus.FORBIDDEN);
+        return factory.create(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED, e.getMessage(), request);
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException e, HttpServletRequest request) {
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleAuthentication(AuthenticationException e, HttpServletRequest request) {
         log.warn("Authentication failed: {}", e.getMessage());
 
-        return new ResponseEntity<>(factory.create(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request), HttpStatus.UNAUTHORIZED);
+        return factory.create(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request);
     }
 
     @ExceptionHandler(MissingTokenException.class)
@@ -83,6 +88,14 @@ public class GlobalExceptionHandler {
         log.warn("Missing token: {}", e.getMessage());
 
         return factory.create(HttpStatus.NO_CONTENT, ErrorCode.MISSING_TOKEN, e.getMessage(), request);
+    }
+
+    @ExceptionHandler(ServiceUnavailableException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ErrorResponse handleServiceUnavailable(ServiceUnavailableException e, HttpServletRequest request) {
+        log.error("Service unavailable: {}", e.getMessage(), e);
+
+        return factory.create(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.SERVICE_UNAVAILABLE, e.getMessage(), request);
     }
 
     @ExceptionHandler(Exception.class)

@@ -1,6 +1,6 @@
 package com.security_service.domain.entity;
 
-import com.security_service.domain.enums.Role;
+import com.security_starter.enums.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -18,9 +18,10 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "auths")
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @AllArgsConstructor
@@ -31,6 +32,9 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column
+    private UUID guid;
 
     @Column(nullable = false, length = 50)
     private String username;

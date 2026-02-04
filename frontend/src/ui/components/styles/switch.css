@@ -1,0 +1,78 @@
+.switch {
+    display: inline-flex;
+    align-items: center;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+.switch-slider {
+    position: relative;
+    display: inline-block;
+    background: var(--swtch-btn-bg);
+    border-radius: var(--radius-lg);
+    transition: background 0.2s, width 0.2s, height 0.2s;
+    cursor: pointer;
+}
+
+.switch-slider::before {
+    content: "";
+    position: absolute;
+    background: var(--swtch-btn-thumb, var(--color-text));
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.switch.disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.switch.disabled .switch-slider {
+    cursor: default;
+}
+
+.switch-sm .switch-slider {
+    width: 40px;
+    height: 20px;
+}
+
+.switch-sm .switch-slider::before {
+    width: 16px;
+    height: 16px;
+    left: 2px;
+    bottom: 2px;
+}
+
+.switch-md .switch-slider {
+    width: 50px;
+    height: 25px;
+}
+
+.switch-md .switch-slider::before {
+    width: 19px;
+    height: 19px;
+    left: 3px;
+    bottom: 3px;
+}
+
+.switch-lg .switch-slider {
+    width: 60px;
+    height: 30px;
+}
+
+.switch-lg .switch-slider::before {
+    width: 22px;
+    height: 22px;
+    left: 4px;
+    bottom: 4px;
+}
+
+.switch input:checked+.switch-slider::before {
+    transform: translateX(calc(var(--thumb-diameter) + 2 * var(--thumb-margin)));
+}

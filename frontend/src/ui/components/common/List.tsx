@@ -1,16 +1,17 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, HTMLAttributes } from "react";
+import { classNames } from "../../utils/classNames";
 
-type ListProps = {
+type ListProps = HTMLAttributes<HTMLUListElement | HTMLOListElement> & {
    items: React.ReactNode[];
    ordered?: boolean;
    gap?: CSSProperties["gap"];
-   style?: CSSProperties;
 };
 
-export function List({ items, ordered, gap, style }: ListProps) {
+export function List({ items, ordered, gap, style, className, ...rest }: ListProps) {
    const Tag = ordered ? "ol" : "ul";
    return (
       <Tag
+         className={classNames(className)}
          style={{
             paddingLeft: "1.2rem",
             color: "var(--color-text)",
@@ -18,6 +19,7 @@ export function List({ items, ordered, gap, style }: ListProps) {
             gap,
             ...style,
          }}
+         {...rest}
       >
          {items.map((item, i) => (
             <li key={i}>{item}</li>

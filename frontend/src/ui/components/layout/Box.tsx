@@ -1,4 +1,5 @@
 import type { ComponentPropsWithoutRef, ElementType } from "react";
+import { classNames } from "../../utils/classNames";
 
 type BoxProps<T extends ElementType = "div"> = {
    component?: T;
@@ -6,8 +7,10 @@ type BoxProps<T extends ElementType = "div"> = {
 
 export function Box<T extends ElementType = "div">({
    component,
+   className,
    ...props
 }: BoxProps<T>) {
    const Component = component || "div";
-   return <Component {...props} />;
+
+   return <Component className={classNames(className)} {...props} />;
 }

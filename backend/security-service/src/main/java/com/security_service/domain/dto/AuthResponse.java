@@ -2,9 +2,11 @@ package com.security_service.domain.dto;
 
 import lombok.Builder;
 
+import java.util.UUID;
+
 @Builder
 public record AuthResponse(
-        Long id,
+        UUID guid,
 
         String username,
 
@@ -12,8 +14,6 @@ public record AuthResponse(
 
         String role,
 
-        String accessToken,
-
-        String refreshToken
+        String accessToken
 ) {
 }

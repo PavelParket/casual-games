@@ -1,5 +1,6 @@
 package com.websocket_hub.handler;
 
+import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.util.WebSocketUtil;
@@ -9,6 +10,9 @@ import org.springframework.lang.NonNull;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @AllArgsConstructor
 @Slf4j
@@ -20,29 +24,30 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
-        String userId = WebSocketUtil.getUserId(session);
-        String username = WebSocketUtil.getUsername(session);
-        String roomName = WebSocketUtil.getRoomName(session);
+        UserInternalResponse user = WebSocketUtil.getUser(session);
+        UUID roomId = WebSocketUtil.getRoomId(session);
+        Instant connectedAt = WebSocketUtil.getConnectedAt(session);
 
-        sessionManager.register(userId, username, session);
-        roomManager.addSession(roomName, userId, username, session);
+        sessionManager.register(user.guid(), user, session, connectedAt);
 
-        onJoin(roomName, username);
+        roomManager.addSession(roomId, user, session);
+
+        onJoin(roomId, user);
     }
 
     @Override
     public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) throws Exception {
-        String userId = WebSocketUtil.getUserId(session);
-        String username = WebSocketUtil.getUsername(session);
-        String roomName = WebSocketUtil.getRoomName(session);
+        UserInternalResponse user = WebSocketUtil.getUser(session);
+        UUID roomId = WebSocketUtil.getRoomId(session);
 
-        sessionManager.remove(userId);
-        roomManager.removeSession(roomName, userId, username, session);
+        roomManager.removeSession(roomId, user, session);
 
-        onLeave(roomName, username);
+        sessionManager.remove(user.guid());
+
+        onLeave(roomId, user);
     }
 
-    protected abstract void onJoin(String roomName, String username);
+    protected abstract void onJoin(UUID roomId, UserInternalResponse user);
 
-    protected abstract void onLeave(String roomName, String username);
+    protected abstract void onLeave(UUID roomId, UserInternalResponse user);
 }

@@ -7,7 +7,6 @@ import com.security_service.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,9 +16,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/users")
@@ -30,35 +31,49 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<UserResponse> create(@Valid @RequestBody RegisterRequest request) {
-        return new ResponseEntity<>(service.create(request), HttpStatus.CREATED);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateRequest request) {
-        return new ResponseEntity<>(service.update(id, request), HttpStatus.OK);
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserResponse create(@Valid @RequestBody RegisterRequest request) {
+        return service.create(request);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @PutMapping("/id={id}")
+    public UserResponse updateById(@PathVariable Long id, @Valid @RequestBody UpdateRequest request) {
+        return service.updateById(id, request);
+    }
+
+    @PutMapping("/guid={guid}")
+    public UserResponse updateByGuid(@PathVariable UUID guid, @Valid @RequestBody UpdateRequest request) {
+        return service.updateByGuid(guid, request);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/id={id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
         service.delete(id);
-
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @DeleteMapping("/guid={guid}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteByGuid(@PathVariable UUID guid) {
+        service.deleteByGuid(guid);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAll() {
-        return new ResponseEntity<>(service.getAll(), HttpStatus.OK);
+    public List<UserResponse> getAll() {
+        return service.getAll();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/id")
-    public ResponseEntity<UserResponse> getById(@RequestParam Long id) {
-        return new ResponseEntity<>(service.getById(id), HttpStatus.OK);
+    public UserResponse getById(@RequestParam Long id) {
+        return service.getById(id);
     }
 
     @GetMapping("/email")
-    public ResponseEntity<UserResponse> getByEmail(@RequestParam String email) {
-        return new ResponseEntity<>(service.getByEmail(email), HttpStatus.OK);
+    public UserResponse getByEmail(@RequestParam String email) {
+        return service.getByEmail(email);
     }
 }

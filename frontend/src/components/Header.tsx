@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom"
-import { Button, Navbar, ThemeSwitcher, Typography } from "../ui"
+import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Box } from "../ui"
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
 import { logout } from "../store/slices/AuthSlice";
@@ -13,42 +13,52 @@ export default function Header() {
       dispatch(logout());
       setTimeout(() => {
          navigate("/");
-      }, 0);
+      }, 500);
    };
 
    return (
-      <Navbar
-         brand={(
+      <AppBar
+         left={(
             <Link to="/" style={{ textDecoration: "none" }}>
-               <Typography variant="h3">WebSockets App</Typography>
+               <Typography variant="h3">Casual Games</Typography>
             </Link>
          )}
          right={(
             <>
                {isAuthenticated && (
-                  <Link to="/rooms">
-                     <Button variant="ghost">Rooms</Button>
-                  </Link>
-               )}
+                  <Menu
+                     trigger={
+                        <Button variant="ghost">
+                           User ▼
+                        </Button>
+                     }
+                  >
+                     <MenuList>
+                        <MenuItem onClick={() => navigate("/profile")}>
+                           Profile
+                        </MenuItem>
+                        <MenuItem onClick={() => navigate("/settings")}>
+                           Settings
+                        </MenuItem>
 
-               {!isAuthenticated && (
-                  <>
-                     <Link to="/register">
-                        <Button variant="solid">Sign Up</Button>
-                     </Link>
-                     <Link to="/login">
-                        <Button variant="solid">Sign In</Button>
-                     </Link>
-                  </>
-               )}
+                        <Box
+                           style={{
+                              height: "2.5rem",
+                              margin: "0 0.5rem",
+                              padding: "0 1rem",
+                              display: "flex",
+                              alignContent: "center"
+                           }}
+                        >
+                           <ThemeSwitcher size="md" />
+                        </Box>
 
-               {isAuthenticated && (
-                  <Button variant="ghost" onClick={handleLogout}>
-                     Logout
-                  </Button>
+                        <MenuItem onClick={handleLogout}>
+                           Logout
+                        </MenuItem>
+                     </MenuList>
+                  </Menu>
                )}
-
-               <ThemeSwitcher />
             </>
          )}
       />

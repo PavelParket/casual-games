@@ -24,10 +24,10 @@ export default function Home() {
                boxShadow: "var(--shadow-lg)"
             }}>
                <Typography variant="h1" style={{ marginBottom: "1rem" }}>
-                  Welcome to Tic-Tac-Toe
+                  Welcome to Casual Games
                </Typography>
                <Typography variant="body" style={{ marginBottom: "2rem", opacity: 0.8 }}>
-                  Play multiplayer Tic-Tac-Toe with your friends in real-time
+                  Play singleplayer and multiplayer games alone or with your friends in real-time
                </Typography>
 
                {isAuthenticated ? (

@@ -1,0 +1,10 @@
+.theme-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem
+}
+
+.theme-switch-icon {
+    display: inline-flex;
+    align-items: center;
+}
