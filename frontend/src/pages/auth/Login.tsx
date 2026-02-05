@@ -5,12 +5,12 @@ import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
 import { login } from "../../store/slices/AuthSlice";
 import { useThemedIcon } from "../../ui/hooks/useThemedIcon";
-import { isValidEmail, sanitizeEmail } from "../../utils/SecurityUtils";
+import { isValidEmail, validateEmail } from "../../utils/SecurityUtils";
 
 export default function Login() {
    const [form, setForm] = useState({ email: "", password: "" });
    const [validationError, setValidationError] = useState<string>("");
-   const { isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth);
+   const { isAuthenticated, error } = useSelector((state: RootState) => state.auth);
 
    const { getIcon } = useThemedIcon();
 
@@ -30,7 +30,7 @@ export default function Login() {
       const { name, value } = e.target;
 
       if (name === "email") {
-         const sanitized = sanitizeEmail(value);
+         const sanitized = validateEmail(value);
          setForm({ ...form, [name]: sanitized });
       } else {
          setForm({ ...form, [name]: value });
@@ -83,8 +83,8 @@ export default function Login() {
                         required
                         rounded
                      />
-                     <Button type="submit" variant="solid" disabled={isLoading}>
-                        {isLoading ? "Loading..." : "Sign In"}
+                     <Button type="submit" variant="solid">
+                        Sign In
                      </Button>
                   </Form>
 

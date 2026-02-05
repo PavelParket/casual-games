@@ -1,6 +1,6 @@
-import type { WSMessage } from "../types/ws";
+import type { WSMessage } from "../models/WsMessage";
 
-export const sanitizeInput = (input: string): string => {
+export const validateInput = (input: string): string => {
     if (!input) {
         return "";
     }
@@ -13,7 +13,7 @@ export const sanitizeInput = (input: string): string => {
         .slice(0, 255);
 };
 
-export const sanitizeRoomName = (name: string): string => {
+export const validateRoomName = (name: string): string => {
     if (!name) {
         return "";
     }
@@ -25,7 +25,7 @@ export const sanitizeRoomName = (name: string): string => {
         .slice(0, 50);
 };
 
-export const sanitizeEmail = (email: string): string => {
+export const validateEmail = (email: string): string => {
     if (!email) {
         return "";
     }
@@ -41,7 +41,7 @@ export const isValidEmail = (email: string): boolean => {
     return emailRegex.test(email);
 };
 
-export const sanitizeUsername = (username: string): string => {
+export const validateUsername = (username: string): string => {
     if (!username) {
         return "";
     }
@@ -62,7 +62,7 @@ export const escapeHtml = (text: string): string => {
     return div.innerHTML;
 };
 
-export const sanitizeToastMessage = (message: string): string => {
+export const validateToastMessage = (message: string): string => {
     if (!message) {
         return "";
     }
@@ -73,27 +73,52 @@ export const sanitizeToastMessage = (message: string): string => {
         .slice(0, 200);
 };
 
-export const sanitizeWSMessage = <T extends WSMessage>(
+export const validateWSMessage = <T extends WSMessage>(
     message: T,
     allowedFields: (keyof T)[]
 ): Partial<T> => {
-    const sanitized: Partial<T> = {};
+    const validated: Partial<T> = {};
 
     for (const field of allowedFields) {
         const value = message[field];
 
-        if (value === undefined) {
-            continue
+        if (value === undefined || value === null) {
+            continue;
         }
 
-        if (typeof value === "string") {
-            sanitized[field] = sanitizeInput(value) as T[keyof T];
-        } else {
-            sanitized[field] = value;
-        }
+        validated[field] = validateValue(value) as T[keyof T];
     }
 
-    return sanitized;
+    return validated;
+};
+
+const validateValue = (value: unknown): unknown => {
+    if (typeof value === "string") {
+        return validateInput(value);
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+        return value;
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(item => validateValue(item));
+    }
+
+    if (typeof value === "object" && value !== null) {
+        const obj = value as Record<string, unknown>;
+        const validatedObj: Record<string, unknown> = {};
+
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                validatedObj[key] = validateValue(obj[key]);
+            }
+        }
+
+        return validatedObj;
+    }
+
+    return value;
 };
 
 export const getSecureLocalStorage = <T>(key: string): T | null => {
@@ -120,17 +145,17 @@ export const getSecureLocalStorage = <T>(key: string): T | null => {
 export const setSecureLocalStorage = <T>(key: string, value: T): void => {
     try {
         if (typeof value === "string") {
-            localStorage.setItem(key, sanitizeInput(value));
+            localStorage.setItem(key, validateInput(value));
             return;
         }
 
-        const sanitized = JSON.parse(
+        const validated = JSON.parse(
             JSON.stringify(value, (_, val) =>
-                typeof val === "string" ? sanitizeInput(val) : val
+                typeof val === "string" ? validateInput(val) : val
             )
         );
 
-        localStorage.setItem(key, JSON.stringify(sanitized));
+        localStorage.setItem(key, JSON.stringify(validated));
     } catch (error) {
         console.info(`Error setting localStorage key: ${key}`, error);
     }

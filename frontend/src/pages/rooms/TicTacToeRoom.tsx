@@ -1,239 +1,281 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
-import { Box, Button, Card, Container, Icon, Toast, Typography, useThemedIcon } from "../../ui";
-import type { GameMessage } from "../../types/ws";
-import { RoomAPI } from "../../api/WsHubApi";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../store/store";
-import type { LastRoom } from "../../types/room";
-import { getSecureLocalStorage, sanitizeRoomName, sanitizeToastMessage, sanitizeWSMessage } from "../../utils/SecurityUtils";
+import { Box, Button, Card, Container, Icon, Input, Toast, Typography, useThemedIcon } from "../../ui";
+import type { GameMessage } from "../../models/WsMessage";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../store/store";
+import { validateToastMessage } from "../../utils/SecurityUtils";
+import { findByGuid } from "../../store/slices/UserSlice";
+import { getPlayersBets, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/TicTacToeRoomSlice";
 
 export default function TicTacToeRoom() {
-   const email = useSelector((state: RootState) => state.auth.user?.email);
-   const lastRoom: LastRoom | null = getSecureLocalStorage<LastRoom>("lastRoom");
-
-   const navigate = useNavigate();
-
-   const roomName: string = sanitizeRoomName(useParams<{ roomName?: string }>().roomName ?? "");
-
-   const [roomType, setRoomType] = useState<string | null>(lastRoom?.type?.name ?? null);
-   const [handlerUrl, setHandlerUrl] = useState<string | null>(lastRoom?.type?.handlerUrl ?? null);
-
    const { getInverseIcon } = useThemedIcon();
 
+   const guid = useSelector((state: RootState) => state.auth.user?.guid);
+   const balance = useSelector((state: RootState) => state.user.user?.balance);
+   const navigate = useNavigate();
+   const dispatch = useDispatch<AppDispatch>();
+
+   const roomId: string | undefined = useParams<{ roomId?: string }>().roomId;
+   const { room, players, readyPlayersCount, totalPlayersCount, playerBetMap } = useSelector((state: RootState) => state.ticTacToeRoom);
+
    const [toast, setToast] = useState<{ text: string } | null>(null);
+
+   const [ready, setReady] = useState<boolean>(false);
+
    const [isGame, setIsGame] = useState(false);
-   const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
-   const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
-   const [mySymbol, setMySymbol] = useState<string | null>(null);
-   const [winner, setWinner] = useState<string | null>(null);
-   const [players, setPlayers] = useState<{ name: string; symbol: string }[]>([]);
-   const [ready, setReady] = useState(false);
-   const [readyCount, setReadyCount] = useState(0);
-   const [totalPlayers, setTotalPlayers] = useState(0);
+   const [board, setBoard] = useState<string[]>(Array(9).fill(null));
+   const [mySymbol, setMySymbol] = useState<string>();
+   const [currentPlayerSymbol, setCurrentPlayerSymbol] = useState<string>();
+   const [playersSymbols, setPlayersSymbols] = useState<Record<string, string>>();
+   const [playersWithSymbols, setPlayersWithSymbols] = useState<Record<string, string>>({});
+   const [winner, setWinner] = useState<string>();
 
-   const emailRef = useRef(email);
-   const winnerRef = useRef(winner);
-   const mySymbolRef = useRef(mySymbol);
-
-   const { isConnected, message, send } = useWebSocket<GameMessage>("ws://localhost:8081/ws", handlerUrl!, roomName!, roomType!);
+   const [betInput, setBetInput] = useState<string>("");
+   const [betPlaced, setBetPlaced] = useState<boolean>(false);
 
    useEffect(() => {
-      if (!lastRoom || !roomName) {
+      if (!roomId || !guid) {
          navigate("/rooms");
          return;
       }
 
-      if (lastRoom.type?.name && lastRoom.type?.name !== roomType) {
-         setRoomType(lastRoom.type?.name);
-      }
-      if (lastRoom.type?.handlerUrl && lastRoom.type?.handlerUrl !== handlerUrl) {
-         setHandlerUrl(lastRoom.type?.handlerUrl);
-      }
-   }, [lastRoom, roomName, roomType, handlerUrl, navigate]);
+      dispatch(getRoomById({ roomId }));
+      dispatch(findByGuid(guid));
+   }, [dispatch, guid, navigate, roomId]);
 
-   useEffect(() => { emailRef.current = email }, [email]);
-   useEffect(() => { winnerRef.current = winner }, [winner]);
-   useEffect(() => { mySymbolRef.current = mySymbol }, [mySymbol]);
-
-   const fetchPlayers = useCallback(async () => {
-      if (!roomName || !roomType) {
-         return;
-      }
-
-      try {
-         const response = await RoomAPI.getPlayersInRoom(roomName, roomType);
-         const data = response.data;
-
-         setPlayers(data.map((player: string) => ({ name: player, symbol: "" })));
-         setTotalPlayers(data.length);
-      } catch (error) {
-         console.info("Failed to fetch players:", error);
-      }
-   }, [roomName, roomType]);
-
-   const fetchReadyPlayers = useCallback(async () => {
-      if (!roomName || !roomType) {
-         return;
-      }
-
-      try {
-         const response = await RoomAPI.getReadyPlayers(roomName, roomType);
-         const data = response.data;
-
-         setReadyCount(data);
-      } catch (error) {
-         console.info("Failed to fetch ready players:", error);
-      }
-   }, [roomName, roomType]);
+   const { isConnected, message, send } = useWebSocket<GameMessage>(
+      roomId,
+      room?.type,
+   );
 
    const processReset = useCallback(() => {
       showToast("Your opponent left the room. Waiting for a new player...");
       setBoard(Array(9).fill(null));
-      setCurrentPlayer(null);
-      setMySymbol(null);
-      setWinner(null);
+      setCurrentPlayerSymbol(undefined);
+      setMySymbol(undefined);
+      setPlayersWithSymbols({});
+      setWinner(undefined);
       setReady(false);
       setIsGame(false);
+      setBetPlaced(false);
+      setBetInput("");
    }, []);
 
    const processStart = useCallback((message: GameMessage) => {
       setBoard(message.board!);
-      setCurrentPlayer(message.nextPlayer!);
-      setMySymbol(message.playersSymbols![emailRef.current!]);
-      setPlayers(prev =>
-         prev.map(p => ({
-            ...p,
-            symbol: message.playersSymbols![p.name] ?? "",
-         }))
-      );
+      setCurrentPlayerSymbol(message.currentPlayerSymbol);
+      setPlayersSymbols(message.playersSymbols);
+
+      const playersMap = message.players || {};
+      const symbolsMap = message.playersSymbols || {};
+      const combinedMap: Record<string, string> = {};
+
+      Object.keys(playersMap).forEach(guid => {
+         const username = playersMap[guid];
+         const symbol = symbolsMap[guid];
+         if (username && symbol) {
+            combinedMap[username] = symbol;
+         }
+      });
+
+      setPlayersWithSymbols(combinedMap);
+
+      if (guid) {
+         setMySymbol(symbolsMap[guid]);
+      }
+
       setIsGame(true);
+   }, [guid]);
+
+   const processMove = useCallback((message: GameMessage) => {
+      if (!message.board) {
+         return;
+      }
+
+      setBoard(message.board);
+      setCurrentPlayerSymbol(message.nextPlayerSymbol);
    }, []);
 
-   const processMove = (message: GameMessage) => {
-      setBoard(message.board!);
-      setCurrentPlayer(message.nextPlayer!);
-   };
-
    const processWin = useCallback((message: GameMessage) => {
-      setBoard(message.board!);
-      setWinner(message.player!);
+      if (!message.board || !message.winner || !message.players) {
+         return;
+      }
 
-      if (winnerRef.current === mySymbolRef.current) {
+      setBoard(message.board);
+      setWinner(message.players[message.winner]);
+
+      if (message.winner === mySymbol) {
          showToast("You are the winner!");
       } else {
          showToast(`Your opponent won!`);
       }
+
       setIsGame(false);
-   }, []);
+   }, [mySymbol]);
 
    const processDraw = useCallback((message: GameMessage) => {
-      setBoard(message.board!);
-      setWinner(message.winner!);
-      showToast(message.message!);
+      if (!message.board || !message.message) {
+         return;
+      }
+
+      setBoard(message.board);
+      setWinner(message.winner);
+      showToast(message.message);
       setIsGame(false);
    }, []);
 
    useEffect(() => {
-      if (!isConnected || !message) {
+      if (!isConnected || !message || !guid || !roomId || !room) {
          return;
       }
 
-      const sanitizedMessage = sanitizeWSMessage(message, [
-         "type",
-         "event",
-         "message",
-         "board",
-         "nextPlayer",
-         "player",
-         "playersSymbols",
-         "winner"
-      ]) as GameMessage;
-
-      switch (sanitizedMessage.event) {
-         case "joined":
-            fetchPlayers();
-            fetchReadyPlayers();
-            showToast(sanitizedMessage.message!);
+      switch (message.event) {
+         case "JOIN":
+            showToast(message.message ?? "Player join the room");
+            dispatch(syncRoomState({ roomId, roomType: room.type }));
             break;
 
-         case "left":
+         case "LEAVE":
             if (isGame) {
                processReset();
             } else {
-               showToast(sanitizedMessage.message!);
+               showToast(message.message ?? "Player leave the room");
             }
 
-            fetchPlayers();
-            fetchReadyPlayers();
-
+            dispatch(syncRoomState({ roomId, roomType: room.type }));
             break;
 
-         case "ready":
-            fetchReadyPlayers();
-            showToast(sanitizedMessage.message!);
+         case "START":
+            processStart(message);
             break;
 
-         case "start":
-            processStart(sanitizedMessage);
+         case "READY":
+            showToast(message.message ?? "Player is ready");
+            dispatch(syncReadiness({ roomId, roomType: room.type }));
             break;
 
-         case "move":
-            processMove(sanitizedMessage);
+         case "MOVE":
+            processMove(message);
             break;
 
-         case "winner X":
-         case "winner O": {
-            processWin(sanitizedMessage);
+         case "WINNER_X":
+         case "WINNER_O": {
+            processWin(message);
             break;
          }
 
-         case "draw":
-            processDraw(sanitizedMessage);
+         case "DRAW":
+            processDraw(message);
+            break;
+
+         case "BET":
+            if (message.fromUserId === guid) {
+               setBetPlaced(true);
+               showToast(message.message || "Your bet has been accepted!");
+            } else {
+               showToast(message.message || "Opponent placed a bet");
+            }
+
+            dispatch(syncReadiness({ roomId, roomType: room.type }));
+            break;
+
+         case "BET_REJECT":
+            setBetPlaced(false);
+            showToast(message.message || "Your bet was rejected. Please increase your bet.");
+            dispatch(getPlayersBets({ roomId }));
+            break;
+
+         case "BET_OUTBID":
+            setBetPlaced(false);
+            setReady(false);
+            showToast(message.message || "You have been outbid! Please place a new bet.");
+
+            dispatch(syncReadiness({ roomId, roomType: room.type }));
+            break;
+
+         case "BET_REQUIRED":
+            showToast(message.message || "You must place a bet before becoming ready");
             break;
 
          default:
             break;
       }
-   }, [isConnected, message, fetchPlayers, fetchReadyPlayers, isGame, processStart, processDraw, processReset, processWin]);
+   }, [dispatch, guid, isConnected, isGame, message, processDraw, processMove, processReset, processStart, processWin, room, roomId]);
 
    const handleClick = (index: number) => {
-      if (!isConnected || board[index] || winner || currentPlayer !== mySymbol) {
+      if (!guid || !room || !isConnected || board[index] || winner || currentPlayerSymbol !== mySymbol) {
          return;
       }
 
       send({
-         type: "message",
-         event: "move",
-         fromUserId: email,
-         roomName: roomName!,
+         type: "USER_MESSAGE",
+         event: "MOVE",
+         fromUserId: guid,
+         roomId: room.id,
          board: board,
          cell: index,
-         player: mySymbol!,
+         currentPlayerSymbol: mySymbol,
+         playersSymbols,
       });
    };
 
    const handleReady = () => {
-      if (!isConnected || ready) {
+      if (!room || !isConnected || ready) {
          return;
       }
 
-      send({ type: "message", event: "ready", roomName: roomName! });
+      if (!betPlaced) {
+         showToast("You must place a bet before becoming ready!");
+         return;
+      }
+
+      send({
+         type: "USER_MESSAGE",
+         event: "READY",
+         roomId: room.id,
+      });
+
       setReady(true);
    };
 
+   const handlePlaceBet = () => {
+      if (!room || !isConnected || !guid) {
+         return;
+      }
+
+      const betAmount = parseFloat(betInput);
+
+      if (isNaN(betAmount) || betAmount <= 0) {
+         showToast("Please enter a valid bet amount greater than 0");
+         return;
+      }
+
+      if (balance && betAmount > balance) {
+         showToast("Insufficient balance");
+         return;
+      }
+
+      send({
+         type: "USER_MESSAGE",
+         event: "BET",
+         fromUserId: guid,
+         roomId: room.id,
+         bet: betAmount,
+      });
+   };
+
    const handleLeave = () => {
-      localStorage.removeItem("lastRoom");
-      localStorage.removeItem("action");
       navigate("/rooms");
    };
 
    const showToast = (text: string): void => {
-      setToast({ text: sanitizeToastMessage(text) })
+      setToast({ text: validateToastMessage(text) })
    };
 
-   if (!roomName) {
+   // todo: Сделать нормальный компонент-страницу с сообщение о несуществующей комнате
+   if (!roomId || !room) {
       return (
          <Container>
             <Card style={{ textAlign: "center", padding: "2rem" }}>
@@ -259,7 +301,7 @@ export default function TicTacToeRoom() {
          <Container>
             <Box style={{ padding: "2rem 0" }}>
                <Typography variant="h2" style={{ textAlign: "center" }}>
-                  Tic-Tae-Toe: {roomName}
+                  Tic-Tac-Toe: {room.name}
                </Typography>
             </Box>
 
@@ -275,30 +317,38 @@ export default function TicTacToeRoom() {
                         ? "Draw!"
                         : `Winner: ${winner}`
                      : isGame
-                        ? `Turn: ${currentPlayer}`
-                        : `Ready players: ${readyCount} / ${totalPlayers}`
+                        ? `Turn: ${currentPlayerSymbol}`
+                        : `Ready players: ${readyPlayersCount} / ${totalPlayersCount}`
                   }
                </Typography>
 
                <Box style={{
+                  width: "100%",
                   display: "grid",
                   gridTemplateColumns: "repeat(3, 1fr)",
                   alignItems: "center",
                   justifyContent: "center",
                }}>
                   <Box style={{
-                     marginRight: "5rem",
                      display: "flex",
                      flexDirection: "column",
                      alignItems: "center",
                      justifyContent: "center",
                      rowGap: "1.5rem",
                   }}>
-                     {players.map((User, index) => (
-                        <Typography key={index} variant="h2">
-                           {User.name}: {User.symbol}
-                        </Typography>
-                     ))}
+                     {isGame ? (
+                        Object.entries(playersWithSymbols).map(([username, symbol]) => (
+                           <Typography key={username} variant="h2">
+                              {username}: {symbol}
+                           </Typography>
+                        ))
+                     ) : (
+                        Object.values(players || {}).map((username) => (
+                           <Typography key={username} variant="h2">
+                              {username}
+                           </Typography>
+                        ))
+                     )}
                   </Box>
 
                   <Box style={{
@@ -346,6 +396,109 @@ export default function TicTacToeRoom() {
                         })}
                      </Box>
                   </Box>
+
+                  <Box style={{
+                     display: "flex",
+                     flexDirection: "column",
+                     alignItems: "flex-start",
+                     gap: "1rem",
+                     marginRight: "1.5rem",
+                     padding: "1rem",
+                     background: "var(--color-bg-secondary)",
+                     borderRadius: "var(--radius-md)",
+                     boxShadow: "var(--shadow-md)",
+                  }}>
+                     {playerBetMap && Object.keys(playerBetMap).length > 0 && (
+                        <>
+                           <Typography variant="h3">Current Bets</Typography>
+                           <Box style={{
+                              width: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "0.5rem",
+                              padding: "0.75rem",
+                              background: "var(--color-bg)",
+                              borderRadius: "var(--radius-sm)",
+                              border: "1px solid var(--color-border)",
+                           }}>
+                              {Object.entries(playerBetMap).map(([username, bet]) => (
+                                 <Box key={username} style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center"
+                                 }}>
+                                    <Typography variant="body" style={{ fontWeight: 500 }}>
+                                       {username}
+                                    </Typography>
+                                    <Typography variant="body" style={{ color: "var(--color-success)" }}>
+                                       ${bet}
+                                    </Typography>
+                                 </Box>
+                              ))}
+                           </Box>
+
+                           <Box style={{
+                              width: "100%",
+                              height: "1px",
+                              background: "var(--color-border)",
+                              margin: "0.5rem 0"
+                           }} />
+                        </>
+                     )}
+
+                     <Typography variant="h3">Place Your Bet</Typography>
+
+                     {balance !== undefined && (
+                        <Typography variant="body" style={{ color: "var(--color-text-secondary)" }}>
+                           Balance: ${balance.toFixed(2)}
+                        </Typography>
+                     )}
+
+                     <Box style={{ width: "100%" }}>
+                        <Input
+                           type="number"
+                           value={betInput}
+                           onChange={(e) => setBetInput(e.target.value)}
+                           placeholder="Enter bet amount"
+                           disabled={betPlaced || isGame}
+                           style={{
+                              width: "100%",
+                              padding: "0.75rem",
+                              borderRadius: "var(--radius-sm)",
+                              border: "1px solid var(--color-border)",
+                              background: betPlaced || isGame ? "var(--color-bg-disabled)" : "var(--color-bg)",
+                              color: "var(--color-text)",
+                              fontSize: "1rem",
+                              opacity: betPlaced || isGame ? 0.6 : 1,
+                           }}
+                        />
+                     </Box>
+
+                     <Button
+                        onClick={handlePlaceBet}
+                        disabled={betPlaced || isGame}
+                        style={{
+                           width: "100%",
+                           opacity: (betPlaced || isGame) ? 0.5 : 1,
+                        }}
+                     >
+                        Place Bet
+                     </Button>
+
+                     <Typography
+                        variant="caption"
+                        style={{
+                           color: "var(--color-text-secondary)",
+                           fontSize: "0.875rem",
+                           lineHeight: "1.4"
+                        }}
+                     >
+                        {betPlaced
+                           ? "Your bet has been accepted. You can now get ready!"
+                           : "You must place a bet before becoming ready"
+                        }
+                     </Typography>
+                  </Box>
                </Box>
 
                <Box style={{
@@ -359,12 +512,13 @@ export default function TicTacToeRoom() {
 
                   <Button
                      onClick={handleReady}
-                     disabled={ready}
+                     disabled={ready || !betPlaced}
                      style={{
                         margin: "2rem",
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px"
+                        gap: "8px",
+                        opacity: (!betPlaced || ready) ? 0.5 : 1,
                      }}
                   >
                      {ready ? (

@@ -1,18 +1,19 @@
 export interface WSMessage {
    type: string;
-   event?: string;
+   event: string;
    fromUserId?: string;
    toUserId?: string;
-   roomName?: string;
+   roomId: string;
    message?: string;
 }
 
 export interface GameMessage extends WSMessage {
-   board?: (string | null)[];
+   board?: string[];
    cell?: number;
-   player?: string;
-   nextPlayer?: string;
+   currentPlayerSymbol?: string;
+   nextPlayerSymbol?: string;
    playersSymbols?: Record<string, string>;
-   players?: string[];
+   players?: Record<string, string>;
    winner?: string;
+   bet?: number;
 }

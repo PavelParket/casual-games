@@ -9,16 +9,18 @@ import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.factory.PlayerBetFactory;
+import com.websocket_hub.helper.WebSocketHelper;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
-import com.websocket_hub.service.PlayerBetService;
 import com.websocket_hub.validator.PlayerBetValidator;
 import com.websocket_hub.validator.RoomValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +42,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
     private final PlayerBetValidator playerBetValidator;
 
-    private final PlayerBetService playerBetService;
+    private final WebSocketHelper webSocketHelper;
 
     public TicTacToeGameRoomManager(
             MessageSerializer<String> serializer,
@@ -50,13 +52,13 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
             TicTacToeGameMessageMapper ticTacToeGameMessageMapper,
             PlayerBetFactory playerBetFactory,
             PlayerBetValidator playerBetValidator,
-            PlayerBetService playerBetService
+            WebSocketHelper webSocketHelper
     ) {
         super(serializer, roomFactory, sessionManager, roomValidator);
         this.messageMapper = ticTacToeGameMessageMapper;
         this.playerBetFactory = playerBetFactory;
         this.playerBetValidator = playerBetValidator;
-        this.playerBetService = playerBetService;
+        this.webSocketHelper = webSocketHelper;
     }
 
     @Override
@@ -100,6 +102,24 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
                 room.getId(),
                 "Player " + user.username() + " has left the room " + room.getName()
         ));
+
+        playerBets.computeIfPresent(room.getId(), (key, bets) -> {
+            bets.removeIf(bet -> bet.getGuid().equals(user.guid()));
+
+            /*if (bets.size() == 1) {
+                PlayerBet remainingBet = bets.getFirst();
+                ClientSession remainingClient = getClientSessionByGuid(remainingBet.getGuid());
+
+                Set<ClientSession> players = getPlayersInRoom(room.getId());
+                players.removeIf(player -> player.getGuid().equals(remainingBet.getGuid()));
+
+                webSocketHelper.notifyBetAccepted(room.getId(), remainingClient, players, remainingBet.getBet());
+
+                log.info("Auto-accepted remaining bet {} for player {} after opponent left", remainingBet.getBet(), remainingClient.getUsername());
+            }*/
+
+            return bets.isEmpty() ? null : bets;
+        });
     }
 
     @Override
@@ -112,6 +132,15 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
         if (room == null) {
             throw new IllegalArgumentException("Room id=" + roomId + " not found!");
+        }
+
+        List<PlayerBet> bets = playerBets.getOrDefault(roomId, List.of());
+        if (!playerBetValidator.hasPlayerPlacedBet(bets, user.guid())) {
+            log.warn("Player {} tried to ready without placing a bet", user.username());
+
+            ClientSession client = getClientSessionByGuid(user.guid());
+            webSocketHelper.notifyBetRequired(roomId, client);
+            return;
         }
 
         Set<UUID> ready = readyPlayers.computeIfAbsent(roomId, key -> ConcurrentHashMap.newKeySet());
@@ -131,63 +160,109 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
     public boolean areBothPlayersReady(UUID roomId) {
         Set<UUID> ready = readyPlayers.get(roomId);
-        Set<ClientSession> players = getUsersInRoom(roomId);
+        Set<ClientSession> players = getPlayersInRoom(roomId);
 
         return ready != null && ready.size() == 2 && players.size() == 2
                 && ready.containsAll(players.stream().map(ClientSession::getGuid).collect(Collectors.toSet()));
     }
 
-    public void clearReadyPlayers(UUID roomId) {
+    public void removeReadyPlayers(UUID roomId) {
         readyPlayers.remove(roomId);
 
         log.info("Cleared ready players for room {}", roomId);
     }
 
-    /*public void markPlayerBet(String roomName, UserInternalResponse user, BigDecimal bet) {
-        PlayerBet newPlayerBet = playerBetFactory.create(user.guid(), bet, user.balance());
+    private void removeReadyPlayer(UUID roomId, UUID playerGuid) {
+        readyPlayers.computeIfPresent(roomId, (key, players) -> {
+            boolean removed = players.remove(playerGuid);
 
+            if (removed) {
+                log.info("Removed ready status for player {} in room {} (bet was outbid)", playerGuid, roomId);
+            }
+
+            return players.isEmpty() ? null : players;
+        });
+    }
+
+    public void markPlayerBet(UUID roomId, UserInternalResponse user, BigDecimal bet) {
+        PlayerBet newPlayerBet = playerBetFactory.create(user.guid(), bet, user.balance());
         playerBetValidator.validateBet(newPlayerBet);
 
         ClientSession newClient = getClientSessionByGuid(user.guid());
-        List<PlayerBet> bets = playerBets.computeIfAbsent(roomName, key -> new ArrayList<>());
+        List<PlayerBet> bets = playerBets.computeIfAbsent(roomId, key -> new ArrayList<>());
+
+        Set<ClientSession> players = getPlayersInRoom(roomId).stream()
+                .filter(player -> !player.getGuid().equals(newClient.getGuid()))
+                .collect(Collectors.toSet());
 
         synchronized (bets) {
             bets.removeIf(playerBet -> playerBet.getGuid().equals(user.guid()));
 
             if (bets.isEmpty()) {
                 bets.add(newPlayerBet);
-                playerBetService.notifyBetAccepted(roomName, newClient, bet, this);
+                webSocketHelper.notifyBetAccepted(roomId, newClient, players, bet);
+                log.info("First bet in room {} by player {}: {}", roomId, user.username(), bet);
                 return;
             }
 
-            if (bets.size() == 1) {
-                PlayerBet oldPlayerBet = bets.getFirst();
-                ClientSession oldClient = getClientSessionByGuid(oldPlayerBet.getGuid());
+            PlayerBet existingBet = bets.getFirst();
+            ClientSession existingClient = getClientSessionByGuid(existingBet.getGuid());
 
-                if (newPlayerBet.getBet().compareTo(oldPlayerBet.getBet()) < 0) {
-                    playerBetService.notifyBetRejected(roomName, newClient, newPlayerBet.getBet(), this);
-                    return;
-                } else if (newPlayerBet.getBet().compareTo(oldPlayerBet.getBet()) > 0) {
-                    bets.clear();
-                    bets.add(newPlayerBet);
+            int compareBets = newPlayerBet.getBet().compareTo(existingBet.getBet());
 
-                    playerBetService.notifyOutbid(roomName, oldClient, newPlayerBet.getBet(), this);
-                    playerBetService.notifyBetAccepted(roomName, newClient, bet, this);
-
-                    return;
-                }
-
-                bets.add(newPlayerBet);
-                playerBetService.notifyBetAccepted(roomName, newClient, bet, this);
+            if (compareBets < 0) {
+                webSocketHelper.notifyBetRejected(roomId, newClient, newPlayerBet.getBet());
+                log.info("Bet rejected in room {} for player {}: {} (existing: {})", roomId, user.username(), bet, existingBet.getBet());
+                return;
             }
 
-            playerBetService.notifyBetRejected(roomName, newClient, null, this);
+            if (compareBets > 0) {
+                bets.clear();
+                bets.add(newPlayerBet);
+
+                webSocketHelper.notifyBetAccepted(roomId, newClient, players, bet);
+                webSocketHelper.notifyOutbid(roomId, existingClient, newPlayerBet.getBet());
+
+                removeReadyPlayer(roomId, existingClient.getGuid());
+
+                log.info("Bet accepted (outbid) in room {} by player {}: {} (outbid player: {}, ready status reset)", roomId, user.username(), bet, existingClient.getUsername());
+
+                return;
+            }
+
+            bets.add(newPlayerBet);
+            webSocketHelper.notifyBetAccepted(roomId, newClient, players, bet);
+
+            log.info("Bet accepted (equal) in room {} by player {}: {} (both players ready to start)", roomId, user.username(), bet);
         }
     }
 
-    public void clearPlayerBets(UUID roomId) {
+    public void removePlayerBets(UUID roomId) {
         playerBets.remove(roomId);
 
         log.info("Cleared players bets in room {}", roomId);
-    }*/
+    }
+
+    public List<PlayerBet> getPlayerBets(UUID roomId) {
+        return new ArrayList<>(playerBets.getOrDefault(roomId, List.of()));
+    }
+
+    public PlayerBet getPlayerBet(UUID roomId, UUID playerGuid) {
+        List<PlayerBet> bets = getPlayerBets(roomId);
+
+        if (bets == null || bets.isEmpty()) {
+            return null;
+        }
+
+        return bets.stream()
+                .filter(bet -> bet.getGuid().equals(playerGuid))
+                .findFirst()
+                .map(playerBet -> new PlayerBet(playerBet.getGuid(), playerBet.getBet(), null))
+                .orElse(null);
+    }
+
+    public void validateBetsForGameStart(UUID roomId) {
+        List<PlayerBet> bets = getPlayerBets(roomId);
+        playerBetValidator.validateBetsForGameStart(bets);
+    }
 }

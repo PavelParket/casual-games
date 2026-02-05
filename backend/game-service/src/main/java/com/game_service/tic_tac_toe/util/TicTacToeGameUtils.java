@@ -3,10 +3,14 @@ package com.game_service.tic_tac_toe.util;
 import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
 import lombok.experimental.UtilityClass;
 
+import java.util.Arrays;
+
 @UtilityClass
 public class TicTacToeGameUtils {
 
     private static final int SIZE = 3;
+    public static final String SYMBOL_X = "X";
+    public static final String SYMBOL_O = "O";
 
     public static boolean isCellValid(int cell) {
         return cell >= 0 && cell < SIZE * SIZE;
@@ -17,12 +21,8 @@ public class TicTacToeGameUtils {
     }
 
     public static boolean isDraw(String[] board) {
-        for (String cell : board) {
-            if (cell == null || cell.isBlank()) {
-                return false;
-            }
-        }
-        return true;
+        return Arrays.stream(board)
+                .allMatch(cell -> cell != null && !cell.isBlank());
     }
 
     public static TicTacToeGameEvent checkWinner(String[] board) {
@@ -49,16 +49,17 @@ public class TicTacToeGameUtils {
             return setWinner(board[2], board);
         }
 
+        if (isDraw(board)) {
+            return TicTacToeGameEvent.DRAW;
+        }
         return TicTacToeGameEvent.MOVE;
     }
 
     private static TicTacToeGameEvent setWinner(String winnerSymbol, String[] board) {
-        if ("X".equals(winnerSymbol)) {
+        if (SYMBOL_X.equals(winnerSymbol)) {
             return TicTacToeGameEvent.WINNER_X;
-        } else if ("O".equals(winnerSymbol)) {
+        } else if (SYMBOL_O.equals(winnerSymbol)) {
             return TicTacToeGameEvent.WINNER_O;
-        } else if (isDraw(board)) {
-            return TicTacToeGameEvent.DRAW;
         } else {
             return null;
         }
@@ -66,9 +67,9 @@ public class TicTacToeGameUtils {
 
     public static String getWinnerSymbol(TicTacToeGameEvent event) {
         if (TicTacToeGameEvent.WINNER_X.equals(event)) {
-            return "X";
+            return SYMBOL_X;
         } else if (TicTacToeGameEvent.WINNER_O.equals(event)) {
-            return "O";
+            return SYMBOL_O;
         }
 
         return null;

@@ -1,9 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer, { logout, setAccessToken } from "./slices/AuthSlice";
+import authReducer from "./slices/AuthSlice";
 import roomReducer from "./slices/RoomSlice";
-import userReducer, { clearUser } from "./slices/UserSlice";
+import userReducer from "./slices/UserSlice";
 import bankReducer from "./slices/BankSlice";
-import { setOnTokenRefresh } from "../utils/TokenManager";
+import ticTacToeReducer from "./slices/TicTacToeRoomSlice";
 
 export const store = configureStore({
    reducer: {
@@ -11,6 +11,7 @@ export const store = configureStore({
       rooms: roomReducer,
       user: userReducer,
       bank: bankReducer,
+      ticTacToeRoom: ticTacToeReducer,
    },
 });
 
@@ -18,12 +19,3 @@ export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
 export const selectRoomsState = (state: RootState) => state.rooms;
-
-setOnTokenRefresh((token) => {
-   if (token) {
-      store.dispatch(setAccessToken(token));
-   } else {
-      store.dispatch(logout());
-      store.dispatch(clearUser());
-   }
-});

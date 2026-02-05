@@ -1,9 +1,7 @@
-import { client } from "./AxiosConfig";
 import type { DepositRequest, TransactionResponse } from "../models/Bank";
-
-const BANK_SERVICE_URL = 'http://localhost:8084';
+import axios from "axios";
+import { BANK_SERVICE_URL } from "./ApiDictionary";
 
 export const BankAPI = {
-  deposit: (data: DepositRequest) => 
-    client.post<TransactionResponse>(`${BANK_SERVICE_URL}/transactions/deposit`, data),
+  deposit: (data: DepositRequest) => axios.post<TransactionResponse>(`${BANK_SERVICE_URL}/transactions/deposit`, data),
 };

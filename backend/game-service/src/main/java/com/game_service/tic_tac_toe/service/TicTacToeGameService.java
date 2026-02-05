@@ -1,6 +1,5 @@
 package com.game_service.tic_tac_toe.service;
 
-import com.game_service.tic_tac_toe.dto.PlayerInternalRequest;
 import com.game_service.tic_tac_toe.dto.TicTacToeGameRequest;
 import com.game_service.tic_tac_toe.dto.TicTacToeGameResponse;
 import com.game_service.tic_tac_toe.enums.MessageType;
@@ -20,6 +19,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
+import static com.game_service.tic_tac_toe.util.TicTacToeGameUtils.SYMBOL_O;
+import static com.game_service.tic_tac_toe.util.TicTacToeGameUtils.SYMBOL_X;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -38,15 +40,13 @@ public class TicTacToeGameService {
 
         String[] board = new String[9];
 
-        List<UUID> players = new ArrayList<>(request.players().stream()
-                .map(PlayerInternalRequest::guid)
-                .toList());
+        List<UUID> players = new ArrayList<>(request.players().keySet());
 
         Collections.shuffle(players, random);
 
         Map<UUID, String> playersSymbols = Map.of(
-                players.get(0), "X",
-                players.get(1), "O"
+                players.get(0), SYMBOL_X,
+                players.get(1), SYMBOL_O
         );
 
         String message = "Game started!";
@@ -66,9 +66,9 @@ public class TicTacToeGameService {
         );
     }
 
-    // todo: синхронизировать по комнате или скорее игре, то есть добавить состояние и по нему блокировать
-    // иначе два запроса могут попасть на обработку одновременно, так как вебсокеты принимают запрос и прокидывают его без блокировки
-    // в целом надо добавить объекты для состояний и по ним работать
+    /* todo: синхронизировать по комнате или скорее игре, то есть добавить состояние и по нему блокировать
+        иначе два запроса могут попасть на обработку одновременно, так как вебсокеты принимают запрос и прокидывают его без блокировки
+        в целом надо добавить объекты для состояний и по ним работать */
     public TicTacToeGameResponse processMove(TicTacToeGameRequest request) {
         ticTacToeGameValidator.validateMove(request);
 
@@ -85,7 +85,7 @@ public class TicTacToeGameService {
 
         if (TicTacToeGameEvent.WINNER_X.equals(event) || TicTacToeGameEvent.WINNER_O.equals(event)) {
             String winnerSymbol = TicTacToeGameUtils.getWinnerSymbol(event);
-            UUID winnerId = request.playersSymbols().entrySet().stream()
+            winner = request.playersSymbols().entrySet().stream()
                     .filter(playerId -> playerId.getValue().equals(winnerSymbol))
                     .map(Map.Entry::getKey)
                     .findFirst()
@@ -93,15 +93,7 @@ public class TicTacToeGameService {
                             new GameValidationException("Winner symbol exists but player not found")
                     );
 
-            PlayerInternalRequest winnerPlayer = request.players().stream()
-                    .filter(player -> player.guid().equals(winnerId))
-                    .findFirst()
-                    .orElseThrow(() ->
-                            new GameValidationException("Winner player not found in players list")
-                    );
-
-            winner = winnerId;
-            message = "Player " + winnerPlayer.username() + " wins!";
+            message = "Player " + request.players().get(winner) + " wins!";
         } else if (TicTacToeGameEvent.DRAW.equals(event)) {
             message = "It's a draw!";
         } else {

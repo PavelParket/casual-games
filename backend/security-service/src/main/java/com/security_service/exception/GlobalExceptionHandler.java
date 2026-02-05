@@ -82,6 +82,14 @@ public class GlobalExceptionHandler {
         return factory.create(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request);
     }
 
+    @ExceptionHandler(InvalidCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleInvalidCredentials(InvalidCredentialsException e, HttpServletRequest request) {
+        log.warn("Authentication failed due to invalid credentials: {}", e.getMessage());
+
+        return factory.create(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_CREDENTIALS, e.getMessage(), request);
+    }
+
     @ExceptionHandler(MissingTokenException.class)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ErrorResponse handleMissingToken(MissingTokenException e, HttpServletRequest request) {
