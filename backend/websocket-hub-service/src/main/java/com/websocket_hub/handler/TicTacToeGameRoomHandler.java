@@ -74,15 +74,12 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             UUID roomId = WebSocketUtil.getRoomId(session);
             UserInternalResponse user = WebSocketUtil.getUser(session);
 
-            //todo: token
-            String token = WebSocketUtil.getToken(session);
-
             log.info("Received game message: {}", ticTacToeGameMessage);
 
             switch (ticTacToeGameMessage.event()) {
                 case READY -> handlePlayerReady(roomId, user);
 
-                case MOVE -> handleGameMove(ticTacToeGameMessage, roomId, user, token);
+                case MOVE -> handleGameMove(ticTacToeGameMessage, roomId, user);
 
                 case BET -> handlePlayerBet(ticTacToeGameMessage, roomId, user);
 
@@ -160,7 +157,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         }
     }
 
-    private void handleGameMove(TicTacToeGameMessage ticTacToeGameMessage, UUID roomId, UserInternalResponse user, String token) {
+    private void handleGameMove(TicTacToeGameMessage ticTacToeGameMessage, UUID roomId, UserInternalResponse user) {
         try {
             Map<UUID, String> players = roomManager.getPlayersInRoom(roomId).stream()
                     .collect(Collectors.toMap(
@@ -186,7 +183,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             if (moveGameResponse.winner() != null
                     && (TicTacToeGameEvent.WINNER_X.equals(moveGameResponse.event())
                     || TicTacToeGameEvent.WINNER_O.equals(moveGameResponse.event()))) {
-                processGameEnd(roomId, moveGameResponse, token);
+                processGameEnd(roomId, moveGameResponse);
             } else {
                 roomManager.broadcast(roomId, moveGameResponse);
             }
@@ -195,7 +192,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         }
     }
 
-    private void processGameEnd(UUID roomId, TicTacToeGameMessage moveGameResponse, String token) {
+    private void processGameEnd(UUID roomId, TicTacToeGameMessage moveGameResponse) {
         roomManager.broadcast(roomId, moveGameResponse);
 
         try {
@@ -208,8 +205,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
                     moveGameResponse.winner()
             );
 
-            //todo: костыль с токеном, переделать потом!
-            TicTacToeTransactionInternalResponse transactionResponse = bankServiceClient.sendTicTacToeGameResults(transactionRequest, token);
+            TicTacToeTransactionInternalResponse transactionResponse = bankServiceClient.sendTicTacToeGameResults(transactionRequest);
 
             if (transactionResponse != null) {
                 log.info("Bank service response: status={}, message={}, transactions={}",

@@ -31,7 +31,6 @@ public class WebSocketUtil {
         return (Instant) session.getAttributes().get("connectedAt");
     }
 
-    //todo: token
     public String getToken(WebSocketSession session) {
         return (String) session.getAttributes().get("token");
     }

@@ -9,14 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-@ConfigurationProperties(prefix = "security.service-whitelist")
+@ConfigurationProperties(prefix = "spring.security.service-whitelist")
 @Getter
 @Setter
 public class ServiceWhitelistProperties {
 
     private List<String> hosts = new ArrayList<>();
-
-    private List<Integer> ports = new ArrayList<>();
 
     private boolean enabled = false;
 }

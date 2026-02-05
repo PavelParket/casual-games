@@ -14,6 +14,8 @@ import com.security_starter.redis.RedisProperties;
 import com.security_starter.repository.RedisPermissionRepository;
 import com.security_starter.validator.JwtValidator;
 import com.security_starter.validator.PermissionValidator;
+import com.security_starter.whitelist.ServiceWhitelistChecker;
+import com.security_starter.whitelist.ServiceWhitelistProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -23,14 +25,15 @@ import org.springframework.context.annotation.Import;
 
 @Configuration
 @EnableAspectJAutoProxy
-@EnableConfigurationProperties({JwtProperties.class, RedisProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, RedisProperties.class, ServiceWhitelistProperties.class})
 @Import({
         CorsConfig.class, DefaultSecurityFilterChain.class,
         PermissionValidator.class, PermissionContextFactory.class,
         JwtAccessDeniedHandler.class, JwtAuthenticationEntryPoint.class, SecurityException.class,
         JwtAuthenticationFilter.class, JwtDecoder.class,
         JwtClaimsExtractor.class, JwtValidator.class,
-        RedisConfig.class, RedisPermissionRepository.class
+        RedisConfig.class, RedisPermissionRepository.class,
+        ServiceWhitelistChecker.class
 })
 public class SecurityAutoConfiguration {
 

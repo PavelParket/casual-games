@@ -23,18 +23,6 @@ public class ServiceWhitelistChecker {
             return false;
         }
 
-        // Приоритет 1: Проверка по портам (для localhost разработки)
-        List<Integer> whitelistedPorts = whitelistProperties.getPorts();
-        if (whitelistedPorts != null && !whitelistedPorts.isEmpty()) {
-            int remotePort = request.getRemotePort();
-            if (whitelistedPorts.contains(remotePort)) {
-                return true;
-            }
-            // Если указаны порты, проверяем ТОЛЬКО порты, хосты игнорируем
-            return false;
-        }
-
-        // Приоритет 2: Проверка по хостам/IP (для production)
         List<String> whitelistedHosts = whitelistProperties.getHosts();
         if (whitelistedHosts == null || whitelistedHosts.isEmpty()) {
             return false;

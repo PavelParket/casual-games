@@ -41,9 +41,6 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
         attributes.put("roomType", roomType);
         attributes.put("connectedAt", Instant.now());
 
-        //todo: token
-        attributes.put("token", token);
-
         log.info("Preparing handshake for user={} room={} type={} ip={}", user.email(), roomId, roomType, ip);
 
         return true;
