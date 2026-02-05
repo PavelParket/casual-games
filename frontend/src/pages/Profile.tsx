@@ -7,6 +7,7 @@ import type { Icons } from "../assets/icons";
 import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Img, Input, Toast, FormField } from "../ui";
 import { useThemedIcon } from "../ui";
 import { validateUsername } from "../utils/SecurityUtils";
+import LoadingPage from "./LoadingPage";
 
 const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
@@ -148,9 +149,7 @@ export default function Profile() {
 
     if (isLoading && !user) {
         return (
-            <Box style={{ padding: "4rem 0", display: "flex", justifyContent: "center" }}>
-                <Typography variant="h2">Loading profile...</Typography>
-            </Box>
+            <LoadingPage />
         );
     }
 

@@ -15,6 +15,7 @@ import Rooms from './pages/rooms/Rooms'
 import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
 import Profile from './pages/Profile'
 import ExperimentalPage from './pages/ExperimentalPage'
+import LoadingPage from './pages/LoadingPage'
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
@@ -39,51 +40,43 @@ export default function App() {
       initialize();
    }, [dispatch]);
 
-
-   // todo: сделать нормальный компонент ожидания загрузки
-   if (!isInitialized) {
-      return (
-         <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh'
-         }}>
-            Loading...
-         </div>
-      );
-   }
-
    return (
       <BrowserRouter>
          <ThemeProvider>
-            <Routes>
-               {/* Public Routes */}
-               <Route element={<Layout />}>
-                  <Route path="/" element={<Home />} />
-               </Route>
-
-               {/* Protected Routes */}
-               <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>
-                  <Route element={<Layout />}>
-                     <Route path="/profile" element={<Profile />} />
-                     <Route path="/rooms" element={<Rooms />} />
-                     <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
-                     {/* <Route path="/room/de-coder/:roomName" element={<DeCoderRoom />} /> */}
-
-                     {/* ===== Experiment Room ===== */}
-                     <Route path="/ws" element={<ExperimentalPage />} />
+            {!isInitialized ? (
+               <Routes>
+                  <Route element={<Layout centered />}>
+                     <Route path="*" element={<LoadingPage />} />
                   </Route>
-               </Route>
+               </Routes>
+            ) : (
+               <Routes>
+                  {/* Public Routes */}
+                  <Route element={<Layout />}>
+                     <Route path="/" element={<Home />} />
+                  </Route>
 
-               {/* Auth and Error Routes*/}
-               <Route element={<Layout centered />}>
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/forbidden" element={<Forbidden />} />
-                  <Route path="*" element={<NotFound />} />
-               </Route>
-            </Routes>
+                  {/* Protected Routes */}
+                  <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>
+                     <Route element={<Layout />}>
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/rooms" element={<Rooms />} />
+                        <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
+                        {/* <Route path="/room/de-coder/:roomName" element={<DeCoderRoom />} /> */}
+
+                        {/* ===== Experiment Room ===== */}
+                        <Route path="/ws" element={<ExperimentalPage />} />
+                     </Route>
+                  </Route>
+
+                  {/* Auth and Error Routes*/}
+                  <Route element={<Layout centered />}>
+                     <Route path="/register" element={<Register />} />
+                     <Route path="/login" element={<Login />} />
+                     <Route path="/forbidden" element={<Forbidden />} />
+                     <Route path="*" element={<NotFound />} />
+                  </Route>
+               </Routes>)}
          </ThemeProvider>
       </BrowserRouter>
    );
