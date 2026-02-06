@@ -215,7 +215,8 @@ export default function Profile() {
                                                     zIndex: 2, boxShadow: "var(--shadow-sm)",
                                                     opacity: isAvatarHovered ? 1 : 0,
                                                     transform: isAvatarHovered ? "scale(1)" : "scale(0.8)",
-                                                    transition: "all 0.2s ease"
+                                                    transition: "all 0.2s ease",
+                                                    cursor: "pointer,"
                                                 }}
                                             >
                                                 <Icon src={getIcon("edit")} alt="edit avatar" size={20} />

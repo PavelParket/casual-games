@@ -7,17 +7,21 @@
    padding: 0.5rem 1.2rem;
    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
    backdrop-filter: blur(var(--glass-blur));
+   position: relative;
+   overflow: hidden;
 }
 
-/* color-only hover effect */
-/* .btn:hover {
-   box-shadow: var(--shadow-md);
-} */
+.btn-content {
+   display: inline-flex;
+   align-items: center;
+   gap: 0.5rem;
+   position: relative;
+   z-index: 1;
+}
 
-/* active (pressed) state: color-only */
-/* .btn:active {
-   box-shadow: var(--shadow-sm);
-} */
+.btn-content * {
+   transition: filter 0.15s ease;
+}
 
 /* keyboard focus ring for accessibility */
 .btn:focus-visible {
@@ -25,7 +29,9 @@
    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 30%, transparent), var(--shadow-sm);
 }
 
-/* solid */
+/* =========================== */
+/* ========== SOLID ========== */
+/* =========================== */
 .btn-solid {
    background: var(--color-primary);
    color: var(--on-primary);
@@ -41,7 +47,9 @@
    background: var(--btn-solid-active-bg);
 }
 
-/* outline */
+/* ============================= */
+/* ========== OUTLINE ========== */
+/* ============================= */
 .btn-outline {
    background: var(--glass-surface);
    border: none;
@@ -55,11 +63,21 @@
    box-shadow: inset 0 0 0 1px var(--color-primary);
 }
 
+.btn-outline:hover .btn-content * {
+   filter: invert(1);
+}
+
 .btn-outline:active {
    background: var(--btn-outline-active-bg);
 }
 
-/* ghost */
+.btn-outline:active .btn-content * {
+   filter: invert(1);
+}
+
+/* =========================== */
+/* ========== GHOST ========== */
+/* =========================== */
 .btn-ghost {
    background: var(--glass-surface);
    border: none;

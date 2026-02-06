@@ -67,6 +67,7 @@ body {
    --swtch-btn-bg: rgba(220, 220, 220, 0.9);
    --swtch-btn-thumb: rgba(0, 0, 0, 0.9);
 
+   /* Skeleton component tokens */
    --skeleton-bg: rgba(200, 200, 200, 0.35);
    --skeleton-shimmer: rgba(255, 255, 255, 0.6);
 }
@@ -119,6 +120,7 @@ html.dark {
    --swtch-btn-bg: rgba(90, 90, 90, 0.9);
    --swtch-btn-thumb: rgba(255, 255, 255, 0.9);
 
+   /* Skeleton component tokens */
    --skeleton-bg: rgba(60, 60, 60, 0.6);
    --skeleton-shimmer: rgba(255, 255, 255, 0.25);
 }
