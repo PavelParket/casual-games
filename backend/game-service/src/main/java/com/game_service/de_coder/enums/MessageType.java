@@ -7,10 +7,5 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum MessageType {
 
-    START("Start"),
-    MOVE("Move"),
-    WINNER("You win!"),
-    LOSER("You lose!");
-
-    private final String type;
+    SYSTEM
 }

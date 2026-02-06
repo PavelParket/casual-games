@@ -76,4 +76,14 @@ public class GlobalExceptionHandler {
                 "Unexpected server error",
                 HttpStatus.INTERNAL_SERVER_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleMessageNotReadable(HttpMessageNotReadableException ex) {
+        log.error("Failed to parse JSON: {}", ex.getMessage());
+
+        return new ResponseEntity<>(factory.create(
+                ErrorType.VALIDATION_ERROR,
+                "Invalid request format",
+                HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
+    }
 }
