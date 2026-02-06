@@ -1,4 +1,4 @@
-package com.security_starter.config;
+package com.bank_service.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

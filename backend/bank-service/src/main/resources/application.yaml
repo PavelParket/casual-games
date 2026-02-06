@@ -60,7 +60,10 @@ spring:
     jwt:
       secret: ${JWT_SECRET}
       access-expiration: ${JWT_ACCESS_EXPIRATION:900000}      # 15 minutes default
-      refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}
+      refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
+    service-whitelist:
+      enabled: true
+      hosts: [ "127.0.0.1" ]
 
 server:
   port: 8084

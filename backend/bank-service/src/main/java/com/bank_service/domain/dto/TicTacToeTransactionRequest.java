@@ -16,7 +16,6 @@ public record TicTacToeTransactionRequest(
         @NotNull(message = "Room ID cannot be null")
         UUID roomId,
 
-        @NotNull(message = "Player bets cannot be null")
         @NotEmpty(message = "Player bets cannot be empty")
         @Size(min = 2, max = 2, message = "TicTacToe requires exactly 2 players")
         @Valid

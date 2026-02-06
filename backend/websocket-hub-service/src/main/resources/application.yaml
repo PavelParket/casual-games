@@ -84,6 +84,8 @@ app:
     url: http://localhost:8082
   user-service:
     url: http://localhost:8083
+  bank-service:
+    url: http://localhost:8084
 
 logging:
   level:
