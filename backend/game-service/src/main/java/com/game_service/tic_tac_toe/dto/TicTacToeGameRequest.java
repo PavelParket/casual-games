@@ -5,7 +5,6 @@ import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
 import lombok.Builder;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 @Builder
@@ -33,7 +32,7 @@ public record TicTacToeGameRequest(
 
         Map<UUID, String> playersSymbols,
 
-        Set<PlayerInternalRequest> players,
+        Map<UUID, String> players,
 
         UUID winner
 ) {

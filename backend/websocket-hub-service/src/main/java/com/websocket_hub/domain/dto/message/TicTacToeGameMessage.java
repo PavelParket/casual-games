@@ -1,13 +1,11 @@
 package com.websocket_hub.domain.dto.message;
 
-import com.websocket_hub.domain.dto.game_service.PlayerInternalRequest;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.TicTacToeGameEvent;
 import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 @Builder
@@ -35,7 +33,7 @@ public record TicTacToeGameMessage(
 
         Map<UUID, String> playersSymbols,
 
-        Set<PlayerInternalRequest> players,
+        Map<UUID, String> players,
 
         UUID winner,
 

@@ -4,13 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../store/slices/AuthSlice";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
-import { isValidEmail, sanitizeEmail, sanitizeUsername } from "../../utils/SecurityUtils";
+import { isValidEmail, validateEmail, validateUsername } from "../../utils/SecurityUtils";
 
 export default function Register() {
    const dispatch = useDispatch<AppDispatch>();
    const navigate = useNavigate();
 
-   const { isLoading, error } = useSelector((state: RootState) => state.auth);
+   const { error } = useSelector((state: RootState) => state.auth);
    const [form, setForm] = useState({ username: "", email: "", password: "", });
    const [validationError, setValidationError] = useState<string>("");
 
@@ -20,10 +20,10 @@ export default function Register() {
       const { name, value } = e.target;
 
       if (name === "username") {
-         const sanitized = sanitizeUsername(value);
+         const sanitized = validateUsername(value);
          setForm({ ...form, [name]: sanitized });
       } else if (name === "email") {
-         const sanitized = sanitizeEmail(value);
+         const sanitized = validateEmail(value);
          setForm({ ...form, [name]: sanitized });
       } else {
          setForm({ ...form, [name]: value });
@@ -103,7 +103,7 @@ export default function Register() {
                         required
                         rounded
                      />
-                     <Button type="submit" variant="solid" disabled={isLoading}>{isLoading ? "Loading..." : "Sign Up"}</Button>
+                     <Button type="submit" variant="solid">Sign Up</Button>
                   </Form>
 
                   {(error || validationError) && (

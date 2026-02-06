@@ -9,11 +9,11 @@ export interface User {
     username: string;
     email: string;
     role: string;
-    
+
     balance: number;
     status: string;
     createdAt: string;
-    
+
     avatarUrl?: string | null;
     achievements?: string[];
     history?: UserGameHistory[];

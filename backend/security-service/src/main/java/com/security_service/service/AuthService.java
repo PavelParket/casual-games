@@ -78,7 +78,6 @@ public class AuthService {
     }
 
     public void manualSync(String string) {
-        System.out.println("Writing manual sync log: " + string);
         permissionSyncScheduler.manualSync();
     }
 }

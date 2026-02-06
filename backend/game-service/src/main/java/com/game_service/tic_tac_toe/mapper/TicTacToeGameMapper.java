@@ -1,6 +1,5 @@
 package com.game_service.tic_tac_toe.mapper;
 
-import com.game_service.tic_tac_toe.dto.PlayerInternalRequest;
 import com.game_service.tic_tac_toe.dto.TicTacToeGameResponse;
 import com.game_service.tic_tac_toe.enums.MessageType;
 import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
@@ -8,7 +7,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 @Mapper(componentModel = "spring")
@@ -25,7 +23,7 @@ public interface TicTacToeGameMapper {
                                           String currentPlayerSymbol,
                                           String nextPlayerSymbol,
                                           Map<UUID, String> playersSymbols,
-                                          Set<PlayerInternalRequest> players,
+                                          Map<UUID, String> players,
                                           String message);
 
     @Mapping(target = "fromUserId", ignore = true)
@@ -39,6 +37,6 @@ public interface TicTacToeGameMapper {
                                          String currentPlayerSymbol,
                                          String nextPlayerSymbol,
                                          Map<UUID, String> playersSymbols,
-                                         Set<PlayerInternalRequest> players,
+                                         Map<UUID, String> players,
                                          UUID winner);
 }
