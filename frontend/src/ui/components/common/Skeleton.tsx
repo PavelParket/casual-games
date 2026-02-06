@@ -2,10 +2,8 @@ import type { CSSProperties } from "react";
 import "../styles/skeleton.css";
 import { classNames } from "../../utils/classNames";
 
-type SkeletonVariant = "text" | "circular" | "rectangular" | "card";
-
 type SkeletonProps = {
-    variant?: SkeletonVariant;
+    variant?: "text" | "circular" | "rectangular" | "card";
     width?: CSSProperties["width"];
     height?: CSSProperties["height"];
     style?: CSSProperties;
