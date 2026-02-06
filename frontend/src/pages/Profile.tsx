@@ -340,7 +340,7 @@ export default function Profile() {
                                             </Typography>
                                         </Box>
                                         <Button variant="ghost" onClick={() => setDepositModalOpen(true)}>
-                                            Пополнить
+                                            Deposit
                                         </Button>
                                     </Box>
                                 </Stack>
