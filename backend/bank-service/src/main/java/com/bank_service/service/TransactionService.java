@@ -1,9 +1,12 @@
 package com.bank_service.service;
 
+import com.bank_service.client.UserServiceClient;
+import com.bank_service.domain.dto.DepositRequest;
 import com.bank_service.domain.dto.PageResponse;
 import com.bank_service.domain.dto.TransactionResponse;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.TransactionStatus;
+import com.bank_service.factory.DefaultTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -28,6 +32,10 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
 
     private final TransactionMapper transactionMapper;
+
+    private final UserServiceClient userServiceClient;
+
+    private final DefaultTransactionFactory defaultTransactionFactory;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void success(List<Transaction> transactions) {
@@ -87,5 +95,30 @@ public class TransactionService {
                 transactions.getNumberOfElements(), userGuid, page + 1, transactions.getTotalPages());
 
         return PageResponse.of(transactions.map(transactionMapper::toResponse));
+    }
+
+    @Transactional
+    public TransactionResponse processDeposit(DepositRequest request) {
+        BigDecimal balanceBefore = transactionRepository
+                .findFirstByUserGuidAndStatusOrderByCreatedAtDesc(request.userGuid(), TransactionStatus.SUCCESS)
+                .map(Transaction::getBalanceAfter)
+                .orElse(BigDecimal.ZERO);
+
+        Transaction transaction = defaultTransactionFactory.createTransaction(request, balanceBefore);
+
+        List<Transaction> pendingTransactions = pending(List.of(transaction));
+
+        try {
+            userServiceClient.sendUpdates(transactionMapper.toShortInfoList(pendingTransactions));
+
+            success(pendingTransactions);
+
+            return transactionMapper.toResponse(pendingTransactions.getFirst());
+
+        } catch (Exception e) {
+            log.error("Deposit failed for user: {}. Moving to REJECTED.", request.userGuid());
+            this.rejectSafely(pendingTransactions);
+            throw e;
+        }
     }
 }

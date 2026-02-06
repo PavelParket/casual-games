@@ -3,117 +3,112 @@ import { useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState } from "react";
 import { Box, Button, Card, Container, Icon, Modal, ComboBox, Textfield, Typography, useThemedIcon } from "../../ui";
-import { fetchRooms, fetchTypes, findTypeByRoomType } from "../../store/slices/RoomSlice";
-import type { LastRoom, Room, RoomType } from "../../models/room";
-import { sanitizeRoomName, setSecureLocalStorage } from "../../utils/SecurityUtils";
+import { ROOM_TYPE_HANDLERS, ROOM_TYPE_LABELS, type Room, type RoomRequest, type RoomType } from "../../models/Room";
+import { validateRoomName } from "../../utils/SecurityUtils";
+import { createRoom, getRooms, getTypes } from "../../store/slices/RoomSlice";
 
 export default function Rooms() {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
 
-    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-    const { rooms, types } = useSelector((state: RootState) => state.rooms);
+    const authentication = useSelector((state: RootState) => state.auth);
+    const { rooms, roomTypes } = useSelector((state: RootState) => state.rooms);
 
-    const [createModalOpen, setCreateModalOpen] = useState(false);
-    const [newRoomName, setNewRoomName] = useState("");
-    const [selectedRoomType, setSelectedRoomType] = useState<string>("");
-    const [roomInfo, setRoomInfo] = useState<Room | null>(null);
+    const [isCreateRoomModalOpen, setIsCreateRoomModalOpen] = useState<boolean>(false);
+    const [roomName, setRoomName] = useState<string>("");
+    const [roomType, setRoomType] = useState<RoomType>();
+
+    const [roomInfo, setRoomInfo] = useState<Room>();
+    const [isRoomInfoModalOpen, setIsRoomInfoModalOpen] = useState<boolean>(false);
 
     const { getIcon, getInverseIcon } = useThemedIcon();
 
     const [hovered, setHovered] = useState(false);
     const [pressed, setPressed] = useState(false);
 
-    const [validationError, setValidationError] = useState<string>("");
+    const [error, setError] = useState<string>("");
 
     useEffect(() => {
-        dispatch(fetchRooms());
-        dispatch(fetchTypes());
+        dispatch(getRooms());
+        dispatch(getTypes());
     }, [dispatch]);
 
-    const goToRoom = (
-        roomId: string | null,
-        roomName: string | null,
-        type: RoomType,
-        action: "join" | "create"
-    ) => {
-        const sanitizedRoomName = sanitizeRoomName(roomName!);
-
-        if (!sanitizedRoomName) {
-            setValidationError("Invalid room name");
-            return;
-        }
-
-        const lastRoom: LastRoom = { id: roomId ? roomId : null, name: roomName, type: type };
-
-        setSecureLocalStorage("lastRoom", lastRoom);
-        setSecureLocalStorage("action", "join" === action ? "join" : "create");
-
-        navigate(`/room/${type.handlerUrl}/${encodeURIComponent(sanitizedRoomName)}`, {
-            state: { roomType: type.name, handlerUrl: type.handlerUrl },
-        });
-    };
-
-    const handleJoinRoom = (room: Room) => {
-        if (!isAuthenticated) {
-            return;
-        }
-
-        const type = findTypeByRoomType(types, room.type!);
-
-        if (!type) {
-            return;
-        }
-
-        goToRoom(room.id, room.name, type, "join");
-    };
-
-    const handleCreateRoom = () => {
-        setValidationError("");
-
-        if (!isAuthenticated) {
-            setValidationError("You must be authenticated");
-            return;
-        }
-
-        const sanitizedName = sanitizeRoomName(newRoomName.trim());
-
-        if (!sanitizedName) {
-            setValidationError("Room name is required and must contain only letters, numbers, spaces, hyphens and underscores");
-            return;
-        }
-
-        if (sanitizedName.length < 3) {
-            setValidationError("Room name must be at least 3 characters long");
-            return;
-        }
-
-        if (!selectedRoomType) {
-            setValidationError("Please select a room type");
-            return;
-        }
-
-        const type = findTypeByRoomType(types, selectedRoomType);
-        if (!type) {
-            return;
-        }
-
-        setNewRoomName("");
-        setSelectedRoomType("");
-        setValidationError("");
-        setCreateModalOpen(false);
-        goToRoom(null, newRoomName, type, "create");
-    };
-
     const handleRoomNameChange = (value: string): void => {
-        const sanitized = sanitizeRoomName(value);
-        setNewRoomName(sanitized);
-        setValidationError("");
+        const validatedRoomName = validateRoomName(value);
+        setRoomName(validatedRoomName);
+        setError("");
     };
 
     const handleInfo = (room: Room): void => {
         setRoomInfo(room);
+        setIsRoomInfoModalOpen(true);
     }
+
+    const handleJoinRoom = (room: Room) => {
+        if (!authentication.isAuthenticated || !room) {
+            return;
+        }
+
+        navigateToRoom(room);
+    };
+
+    const handleCreateRoom = async () => {
+        setError("");
+
+        if (!authentication.isAuthenticated) {
+            setError("You must be authenticated!");
+            return;
+        }
+
+        if (!roomName) {
+            setError("Room name must not be empty!")
+            return;
+        }
+
+        const validatedName = validateRoomName(roomName);
+
+        if (!validatedName) {
+            setError("Room name is required and must contain only letters, numbers, spaces, hyphens and underscores!");
+            return;
+        }
+
+        if (validatedName.length < 3) {
+            setError("Room name must be at least 3 characters long!");
+            return;
+        }
+
+        if (!roomType) {
+            setError("Select a room type!");
+            return;
+        }
+
+        const roomRequest: RoomRequest = {
+            roomName: validatedName,
+            roomType: roomType
+        };
+
+        try {
+            const roomResponse = await dispatch(createRoom(roomRequest)).unwrap();
+
+            setRoomName("");
+            setRoomType(undefined);
+            setError("");
+            setIsCreateRoomModalOpen(false);
+            navigateToRoom(roomResponse);
+        } catch (error) {
+            setError((error as string) || "Failed to create room");
+            return;
+        }
+    };
+
+    const navigateToRoom = (room: Room) => {
+        if (!room) {
+            setError("Room not found");
+            return;
+        }
+
+        navigate(`/room/${ROOM_TYPE_HANDLERS[room.type]}/${encodeURIComponent(room.name)}/${room.id}`);
+    };
 
     return (
         <>
@@ -141,7 +136,7 @@ export default function Rooms() {
 
                         <Button
                             variant="solid"
-                            onClick={() => setCreateModalOpen(true)}
+                            onClick={() => setIsCreateRoomModalOpen(true)}
                             style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -158,7 +153,7 @@ export default function Rooms() {
                     </Box>
 
                     <Box style={{ textAlign: "center" }}>
-                        {rooms.length === 0 && (
+                        {!rooms || rooms.length === 0 && (
                             <Typography>No rooms available. Try to create something!</Typography>
                         )}
                     </Box>
@@ -171,7 +166,7 @@ export default function Rooms() {
                         rowGap: "3rem",
                         justifyItems: "center",
                     }}>
-                        {rooms.map((room: Room) => (
+                        {rooms && rooms.map((room: Room) => (
                             <Card
                                 key={room.id}
                                 style={{
@@ -190,47 +185,49 @@ export default function Rooms() {
                             </Card>
                         ))}
 
-                        {rooms.length > 0 && <Card
-                            onClick={() => setCreateModalOpen(true)}
-                            onMouseEnter={() => setHovered(true)}
-                            onMouseLeave={() => {
-                                setHovered(false);
-                                setPressed(false);
-                            }}
-                            onMouseDown={() => setPressed(true)}
-                            onMouseUp={() => setPressed(false)}
-                            style={{
-                                width: "180px",
-                                height: "180px",
-                                textAlign: "center",
-                                padding: "20px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                cursor: "pointer",
-                                transition: "transform 0.15s ease, box-shadow 0.15s ease",
-                                background: "var(--color-bg-glass)",
-                                borderRadius: "var(--radius-md)",
-                                boxShadow: hovered
-                                    ? "var(--shadow-lg)"
-                                    : "var(--shadow-md)",
-                                transform: pressed
-                                    ? "scale(0.95)"
-                                    : hovered
-                                        ? "scale(1.05)"
-                                        : "scale(1)",
-                            }}
-                        >
-                            <Icon src={getIcon("add")} alt="add" size={50} />
-                        </Card>}
+                        {rooms && (rooms.length > 0) &&
+                            <Card
+                                onClick={() => setIsCreateRoomModalOpen(true)}
+                                onMouseEnter={() => setHovered(true)}
+                                onMouseLeave={() => {
+                                    setHovered(false);
+                                    setPressed(false);
+                                }}
+                                onMouseDown={() => setPressed(true)}
+                                onMouseUp={() => setPressed(false)}
+                                style={{
+                                    width: "180px",
+                                    height: "180px",
+                                    textAlign: "center",
+                                    padding: "20px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    cursor: "pointer",
+                                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                                    background: "var(--color-bg-glass)",
+                                    borderRadius: "var(--radius-md)",
+                                    boxShadow: hovered
+                                        ? "var(--shadow-lg)"
+                                        : "var(--shadow-md)",
+                                    transform: pressed
+                                        ? "scale(0.95)"
+                                        : hovered
+                                            ? "scale(1.05)"
+                                            : "scale(1)",
+                                }}
+                            >
+                                <Icon src={getIcon("add")} alt="add" size={50} />
+                            </Card>}
                     </Box>
                 </Container>
             </Box>
 
             <Modal
-                isOpen={!!roomInfo}
+                isOpen={isRoomInfoModalOpen}
                 onClose={() => {
-                    setRoomInfo(null);
+                    setRoomInfo(undefined);
+                    setIsRoomInfoModalOpen(false);
                 }}
                 title="Room Info"
             >
@@ -240,33 +237,33 @@ export default function Rooms() {
             </Modal>
 
             <Modal
-                isOpen={createModalOpen}
+                isOpen={isCreateRoomModalOpen}
                 onClose={() => {
-                    setCreateModalOpen(false);
-                    setValidationError("");
+                    setIsCreateRoomModalOpen(false);
+                    setError("");
                 }}
                 title="Create Room"
             >
                 <Box style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <Textfield
-                        value={newRoomName}
+                        value={roomName}
                         onChange={handleRoomNameChange}
                         placeholder="Room name"
                     />
                     <ComboBox
-                        options={types.map((type) => ({
-                            value: type.name,
-                            label: type.label,
+                        options={(roomTypes ?? []).map((type) => ({
+                            value: type,
+                            label: ROOM_TYPE_LABELS[type],
                         }))}
-                        value={selectedRoomType}
-                        onValueChange={setSelectedRoomType}
+                        value={roomType}
+                        onValueChange={setRoomType}
                         placeholder="Choose room type"
                         searchable
                     />
 
-                    {validationError && (
-                        <Typography variant="caption" style={{ color: "red" }}>
-                            {validationError}
+                    {error && (
+                        <Typography variant="caption" style={{ color: "red", textAlign: "center" }}>
+                            {error}
                         </Typography>
                     )}
 

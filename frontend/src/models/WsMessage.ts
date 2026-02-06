@@ -3,7 +3,7 @@ export interface WSMessage {
    event: string;
    fromUserId?: string;
    toUserId?: string;
-   roomName: string;
+   roomId: string;
    message?: string;
 }
 
@@ -12,8 +12,8 @@ export interface GameMessage extends WSMessage {
    cell?: number;
    currentPlayerSymbol?: string;
    nextPlayerSymbol?: string;
-   playersSymbols?: Map<string, string>;
-   players?: Map<string, string>;
+   playersSymbols?: Record<string, string>;
+   players?: Record<string, string>;
    winner?: string;
    bet?: number;
 }

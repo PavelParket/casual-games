@@ -1,22 +1,23 @@
 import axios from "axios";
-import type { RoomTypeInfo } from "../models/rooms";
-
-const WS_HUB_URL = 'http://localhost:8081/ws';
+import { WEBSOCKET_HUB_SERVICE_URL } from "./ApiDictionary";
+import type { PlayerBet, Room, RoomRequest, RoomType } from "../models/Room";
 
 export const RoomAPI = {
-   getAllRooms: () =>
-      axios.get(`${WS_HUB_URL}/rooms/all`),
+   getRooms: () => axios.get<Room[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/all`),
 
-   getTypes: () =>
-      axios.get<RoomTypeInfo[]>(`${WS_HUB_URL}/rooms/types`),
+   getTypes: () => axios.get<RoomType[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/types`),
 
-   getPlayersInRoom: (roomName: string, roomType: string) =>
-      axios.get(`${WS_HUB_URL}/rooms/${roomName}/players`, {
-         params: { roomType }
-      }),
+   getUsernamesInRoom: (roomId: string, roomType: RoomType) =>
+      axios.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/players/${roomId}/${roomType}`),
 
-   getReadyPlayers: (roomName: string, roomType: string) =>
-      axios.get(`${WS_HUB_URL}/rooms/${roomName}/ready-count`, {
-         params: { roomType }
-      }),
+   getReadyPlayers: (roomId: string, roomType: RoomType) =>
+      axios.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/ready-count/${roomId}/${roomType}`),
+
+   createRoom: (room: RoomRequest) => axios.post<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms`, room),
+
+   getRoomById: (roomId: string) => axios.get<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/${roomId}`),
+};
+
+export const TicTacToeRoomApi = {
+   getPlayersBets: (roomId: string) => axios.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/t-t-t/player-bets/${roomId}`),
 };

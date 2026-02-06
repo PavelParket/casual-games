@@ -24,15 +24,15 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
 
     private final IdentityProvider identityProvider;
 
-    //todo: вместо запроса на сервис попробовать вытащить всю инфу из токена, вроде все нужные поля в нем есть
     private final UserServiceClient client;
 
     @Override
     public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+        String token = identityProvider.resolveToken(request);
         UUID guid = identityProvider.resolveGuid(request);
         UUID roomId = identityProvider.resolveRoomId(request);
         RoomType roomType = identityProvider.resolveRoomType(request);
-        UserInternalResponse user = client.getUserByGuid(guid);
+        UserInternalResponse user = client.getUserByGuid(guid, token);
         String ip = request.getRemoteAddress().getHostString();
 
         attributes.put("guid", guid);

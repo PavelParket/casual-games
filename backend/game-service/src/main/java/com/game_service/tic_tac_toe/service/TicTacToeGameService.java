@@ -19,6 +19,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
+import static com.game_service.tic_tac_toe.util.TicTacToeGameUtils.SYMBOL_O;
+import static com.game_service.tic_tac_toe.util.TicTacToeGameUtils.SYMBOL_X;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -42,8 +45,8 @@ public class TicTacToeGameService {
         Collections.shuffle(players, random);
 
         Map<UUID, String> playersSymbols = Map.of(
-                players.get(0), "X",
-                players.get(1), "O"
+                players.get(0), SYMBOL_X,
+                players.get(1), SYMBOL_O
         );
 
         String message = "Game started!";
@@ -63,9 +66,9 @@ public class TicTacToeGameService {
         );
     }
 
-    // todo: синхронизировать по комнате или скорее игре, то есть добавить состояние и по нему блокировать
-    // иначе два запроса могут попасть на обработку одновременно, так как вебсокеты принимают запрос и прокидывают его без блокировки
-    // в целом надо добавить объекты для состояний и по ним работать
+    /* todo: синхронизировать по комнате или скорее игре, то есть добавить состояние и по нему блокировать
+        иначе два запроса могут попасть на обработку одновременно, так как вебсокеты принимают запрос и прокидывают его без блокировки
+        в целом надо добавить объекты для состояний и по ним работать */
     public TicTacToeGameResponse processMove(TicTacToeGameRequest request) {
         ticTacToeGameValidator.validateMove(request);
 

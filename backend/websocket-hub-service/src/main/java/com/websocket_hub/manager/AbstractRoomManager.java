@@ -125,9 +125,7 @@ public abstract class AbstractRoomManager {
             Set<ClientSession> dead = ConcurrentHashMap.newKeySet();
 
             for (ClientSession clientSession : room.getParticipants()) {
-                WebSocketSession session = clientSession.getSession();
-
-                if (session == null || !session.isOpen()) {
+                if (clientSession == null || !clientSession.isOpen()) {
                     dead.add(clientSession);
 
                     continue;
@@ -135,10 +133,10 @@ public abstract class AbstractRoomManager {
 
                 Thread.ofVirtual().start(() -> {
                     try {
-                        session.sendMessage(new TextMessage(json));
+                        clientSession.sendMessage(new TextMessage(json));
                         log.info("Sent message: {}", json);
                     } catch (IOException e) {
-                        log.warn("Failed to send message to session {}: {}", session.getId(), e.getMessage());
+                        log.warn("Failed to send message to session {}: {}", clientSession.getSession().getId(), e.getMessage());
 
                         dead.add(clientSession);
                     }
@@ -171,7 +169,7 @@ public abstract class AbstractRoomManager {
         return rooms.values().stream().toList();
     }
 
-    public Set<ClientSession> getUsersInRoom(UUID roomId) {
+    public Set<ClientSession> getPlayersInRoom(UUID roomId) {
         Room room = rooms.getOrDefault(roomId, null);
 
         if (room == null) {

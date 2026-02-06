@@ -86,6 +86,8 @@ public class UserServiceImpl implements UserService {
 
         userValidator.validateEmailForUpdate(request.email(), target);
 
+        userMapper.updateEntity(request, target);
+
         User saved = userRepository.save(target);
 
         client.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
@@ -146,17 +148,24 @@ public class UserServiceImpl implements UserService {
 
         User saved = userRepository.save(target);
 
-        // todo: переделать потом, а то ничего не сработает
-        // todo: вероятно пора добавлять outbox паттерн
+        /* todo: переделать потом, а то ничего не сработает
+            вероятно пора добавлять outbox паттерн */
         //client.updateRole(actor, saved, role);
 
         return userMapper.toDto(saved);
     }
 
-    /*todo: пофиксить баг при котором на банк сервис возвращается null, а не boolean из-за чего транзакция
-       с отрицательным балансом помечается как success, вместо reject
-       Также есть проблема с тем что нормальная транзакция меняет баланс и он фиксируется в базе,
-       а отрицательный - нет, возникает несогласованность*/
+    @Override
+    public BigDecimal getBalance(UUID guid) {
+        return userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"))
+                .getBalance();
+    }
+
+    /* todo: пофиксить баг при котором на банк сервис возвращается null, а не boolean из-за чего транзакция
+        с отрицательным балансом помечается как success, вместо reject
+        Также есть проблема с тем что нормальная транзакция меняет баланс и он фиксируется в базе,
+        а отрицательный - нет, возникает несогласованность */
     @Override
     @Transactional
     public Boolean updateBalances(List<TransactionShortInfoInternalRequest> transactions) {

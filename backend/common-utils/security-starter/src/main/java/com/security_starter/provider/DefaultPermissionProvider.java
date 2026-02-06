@@ -1,7 +1,6 @@
 package com.security_starter.provider;
 
 import com.security_starter.repository.RedisPermissionRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,11 +14,6 @@ import java.util.Set;
 public class DefaultPermissionProvider implements PermissionProvider {
 
     private final RedisPermissionRepository repository;
-
-    @PostConstruct
-    public void init() {
-        System.out.println("Default permission provider is ready");
-    }
 
     @Override
     public Map<String, Set<String>> getPermissions(Set<String> roles, String email) {

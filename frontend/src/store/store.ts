@@ -1,11 +1,17 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/AuthSlice";
 import roomReducer from "./slices/RoomSlice";
+import userReducer from "./slices/UserSlice";
+import bankReducer from "./slices/BankSlice";
+import ticTacToeReducer from "./slices/TicTacToeRoomSlice";
 
 export const store = configureStore({
    reducer: {
       auth: authReducer,
       rooms: roomReducer,
+      user: userReducer,
+      bank: bankReducer,
+      ticTacToeRoom: ticTacToeReducer,
    },
 });
 

@@ -1,6 +1,5 @@
 package com.security_starter.repository;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,11 +23,6 @@ public class RedisPermissionRepository {
     private static final String USER_ALLOW_PREFIX = "user:allow:";
     private static final String USER_RESTRICT_PREFIX = "user:restrict:";
     private static final String DELIMITER = ",";
-
-    @PostConstruct
-    public void init() {
-        System.out.println("Redis permission repository is ready");
-    }
 
     /**
      * Get base permissions for a role

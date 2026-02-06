@@ -1,19 +1,34 @@
+/* ============================= */
+/* ========== GENERAL ========== */
+/* ============================= */
 export interface Room {
     id: string;
     name: string;
-    type: string;
+    type: RoomType;
     participantGuids: string[];
     participantCount: number;
 }
 
-export interface RoomType {
-    name: string;
-    label: string;
-    handlerUrl: string;
-}
+export interface RoomRequest {
+    roomName: string;
+    roomType: RoomType;
+};
 
-export interface LastRoom {
-    id: string | null;
-    name: string | null;
-    type: RoomType | null;
-}
+export const ROOM_TYPE_HANDLERS: Record<string, string> = {
+    "TIC_TAC_TOE": "t-t-t",
+} as const;
+
+export const ROOM_TYPE_LABELS: Record<string, string> = {
+    "TIC_TAC_TOE": "Tic Tac Toe",
+    "ROOM_TEST": "Room Test",
+} as const;
+
+export type RoomType = keyof typeof ROOM_TYPE_HANDLERS;
+
+/* ============================ */
+/* ===== TIC TAC TOE ROOM ===== */
+/* ============================ */
+export interface PlayerBet {
+    guid: string;
+    bet: number;
+};

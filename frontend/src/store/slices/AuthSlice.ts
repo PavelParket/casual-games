@@ -2,8 +2,9 @@ import type { AxiosError } from 'axios';
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AuthAPI } from '../../api/AuthApi';
 import { setTokenForManager, startTokenTimer, stopTokenTimer } from '../../utils/TokenManager';
-import type { AuthUser, LoginRequest, RegisterRequest } from '../../models/Security';
+import type { AuthUser, LoginRequest, RegisterRequest } from '../../models/AuthenticationUser';
 import { ApiHelper } from '../../helpers/ApiHelper';
+import { update } from './UserSlice';
 
 export interface AuthState {
    user?: AuthUser;
@@ -139,6 +140,13 @@ const authSlice = createSlice({
             state.user = undefined;
             state.isAuthenticated = false;
             state.error = action.payload ?? "Session expired";
+         })
+
+         /* === On Update Username === */
+         .addCase(update.fulfilled, (state, action) => {
+            if (state.user) {
+               state.user.username = action.payload.username;
+            }
          });
    },
 });

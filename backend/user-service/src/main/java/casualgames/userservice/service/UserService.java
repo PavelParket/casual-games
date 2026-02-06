@@ -7,6 +7,7 @@ import casualgames.userservice.dto.UserResponseDto;
 import casualgames.userservice.dto.bank_service.TransactionShortInfoInternalRequest;
 import com.security_starter.enums.Role;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,4 +30,6 @@ public interface UserService extends Service<UserResponse, Long> {
     Boolean updateBalances(List<TransactionShortInfoInternalRequest> transactions);
 
     UserResponseDto updateRole(UUID guid, Role role);
+
+    BigDecimal getBalance(UUID guid);
 }

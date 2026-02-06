@@ -12,7 +12,8 @@ public enum TicTacToeGameEvent implements EventType {
     DRAW,
     BET,
     BET_REJECT,
-    BET_OUTBID;
+    BET_OUTBID,
+    BET_REQUIRED;
 
     @Override
     public String join() {
