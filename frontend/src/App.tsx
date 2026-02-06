@@ -6,19 +6,22 @@ import Register from './pages/auth/Register'
 import Login from './pages/auth/Login'
 import Forbidden from './pages/error/Forbidden'
 import NotFound from './pages/error/NotFound'
-import type { AppDispatch } from './store/store'
-import { useDispatch } from 'react-redux'
-import { useEffect } from 'react'
-import { refresh } from './store/slices/AuthSlice'
 import { ProtectedRoute } from './router/ProtectedRoute'
 import Rooms from './pages/rooms/Rooms'
 import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
+import { useDispatch } from 'react-redux'
+import type { AppDispatch } from './store/store'
+import { useEffect } from 'react'
+import { setOnRefreshRequired } from './utils/TokenManager'
+import { refresh } from './store/slices/AuthSlice'
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
 
    useEffect(() => {
-      dispatch(refresh());
+      setOnRefreshRequired(() => {
+         dispatch(refresh());
+      });
    }, [dispatch]);
 
    return (

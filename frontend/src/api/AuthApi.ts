@@ -1,9 +1,9 @@
-import type { AuthResponse, LoginRequest, RegisterRequest } from "../store/slices/AuthSlice";
+import type { AuthUser, LoginRequest, RegisterRequest } from "../models/Security";
 import { client } from "./AxiosConfig";
 
 export const AuthAPI = {
-   login: (data: LoginRequest) => client.post<AuthResponse>("auth/login", data),
-   register: (data: RegisterRequest) => client.post<AuthResponse>("auth/register", data),
+   login: (data: LoginRequest) => client.post<AuthUser>("auth/login", data),
+   register: (data: RegisterRequest) => client.post<AuthUser>("auth/register", data),
    logout: () => client.post("auth/logout"),
-   refresh: () => client.post<AuthResponse>("auth/refresh"),
+   refresh: () => client.post<AuthUser>("auth/refresh"),
 };

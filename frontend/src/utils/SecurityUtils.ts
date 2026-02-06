@@ -1,4 +1,4 @@
-import type { WSMessage } from "../types/ws";
+import type { WSMessage } from "../models/WsMessage";
 
 export const sanitizeInput = (input: string): string => {
     if (!input) {

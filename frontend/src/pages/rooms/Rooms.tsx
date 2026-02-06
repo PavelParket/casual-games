@@ -4,7 +4,7 @@ import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState } from "react";
 import { Box, Button, Card, Container, Icon, Modal, ComboBox, Textfield, Typography, useThemedIcon } from "../../ui";
 import { fetchRooms, fetchTypes, findTypeByRoomType } from "../../store/slices/RoomSlice";
-import type { LastRoom, Room, RoomType } from "../../types/room";
+import type { LastRoom, Room, RoomType } from "../../models/room";
 import { sanitizeRoomName, setSecureLocalStorage } from "../../utils/SecurityUtils";
 
 export default function Rooms() {

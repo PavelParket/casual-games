@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { RoomAPI } from "../../api/WsHubApi";
 import type { AxiosError } from "axios";
-import type { Room, RoomType } from "../../types/room";
+import type { Room, RoomType } from "../../models/room";
 
 export interface RoomState {
    rooms: Room[];
