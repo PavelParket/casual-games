@@ -1,1 +1,1 @@
-com.security_starter.config.RedisAutoConfiguration
+com.redis_starter.config.RedisAutoConfiguration

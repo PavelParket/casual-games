@@ -1,6 +1,5 @@
 package com.redis_starter.config;
 
-import com.redis_starter.repository.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -9,7 +8,6 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.core.RedisOperations;
 
 @Configuration
 @ConditionalOnProperty(prefix = "spring.data.redis", name = "enabled", havingValue = "true")
@@ -17,11 +15,6 @@ import org.springframework.data.redis.core.RedisOperations;
 public class RedisConfig {
 
     private final RedisProperties redisProperties;
-
-    @Bean
-    public RedisRepository redisRepository(RedisOperations<String, String> operations) {
-        return new RedisRepository(operations);
-    }
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
