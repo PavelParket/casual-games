@@ -36,7 +36,7 @@ export default function Home() {
                         Go to Rooms
                      </Button>
                      <Button variant="solid" onClick={() => navigate("/ws")} style={{ fontSize: "18px", padding: "0.75rem 2rem" }}>
-                        Go to WebSocket
+                        Go to Test Room
                      </Button>
                   </Box>
                ) : (

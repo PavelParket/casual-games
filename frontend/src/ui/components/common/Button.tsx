@@ -9,7 +9,9 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 export function Button({ variant = "solid", className, children, ...props }: ButtonProps) {
    return (
       <button {...props} className={classNames("btn", `btn-${variant}`, className)}>
-         {children}
+         <span className="btn-content">
+            {children}
+         </span>
       </button>
    );
 }
