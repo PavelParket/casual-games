@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RedisRepository {
 
-    private final HashOperations<String, String, String> hashOperations;
+    protected final HashOperations<String, String, String> hashOperations;
 
     public RedisRepository(RedisOperations<String, String> redisOperations) {
         this.hashOperations = redisOperations.opsForHash();
