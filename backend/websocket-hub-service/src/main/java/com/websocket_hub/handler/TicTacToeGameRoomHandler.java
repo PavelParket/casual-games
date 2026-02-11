@@ -14,7 +14,6 @@ import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.mapper.TicTacToeTransactionMapper;
-import com.websocket_hub.serializer.JsonDeserializer;
 import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.util.WebSocketUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameRoomManager> {
 
-    private final MessageDeserializer deserializer;
+    private final MessageDeserializer messageDeserializer;
 
     private final TicTacToeGameMessageMapper ticTacToeGameMessageMapper;
 
@@ -45,14 +44,14 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
     public TicTacToeGameRoomHandler(
             SessionManager sessionManager,
             TicTacToeGameRoomManager roomManager,
-            JsonDeserializer deserializer,
+            MessageDeserializer messageDeserializer,
             TicTacToeGameMessageMapper ticTacToeGameMessageMapper,
             TicTacToeTransactionMapper ticTacToeTransactionMapper,
             GameServiceClient gameServiceClient,
             BankServiceClient bankServiceClient
     ) {
         super(sessionManager, roomManager);
-        this.deserializer = deserializer;
+        this.messageDeserializer = messageDeserializer;
         this.ticTacToeGameMessageMapper = ticTacToeGameMessageMapper;
         this.ticTacToeTransactionMapper = ticTacToeTransactionMapper;
         this.gameServiceClient = gameServiceClient;
@@ -70,7 +69,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         }
 
         try {
-            TicTacToeGameMessage ticTacToeGameMessage = deserializer.deserialize(payload, TicTacToeGameMessage.class);
+            TicTacToeGameMessage ticTacToeGameMessage = messageDeserializer.deserialize(payload, TicTacToeGameMessage.class);
             UUID roomId = WebSocketUtil.getRoomId(session);
             UserInternalResponse user = WebSocketUtil.getUser(session);
 

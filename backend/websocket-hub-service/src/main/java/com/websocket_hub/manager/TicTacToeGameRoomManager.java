@@ -45,7 +45,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
     private final WebSocketHelper webSocketHelper;
 
     public TicTacToeGameRoomManager(
-            MessageSerializer<String> serializer,
+            MessageSerializer serializer,
             ObjectFactory<Room> roomFactory,
             SessionManager sessionManager,
             RoomValidator roomValidator,

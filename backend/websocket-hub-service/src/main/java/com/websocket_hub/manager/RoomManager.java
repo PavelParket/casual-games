@@ -22,7 +22,7 @@ public class RoomManager extends AbstractRoomManager {
     private final MessageMapper messageMapper;
 
     public RoomManager(
-            MessageSerializer<String> serializer,
+            MessageSerializer serializer,
             ObjectFactory<Room> factory,
             SessionManager sessionManager,
             RoomValidator validator,

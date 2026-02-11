@@ -31,7 +31,7 @@ public abstract class AbstractRoomManager {
 
     private final Map<UUID, Room> rooms = new ConcurrentHashMap<>();
 
-    private final MessageSerializer<String> serializer;
+    private final MessageSerializer serializer;
 
     private final ObjectFactory<Room> factory;
 
