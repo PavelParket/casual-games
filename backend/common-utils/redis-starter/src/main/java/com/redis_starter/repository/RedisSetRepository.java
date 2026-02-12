@@ -95,10 +95,17 @@ public class RedisSetRepository {
     }
 
     public Set<String> getKeys(String pattern) {
-        return setOperations.getOperations().keys(pattern);
+        Set<String> keys = setOperations.getOperations().keys(pattern);
+
+        return keys != null ? keys : Set.of();
     }
 
     public Map<String, Set<String>> getValuesByKey(Collection<String> keys) {
+        if (keys == null || keys.isEmpty()) {
+            log.warn("Attempted to get values with null parameters: key={}", keys);
+            return Map.of();
+        }
+
         return keys.stream()
                 .collect(Collectors.toMap(
                         key -> key,

@@ -125,7 +125,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
     }
 
     public void markReady(UUID roomId, UserInternalResponse user) {
-        Room room = super.getRoomsMap().getOrDefault(roomId, null);
+        Room room = getRoomsMap().getOrDefault(roomId, null);
 
         if (room == null) {
             throw new IllegalArgumentException("Room id=" + roomId + " not found!");
