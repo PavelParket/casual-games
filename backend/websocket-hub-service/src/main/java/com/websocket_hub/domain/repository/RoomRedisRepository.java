@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RoomRedisRepository {
 
+    public final String ASTERIX_PLACEHOLDER = "*";
+
     private final RedisHashRepository redisHashRepository;
 
     private final RedisSetRepository redisSetRepository;
@@ -64,20 +66,18 @@ public class RoomRedisRepository {
     }
 
     public Set<RoomMetadata> getAll(RoomTypeRedisKey roomTypeRedisKey) {
-        String key = roomTypeRedisKey.getRedisKey();
-        Map<String, String> allRooms = redisHashRepository.findAll(key);
+        try {
+            String key = roomTypeRedisKey.getRedisKey();
+            Map<String, String> rooms = redisHashRepository.findAll(key);
 
-        return allRooms.values().stream()
-                .map(json -> {
-                    try {
-                        return redisDeserializer.deserialize(json, RoomMetadata.class);
-                    } catch (Exception e) {
-                        log.error("Failed to deserialize room metadata");
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+            return rooms.values().stream()
+                    .map(room -> redisDeserializer.deserialize(room, RoomMetadata.class))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+        } catch (Exception e) {
+            log.error("Failed to deserialize room metadata");
+            return Set.of();
+        }
     }
 
     public void delete(UUID roomId, RoomTypeRedisKey roomTypeRedisKey) {
@@ -142,6 +142,19 @@ public class RoomRedisRepository {
                 .collect(Collectors.toSet());
     }
 
+    public Map<UUID, Set<UUID>> getParticipantsByRoom() {
+        Set<String> keys = redisSetRepository.getKeys(RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey() + ASTERIX_PLACEHOLDER);
+        Map<String, Set<String>> participants = redisSetRepository.getValuesByKey(keys);
+
+        return keys.stream()
+                .collect(Collectors.toMap(
+                        UUID::fromString,
+                        key -> participants.get(key).stream()
+                                .map(UUID::fromString)
+                                .collect(Collectors.toSet())
+                ));
+    }
+
     public Long getParticipantCount(UUID roomId) {
         String key = buildRoomParticipantsRedisKey(roomId);
 
@@ -162,7 +175,7 @@ public class RoomRedisRepository {
         if (deleted) {
             log.info("Cleared all participants: roomId={}", roomId);
         } else {
-            log.debug("No participants to clear: roomId={}", roomId);
+            log.warn("No participants to clear: roomId={}", roomId);
 
         }
     }

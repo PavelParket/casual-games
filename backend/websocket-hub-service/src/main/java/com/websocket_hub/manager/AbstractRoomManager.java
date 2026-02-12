@@ -5,9 +5,12 @@ import com.websocket_hub.domain.dto.message.Message;
 import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
+import com.websocket_hub.domain.entity.RoomMetadata;
 import com.websocket_hub.domain.enums.EventType;
 import com.websocket_hub.domain.enums.RoomType;
-import com.websocket_hub.factory.ObjectFactory;
+import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
+import com.websocket_hub.domain.repository.RoomRedisRepository;
+import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
 import com.websocket_hub.validator.RoomValidator;
@@ -33,15 +36,19 @@ public abstract class AbstractRoomManager {
 
     private final MessageSerializer serializer;
 
-    private final ObjectFactory<Room> factory;
+    private final RoomFactory roomFactory;
 
     private final SessionManager sessionManager;
 
     private final RoomValidator validator;
 
+    private final RoomRedisRepository redisRepository;
+
     public abstract RoomType getRoomType();
 
     public abstract MessageMapper getMapper();
+
+    public abstract RoomTypeRedisKey getRedisKey();
 
     protected abstract void onAddSession(UserInternalResponse user, Room room, WebSocketSession session);
 
@@ -51,12 +58,14 @@ public abstract class AbstractRoomManager {
         Room room = rooms.get(roomId);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
-        if (room != null && client != null && client.validateSession(session)) {
-            synchronized (room) {
-                room.add(client);
-            }
-        } else {
+        if (room == null || client == null || !client.validateSession(session)) {
             return;
+        }
+
+        synchronized (room) {
+            room.add(client);
+
+            redisRepository.addParticipantAndUpdateCount(roomId, user.guid(), getRedisKey());
         }
 
         onAddSession(user, room, session);
@@ -68,12 +77,14 @@ public abstract class AbstractRoomManager {
         Room room = rooms.get(roomId);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
-        if (room != null && client != null && client.validateSession(session)) {
-            synchronized (room) {
-                room.remove(client);
-            }
-        } else {
+        if (room == null || client == null || !client.validateSession(session)) {
             return;
+        }
+
+        synchronized (room) {
+            room.remove(client);
+
+            redisRepository.removeParticipantAndUpdateCount(roomId, user.guid(), getRedisKey());
         }
 
         onRemoveSession(user, room, session);
@@ -82,13 +93,16 @@ public abstract class AbstractRoomManager {
     }
 
     public Room create(RoomRequest roomRequest) {
-        synchronized (rooms) {
-            if (validator.isRoomExists(roomRequest, rooms)) {
+        Set<RoomMetadata> metadata = redisRepository.getAll(getRedisKey());
+
+        synchronized (metadata) {
+            if (validator.isRoomNameExists(roomRequest, metadata)) {
                 throw new RuntimeException("Room with name: " + roomRequest.roomName() + " already exists!");
             }
 
-            Room room = factory.create(roomRequest.roomName(), roomRequest.roomType());
-            rooms.put(room.getId(), room);
+            Room room = roomFactory.create(roomRequest.roomName(), roomRequest.roomType());
+
+            redisRepository.save(RoomMetadata.create(room), getRedisKey());
 
             log.info("Room name={} id={} was created", room.getName(), room.getId());
 
@@ -97,18 +111,23 @@ public abstract class AbstractRoomManager {
     }
 
     public void delete(UUID roomId) {
-        synchronized (rooms) {
-            Room room = rooms.getOrDefault(roomId, null);
+        Map<UUID, Set<UUID>> participants = redisRepository.getParticipantsByRoom();
+        Set<Room> roomSet = roomFactory.createSetFromMetadata(
+                redisRepository.getAll(getRedisKey()),
+                participants,
+                sessionManager.getAll()
+        );
 
-            if (room == null) {
+        synchronized (roomSet) {
+            if (roomSet.isEmpty() || !roomSet.contains(roomId)) {
                 log.warn("Room id={} not found", roomId);
 
                 return;
             }
 
-            rooms.remove(roomId);
+            redisRepository.deleteFullRoom(roomId, getRedisKey());
 
-            log.info("Room name={} id={} was deleted", room.getName(), room.getId());
+            log.info("Room id={} was deleted", roomId);
         }
     }
 

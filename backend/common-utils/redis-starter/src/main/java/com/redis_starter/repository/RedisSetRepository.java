@@ -6,7 +6,9 @@ import org.springframework.data.redis.core.SetOperations;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Repository
 @Slf4j
@@ -90,6 +92,18 @@ public class RedisSetRepository {
             log.error("Error getting values from set: key={}", key, e);
             return Set.of();
         }
+    }
+
+    public Set<String> getKeys(String pattern) {
+        return setOperations.getOperations().keys(pattern);
+    }
+
+    public Map<String, Set<String>> getValuesByKey(Collection<String> keys) {
+        return keys.stream()
+                .collect(Collectors.toMap(
+                        key -> key,
+                        this::get
+                ));
     }
 
     public boolean contains(String key, String value) {

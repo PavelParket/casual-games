@@ -31,7 +31,7 @@ public class RoomMetadata {
                 .name(room.getName())
                 .type(room.getType())
                 .createdAt(room.getCreatedAt())
-                .participantCount(room.getParticipants().size())
+                .participantCount(room.size())
                 .build();
     }
 }

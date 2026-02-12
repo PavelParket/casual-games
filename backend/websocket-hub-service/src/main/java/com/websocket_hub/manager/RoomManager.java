@@ -5,7 +5,9 @@ import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomEvent;
 import com.websocket_hub.domain.enums.RoomType;
-import com.websocket_hub.factory.ObjectFactory;
+import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
+import com.websocket_hub.domain.repository.RoomRedisRepository;
+import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
 import com.websocket_hub.validator.RoomValidator;
@@ -23,12 +25,13 @@ public class RoomManager extends AbstractRoomManager {
 
     public RoomManager(
             MessageSerializer serializer,
-            ObjectFactory<Room> factory,
+            RoomFactory factory,
             SessionManager sessionManager,
             RoomValidator validator,
+            RoomRedisRepository roomRedisRepository,
             @Qualifier("messageMapperImpl") MessageMapper mapper
     ) {
-        super(serializer, factory, sessionManager, validator);
+        super(serializer, factory, sessionManager, validator, roomRedisRepository);
         this.messageMapper = mapper;
     }
 
@@ -40,6 +43,11 @@ public class RoomManager extends AbstractRoomManager {
     @Override
     public MessageMapper getMapper() {
         return this.messageMapper;
+    }
+
+    @Override
+    public RoomTypeRedisKey getRedisKey() {
+        return null;
     }
 
     @Override

@@ -8,12 +8,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MessageDeserializer implements Deserializer<String> {
 
-    private final ObjectMapper mapper;
+    private final ObjectMapper objectMapper;
 
     @Override
     public <T> T deserialize(String message, Class<T> clazz) {
         try {
-            return mapper.readValue(message, clazz);
+            return objectMapper.readValue(message, clazz);
         } catch (Exception e) {
             throw new RuntimeException("Failed to deserialize message", e);
         }
