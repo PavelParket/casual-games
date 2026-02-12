@@ -14,11 +14,13 @@ import java.util.stream.Collectors;
 
 @Repository
 @Slf4j
-public class RedisRepository {
+public class RedisHashRepository {
+
+    private final Long LONG_ZERO = 0L;
 
     protected final HashOperations<String, String, String> hashOperations;
 
-    public RedisRepository(RedisOperations<String, String> redisOperations) {
+    public RedisHashRepository(RedisOperations<String, String> redisOperations) {
         this.hashOperations = redisOperations.opsForHash();
     }
 
@@ -106,7 +108,7 @@ public class RedisRepository {
 
     public Long updateAll(String key, Map<String, String> values) {
         if (key == null || values == null || values.isEmpty()) {
-            return 0L;
+            return LONG_ZERO;
         }
 
         try {
@@ -122,7 +124,7 @@ public class RedisRepository {
             return (long) toUpdate.size();
         } catch (Exception e) {
             log.error("Error updating multiple values: key={}", key, e);
-            return 0L;
+            return LONG_ZERO;
         }
     }
 
@@ -171,14 +173,14 @@ public class RedisRepository {
     public Long delete(String key, String hashKey) {
         if (key == null || hashKey == null) {
             log.warn("Attempted to delete with null parameters: key={}, hashKey={}", key, hashKey);
-            return 0L;
+            return LONG_ZERO;
         }
 
         try {
             return hashOperations.delete(key, hashKey);
         } catch (Exception e) {
             log.error("Error deleting value: key={}, hashKey={}", key, hashKey, e);
-            return 0L;
+            return LONG_ZERO;
         }
     }
 
@@ -199,28 +201,28 @@ public class RedisRepository {
     public Long deleteList(String key, Collection<String> hashKeys) {
         if (key == null || hashKeys == null || hashKeys.isEmpty()) {
             log.warn("Attempted to delete list with invalid parameters: key={}", key);
-            return 0L;
+            return LONG_ZERO;
         }
 
         try {
             return hashOperations.delete(key, hashKeys.toArray());
         } catch (Exception e) {
             log.error("Error deleting list: key={}, count={}", key, hashKeys.size(), e);
-            return 0L;
+            return LONG_ZERO;
         }
     }
 
     public Long size(String key) {
         if (key == null) {
             log.warn("Attempted to get size with null key");
-            return 0L;
+            return LONG_ZERO;
         }
 
         try {
             return hashOperations.size(key);
         } catch (Exception e) {
             log.error("Error getting size: key={}", key, e);
-            return 0L;
+            return LONG_ZERO;
         }
     }
 

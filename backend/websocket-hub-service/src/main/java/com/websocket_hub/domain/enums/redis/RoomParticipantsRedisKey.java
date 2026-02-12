@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum RoomParticipantsRedisKey {
 
-    ROOM_PARTICIPANTS("roomParticipants");
+    ROOM_PARTICIPANTS("room:participants");
 
     private final String redisKey;
 }

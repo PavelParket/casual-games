@@ -1,17 +1,16 @@
 package com.websocket_hub.domain.repository;
 
-import com.redis_starter.repository.RedisRepository;
+import com.redis_starter.repository.RedisHashRepository;
+import com.redis_starter.repository.RedisSetRepository;
 import com.websocket_hub.domain.entity.RoomMetadata;
 import com.websocket_hub.domain.enums.redis.RoomParticipantsRedisKey;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.serializer.RedisDeserializer;
 import com.websocket_hub.serializer.RedisSerializer;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -19,24 +18,17 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Repository
+@RequiredArgsConstructor
 @Slf4j
-public class RoomRedisRepository extends RedisRepository {
+public class RoomRedisRepository {
 
-    private final Long LONG_ZERO = 0L;
+    private final RedisHashRepository redisHashRepository;
+
+    private final RedisSetRepository redisSetRepository;
 
     private final RedisSerializer redisSerializer;
 
     private final RedisDeserializer redisDeserializer;
-
-    public RoomRedisRepository(
-            RedisOperations<String, String> redisOperations,
-            RedisSerializer redisSerializer,
-            RedisDeserializer redisDeserializer
-    ) {
-        super(redisOperations);
-        this.redisSerializer = redisSerializer;
-        this.redisDeserializer = redisDeserializer;
-    }
 
     public void save(RoomMetadata roomMetadata, RoomTypeRedisKey roomTypeRedisKey) {
         try {
@@ -44,7 +36,7 @@ public class RoomRedisRepository extends RedisRepository {
             String hashKey = roomMetadata.getId().toString();
             String value = redisSerializer.serialize(roomMetadata);
 
-            super.put(key, hashKey, value);
+            redisHashRepository.put(key, hashKey, value);
 
             log.info("Saved room metadata: roomId={}, type={}", roomMetadata.getId(), roomMetadata.getType());
         } catch (Exception e) {
@@ -57,7 +49,7 @@ public class RoomRedisRepository extends RedisRepository {
         try {
             String key = roomTypeRedisKey.getRedisKey();
             String hashKey = roomId.toString();
-            String value = super.findByKey(key, hashKey);
+            String value = redisHashRepository.findByKey(key, hashKey);
 
             if (value == null) {
                 log.warn("Room metadata not found: roomId={}, type={}", roomId, roomTypeRedisKey);
@@ -73,7 +65,7 @@ public class RoomRedisRepository extends RedisRepository {
 
     public Set<RoomMetadata> getAll(RoomTypeRedisKey roomTypeRedisKey) {
         String key = roomTypeRedisKey.getRedisKey();
-        Map<String, String> allRooms = super.findAll(key);
+        Map<String, String> allRooms = redisHashRepository.findAll(key);
 
         return allRooms.values().stream()
                 .map(json -> {
@@ -92,12 +84,12 @@ public class RoomRedisRepository extends RedisRepository {
         String key = roomTypeRedisKey.getRedisKey();
         String hashKey = roomId.toString();
 
-        Long deleted = super.delete(key, hashKey);
+        Long deleted = redisHashRepository.delete(key, hashKey);
 
         log.info("Deleted room metadata: roomId={}, type={}, deleted={}", roomId, roomTypeRedisKey, deleted);
     }
 
-    public void updateParticipantCount(UUID roomId, RoomTypeRedisKey roomTypeRedisKey, int count) {
+    public void updateParticipantCount(UUID roomId, RoomTypeRedisKey roomTypeRedisKey, Long count) {
         RoomMetadata roomMetadata = get(roomId, roomTypeRedisKey);
 
         if (roomMetadata == null) {
@@ -105,117 +97,106 @@ public class RoomRedisRepository extends RedisRepository {
             return;
         }
 
-        roomMetadata.setParticipantCount(count);
+        roomMetadata.setParticipantCount(count.intValue());
         save(roomMetadata, roomTypeRedisKey);
 
         log.info("Updated participant count: roomId={}, count={}", roomId, count);
-    }
-
-    public void addParticipant(UUID roomId, UUID participantId) {
-        try {
-            String key = RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey();
-            String hashKey = roomId.toString();
-
-            @SuppressWarnings("unchecked")
-            List<UUID> participants = redisDeserializer.deserialize(findByKey(key, hashKey), List.class);
-
-            if (!participants.isEmpty()) {
-                participants.add(participantId);
-                super.put(key, hashKey, redisSerializer.serialize(participants));
-
-                return;
-            }
-
-            super.add(key, hashKey, redisSerializer.serialize(new ArrayList<>(List.of(participantId))));
-        } catch (Exception e) {
-            log.error("Failed to serialize or deserialize room participants: roomId={}", roomId);
-            throw new RuntimeException("Failed to save room metadata", e);
-        }
-    }
-
-    public void removeParticipant(UUID roomId, UUID participantGuid) {
-        try {
-            String key = RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey();
-            String hashKey = roomId.toString();
-
-            @SuppressWarnings("unchecked")
-            List<UUID> participants = redisDeserializer.deserialize(findByKey(key, hashKey), List.class);
-
-            if (!participants.isEmpty()) {
-                return;
-            }
-
-            Long removed = super.delete(key, hashKey);
-
-            log.info("Removed participant: roomId={}, participantGuid={}, removed={}", roomId, participantGuid, removed);
-        } catch (Exception e) {
-            log.error("Failed to deserialize room metadata while removing: roomId={}", roomId);
-            throw new RuntimeException("Failed to remove participant", e);
-        }
-    }
-
-    public Set<UUID> getParticipants(UUID roomId) {
-        try {
-            String key = RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey();
-            String hashKey = roomId.toString();
-
-            @SuppressWarnings("unchecked")
-            Set<UUID> participants = redisDeserializer.deserialize(super.findByKey(key, hashKey), Set.class);
-
-            return participants;
-        } catch (Exception e) {
-            log.error("Failed to deserialize room metadata while getting: roomId={}", roomId);
-            throw new RuntimeException("Failed to get participants", e);
-        }
-    }
-
-    public Long getParticipantCount(UUID roomId) {
-        try {
-            String key = RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey();
-            String hashKey = roomId.toString();
-
-            return (long) redisDeserializer.deserialize(super.findByKey(key, hashKey), Set.class).size();
-        } catch (Exception e) {
-            log.error("Failed to deserialize room metadata while getting count: roomId={}", roomId);
-            throw new RuntimeException("Failed to get participant count", e);
-        }
-    }
-
-    public boolean isParticipant(UUID roomId, UUID participantId) {
-        try {
-            String key = RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey();
-            String hashKey = roomId.toString();
-
-            @SuppressWarnings("unchecked")
-            Set<UUID> participants = redisDeserializer.deserialize(super.findByKey(key, hashKey), Set.class);
-
-            return participants.contains(participantId);
-        } catch (Exception e) {
-            log.error("Failed to deserialize room metadata while checking: roomId={}", roomId);
-            throw new RuntimeException("Failed to check is participant", e);
-        }
-    }
-
-    public void clearParticipants(UUID roomId) {
-        String key = RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey();
-        String hashKey = roomId.toString();
-
-        Long deleted = super.delete(key, hashKey);
-
-        log.info("Cleared participants: roomId={}, deleted={}", roomId, deleted);
-    }
-
-    public void deleteRoom(UUID roomId, RoomTypeRedisKey roomTypeRedisKey) {
-        delete(roomId, roomTypeRedisKey);
-        clearParticipants(roomId);
-
-        log.info("Completely deleted room: roomId={}, type={}", roomId, roomTypeRedisKey);
     }
 
     public boolean roomExists(UUID roomId, RoomTypeRedisKey roomTypeRedisKey) {
         String key = roomTypeRedisKey.getRedisKey();
         String hashKey = roomId.toString();
 
-        return super.hasKey(key, hashKey);
+        return redisHashRepository.hasKey(key, hashKey);
+    }
+
+    public void addParticipant(UUID roomId, UUID participantId) {
+        String key = buildRoomParticipantsRedisKey(roomId);
+
+        Long added = redisSetRepository.add(key, participantId.toString());
+
+        if (added > 0) {
+            log.info("Added participant: roomId={}, participantId={}", roomId, participantId);
+        } else {
+            log.info("Participant already in room: roomId={}, participantId={}", roomId, participantId);
+        }
+    }
+
+    public void removeParticipant(UUID roomId, UUID participantId) {
+        String key = buildRoomParticipantsRedisKey(roomId);
+
+        Long removed = redisSetRepository.remove(key, participantId.toString());
+
+        if (removed > 0) {
+            log.info("Removed participant: roomId={}, participantId={}", roomId, participantId);
+        } else {
+            log.warn("Participant not found in room: roomId={}, participantId={}", roomId, participantId);
+        }
+    }
+
+    public Set<UUID> getParticipants(UUID roomId) {
+        String key = buildRoomParticipantsRedisKey(roomId);
+
+        return redisSetRepository.get(key).stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toSet());
+    }
+
+    public Long getParticipantCount(UUID roomId) {
+        String key = buildRoomParticipantsRedisKey(roomId);
+
+        return redisSetRepository.size(key);
+    }
+
+    public boolean isParticipant(UUID roomId, UUID participantId) {
+        String key = buildRoomParticipantsRedisKey(roomId);
+
+        return redisSetRepository.contains(key, participantId.toString());
+    }
+
+    public void clearParticipants(UUID roomId) {
+        String key = buildRoomParticipantsRedisKey(roomId);
+
+        boolean deleted = redisSetRepository.deleteKey(key);
+
+        if (deleted) {
+            log.info("Cleared all participants: roomId={}", roomId);
+        } else {
+            log.debug("No participants to clear: roomId={}", roomId);
+
+        }
+    }
+
+    public boolean participantsExist(UUID roomId) {
+        String key = buildRoomParticipantsRedisKey(roomId);
+
+        return redisSetRepository.hasKey(key);
+    }
+
+    public void deleteFullRoom(UUID roomId, RoomTypeRedisKey roomTypeRedisKey) {
+        delete(roomId, roomTypeRedisKey);
+        clearParticipants(roomId);
+
+        log.info("Completely deleted room: roomId={}, type={}", roomId, roomTypeRedisKey);
+    }
+
+    public void addParticipantAndUpdateCount(UUID roomId, UUID participantId, RoomTypeRedisKey roomTypeRedisKey) {
+        addParticipant(roomId, participantId);
+
+        Long count = getParticipantCount(roomId);
+
+        updateParticipantCount(roomId, roomTypeRedisKey, count);
+    }
+
+    public void removeParticipantAndUpdateCount(UUID roomId, UUID participantId, RoomTypeRedisKey roomTypeRedisKey) {
+        removeParticipant(roomId, participantId);
+
+        Long count = getParticipantCount(roomId);
+
+        updateParticipantCount(roomId, roomTypeRedisKey, count);
+    }
+
+    private String buildRoomParticipantsRedisKey(UUID roomId) {
+        return String.format("%s:%s", RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey(), roomId.toString());
     }
 }

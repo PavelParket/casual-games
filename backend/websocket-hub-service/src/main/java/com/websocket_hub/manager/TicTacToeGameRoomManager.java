@@ -106,18 +106,6 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
         playerBets.computeIfPresent(room.getId(), (key, bets) -> {
             bets.removeIf(bet -> bet.getGuid().equals(user.guid()));
 
-            /*if (bets.size() == 1) {
-                PlayerBet remainingBet = bets.getFirst();
-                ClientSession remainingClient = getClientSessionByGuid(remainingBet.getGuid());
-
-                Set<ClientSession> players = getPlayersInRoom(room.getId());
-                players.removeIf(player -> player.getGuid().equals(remainingBet.getGuid()));
-
-                webSocketHelper.notifyBetAccepted(room.getId(), remainingClient, players, remainingBet.getBet());
-
-                log.info("Auto-accepted remaining bet {} for player {} after opponent left", remainingBet.getBet(), remainingClient.getUsername());
-            }*/
-
             return bets.isEmpty() ? null : bets;
         });
     }
