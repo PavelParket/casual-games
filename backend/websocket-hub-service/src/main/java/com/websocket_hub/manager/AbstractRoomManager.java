@@ -20,8 +20,10 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,17 +55,15 @@ public abstract class AbstractRoomManager {
     protected abstract void onRemoveSession(UserInternalResponse user, Room room, WebSocketSession session);
 
     public void addSession(UUID roomId, UserInternalResponse user, WebSocketSession session) {
-        RoomMetadata roomMetadata = redisRepository.get(roomId, getRedisKey());
-
-        if (roomMetadata == null) {
-            log.warn("Cannot add session — room not found in Redis: roomId={}", roomId);
-            return;
-        }
-
         Room room = restoreRoom(roomId);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
-        if (room == null || client == null || !client.validateSession(session)) {
+        if (room == null) {
+            log.warn("Cannot add session — room not found: roomId={}", roomId);
+            return;
+        }
+
+        if (client == null || !client.validateSession(session)) {
             return;
         }
 
@@ -77,17 +77,15 @@ public abstract class AbstractRoomManager {
     }
 
     public void removeSession(UUID roomId, UserInternalResponse user, WebSocketSession session) {
-        RoomMetadata roomMetadata = redisRepository.get(roomId, getRedisKey());
-
-        if (roomMetadata == null) {
-            log.warn("Cannot remove session — room not found in Redis: roomId={}", roomId);
-            return;
-        }
-
         Room room = restoreRoom(roomId);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
-        if (room == null || client == null || !client.validateSession(session)) {
+        if (room == null) {
+            log.warn("Cannot remove session — room not found: roomId={}", roomId);
+            return;
+        }
+
+        if (client == null || !client.validateSession(session)) {
             return;
         }
 
@@ -153,6 +151,8 @@ public abstract class AbstractRoomManager {
 
             Set<ClientSession> dead = ConcurrentHashMap.newKeySet();
 
+            List<Thread> threads = new ArrayList<>();
+
             for (ClientSession clientSession : room.getParticipants()) {
                 if (clientSession == null || !clientSession.isOpen()) {
                     dead.add(clientSession);
@@ -160,7 +160,7 @@ public abstract class AbstractRoomManager {
                     continue;
                 }
 
-                Thread.ofVirtual().start(() -> {
+                Thread thread = Thread.ofVirtual().start(() -> {
                     try {
                         clientSession.sendMessage(new TextMessage(json));
                         log.info("Sent message: {}", json);
@@ -170,6 +170,17 @@ public abstract class AbstractRoomManager {
                         dead.add(clientSession);
                     }
                 });
+
+                threads.add(thread);
+            }
+
+            for (Thread thread : threads) {
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.warn("Broadcast interrupted for room {}", roomId);
+                }
             }
 
             if (!dead.isEmpty()) {
@@ -216,6 +227,7 @@ public abstract class AbstractRoomManager {
     public Set<ClientSession> getPlayersInRoom(UUID roomId) {
         return redisRepository.getParticipants(roomId).stream()
                 .map(sessionManager::getByGuid)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
 

@@ -86,6 +86,7 @@ public class RoomService {
 
     public RoomResponse getById(UUID id) {
         return roomMapper.toResponse(roomManagers.values().stream()
+                .filter(manager -> manager.getRedisKey() != null)
                 .flatMap(manager -> manager.getRoomsList().stream())
                 .filter(room -> room.getId().equals(id))
                 .findFirst()
