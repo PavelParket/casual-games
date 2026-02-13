@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,8 +42,11 @@ public class RoomFactory implements ObjectFactory<Room> {
     public Room createFromMetadata(RoomMetadata roomMetadata,
                                    Set<UUID> participantsFromRedis,
                                    Map<UUID, ClientSession> participantsFromSessions) {
-        Set<ClientSession> participants = participantsFromRedis.stream()
+        Set<ClientSession> participants = participantsFromRedis == null
+                ? ConcurrentHashMap.newKeySet()
+                : participantsFromRedis.stream()
                 .map(participantsFromSessions::get)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
         return Room.builder()
@@ -59,7 +63,7 @@ public class RoomFactory implements ObjectFactory<Room> {
                                            Map<UUID, ClientSession> participantsFromSessions) {
         return roomMetadata.stream()
                 .map(metadata ->
-                        createFromMetadata(metadata, participantsFromRedis.get(metadata.getId()), participantsFromSessions)
+                        createFromMetadata(metadata, participantsFromRedis.getOrDefault(metadata.getId(), Set.of()), participantsFromSessions)
                 )
                 .collect(Collectors.toSet());
     }

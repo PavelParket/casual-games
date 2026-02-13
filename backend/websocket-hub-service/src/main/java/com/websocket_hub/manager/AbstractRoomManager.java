@@ -32,8 +32,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class AbstractRoomManager {
 
-    //private final Map<UUID, Room> rooms = new ConcurrentHashMap<>();
-
     private final MessageSerializer serializer;
 
     private final RoomFactory roomFactory;
@@ -55,19 +53,23 @@ public abstract class AbstractRoomManager {
     protected abstract void onRemoveSession(UserInternalResponse user, Room room, WebSocketSession session);
 
     public void addSession(UUID roomId, UserInternalResponse user, WebSocketSession session) {
-        Set<UUID> participants = redisRepository.getParticipants(roomId);
-        Room room = roomFactory.createFromMetadata(redisRepository.get(roomId, getRedisKey()), participants, sessionManager.getAll());
+        RoomMetadata roomMetadata = redisRepository.get(roomId, getRedisKey());
+
+        if (roomMetadata == null) {
+            log.warn("Cannot add session — room not found in Redis: roomId={}", roomId);
+            return;
+        }
+
+        Room room = restoreRoom(roomId);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
         if (room == null || client == null || !client.validateSession(session)) {
             return;
         }
 
-        synchronized (room) {
-            room.add(client);
+        room.add(client);
 
-            redisRepository.addParticipantAndUpdateCount(roomId, user.guid(), getRedisKey());
-        }
+        redisRepository.addParticipantAndUpdateCount(roomId, user.guid(), getRedisKey());
 
         onAddSession(user, room, session);
 
@@ -75,19 +77,23 @@ public abstract class AbstractRoomManager {
     }
 
     public void removeSession(UUID roomId, UserInternalResponse user, WebSocketSession session) {
-        Set<UUID> participants = redisRepository.getParticipants(roomId);
-        Room room = roomFactory.createFromMetadata(redisRepository.get(roomId, getRedisKey()), participants, sessionManager.getAll());
+        RoomMetadata roomMetadata = redisRepository.get(roomId, getRedisKey());
+
+        if (roomMetadata == null) {
+            log.warn("Cannot remove session — room not found in Redis: roomId={}", roomId);
+            return;
+        }
+
+        Room room = restoreRoom(roomId);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
         if (room == null || client == null || !client.validateSession(session)) {
             return;
         }
 
-        synchronized (room) {
-            room.remove(client);
+        room.remove(client);
 
-            redisRepository.removeParticipantAndUpdateCount(roomId, user.guid(), getRedisKey());
-        }
+        redisRepository.removeParticipantAndUpdateCount(roomId, user.guid(), getRedisKey());
 
         onRemoveSession(user, room, session);
 
@@ -139,8 +145,7 @@ public abstract class AbstractRoomManager {
         try {
             String json = serializer.serialize(message);
 
-            Set<UUID> participants = redisRepository.getParticipants(roomId);
-            Room room = roomFactory.createFromMetadata(redisRepository.get(roomId, getRedisKey()), participants, sessionManager.getAll());
+            Room room = restoreRoom(roomId);
 
             if (room == null || room.isEmpty()) {
                 return;
@@ -168,15 +173,13 @@ public abstract class AbstractRoomManager {
             }
 
             if (!dead.isEmpty()) {
-                synchronized (room) {
-                    dead.forEach(clientSession ->
-                            redisRepository.removeParticipantAndUpdateCount(
-                                    room.getId(),
-                                    clientSession.getGuid(),
-                                    getRedisKey()
-                            )
-                    );
-                }
+                dead.forEach(clientSession ->
+                        redisRepository.removeParticipantAndUpdateCount(
+                                room.getId(),
+                                clientSession.getGuid(),
+                                getRedisKey()
+                        )
+                );
             }
 
             log.info("Broadcast in room \"{}\" from {} → {} recipients", roomId, message.fromUserId(), room.size());
@@ -216,44 +219,23 @@ public abstract class AbstractRoomManager {
                 .collect(Collectors.toSet());
     }
 
-    /*public Set<String> getUserEmails(UUID roomId) {
-        Room room = rooms.getOrDefault(roomId, null);
-
-        if (room == null) {
-            return Set.of();
-        }
-
-        return room.getParticipants().stream()
-                .map(ClientSession::getEmail)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-    }
-
-    public Set<String> getUsernamesInRoom(UUID roomId) {
-        Room room = rooms.getOrDefault(roomId, null);
-
-        if (room == null) {
-            return Set.of();
-        }
-
-        return room.getParticipants().stream().map(ClientSession::getUsername).filter(Objects::nonNull).collect(Collectors.toSet());
-    }
-
-    public Integer getPlayerCount(UUID roomId) {
-        Room room = rooms.getOrDefault(roomId, null);
-
-        if (room == null) {
-            return 0;
-        }
-
-        return room.size();
-    }*/
-
     public Integer getReadyPlayerCount(UUID roomId) {
         return 0;
     }
 
     protected ClientSession getClientSessionByGuid(UUID guid) {
         return sessionManager.getByGuid(guid);
+    }
+
+    private Room restoreRoom(UUID roomId) {
+        RoomMetadata metadata = redisRepository.get(roomId, getRedisKey());
+
+        if (metadata == null) {
+            return null;
+        }
+
+        Set<UUID> participants = redisRepository.getParticipants(roomId);
+
+        return roomFactory.createFromMetadata(metadata, participants, sessionManager.getAll());
     }
 }

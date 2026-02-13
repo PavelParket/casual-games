@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class RoomRedisRepository {
 
     public final String ASTERIX_PLACEHOLDER = "*";
+    public final String COLON_PLACEHOLDER = ":";
 
     private final RedisHashRepository redisHashRepository;
 
@@ -143,12 +144,12 @@ public class RoomRedisRepository {
     }
 
     public Map<UUID, Set<UUID>> getParticipantsByRoom() {
-        Set<String> keys = redisSetRepository.getKeys(RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey() + ASTERIX_PLACEHOLDER);
+        Set<String> keys = redisSetRepository.getKeys(RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey() + COLON_PLACEHOLDER + ASTERIX_PLACEHOLDER);
         Map<String, Set<String>> participants = redisSetRepository.getValuesByKey(keys);
 
         return keys.stream()
                 .collect(Collectors.toMap(
-                        UUID::fromString,
+                        key -> UUID.fromString(key.substring(key.lastIndexOf(COLON_PLACEHOLDER) + 1)),
                         key -> participants.get(key).stream()
                                 .map(UUID::fromString)
                                 .collect(Collectors.toSet())
