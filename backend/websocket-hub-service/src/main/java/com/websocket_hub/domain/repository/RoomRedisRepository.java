@@ -43,7 +43,7 @@ public class RoomRedisRepository {
 
             log.info("Saved room metadata: roomId={}, type={}", roomMetadata.getId(), roomMetadata.getType());
         } catch (Exception e) {
-            log.error("Failed to serialize room metadata: roomId={}", roomMetadata.getId());
+            log.error("Failed to serialize room {} metadata: {}", roomMetadata.getId(), e.getMessage());
             throw new RuntimeException("Failed to save room metadata", e);
         }
     }
@@ -61,7 +61,7 @@ public class RoomRedisRepository {
 
             return redisDeserializer.deserialize(value, RoomMetadata.class);
         } catch (Exception e) {
-            log.error("Failed to deserialize room metadata: roomId={}", roomId);
+            log.error("Failed to deserialize room {} metadata: {}", roomId, e.getMessage());
             return null;
         }
     }
@@ -76,7 +76,7 @@ public class RoomRedisRepository {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
         } catch (Exception e) {
-            log.error("Failed to deserialize room metadata");
+            log.error("Failed to deserialize room metadata: {}", e.getMessage());
             return Set.of();
         }
     }
@@ -145,6 +145,11 @@ public class RoomRedisRepository {
 
     public Map<UUID, Set<UUID>> getParticipantsByRoom() {
         Set<String> keys = redisSetRepository.getKeys(RoomParticipantsRedisKey.ROOM_PARTICIPANTS.getRedisKey() + COLON_PLACEHOLDER + ASTERIX_PLACEHOLDER);
+
+        if (keys.isEmpty()) {
+            return Map.of();
+        }
+
         Map<String, Set<String>> participants = redisSetRepository.getValuesByKey(keys);
 
         return keys.stream()

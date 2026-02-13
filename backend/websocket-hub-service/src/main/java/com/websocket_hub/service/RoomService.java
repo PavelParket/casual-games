@@ -40,6 +40,7 @@ public class RoomService {
 
     public List<RoomResponse> getRooms() {
         return roomManagers.values().stream()
+                .filter(manager -> manager.getRedisKey() != null)
                 .flatMap(manager -> manager.getRoomsList().stream())
                 .map(roomMapper::toResponse)
                 .toList();

@@ -42,12 +42,12 @@ public class RoomFactory implements ObjectFactory<Room> {
     public Room createFromMetadata(RoomMetadata roomMetadata,
                                    Set<UUID> participantsFromRedis,
                                    Map<UUID, ClientSession> participantsFromSessions) {
-        Set<ClientSession> participants = participantsFromRedis == null
+        Set<ClientSession> participants = (participantsFromRedis == null || participantsFromRedis.isEmpty())
                 ? ConcurrentHashMap.newKeySet()
                 : participantsFromRedis.stream()
                 .map(participantsFromSessions::get)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(ConcurrentHashMap::newKeySet));
 
         return Room.builder()
                 .id(roomMetadata.getId())
@@ -61,10 +61,16 @@ public class RoomFactory implements ObjectFactory<Room> {
     public Set<Room> createSetFromMetadata(Set<RoomMetadata> roomMetadata,
                                            Map<UUID, Set<UUID>> participantsFromRedis,
                                            Map<UUID, ClientSession> participantsFromSessions) {
+        if (roomMetadata == null || roomMetadata.isEmpty()) {
+            return Set.of();
+        }
+
         return roomMetadata.stream()
-                .map(metadata ->
-                        createFromMetadata(metadata, participantsFromRedis.getOrDefault(metadata.getId(), Set.of()), participantsFromSessions)
-                )
+                .map(metadata -> createFromMetadata(
+                        metadata,
+                        participantsFromRedis.getOrDefault(metadata.getId(), Set.of()),
+                        participantsFromSessions
+                ))
                 .collect(Collectors.toSet());
     }
 }
