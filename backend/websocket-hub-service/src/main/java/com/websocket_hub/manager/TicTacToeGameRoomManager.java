@@ -7,8 +7,11 @@ import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.TicTacToeGameEvent;
+import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
+import com.websocket_hub.domain.repository.RoomRedisRepository;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.factory.PlayerBetFactory;
+import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.helper.WebSocketHelper;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
@@ -45,16 +48,17 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
     private final WebSocketHelper webSocketHelper;
 
     public TicTacToeGameRoomManager(
-            MessageSerializer<String> serializer,
-            ObjectFactory<Room> roomFactory,
+            MessageSerializer serializer,
+            RoomFactory roomFactory,
             SessionManager sessionManager,
             RoomValidator roomValidator,
+            RoomRedisRepository roomRedisRepository,
             TicTacToeGameMessageMapper ticTacToeGameMessageMapper,
             PlayerBetFactory playerBetFactory,
             PlayerBetValidator playerBetValidator,
             WebSocketHelper webSocketHelper
     ) {
-        super(serializer, roomFactory, sessionManager, roomValidator);
+        super(serializer, roomFactory, sessionManager, roomValidator, roomRedisRepository);
         this.messageMapper = ticTacToeGameMessageMapper;
         this.playerBetFactory = playerBetFactory;
         this.playerBetValidator = playerBetValidator;
@@ -69,6 +73,11 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
     @Override
     public MessageMapper getMapper() {
         return this.messageMapper;
+    }
+
+    @Override
+    public RoomTypeRedisKey getRedisKey() {
+        return RoomTypeRedisKey.TIC_TAC_TOE_ROOM;
     }
 
     @Override
@@ -94,6 +103,12 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
             return players.isEmpty() ? null : players;
         });
 
+        playerBets.computeIfPresent(room.getId(), (key, bets) -> {
+            bets.removeIf(bet -> bet.getGuid().equals(user.guid()));
+
+            return bets.isEmpty() ? null : bets;
+        });
+
         broadcast(room.getId(), messageMapper.toResponse(
                 MessageType.SYSTEM,
                 TicTacToeGameEvent.LEAVE,
@@ -102,24 +117,6 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
                 room.getId(),
                 "Player " + user.username() + " has left the room " + room.getName()
         ));
-
-        playerBets.computeIfPresent(room.getId(), (key, bets) -> {
-            bets.removeIf(bet -> bet.getGuid().equals(user.guid()));
-
-            /*if (bets.size() == 1) {
-                PlayerBet remainingBet = bets.getFirst();
-                ClientSession remainingClient = getClientSessionByGuid(remainingBet.getGuid());
-
-                Set<ClientSession> players = getPlayersInRoom(room.getId());
-                players.removeIf(player -> player.getGuid().equals(remainingBet.getGuid()));
-
-                webSocketHelper.notifyBetAccepted(room.getId(), remainingClient, players, remainingBet.getBet());
-
-                log.info("Auto-accepted remaining bet {} for player {} after opponent left", remainingBet.getBet(), remainingClient.getUsername());
-            }*/
-
-            return bets.isEmpty() ? null : bets;
-        });
     }
 
     @Override
@@ -128,7 +125,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
     }
 
     public void markReady(UUID roomId, UserInternalResponse user) {
-        Room room = super.getRoomsMap().getOrDefault(roomId, null);
+        Room room = getRoomsMap().getOrDefault(roomId, null);
 
         if (room == null) {
             throw new IllegalArgumentException("Room id=" + roomId + " not found!");

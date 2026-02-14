@@ -1,3 +1,4 @@
 rootProject.name = 'common-utils'
 
 include 'security-starter'
+include 'redis-starter'

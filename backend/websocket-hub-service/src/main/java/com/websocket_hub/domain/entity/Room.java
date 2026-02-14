@@ -46,17 +46,17 @@ public class Room {
     }
 
     public Integer size() {
-        return participants.size();
+        return this.participants.size();
     }
 
     public List<String> getParticipantEmails() {
-        return participants.stream()
+        return this.participants.stream()
                 .map(ClientSession::getEmail)
                 .toList();
     }
 
     public List<UUID> getParticipantGuids() {
-        return participants.stream()
+        return this.participants.stream()
                 .map(ClientSession::getGuid)
                 .toList();
     }

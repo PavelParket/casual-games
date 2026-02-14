@@ -28,7 +28,7 @@ public class SessionManager {
 
     private final ObjectFactory<ClientSession> factory;
 
-    private final MessageSerializer<String> serializer;
+    private final MessageSerializer serializer;
 
     public void register(UUID guid, UserInternalResponse user, WebSocketSession session, Instant connectedAt) {
         if (guid == null || user == null || session == null) {
