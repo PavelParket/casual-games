@@ -36,9 +36,9 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
 
     private final MessageDeserializer deserializer;
 
-    public RoomHandler(SessionManager sessionManager, RoomManager roomManager, MessageDeserializer deserializer) {
+    public RoomHandler(SessionManager sessionManager, RoomManager roomManager, MessageDeserializer messageDeserializer) {
         super(sessionManager, roomManager);
-        this.deserializer = deserializer;
+        this.deserializer = messageDeserializer;
     }
 
     @Override
