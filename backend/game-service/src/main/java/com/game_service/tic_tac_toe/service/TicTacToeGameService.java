@@ -1,10 +1,10 @@
 package com.game_service.tic_tac_toe.service;
 
 import com.game_service.common.enums.MessageType;
+import com.game_service.common.exception.GameValidationException;
 import com.game_service.tic_tac_toe.dto.TicTacToeGameRequest;
 import com.game_service.tic_tac_toe.dto.TicTacToeGameResponse;
 import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
-import com.game_service.tic_tac_toe.exception.GameValidationException;
 import com.game_service.tic_tac_toe.mapper.TicTacToeGameMapper;
 import com.game_service.tic_tac_toe.util.TicTacToeGameUtils;
 import com.game_service.tic_tac_toe.validator.TicTacToeGameValidator;

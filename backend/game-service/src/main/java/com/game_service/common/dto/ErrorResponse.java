@@ -1,6 +1,6 @@
-package com.game_service.tic_tac_toe.dto;
+package com.game_service.common.dto;
 
-import com.game_service.tic_tac_toe.enums.ErrorType;
+import com.game_service.common.enums.ErrorType;
 import lombok.Builder;
 import org.springframework.http.HttpStatus;
 

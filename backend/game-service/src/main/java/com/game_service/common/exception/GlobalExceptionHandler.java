@@ -1,8 +1,8 @@
-package com.game_service.tic_tac_toe.exception;
+package com.game_service.common.exception;
 
-import com.game_service.tic_tac_toe.dto.ErrorResponse;
-import com.game_service.tic_tac_toe.enums.ErrorType;
-import com.game_service.tic_tac_toe.factory.ErrorFactory;
+import com.game_service.common.dto.ErrorResponse;
+import com.game_service.common.enums.ErrorType;
+import com.game_service.common.factory.ErrorFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

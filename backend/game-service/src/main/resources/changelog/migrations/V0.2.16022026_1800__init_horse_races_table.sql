@@ -10,7 +10,7 @@ CREATE TABLE game_horse_races (
     horse_count SMALLINT NOT NULL,
     winner_horse_index SMALLINT NOT NULL,
     segments_count SMALLINT NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'SIMULATED',
+    status VARCHAR(50) NOT NULL DEFAULT 'RUNNING',
     created_at TIMESTAMP NOT NULL
 );
 

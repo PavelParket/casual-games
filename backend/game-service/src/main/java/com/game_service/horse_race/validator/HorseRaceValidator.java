@@ -1,8 +1,8 @@
 package com.game_service.horse_race.validator;
 
+import com.game_service.common.exception.GameValidationException;
 import com.game_service.horse_race.domain.dto.HorseRaceRequest;
 import com.game_service.horse_race.util.HorseRaceGameUtils;
-import com.game_service.tic_tac_toe.exception.GameValidationException;
 import org.springframework.stereotype.Component;
 
 @Component

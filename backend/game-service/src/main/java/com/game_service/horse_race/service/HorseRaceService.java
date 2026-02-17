@@ -1,6 +1,7 @@
 package com.game_service.horse_race.service;
 
 import com.game_service.common.enums.MessageType;
+import com.game_service.common.exception.GameValidationException;
 import com.game_service.horse_race.domain.dto.HorseRacePresetResponse;
 import com.game_service.horse_race.domain.dto.HorseRaceRequest;
 import com.game_service.horse_race.domain.dto.HorseRaceResponse;
@@ -12,7 +13,6 @@ import com.game_service.horse_race.mapper.HorseRaceMapper;
 import com.game_service.horse_race.repository.HorseRaceRepository;
 import com.game_service.horse_race.util.HorseRaceGameUtils;
 import com.game_service.horse_race.validator.HorseRaceValidator;
-import com.game_service.tic_tac_toe.exception.GameValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,8 +26,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class HorseRaceService {
-
-    private final Random random = new Random();
 
     private final HorseRaceRepository horseRaceRepository;
 
@@ -97,7 +95,7 @@ public class HorseRaceService {
                 seedHash,
                 serverSeed,
                 horseCount,
-                request.odds(),
+                HorseRaceGameUtils.calculateOdds(horseCount),
                 winnerHorseIndex,
                 segmentsCount,
                 ticks

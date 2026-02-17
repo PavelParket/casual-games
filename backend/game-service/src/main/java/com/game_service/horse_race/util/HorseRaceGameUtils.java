@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
 @UtilityClass
@@ -26,8 +27,6 @@ public class HorseRaceGameUtils {
 
     public final int MAX_SPEED = 10;
 
-    private final Random random = new Random();
-
     public double[] calculateOdds(int horseCount) {
         return IntStream.range(0, horseCount)
                 .mapToDouble(horse -> horse + 1.0)
@@ -36,12 +35,14 @@ public class HorseRaceGameUtils {
 
     public int calculateHorseCount() {
         return HorseRaceGameUtils.MIN_HORSES
-                + random.nextInt(HorseRaceGameUtils.MAX_HORSES - HorseRaceGameUtils.MIN_HORSES + 1);
+                + ThreadLocalRandom.current()
+                .nextInt(HorseRaceGameUtils.MAX_HORSES - HorseRaceGameUtils.MIN_HORSES + 1);
     }
 
     public int calculateSegmentsCount() {
         return HorseRaceGameUtils.MIN_SEGMENTS
-                + random.nextInt(HorseRaceGameUtils.MAX_SEGMENTS - HorseRaceGameUtils.MIN_SEGMENTS + 1);
+                + ThreadLocalRandom.current()
+                .nextInt(HorseRaceGameUtils.MAX_SEGMENTS - HorseRaceGameUtils.MIN_SEGMENTS + 1);
     }
 
     public int[][] buildSpeeds(Random seededRandom, int horseCount, int segmentsCount) {

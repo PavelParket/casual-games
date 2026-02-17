@@ -1,4 +1,4 @@
-package com.game_service.tic_tac_toe.exception;
+package com.game_service.common.exception;
 
 public class InvalidMoveException extends GameException {
 
