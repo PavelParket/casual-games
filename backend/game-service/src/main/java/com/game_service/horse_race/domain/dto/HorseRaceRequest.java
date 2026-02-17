@@ -25,6 +25,8 @@ public record HorseRaceRequest(
 
         Integer horseCount,
 
+        double[] odds,
+
         BigDecimal bet,
 
         Integer horseIndex
