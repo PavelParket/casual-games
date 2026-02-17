@@ -46,6 +46,9 @@ public class HorseRace {
     private String seedHash;
 
     @Column(nullable = false)
+    private Integer horseCount;
+
+    @Column(nullable = false)
     private Integer winnerHorseIndex;
 
     @Column(nullable = false)

@@ -27,6 +27,10 @@ public record HorseRaceResponse(
 
         String serverSeed,
 
+        Integer horseCount,
+
+        double[] odds,
+
         Integer winnerHorseIndex,
 
         Integer segmentsCount,

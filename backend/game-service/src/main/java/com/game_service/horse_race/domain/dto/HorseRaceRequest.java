@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public record HorseRaceRequest(
+
         MessageType type,
 
         HorseRaceEvent event,
@@ -21,6 +22,8 @@ public record HorseRaceRequest(
         String message,
 
         Map<UUID, String> participants,
+
+        Integer horseCount,
 
         BigDecimal bet,
 
