@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.UUID;
+
 @Deprecated
 @Service
 @Slf4j
@@ -72,5 +74,15 @@ public class RoomManager extends AbstractRoomManager {
                 room.getId(),
                 user.username() + " left room: " + room.getName()
         ));
+    }
+
+    @Override
+    protected void onCreateRoom(Room room) {
+
+    }
+
+    @Override
+    protected void onDeleteRoom(UUID roomId) {
+
     }
 }

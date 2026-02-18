@@ -12,6 +12,7 @@ import java.util.UUID;
 @Mapper(componentModel = "spring")
 public interface HorseRaceGameMessageMapper extends MessageMapper {
 
+    @Mapping(target = "event", ignore = true)
     @Mapping(target = "fromUserId", ignore = true)
     @Mapping(target = "toUserId", ignore = true)
     @Mapping(target = "message", ignore = true)
@@ -23,7 +24,7 @@ public interface HorseRaceGameMessageMapper extends MessageMapper {
     @Mapping(target = "segmentsCount", ignore = true)
     @Mapping(target = "ticks", ignore = true)
     @Mapping(target = "participants", ignore = true)
-    HorseRaceMessage toCreateRequest(MessageType type, HorseRaceEvent event, UUID roomId);
+    HorseRaceMessage toCreateRequest(MessageType type, UUID roomId);
 
     @Mapping(target = "fromUserId", ignore = true)
     @Mapping(target = "toUserId", ignore = true)

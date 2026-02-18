@@ -58,8 +58,6 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
             log.info("Received horse race message: event={}, room={}, user={}", horseRaceMessage.event(), roomId, user.username());
 
             switch (horseRaceMessage.event()) {
-                case CREATE -> handleCreate(roomId);
-
                 case READY -> handleReady(roomId, user);
 
                 default -> log.warn("Unhandled horse race event: {}", horseRaceMessage.event());
@@ -77,32 +75,6 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
     @Override
     protected void onLeave(UUID roomId, UserInternalResponse user) {
 
-    }
-
-    private void handleCreate(UUID roomId) {
-        try {
-            if (roomManager.getPreset(roomId) != null) {
-                log.info("Preset already exists for room={}, skipping CREATE", roomId);
-                return;
-            }
-
-            HorseRaceMessage createRequest = horseRaceMessageMapper.toCreateRequest(
-                    MessageType.SYSTEM,
-                    HorseRaceEvent.CREATE,
-                    roomId
-            );
-
-            HorseRaceMessage createResponse = gameServiceClient.createRace(createRequest)
-                    .orElseThrow(() -> new RuntimeException("Empty preset response from game-service"));
-
-            roomManager.savePreset(roomId, createResponse);
-
-            roomManager.broadcast(roomId, createResponse);
-
-            log.info("Race preset created and broadcasted for room={}: horseCount={}", roomId, createResponse.horseCount());
-        } catch (Exception e) {
-            log.error("Failed to handle CREATE for room={}", roomId, e);
-        }
     }
 
     private void handleReady(UUID roomId, UserInternalResponse user) {

@@ -45,7 +45,6 @@ public class HorseRaceService {
 
         return horseRaceMapper.toPresetResponse(
                 MessageType.SYSTEM,
-                HorseRaceEvent.CREATE,
                 request.roomId(),
                 "Race preset created",
                 horseCount,

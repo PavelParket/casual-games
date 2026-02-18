@@ -1,5 +1,6 @@
 package com.websocket_hub.manager;
 
+import com.websocket_hub.client.GameServiceClient;
 import com.websocket_hub.domain.dto.message.HorseRaceMessage;
 import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
@@ -7,7 +8,9 @@ import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
+import com.websocket_hub.domain.enums.redis.RoomPresetRedisKey;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
+import com.websocket_hub.domain.repository.RoomPresetRedisRepository;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
 import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.mapper.HorseRaceGameMessageMapper;
@@ -30,7 +33,11 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
 
     private final Map<UUID, Set<UUID>> readyPlayers = new ConcurrentHashMap<>();
 
-    private final MessageMapper messageMapper;
+    private final HorseRaceGameMessageMapper horseRaceGameMessageMapper;
+
+    private final RoomPresetRedisRepository presetRedisRepository;
+
+    private final GameServiceClient gameServiceClient;
 
     public HorseRaceGameRoomManager(
             MessageSerializer serializer,
@@ -38,10 +45,14 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
             SessionManager sessionManager,
             RoomValidator validator,
             RoomRedisRepository redisRepository,
-            HorseRaceGameMessageMapper horseRaceGameMessageMapper
+            HorseRaceGameMessageMapper horseRaceGameMessageMapper,
+            RoomPresetRedisRepository presetRedisRepository,
+            GameServiceClient gameServiceClient
     ) {
         super(serializer, roomFactory, sessionManager, validator, redisRepository);
-        this.messageMapper = horseRaceGameMessageMapper;
+        this.horseRaceGameMessageMapper = horseRaceGameMessageMapper;
+        this.presetRedisRepository = presetRedisRepository;
+        this.gameServiceClient = gameServiceClient;
     }
 
     @Override
@@ -51,7 +62,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
 
     @Override
     public MessageMapper getMapper() {
-        return messageMapper;
+        return horseRaceGameMessageMapper;
     }
 
     @Override
@@ -63,7 +74,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
     protected void onAddSession(UserInternalResponse user, Room room, WebSocketSession session) {
         log.info("Player email={} username={} joined horse race room {}", user.email(), user.username(), room.getName());
 
-        broadcast(room.getId(), messageMapper.toResponse(
+        broadcast(room.getId(), horseRaceGameMessageMapper.toResponse(
                 MessageType.SYSTEM,
                 HorseRaceEvent.JOIN,
                 user.guid(),
@@ -82,7 +93,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
             return players.isEmpty() ? null : players;
         });
 
-        broadcast(room.getId(), messageMapper.toResponse(
+        broadcast(room.getId(), horseRaceGameMessageMapper.toResponse(
                 MessageType.SYSTEM,
                 HorseRaceEvent.LEAVE,
                 user.guid(),
@@ -94,12 +105,29 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
 
     @Override
     protected void onCreateRoom(Room room) {
+        try {
+            HorseRaceMessage createRequest = horseRaceGameMessageMapper.toCreateRequest(MessageType.SYSTEM, room.getId());
 
+            HorseRaceMessage createResponse = gameServiceClient.createRace(createRequest)
+                    .orElseThrow(() -> new RuntimeException("Failed to create race preset from game-service"));
+
+            presetRedisRepository.savePreset(room.getId(), createResponse, RoomPresetRedisKey.HORSE_RACE_PRESET);
+
+            log.info("Race preset created and saved for room={}: horseCount={}, odds={}", room.getId(), createRequest.horseCount(), createResponse.odds());
+        } catch (Exception e) {
+            log.error("Failed to create preset for room={}: {}", room.getId(), e.getMessage());
+            // TODO: decide on failure strategy - delete room or allow without preset?
+            throw new RuntimeException("Failed to initialize horse race room", e);
+        }
     }
 
     @Override
     protected void onDeleteRoom(UUID roomId) {
+        presetRedisRepository.deletePreset(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET);
 
+        removeReadyPlayers(roomId);
+
+        log.info("Horse race cleanup complete for room={}", roomId);
     }
 
     @Override
@@ -107,17 +135,12 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
         return readyPlayers.getOrDefault(roomId, Set.of()).size();
     }
 
-    public void savePreset(UUID roomId, HorseRaceMessage preset) {
-        roomPresets.put(roomId, preset);
-        log.info("Preset saved for room={}: horseCount={}", roomId, preset.horseCount());
-    }
-
     public HorseRaceMessage getPreset(UUID roomId) {
-        return roomPresets.get(roomId);
+        return presetRedisRepository.getPreset(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET, HorseRaceMessage.class);
     }
 
     public void removePreset(UUID roomId) {
-        roomPresets.remove(roomId);
+        presetRedisRepository.deletePreset(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET);
     }
 
     public void markReady(UUID roomId, UserInternalResponse user) {
@@ -132,7 +155,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
 
         log.info("Player {} is ready in room {}. Total ready: {}", user.username(), roomId, ready.size());
 
-        broadcast(roomId, messageMapper.toResponse(
+        broadcast(roomId, horseRaceGameMessageMapper.toResponse(
                 MessageType.SYSTEM,
                 HorseRaceEvent.READY,
                 user.guid(),

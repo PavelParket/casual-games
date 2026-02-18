@@ -120,6 +120,16 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
     }
 
     @Override
+    protected void onCreateRoom(Room room) {
+
+    }
+
+    @Override
+    protected void onDeleteRoom(UUID roomId) {
+
+    }
+
+    @Override
     public Integer getReadyPlayerCount(UUID roomId) {
         return readyPlayers.getOrDefault(roomId, Set.of()).size();
     }

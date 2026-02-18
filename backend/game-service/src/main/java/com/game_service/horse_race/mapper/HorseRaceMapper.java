@@ -16,8 +16,8 @@ import java.util.UUID;
 @Mapper(componentModel = "spring")
 public interface HorseRaceMapper {
 
+    @Mapping(target = "event", ignore = true)
     HorseRacePresetResponse toPresetResponse(MessageType type,
-                                             HorseRaceEvent event,
                                              UUID roomId,
                                              String message,
                                              int horseCount,
