@@ -2,6 +2,7 @@ package com.game_service.horse_race.validator;
 
 import com.game_service.common.exception.GameValidationException;
 import com.game_service.horse_race.domain.dto.HorseRaceRequest;
+import com.game_service.horse_race.domain.enums.HorseRaceEvent;
 import com.game_service.horse_race.util.HorseRaceGameUtils;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +52,10 @@ public class HorseRaceValidator {
     public void validateResult(HorseRaceRequest request) {
         if (request == null) {
             throw new GameValidationException("Request cannot be null");
+        }
+
+        if (!HorseRaceEvent.RESULT.equals(request.event())) {
+            throw new GameValidationException("Wrong game event");
         }
 
         if (request.roomId() == null) {

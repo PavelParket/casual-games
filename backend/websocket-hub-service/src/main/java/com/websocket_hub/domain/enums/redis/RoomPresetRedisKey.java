@@ -5,10 +5,9 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum RoomTypeRedisKey {
+public enum RoomPresetRedisKey {
 
-    TIC_TAC_TOE_ROOM("room:tic-tac-toe"),
-    HORSE_RACE_ROOM("room:horse-race");
+    HORSE_RACE_PRESET("preset:horse-race");
 
     private final String redisKey;
 }

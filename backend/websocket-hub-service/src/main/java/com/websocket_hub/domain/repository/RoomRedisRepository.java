@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RoomRedisRepository {
 
-    public final String ASTERIX_PLACEHOLDER = "*";
-    public final String COLON_PLACEHOLDER = ":";
+    public static final String ASTERIX_PLACEHOLDER = "*";
+    public static final String COLON_PLACEHOLDER = ":";
 
     private final RedisHashRepository redisHashRepository;
 

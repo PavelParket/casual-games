@@ -6,7 +6,7 @@ import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomType;
-import com.websocket_hub.domain.enums.TicTacToeGameEvent;
+import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
 import com.websocket_hub.factory.ObjectFactory;

@@ -6,8 +6,8 @@ import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.entity.RoomMetadata;
-import com.websocket_hub.domain.enums.EventType;
 import com.websocket_hub.domain.enums.RoomType;
+import com.websocket_hub.domain.enums.events.EventType;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
 import com.websocket_hub.factory.RoomFactory;
@@ -53,6 +53,10 @@ public abstract class AbstractRoomManager {
     protected abstract void onAddSession(UserInternalResponse user, Room room, WebSocketSession session);
 
     protected abstract void onRemoveSession(UserInternalResponse user, Room room, WebSocketSession session);
+
+    protected abstract void onCreateRoom(Room room);
+
+    protected abstract void onDeleteRoom(UUID roomId);
 
     public void addSession(UUID roomId, UserInternalResponse user, WebSocketSession session) {
         Room room = restoreRoom(roomId);
@@ -110,6 +114,8 @@ public abstract class AbstractRoomManager {
 
             redisRepository.save(RoomMetadata.create(room), getRedisKey());
 
+            onCreateRoom(room);
+
             log.info("Room name={} id={} was created", room.getName(), room.getId());
 
             return room;
@@ -134,6 +140,8 @@ public abstract class AbstractRoomManager {
             }
 
             redisRepository.deleteFullRoom(roomId, getRedisKey());
+
+            onDeleteRoom(roomId);
 
             log.info("Room id={} was deleted", roomId);
         }

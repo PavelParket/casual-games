@@ -2,7 +2,7 @@ package com.websocket_hub.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.websocket_hub.domain.dto.message.Message;
-import com.websocket_hub.domain.enums.EventType;
+import com.websocket_hub.domain.enums.events.EventType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

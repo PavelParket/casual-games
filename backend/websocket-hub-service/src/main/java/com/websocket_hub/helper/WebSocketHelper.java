@@ -2,7 +2,7 @@ package com.websocket_hub.helper;
 
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.enums.MessageType;
-import com.websocket_hub.domain.enums.TicTacToeGameEvent;
+import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.MessageMapper;
 import lombok.RequiredArgsConstructor;
