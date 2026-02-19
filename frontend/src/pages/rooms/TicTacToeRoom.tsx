@@ -2,9 +2,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Input, Toast, Typography, useThemedIcon } from "../../ui";
-import type { GameMessage } from "../../models/WsMessage";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
+import type { TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage } from "../../utils/SecurityUtils";
 import { findByGuid } from "../../store/slices/UserSlice";
 import { getPlayersBets, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/TicTacToeRoomSlice";
@@ -45,7 +45,7 @@ export default function TicTacToeRoom() {
       dispatch(findByGuid(guid));
    }, [dispatch, guid, navigate, roomId]);
 
-   const { isConnected, message, send } = useWebSocket<GameMessage>(
+   const { isConnected, message, send } = useWebSocket<TicTacToeGameMessage>(
       roomId,
       room?.type,
    );
@@ -63,7 +63,7 @@ export default function TicTacToeRoom() {
       setBetInput("");
    }, []);
 
-   const processStart = useCallback((message: GameMessage) => {
+   const processStart = useCallback((message: TicTacToeGameMessage) => {
       setBoard(message.board!);
       setCurrentPlayerSymbol(message.currentPlayerSymbol);
       setPlayersSymbols(message.playersSymbols);
@@ -89,7 +89,7 @@ export default function TicTacToeRoom() {
       setIsGame(true);
    }, [guid]);
 
-   const processMove = useCallback((message: GameMessage) => {
+   const processMove = useCallback((message: TicTacToeGameMessage) => {
       if (!message.board) {
          return;
       }
@@ -98,7 +98,7 @@ export default function TicTacToeRoom() {
       setCurrentPlayerSymbol(message.nextPlayerSymbol);
    }, []);
 
-   const processWin = useCallback((message: GameMessage) => {
+   const processWin = useCallback((message: TicTacToeGameMessage) => {
       if (!message.board || !message.winner || !message.players) {
          return;
       }
@@ -115,7 +115,7 @@ export default function TicTacToeRoom() {
       setIsGame(false);
    }, [mySymbol]);
 
-   const processDraw = useCallback((message: GameMessage) => {
+   const processDraw = useCallback((message: TicTacToeGameMessage) => {
       if (!message.board || !message.message) {
          return;
       }

@@ -17,7 +17,7 @@ public class HorseRaceGameRoomController {
 
     private final HorseRaceGameRoomService horseRaceGameRoomService;
 
-    @GetMapping("/{roomId}/preset")
+    @GetMapping("/preset/{roomId}")
     public HorseRaceGamePreset getPreset(@PathVariable UUID roomId) {
         return horseRaceGameRoomService.getPreset(roomId);
     }

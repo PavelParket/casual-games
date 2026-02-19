@@ -1,3 +1,5 @@
+import type { HorseRaceGameTick } from "./HorseRace";
+
 export interface WSMessage {
    type: string;
    event: string;
@@ -7,7 +9,7 @@ export interface WSMessage {
    message?: string;
 }
 
-export interface GameMessage extends WSMessage {
+export interface TicTacToeGameMessage extends WSMessage {
    board?: string[];
    cell?: number;
    currentPlayerSymbol?: string;
@@ -16,4 +18,15 @@ export interface GameMessage extends WSMessage {
    players?: Record<string, string>;
    winner?: string;
    bet?: number;
+}
+
+export interface HorseRaceGameMessage extends WSMessage {
+   participants?: Record<string, string>;
+   horseCount?: number;
+   odds?: number[];
+   seedHash?: string;
+   serverSeed?: string;
+   winnerHorseIndex?: number;
+   segmentsCount?: number;
+   ticks?: HorseRaceGameTick[];
 }
