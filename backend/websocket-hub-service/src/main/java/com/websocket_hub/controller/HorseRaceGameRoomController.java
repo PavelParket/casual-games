@@ -1,6 +1,6 @@
 package com.websocket_hub.controller;
 
-import com.websocket_hub.domain.dto.message.HorseRaceMessage;
+import com.websocket_hub.domain.entity.HorseRaceGamePreset;
 import com.websocket_hub.service.HorseRaceGameRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +18,7 @@ public class HorseRaceGameRoomController {
     private final HorseRaceGameRoomService horseRaceGameRoomService;
 
     @GetMapping("/{roomId}/preset")
-    public HorseRaceMessage getPreset(@PathVariable UUID roomId) {
+    public HorseRaceGamePreset getPreset(@PathVariable UUID roomId) {
         return horseRaceGameRoomService.getPreset(roomId);
     }
 }

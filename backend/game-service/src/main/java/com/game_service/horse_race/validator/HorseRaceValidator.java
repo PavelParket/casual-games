@@ -1,7 +1,7 @@
 package com.game_service.horse_race.validator;
 
 import com.game_service.common.exception.GameValidationException;
-import com.game_service.horse_race.domain.dto.HorseRaceRequest;
+import com.game_service.horse_race.domain.dto.HorseRaceGameRequest;
 import com.game_service.horse_race.domain.enums.HorseRaceEvent;
 import com.game_service.horse_race.util.HorseRaceGameUtils;
 import org.springframework.stereotype.Component;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class HorseRaceValidator {
 
-    public void validateCreate(HorseRaceRequest request) {
+    public void validateCreate(HorseRaceGameRequest request) {
         if (request == null) {
             throw new GameValidationException("Request cannot be null");
         }
@@ -19,9 +19,13 @@ public class HorseRaceValidator {
         }
     }
 
-    public void validateStart(HorseRaceRequest request) {
+    public void validateStart(HorseRaceGameRequest request) {
         if (request == null) {
             throw new GameValidationException("Request cannot be null");
+        }
+
+        if (!HorseRaceEvent.START.equals(request.event())) {
+            throw new GameValidationException("Wrong game event");
         }
 
         if (request.roomId() == null) {
@@ -49,7 +53,7 @@ public class HorseRaceValidator {
         }
     }
 
-    public void validateResult(HorseRaceRequest request) {
+    public void validateResult(HorseRaceGameRequest request) {
         if (request == null) {
             throw new GameValidationException("Request cannot be null");
         }

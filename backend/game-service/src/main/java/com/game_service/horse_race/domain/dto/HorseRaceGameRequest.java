@@ -1,22 +1,20 @@
 package com.game_service.horse_race.domain.dto;
 
-import com.game_service.common.enums.MessageType;
 import com.game_service.horse_race.domain.enums.HorseRaceEvent;
+import lombok.Builder;
 
+import java.util.Map;
 import java.util.UUID;
 
-public record HorseRacePresetResponse(
-
-        MessageType type,
+@Builder
+public record HorseRaceGameRequest(
 
         HorseRaceEvent event,
 
         UUID roomId,
 
-        String message,
+        Map<UUID, String> participants,
 
-        int horseCount,
-
-        double[] odds
+        Integer horseCount
 ) {
 }

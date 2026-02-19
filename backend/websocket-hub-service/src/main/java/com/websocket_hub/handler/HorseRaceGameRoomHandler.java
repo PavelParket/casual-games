@@ -1,8 +1,11 @@
 package com.websocket_hub.handler;
 
 import com.websocket_hub.client.GameServiceClient;
-import com.websocket_hub.domain.dto.message.HorseRaceMessage;
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
+import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
+import com.websocket_hub.domain.dto.message.HorseRaceGameMessage;
+import com.websocket_hub.domain.entity.HorseRaceGamePreset;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
 import com.websocket_hub.manager.HorseRaceGameRoomManager;
@@ -22,6 +25,7 @@ import java.util.UUID;
 @Component
 @Slf4j
 public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameRoomManager> {
+
     private final MessageDeserializer messageDeserializer;
 
     private final HorseRaceGameMessageMapper horseRaceMessageMapper;
@@ -51,16 +55,16 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
         }
 
         try {
-            HorseRaceMessage horseRaceMessage = messageDeserializer.deserialize(payload, HorseRaceMessage.class);
+            HorseRaceGameMessage horseRaceGameMessage = messageDeserializer.deserialize(payload, HorseRaceGameMessage.class);
             UUID roomId = WebSocketUtil.getRoomId(session);
             UserInternalResponse user = WebSocketUtil.getUser(session);
 
-            log.info("Received horse race message: event={}, room={}, user={}", horseRaceMessage.event(), roomId, user.username());
+            log.info("Received horse race message: event={}, room={}, user={}", horseRaceGameMessage.event(), roomId, user.username());
 
-            switch (horseRaceMessage.event()) {
+            switch (horseRaceGameMessage.event()) {
                 case READY -> handleReady(roomId, user);
 
-                default -> log.warn("Unhandled horse race event: {}", horseRaceMessage.event());
+                default -> log.warn("Unhandled horse race event: {}", horseRaceGameMessage.event());
             }
         } catch (Exception e) {
             log.error("Failed to handle horse race message", e);
@@ -79,7 +83,7 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
 
     private void handleReady(UUID roomId, UserInternalResponse user) {
         try {
-            HorseRaceMessage preset = roomManager.getPreset(roomId);
+            HorseRaceGamePreset preset = roomManager.getPreset(roomId);
 
             if (preset == null) {
                 log.warn("Player {} sent READY but preset not found for room={}", user.username(), roomId);
@@ -97,21 +101,31 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
         }
     }
 
-    private void startRace(UUID roomId, HorseRaceMessage preset) {
+    private void startRace(UUID roomId, HorseRaceGamePreset horseRaceGamePreset) {
         try {
             Map<UUID, String> participants = roomManager.getParticipants(roomId);
 
-            HorseRaceMessage startRequest = horseRaceMessageMapper.toStartRequest(
-                    MessageType.SYSTEM,
+            HorseRaceGameInternalRequest startRequest = horseRaceMessageMapper.toStartRequest(
                     HorseRaceEvent.START,
-                    roomId, participants,
-                    preset.horseCount()
+                    roomId,
+                    participants,
+                    horseRaceGamePreset.horseCount()
             );
 
-            HorseRaceMessage startResponse = gameServiceClient.startRace(startRequest)
+            HorseRaceGameInternalResponse startResponse = gameServiceClient.startRace(startRequest)
                     .orElseThrow(() -> new RuntimeException("Empty start response from game-service"));
 
-            roomManager.broadcast(roomId, startResponse);
+            HorseRaceGameMessage horseRaceGameMessage = horseRaceMessageMapper.toMessage(
+                    startResponse,
+                    MessageType.SYSTEM,
+                    HorseRaceEvent.START,
+                    null,
+                    null,
+                    "Race started",
+                    participants
+            );
+
+            roomManager.broadcast(roomId, horseRaceGameMessage);
 
             log.info("Race started and broadcasted for room={}: winner=horse#{}", roomId, startResponse.winnerHorseIndex());
 
@@ -123,13 +137,9 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
 
     private void notifyResult(UUID roomId) {
         try {
-            HorseRaceMessage resultRequest = horseRaceMessageMapper.toFinishRequest(
-                    MessageType.SYSTEM,
+            HorseRaceGameInternalRequest resultRequest = horseRaceMessageMapper.toFinishRequest(
                     HorseRaceEvent.RESULT,
-                    null,
-                    null,
-                    roomId,
-                    "Race finished"
+                    roomId
             );
 
             gameServiceClient.finishRace(resultRequest);

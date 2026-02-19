@@ -1,6 +1,6 @@
 package com.websocket_hub.service;
 
-import com.websocket_hub.domain.dto.message.HorseRaceMessage;
+import com.websocket_hub.domain.entity.HorseRaceGamePreset;
 import com.websocket_hub.manager.HorseRaceGameRoomManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +15,8 @@ public class HorseRaceGameRoomService {
 
     private final HorseRaceGameRoomManager horseRaceGameRoomManager;
 
-    public HorseRaceMessage getPreset(UUID roomId) {
-        HorseRaceMessage preset = horseRaceGameRoomManager.getPreset(roomId);
+    public HorseRaceGamePreset getPreset(UUID roomId) {
+        HorseRaceGamePreset preset = horseRaceGameRoomManager.getPreset(roomId);
 
         if (preset == null) {
             log.error("Preset not found for room={}", roomId);

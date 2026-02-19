@@ -1,4 +1,4 @@
-package com.websocket_hub.domain.dto.bank_service;
+package com.websocket_hub.domain.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

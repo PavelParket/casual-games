@@ -1,6 +1,7 @@
 package com.websocket_hub.client;
 
-import com.websocket_hub.domain.dto.message.HorseRaceMessage;
+import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
+import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,7 +87,7 @@ public class GameServiceClient {
     // HorseRace
     // -------------------------------------------------------------------------
 
-    public Optional<HorseRaceMessage> createRace(HorseRaceMessage request) {
+    public Optional<HorseRaceGameInternalResponse> createRace(HorseRaceGameInternalRequest request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
                 .path("/game/horse-race/create")
                 .build()
@@ -95,9 +96,9 @@ public class GameServiceClient {
         log.info("Calling game-service to create race preset: roomId={}", request.roomId());
 
         try {
-            ResponseEntity<HorseRaceMessage> response = restTemplate.exchange(
+            ResponseEntity<HorseRaceGameInternalResponse> response = restTemplate.exchange(
                     new RequestEntity<>(request, HttpMethod.POST, uri),
-                    HorseRaceMessage.class
+                    HorseRaceGameInternalResponse.class
             );
 
             log.info("Race preset created successfully: {}", response.getBody());
@@ -109,7 +110,7 @@ public class GameServiceClient {
         }
     }
 
-    public Optional<HorseRaceMessage> startRace(HorseRaceMessage request) {
+    public Optional<HorseRaceGameInternalResponse> startRace(HorseRaceGameInternalRequest request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
                 .path("/game/horse-race/start")
                 .build()
@@ -118,12 +119,12 @@ public class GameServiceClient {
         log.info("Calling game-service to start race: roomId={}, horseCount={}", request.roomId(), request.horseCount());
 
         try {
-            ResponseEntity<HorseRaceMessage> response = restTemplate.exchange(
+            ResponseEntity<HorseRaceGameInternalResponse> response = restTemplate.exchange(
                     new RequestEntity<>(request, HttpMethod.POST, uri),
-                    HorseRaceMessage.class
+                    HorseRaceGameInternalResponse.class
             );
 
-            log.info("Race started successfully: roomId={}", request.roomId());
+            log.info("Race started successfully: roomId={}, race={}", request.roomId(), response.getBody());
 
             return Optional.ofNullable(response.getBody());
         } catch (Exception e) {
@@ -132,7 +133,7 @@ public class GameServiceClient {
         }
     }
 
-    public void finishRace(HorseRaceMessage request) {
+    public void finishRace(HorseRaceGameInternalRequest request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
                 .path("/game/horse-race/result")
                 .build()

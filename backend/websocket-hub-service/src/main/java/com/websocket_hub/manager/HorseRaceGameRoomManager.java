@@ -1,9 +1,11 @@
 package com.websocket_hub.manager;
 
 import com.websocket_hub.client.GameServiceClient;
-import com.websocket_hub.domain.dto.message.HorseRaceMessage;
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
+import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
+import com.websocket_hub.domain.entity.HorseRaceGamePreset;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomType;
@@ -106,14 +108,18 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
     @Override
     protected void onCreateRoom(Room room) {
         try {
-            HorseRaceMessage createRequest = horseRaceGameMessageMapper.toCreateRequest(MessageType.SYSTEM, room.getId());
+            HorseRaceGameInternalRequest createRequest = HorseRaceGameInternalRequest.builder()
+                    .roomId(room.getId())
+                    .build();
 
-            HorseRaceMessage createResponse = gameServiceClient.createRace(createRequest)
+            HorseRaceGameInternalResponse createResponse = gameServiceClient.createRace(createRequest)
                     .orElseThrow(() -> new RuntimeException("Failed to create race preset from game-service"));
 
-            presetRedisRepository.savePreset(room.getId(), createResponse, RoomPresetRedisKey.HORSE_RACE_PRESET);
+            HorseRaceGamePreset preset = horseRaceGameMessageMapper.toPreset(createResponse);
 
-            log.info("Race preset created and saved for room={}: horseCount={}, odds={}", room.getId(), createRequest.horseCount(), createResponse.odds());
+            presetRedisRepository.savePreset(room.getId(), preset, RoomPresetRedisKey.HORSE_RACE_PRESET);
+
+            log.info("Race preset created and saved for room={}: horseCount={}, odds={}", room.getId(), preset.horseCount(), preset.odds());
         } catch (Exception e) {
             log.error("Failed to create preset for room={}: {}", room.getId(), e.getMessage());
             // TODO: decide on failure strategy - delete room or allow without preset?
@@ -135,8 +141,8 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
         return readyPlayers.getOrDefault(roomId, Set.of()).size();
     }
 
-    public HorseRaceMessage getPreset(UUID roomId) {
-        return presetRedisRepository.getPreset(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET, HorseRaceMessage.class);
+    public HorseRaceGamePreset getPreset(UUID roomId) {
+        return presetRedisRepository.getPreset(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET, HorseRaceGamePreset.class);
     }
 
     public void removePreset(UUID roomId) {

@@ -1,5 +1,6 @@
 package com.websocket_hub.domain.dto.message;
 
+import com.websocket_hub.domain.entity.HorseRaceGameTick;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
 import lombok.Builder;
@@ -9,7 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Builder
-public record HorseRaceMessage(
+public record HorseRaceGameMessage(
 
         MessageType type,
 
@@ -23,9 +24,11 @@ public record HorseRaceMessage(
 
         String message,
 
+        Map<UUID, String> participants,
+
         Integer horseCount,
 
-        double[] odds,
+        List<Double> odds,
 
         String seedHash,
 
@@ -35,9 +38,7 @@ public record HorseRaceMessage(
 
         Integer segmentsCount,
 
-        List<double[]> ticks,
-
-        Map<UUID, String> participants
+        List<HorseRaceGameTick> ticks
 
 ) implements Message<HorseRaceEvent> {
 }

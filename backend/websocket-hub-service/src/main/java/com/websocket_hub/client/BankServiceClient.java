@@ -1,7 +1,7 @@
 package com.websocket_hub.client;
 
-import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalRequest;
-import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalResponse;
+import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalRequest;
+import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

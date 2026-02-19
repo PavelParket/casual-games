@@ -1,6 +1,6 @@
 package com.websocket_hub.util;
 
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.enums.RoomType;
 import lombok.experimental.UtilityClass;
 import org.springframework.web.socket.WebSocketSession;

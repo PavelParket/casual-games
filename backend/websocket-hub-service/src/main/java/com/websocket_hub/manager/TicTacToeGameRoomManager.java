@@ -1,8 +1,8 @@
 package com.websocket_hub.manager;
 
-import com.websocket_hub.domain.dto.bank_service.PlayerBet;
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
+import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomType;

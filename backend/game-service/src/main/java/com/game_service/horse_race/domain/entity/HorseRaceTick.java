@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 
 @Builder
-public record HorseTick(
+public record HorseRaceTick(
 
         @JsonProperty("tickIndex")
         int tickIndex,
