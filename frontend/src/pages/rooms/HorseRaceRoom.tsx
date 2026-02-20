@@ -10,7 +10,9 @@ import { useWebSocket } from "../../hooks/useWebSocket";
 import type { HorseRaceGameMessage } from "../../models/WsMessage";
 import { Box, Button, Card, Container, Toast, Typography } from "../../ui";
 
-const TICK_INTERVAL_MS = 400;
+const TICK_DURATION_MS = 600;
+const RACE_DURATION_MS = 10 * TICK_DURATION_MS;
+
 const HORSE_SIZE = 36;
 
 const HORSE_COLORS = [
@@ -48,7 +50,9 @@ export default function HorseRaceRoom() {
     const [winnerIndex, setWinnerIndex] = useState<number | undefined>();
 
     const ticksRef = useRef<HorseRaceGameTick[]>([]);
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const rafRef = useRef<number | null>(null);
+    const startTimeRef = useRef<number>(0);
+    const winnerRef = useRef<number>(0);
 
     const trackRef = useRef<HTMLDivElement>(null);
     const trackWidthRef = useRef<number>(0);
@@ -93,36 +97,51 @@ export default function HorseRaceRoom() {
         dispatch(getPreset({ roomId }));
     }, [dispatch, isConnected, room, roomId]);
 
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
     const stopAnimation = useCallback(() => {
-        if (intervalRef.current !== null) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
+        if (rafRef.current !== null) {
+            cancelAnimationFrame(rafRef.current);
+            rafRef.current = null;
         }
     }, []);
 
     const startAnimation = useCallback((ticks: HorseRaceGameTick[], winner: number) => {
         ticksRef.current = ticks;
-        let i = 0;
+        winnerRef.current = winner;
+        startTimeRef.current = performance.now();
 
-        setHorsePositions(ticks[0]?.positions ?? []);
+        const totalTicks = ticks.length;
 
-        intervalRef.current = setInterval(() => {
-            const tick = ticksRef.current[i];
+        const frame = (now: number) => {
+            const elapsed = now - startTimeRef.current;
+            const progress = Math.min(elapsed / RACE_DURATION_MS, 1);
 
-            if (tick) {
-                setHorsePositions(tick.positions);
-            }
+            const rawIndex = progress * (totalTicks - 1);
+            const tickIndex = Math.floor(rawIndex);
+            const localT = rawIndex - tickIndex;
 
-            i++;
+            const fromTick = ticks[Math.min(tickIndex, totalTicks - 1)];
+            const toTick = ticks[Math.min(tickIndex + 1, totalTicks - 1)];
 
-            if (i >= ticksRef.current.length) {
-                stopAnimation();
-                setWinnerIndex(winner);
+            const interpolated = fromTick.positions.map((fromPos, i) =>
+                lerp(fromPos, toTick.positions[i], localT)
+            );
+
+            setHorsePositions(interpolated);
+
+            if (progress < 1) {
+                rafRef.current = requestAnimationFrame(frame);
+            } else {
+                rafRef.current = null;
+                setWinnerIndex(winnerRef.current);
                 setPhase("FINISHED");
-                showToast(`🏆 Horse #${winner} wins!`);
+                showToast(`🏆 Horse #${winnerRef.current} wins!`);
             }
-        }, TICK_INTERVAL_MS);
-    }, [stopAnimation, showToast]);
+        };
+
+        rafRef.current = requestAnimationFrame(frame);
+    }, [showToast]);
 
     useEffect(() => {
         return () => stopAnimation();
@@ -193,7 +212,7 @@ export default function HorseRaceRoom() {
 
     const horseCount = preset?.horseCount ?? 0;
     const odds = preset?.odds ?? [];
-    const isRacing = phase === "RACING" || phase === "FINISHED";
+    //const isRacing = phase === "RACING" || phase === "FINISHED";
 
     if (!roomId || !room) {
         return (
@@ -240,73 +259,82 @@ export default function HorseRaceRoom() {
                                 flex: 1,
                                 padding: "1.25rem",
                                 background: "var(--color-bg-secondary)",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "0.875rem",
                             }}
                         >
-                            {horseCount === 0 ? (
-                                <Typography variant="body" style={{ color: "var(--color-text-secondary)", textAlign: "center" }}>
-                                    Loading race...
-                                </Typography>
-                            ) : (
-                                Array.from({ length: horseCount }, (_, i) => {
-                                    const position = horsePositions[i] ?? 0;
-                                    const color = HORSE_COLORS[i % HORSE_COLORS.length];
-                                    const isWinner = phase === "FINISHED" && winnerIndex === i;
+                            <div
+                                ref={trackRef}
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "0.875rem",
+                                }}
+                            >
+                                {horseCount === 0 ? (
+                                    <Typography
+                                        variant="body"
+                                        style={{ color: "var(--color-text-secondary)", textAlign: "center" }}
+                                    >
+                                        Loading race...
+                                    </Typography>
+                                ) : (
+                                    Array.from({ length: horseCount }, (_, i) => {
+                                        const position = horsePositions[i] ?? 0;
+                                        const color = HORSE_COLORS[i % HORSE_COLORS.length];
+                                        const isWinner = phase === "FINISHED" && winnerIndex === i;
+                                        const leftPx = positionToPx(position);
 
-                                    return (
-                                        <Box
-                                            key={i}
-                                            style={{
-                                                position: "relative",
-                                                height: "36px",
-                                                display: "flex",
-                                                alignItems: "center",
-                                            }}
-                                        >
+                                        return (
                                             <Box
+                                                key={i}
                                                 style={{
-                                                    position: "absolute",
-                                                    left: 0,
-                                                    right: 0,
-                                                    height: "2px",
-                                                    background: "var(--color-border)",
-                                                    borderRadius: "1px",
-                                                }}
-                                            />
-
-                                            <Box
-                                                style={{
-                                                    position: "absolute",
-                                                    left: `calc(${position * 90}% )`,
-                                                    transition: isRacing ? `left ${TICK_INTERVAL_MS - 30}ms ease-in-out` : "none",
-                                                    width: "36px",
-                                                    height: "36px",
-                                                    background: color,
-                                                    borderRadius: "var(--radius-sm)",
+                                                    position: "relative",
+                                                    height: `${HORSE_SIZE}px`,
                                                     display: "flex",
                                                     alignItems: "center",
-                                                    justifyContent: "center",
-                                                    boxShadow: isWinner
-                                                        ? `0 0 12px 4px ${color}`
-                                                        : "var(--shadow-sm)",
-                                                    outline: isWinner ? `2px solid ${color}` : "none",
-                                                    zIndex: 1,
                                                 }}
                                             >
-                                                <Typography
-                                                    variant="caption"
-                                                    inverse
-                                                    style={{ fontWeight: 700, fontSize: "14px", lineHeight: 1 }}
+                                                <Box
+                                                    style={{
+                                                        position: "absolute",
+                                                        left: 0,
+                                                        right: 0,
+                                                        height: "2px",
+                                                        background: "var(--color-border)",
+                                                        borderRadius: "1px",
+                                                    }}
+                                                />
+
+                                                <Box
+                                                    style={{
+                                                        position: "absolute",
+                                                        left: `${leftPx}px`,
+                                                        width: `${HORSE_SIZE}px`,
+                                                        height: `${HORSE_SIZE}px`,
+                                                        background: color,
+                                                        borderRadius: "var(--radius-sm)",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        boxShadow: isWinner
+                                                            ? `0 0 12px 4px ${color}`
+                                                            : "var(--shadow-sm)",
+                                                        outline: isWinner ? `2px solid ${color}` : "none",
+                                                        zIndex: 1,
+                                                    }}
                                                 >
-                                                    {i}
-                                                </Typography>
+                                                    <Typography
+                                                        variant="caption"
+                                                        inverse
+                                                        style={{ fontWeight: 700, fontSize: "14px", lineHeight: 1 }}
+                                                    >
+                                                        {i}
+                                                    </Typography>
+                                                </Box>
                                             </Box>
-                                        </Box>
-                                    );
-                                })
-                            )}
+                                        );
+                                    })
+                                )}
+                            </div>
                         </Card>
 
                         <Card
@@ -359,7 +387,10 @@ export default function HorseRaceRoom() {
                                             </Box>
                                             <Typography
                                                 variant="body"
-                                                style={{ color: "var(--color-text-secondary)", fontVariantNumeric: "tabular-nums" }}
+                                                style={{
+                                                    color: "var(--color-text-secondary)",
+                                                    fontVariantNumeric: "tabular-nums",
+                                                }}
                                             >
                                                 {odd.toFixed(1)}x
                                             </Typography>
