@@ -17,10 +17,12 @@ import java.util.stream.IntStream;
 public class HorseRaceGameUtils {
 
     public final int MIN_HORSES = 3;
-    public final int MAX_HORSES = 8;
-    public final int MIN_SPEED = 1;
-    public final int MAX_SPEED = 10;
-    public final int SEGMENTS = 10;
+    public final int MAX_HORSES = 6;
+    public final int MIN_SPEED = 5;
+    public final int MAX_SPEED = 6;
+    public final int SEGMENTS = 20;
+
+    public final int ONE = 1;
 
     public List<Double> calculateOdds(Integer horseCount) {
         return IntStream.range(0, horseCount)
@@ -30,11 +32,11 @@ public class HorseRaceGameUtils {
     }
 
     public Integer calculateHorseCount() {
-        return MIN_HORSES + ThreadLocalRandom.current().nextInt(MAX_HORSES - MIN_HORSES + 1);
+        return MIN_HORSES + ThreadLocalRandom.current().nextInt(MAX_HORSES - MIN_HORSES + ONE);
     }
 
     public Integer[][] buildSpeeds(Random seededRandom, Integer horseCount, Integer segmentsCount) {
-        int speedRange = MAX_SPEED - MIN_SPEED + 1;
+        int speedRange = MAX_SPEED - MIN_SPEED + ONE;
         Integer[][] speeds = new Integer[horseCount][segmentsCount];
 
         for (int horse = 0; horse < horseCount; horse++) {
@@ -80,7 +82,13 @@ public class HorseRaceGameUtils {
                 .orElse(1.0);
 
         double[] cumulative = new double[horseCount];
-        List<HorseRaceTick> ticks = new ArrayList<>(segmentsCount);
+        List<HorseRaceTick> ticks = new ArrayList<>(segmentsCount + ONE);
+
+        double[] zeroPositions = new double[horseCount];
+        ticks.add(HorseRaceTick.builder()
+                .tickIndex(0)
+                .positions(zeroPositions)
+                .build());
 
         for (int tick = 0; tick < segmentsCount; tick++) {
             double[] positions = new double[horseCount];
@@ -91,7 +99,7 @@ public class HorseRaceGameUtils {
             }
 
             ticks.add(HorseRaceTick.builder()
-                    .tickIndex(tick)
+                    .tickIndex(tick + ONE)
                     .positions(positions)
                     .build());
         }

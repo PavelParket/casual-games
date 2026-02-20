@@ -11,7 +11,6 @@ import type { HorseRaceGameMessage } from "../../models/WsMessage";
 import { Box, Button, Card, Container, Toast, Typography } from "../../ui";
 
 const TICK_DURATION_MS = 600;
-const RACE_DURATION_MS = 10 * TICK_DURATION_MS;
 
 const HORSE_SIZE = 36;
 
@@ -107,22 +106,25 @@ export default function HorseRaceRoom() {
     }, []);
 
     const startAnimation = useCallback((ticks: HorseRaceGameTick[], winner: number) => {
-        ticksRef.current = ticks;
+        const zeroTick: HorseRaceGameTick = { tickIndex: 0, positions: new Array(ticks[0].positions.length).fill(0) };
+        const allTicks = [zeroTick, ...ticks];
+        ticksRef.current = allTicks;
         winnerRef.current = winner;
         startTimeRef.current = performance.now();
 
         const totalTicks = ticks.length;
 
         const frame = (now: number) => {
+            const raceDuration = allTicks.length * TICK_DURATION_MS;
             const elapsed = now - startTimeRef.current;
-            const progress = Math.min(elapsed / RACE_DURATION_MS, 1);
+            const progress = Math.min(elapsed / raceDuration, 1);
 
             const rawIndex = progress * (totalTicks - 1);
             const tickIndex = Math.floor(rawIndex);
             const localT = rawIndex - tickIndex;
 
-            const fromTick = ticks[Math.min(tickIndex, totalTicks - 1)];
-            const toTick = ticks[Math.min(tickIndex + 1, totalTicks - 1)];
+            const fromTick = allTicks[Math.min(tickIndex, totalTicks - 1)];
+            const toTick = allTicks[Math.min(tickIndex + 1, totalTicks - 1)];
 
             const interpolated = fromTick.positions.map((fromPos, i) =>
                 lerp(fromPos, toTick.positions[i], localT)
@@ -212,7 +214,6 @@ export default function HorseRaceRoom() {
 
     const horseCount = preset?.horseCount ?? 0;
     const odds = preset?.odds ?? [];
-    //const isRacing = phase === "RACING" || phase === "FINISHED";
 
     if (!roomId || !room) {
         return (
