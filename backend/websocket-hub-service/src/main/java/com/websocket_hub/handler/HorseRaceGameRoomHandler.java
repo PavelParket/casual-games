@@ -1,16 +1,21 @@
 package com.websocket_hub.handler;
 
+import com.websocket_hub.client.BankServiceClient;
 import com.websocket_hub.client.GameServiceClient;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
+import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalRequest;
+import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.HorseRaceGameMessage;
 import com.websocket_hub.domain.entity.HorseRaceGamePreset;
+import com.websocket_hub.domain.entity.HorseRacePlayerBet;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
 import com.websocket_hub.manager.HorseRaceGameRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.HorseRaceGameMessageMapper;
+import com.websocket_hub.mapper.HorseRaceTransactionMapper;
 import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.util.WebSocketUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,19 +36,27 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
 
     private final HorseRaceGameMessageMapper horseRaceMessageMapper;
 
+    private final HorseRaceTransactionMapper horseRaceTransactionMapper;
+
     private final GameServiceClient gameServiceClient;
+
+    private final BankServiceClient bankServiceClient;
 
     public HorseRaceGameRoomHandler(
             SessionManager sessionManager,
             HorseRaceGameRoomManager roomManager,
             MessageDeserializer messageDeserializer,
             HorseRaceGameMessageMapper horseRaceMessageMapper,
-            GameServiceClient gameServiceClient
+            HorseRaceTransactionMapper horseRaceTransactionMapper,
+            GameServiceClient gameServiceClient,
+            BankServiceClient bankServiceClient
     ) {
         super(sessionManager, roomManager);
         this.messageDeserializer = messageDeserializer;
         this.horseRaceMessageMapper = horseRaceMessageMapper;
+        this.horseRaceTransactionMapper = horseRaceTransactionMapper;
         this.gameServiceClient = gameServiceClient;
+        this.bankServiceClient = bankServiceClient;
     }
 
     @Override
@@ -62,6 +76,8 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
             log.info("Received horse race message: event={}, room={}, user={}", horseRaceGameMessage.event(), roomId, user.username());
 
             switch (horseRaceGameMessage.event()) {
+                case BET -> handleBet(horseRaceGameMessage, roomId, user);
+
                 case READY -> handleReady(roomId, user);
 
                 default -> log.warn("Unhandled horse race event: {}", horseRaceGameMessage.event());
@@ -79,6 +95,10 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
     @Override
     protected void onLeave(UUID roomId, UserInternalResponse user) {
 
+    }
+
+    private void handleBet(HorseRaceGameMessage message, UUID roomId, UserInternalResponse user) {
+        roomManager.placeBet(roomId, user, message.horseIndex(), message.bet());
     }
 
     private void handleReady(UUID roomId, UserInternalResponse user) {
@@ -129,13 +149,13 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
 
             log.info("Race started and broadcasted for room={}: winner=horse#{}", roomId, startResponse.winnerHorseIndex());
 
-            notifyResult(roomId);
+            processGameEnd(roomId, startResponse.winnerHorseIndex());
         } catch (Exception e) {
             log.error("Failed to start race for room={}", roomId, e);
         }
     }
 
-    private void notifyResult(UUID roomId) {
+    private void processGameEnd(UUID roomId, Integer winnerHorseIndex) {
         try {
             HorseRaceGameInternalRequest resultRequest = horseRaceMessageMapper.toFinishRequest(
                     HorseRaceEvent.RESULT,
@@ -144,11 +164,37 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
 
             gameServiceClient.finishRace(resultRequest);
 
-            roomManager.removePreset(roomId);
+            sendTransactions(roomId, winnerHorseIndex);
+
+            roomManager.removePlayerBets(roomId);
 
             log.info("Race result sent to game-service for room={}", roomId);
         } catch (Exception e) {
             log.error("Failed to notify result for room={}", roomId, e);
+        }
+    }
+
+    private void sendTransactions(UUID roomId, Integer winnerHorseIndex) {
+        try {
+            Collection<HorseRacePlayerBet> bets = roomManager.getPlayerBets(roomId);
+
+            if (bets.isEmpty()) {
+                log.info("No bets to process for room={}", roomId);
+                return;
+            }
+
+            HorseRaceTransactionInternalRequest request = horseRaceTransactionMapper.toInternalRequest(
+                    roomId,
+                    roomManager.getRoomType(),
+                    winnerHorseIndex,
+                    bets
+            );
+
+            HorseRaceTransactionInternalResponse response = bankServiceClient.sendHorseRaceGameResults(request);
+
+            log.info("Bank-service response for room={}: status={}, message={}, transactions={}", roomId, response.status(), response.message(), response.transactionsCreated());
+        } catch (Exception e) {
+            log.error("Failed to process transactions for room={}", roomId, e);
         }
     }
 }

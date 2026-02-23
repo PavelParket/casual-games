@@ -146,7 +146,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
             log.warn("Player {} tried to ready without placing a bet", user.username());
 
             ClientSession client = getClientSessionByGuid(user.guid());
-            webSocketHelper.notifyBetRequired(roomId, client);
+            webSocketHelper.notifyBetRequired(roomId, client, TicTacToeGameEvent.BET_REQUIRED);
             return;
         }
 
@@ -207,7 +207,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
             if (bets.isEmpty()) {
                 bets.add(newPlayerBet);
-                webSocketHelper.notifyBetAccepted(roomId, newClient, players, bet);
+                webSocketHelper.notifyBetAccepted(roomId, newClient, TicTacToeGameEvent.BET, bet);
                 log.info("First bet in room {} by player {}: {}", roomId, user.username(), bet);
                 return;
             }
@@ -218,7 +218,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
             int compareBets = newPlayerBet.getBet().compareTo(existingBet.getBet());
 
             if (compareBets < 0) {
-                webSocketHelper.notifyBetRejected(roomId, newClient, newPlayerBet.getBet());
+                webSocketHelper.notifyBetRejected(roomId, newClient, TicTacToeGameEvent.BET_REJECT, newPlayerBet.getBet().toString());
                 log.info("Bet rejected in room {} for player {}: {} (existing: {})", roomId, user.username(), bet, existingBet.getBet());
                 return;
             }
@@ -227,8 +227,8 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
                 bets.clear();
                 bets.add(newPlayerBet);
 
-                webSocketHelper.notifyBetAccepted(roomId, newClient, players, bet);
-                webSocketHelper.notifyOutbid(roomId, existingClient, newPlayerBet.getBet());
+                webSocketHelper.notifyBetAcceptedToAll(roomId, newClient, players, TicTacToeGameEvent.BET, bet);
+                webSocketHelper.notifyBetOutbid(roomId, existingClient, TicTacToeGameEvent.BET_OUTBID, newPlayerBet.getBet());
 
                 removeReadyPlayer(roomId, existingClient.getGuid());
 
@@ -238,7 +238,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
             }
 
             bets.add(newPlayerBet);
-            webSocketHelper.notifyBetAccepted(roomId, newClient, players, bet);
+            webSocketHelper.notifyBetAcceptedToAll(roomId, newClient, players, TicTacToeGameEvent.BET, bet);
 
             log.info("Bet accepted (equal) in room {} by player {}: {} (both players ready to start)", roomId, user.username(), bet);
         }

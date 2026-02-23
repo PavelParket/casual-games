@@ -18,8 +18,8 @@ public class HorseRaceGameUtils {
 
     public final int MIN_HORSES = 3;
     public final int MAX_HORSES = 6;
-    public final int MIN_SPEED = 5;
-    public final int MAX_SPEED = 6;
+    public final int MIN_SPEED = 10;
+    public final int MAX_SPEED = 11;
     public final int SEGMENTS = 20;
 
     public final int ONE = 1;

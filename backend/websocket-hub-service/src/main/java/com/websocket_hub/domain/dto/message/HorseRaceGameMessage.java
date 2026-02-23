@@ -5,6 +5,7 @@ import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
 import lombok.Builder;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,7 +39,11 @@ public record HorseRaceGameMessage(
 
         Integer segmentsCount,
 
-        List<HorseRaceGameTick> ticks
+        List<HorseRaceGameTick> ticks,
+
+        Integer horseIndex,
+
+        BigDecimal bet
 
 ) implements Message<HorseRaceEvent> {
 }

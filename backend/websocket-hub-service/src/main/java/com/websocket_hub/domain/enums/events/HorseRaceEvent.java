@@ -7,7 +7,10 @@ public enum HorseRaceEvent implements EventType {
     READY,
     START,
     TICK,
-    RESULT;
+    RESULT,
+    BET,
+    BET_REJECT,
+    BET_REQUIRED;
 
     @Override
     public String join() {

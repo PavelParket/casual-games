@@ -11,5 +11,8 @@ import java.util.UUID;
 @Mapper(componentModel = "spring")
 public interface TicTacToeTransactionMapper {
 
-    TicTacToeTransactionInternalRequest toInternalRequest(UUID roomId, RoomType roomType, List<PlayerBet> playerBets, UUID winner);
+    TicTacToeTransactionInternalRequest toInternalRequest(UUID roomId,
+                                                          RoomType roomType,
+                                                          List<PlayerBet> playerBets,
+                                                          UUID winner);
 }
