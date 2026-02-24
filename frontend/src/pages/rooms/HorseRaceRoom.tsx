@@ -8,7 +8,7 @@ import { getPreset, getRoomById, syncReadiness, syncRoomState } from "../../stor
 import { findByGuid } from "../../store/slices/UserSlice";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import type { HorseRaceGameMessage } from "../../models/WsMessage";
-import { Box, Button, Card, Container, Toast, Typography } from "../../ui";
+import { Box, Button, Card, Container, Input, Toast, Typography } from "../../ui";
 
 const TICK_DURATION_MS = 600;
 
@@ -27,14 +27,20 @@ const HORSE_COLORS = [
 
 type RacePhase = "LOBBY" | "WAITING" | "RACING" | "FINISHED";
 
+interface PlacedBetInfo {
+    horseIndex: number;
+    amount: number;
+}
+
 export default function HorseRaceRoom() {
     const guid = useSelector((state: RootState) => state.auth.user?.guid);
+    const balance = useSelector((state: RootState) => state.user.user?.balance);
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
 
     const roomId = useParams<{ roomId?: string }>().roomId;
 
-    const { room, players, readyPlayersCount, totalPlayersCount, preset } = useSelector(
+    const { room, readyPlayersCount, totalPlayersCount, preset } = useSelector(
         (state: RootState) => state.horseRaceRoom
     );
 
@@ -48,6 +54,12 @@ export default function HorseRaceRoom() {
     const [horsePositions, setHorsePositions] = useState<number[]>([]);
     const [winnerIndex, setWinnerIndex] = useState<number | undefined>();
 
+    const [selectedHorse, setSelectedHorse] = useState<number | null>(null);
+    const [betInput, setBetInput] = useState<string>("");
+    const [betPlaced, setBetPlaced] = useState<boolean>(false);
+    const [placedBetInfo, setPlacedBetInfo] = useState<PlacedBetInfo | null>(null);
+    const [hoveredHorse, setHoveredHorse] = useState<number | null>(null);
+
     const ticksRef = useRef<HorseRaceGameTick[]>([]);
     const rafRef = useRef<number | null>(null);
     const startTimeRef = useRef<number>(0);
@@ -55,6 +67,7 @@ export default function HorseRaceRoom() {
 
     const trackRef = useRef<HTMLDivElement>(null);
     const trackWidthRef = useRef<number>(0);
+    const isAnimatingRef = useRef<boolean>(false);
 
     useEffect(() => {
         if (!roomId || !guid) {
@@ -103,28 +116,39 @@ export default function HorseRaceRoom() {
             cancelAnimationFrame(rafRef.current);
             rafRef.current = null;
         }
+        isAnimatingRef.current = false;
     }, []);
 
     const startAnimation = useCallback((ticks: HorseRaceGameTick[], winner: number) => {
+        if (isAnimatingRef.current) {
+            return;
+        }
+
+        if (!ticks || ticks.length === 0) {
+            return;
+        }
+
+        isAnimatingRef.current = true;
+
         const zeroTick: HorseRaceGameTick = { tickIndex: 0, positions: new Array(ticks[0].positions.length).fill(0) };
         const allTicks = [zeroTick, ...ticks];
         ticksRef.current = allTicks;
         winnerRef.current = winner;
         startTimeRef.current = performance.now();
 
-        const totalTicks = ticks.length;
+        const lastIndex = allTicks.length - 1;
+        const raceDuration = allTicks.length * TICK_DURATION_MS;
 
         const frame = (now: number) => {
-            const raceDuration = allTicks.length * TICK_DURATION_MS;
             const elapsed = now - startTimeRef.current;
             const progress = Math.min(elapsed / raceDuration, 1);
 
-            const rawIndex = progress * (totalTicks - 1);
+            const rawIndex = progress * lastIndex;
             const tickIndex = Math.floor(rawIndex);
             const localT = rawIndex - tickIndex;
 
-            const fromTick = allTicks[Math.min(tickIndex, totalTicks - 1)];
-            const toTick = allTicks[Math.min(tickIndex + 1, totalTicks - 1)];
+            const fromTick = allTicks[Math.min(tickIndex, lastIndex)];
+            const toTick = allTicks[Math.min(tickIndex + 1, lastIndex)];
 
             const interpolated = fromTick.positions.map((fromPos, i) =>
                 lerp(fromPos, toTick.positions[i], localT)
@@ -136,6 +160,7 @@ export default function HorseRaceRoom() {
                 rafRef.current = requestAnimationFrame(frame);
             } else {
                 rafRef.current = null;
+                isAnimatingRef.current = false;
                 setWinnerIndex(winnerRef.current);
                 setPhase("FINISHED");
                 showToast(`🏆 Horse #${winnerRef.current} wins!`);
@@ -174,6 +199,7 @@ export default function HorseRaceRoom() {
                 const { ticks, winnerHorseIndex } = message;
 
                 if (!ticks || winnerHorseIndex === undefined) {
+                    console.warn("[START] Guard triggered — missing ticks or winner");
                     break;
                 }
 
@@ -182,10 +208,68 @@ export default function HorseRaceRoom() {
                 break;
             }
 
+            case "BET": {
+                if (message.fromUserId !== guid) {
+                    break;
+                }
+
+                const amount = message.bet;
+                const horseIdx = message.horseIndex;
+
+                if (amount !== undefined && horseIdx !== undefined) {
+                    setPlacedBetInfo({ horseIndex: horseIdx, amount });
+                }
+
+                setBetPlaced(true);
+                showToast(message.message ?? "Your bet has been accepted!");
+                break;
+            }
+
+            case "BET_REJECT":
+                setBetPlaced(false);
+                setPlacedBetInfo(null);
+                showToast(message.message ?? "Your bet was rejected. Please try again.");
+                break;
+
+            case "BET_REQUIRED":
+                showToast(message.message ?? "You must place a bet before becoming ready.");
+                break;
+
             default:
                 break;
         }
-    }, [dispatch, isConnected, message, room, roomId, showToast, startAnimation]);
+    }, [dispatch, guid, isConnected, message, room, roomId, showToast, startAnimation]);
+
+    const handlePlaceBet = () => {
+        if (!room || !isConnected || betPlaced || phase !== "LOBBY") {
+            return;
+        }
+
+        if (selectedHorse === null) {
+            showToast("Please select a horse first.");
+            return;
+        }
+
+        const amount = parseFloat(betInput);
+
+        if (isNaN(amount) || amount <= 0) {
+            showToast("Please enter a valid bet amount.");
+            return;
+        }
+
+        if (balance !== undefined && amount > balance) {
+            showToast("Bet amount exceeds your balance.");
+            return;
+        }
+
+        send({
+            type: "USER_MESSAGE",
+            event: "BET",
+            roomId: room.id,
+            horseIndex: selectedHorse,
+            bet: amount,
+        });
+    };
 
     const handleReady = () => {
         if (!room || !isConnected || ready || phase !== "LOBBY") {
@@ -214,6 +298,16 @@ export default function HorseRaceRoom() {
 
     const horseCount = preset?.horseCount ?? 0;
     const odds = preset?.odds ?? [];
+
+    const betAmountParsed = parseFloat(betInput);
+    const potentialWin = selectedHorse !== null
+        && !isNaN(betAmountParsed)
+        && betAmountParsed > 0
+        && odds[selectedHorse] !== undefined
+        ? betAmountParsed * odds[selectedHorse]
+        : null;
+
+    const isBetButtonDisabled = betPlaced || selectedHorse === null || !betInput || parseFloat(betInput) <= 0;
 
     if (!roomId || !room) {
         return (
@@ -245,16 +339,19 @@ export default function HorseRaceRoom() {
                     <Typography variant="h2" style={{ textAlign: "center" }}>
                         Horse Race: {room.name}
                     </Typography>
-                    <Typography
-                        variant="caption"
-                        style={{ textAlign: "center", display: "block", marginTop: "0.25rem", color: "var(--color-text-secondary)" }}
-                    >
-                        {readyPlayersCount ?? 0} / {totalPlayersCount ?? 0} players ready
-                    </Typography>
                 </Box>
 
                 <Card style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+
+                    <Typography
+                        variant="caption"
+                        style={{ textAlign: "center", color: "var(--color-text-secondary)" }}
+                    >
+                        {readyPlayersCount ?? 0} / {totalPlayersCount ?? 0} players ready
+                    </Typography>
+
                     <Box style={{ display: "flex", gap: "1.5rem", alignItems: "flex-start" }}>
+
                         <Card
                             style={{
                                 flex: 1,
@@ -304,7 +401,6 @@ export default function HorseRaceRoom() {
                                                         borderRadius: "1px",
                                                     }}
                                                 />
-
                                                 <Box
                                                     style={{
                                                         position: "absolute",
@@ -340,16 +436,16 @@ export default function HorseRaceRoom() {
 
                         <Card
                             style={{
-                                minWidth: "140px",
+                                minWidth: "170px",
                                 padding: "1rem 1.25rem",
                                 background: "var(--color-bg-secondary)",
                                 display: "flex",
                                 flexDirection: "column",
-                                gap: "0.625rem",
+                                gap: "0.375rem",
                             }}
                         >
-                            <Typography variant="h3" style={{ marginBottom: "0.25rem" }}>
-                                Odds
+                            <Typography variant="h3" style={{ marginBottom: "0.375rem" }}>
+                                Place a Bet
                             </Typography>
 
                             {odds.length === 0 ? (
@@ -360,32 +456,59 @@ export default function HorseRaceRoom() {
                                 odds.map((odd, i) => {
                                     const color = HORSE_COLORS[i % HORSE_COLORS.length];
                                     const isWinner = phase === "FINISHED" && winnerIndex === i;
+                                    const isSelected = selectedHorse === i;
+                                    const isMyBet = betPlaced && placedBetInfo?.horseIndex === i;
+                                    const isActive = isSelected || isMyBet;
+                                    const isClickable = !betPlaced && phase === "LOBBY";
+                                    const isHovered = hoveredHorse === i && isClickable && !isActive;
 
                                     return (
                                         <Box
                                             key={i}
+                                            onClick={() => { if (isClickable) setSelectedHorse(i); }}
+                                            onMouseEnter={() => { if (isClickable) setHoveredHorse(i); }}
+                                            onMouseLeave={() => setHoveredHorse(null)}
                                             style={{
                                                 display: "flex",
                                                 justifyContent: "space-between",
                                                 alignItems: "center",
                                                 gap: "0.75rem",
-                                                opacity: isWinner ? 1 : phase === "FINISHED" ? 0.45 : 1,
+                                                padding: "0.4rem 0.5rem",
+                                                borderRadius: "var(--radius-sm)",
+                                                border: isActive
+                                                    ? "1.5px solid var(--color-text)"
+                                                    : "1.5px solid transparent",
+                                                background: (isHovered || isActive)
+                                                    ? "rgba(128, 128, 128, 0.12)"
+                                                    : "transparent",
+                                                cursor: isClickable ? "pointer" : "default",
+                                                opacity: isWinner ? 1 : phase === "FINISHED" ? 0.45 : betPlaced && !isMyBet ? 0.45 : 1,
+                                                transition: "background 0.12s, border-color 0.12s, opacity 0.2s",
                                             }}
                                         >
-                                            <Box style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                            <Box style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                                 <Box
                                                     style={{
-                                                        width: "10px",
-                                                        height: "10px",
-                                                        borderRadius: "2px",
+                                                        width: "22px",
+                                                        height: "22px",
+                                                        borderRadius: "4px",
                                                         background: color,
                                                         flexShrink: 0,
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
                                                     }}
-                                                />
-                                                <Typography variant="body" style={{ fontWeight: 500 }}>
-                                                    #{i}
-                                                </Typography>
+                                                >
+                                                    <Typography
+                                                        variant="caption"
+                                                        inverse
+                                                        style={{ fontWeight: 700, fontSize: "11px", lineHeight: 1 }}
+                                                    >
+                                                        {i}
+                                                    </Typography>
+                                                </Box>
                                             </Box>
+
                                             <Typography
                                                 variant="body"
                                                 style={{
@@ -398,6 +521,127 @@ export default function HorseRaceRoom() {
                                         </Box>
                                     );
                                 })
+                            )}
+
+                            {(phase === "LOBBY" || phase === "WAITING") && (
+                                <Box
+                                    style={{
+                                        borderTop: "1px solid var(--color-border)",
+                                        marginTop: "0.375rem",
+                                        paddingTop: "0.75rem",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "0.5rem",
+                                        opacity: betPlaced ? 0.5 : 1,
+                                        transition: "opacity 0.2s",
+                                    }}
+                                >
+                                    <Typography
+                                        variant="caption"
+                                        style={{ color: "var(--color-text-secondary)", fontWeight: 600 }}
+                                    >
+                                        {selectedHorse !== null
+                                            ? `Horse #${selectedHorse} · ${odds[selectedHorse]?.toFixed(1)}x`
+                                            : "Select a horse above"}
+                                    </Typography>
+
+                                    {balance !== undefined && (
+                                        <Typography
+                                            variant="caption"
+                                            style={{ color: "var(--color-text-secondary)", fontSize: "0.75rem" }}
+                                        >
+                                            Balance: ${balance.toFixed(2)}
+                                        </Typography>
+                                    )}
+
+                                    <Input
+                                        type="number"
+                                        value={betInput}
+                                        onChange={(e) => setBetInput(e.target.value)}
+                                        placeholder="Amount"
+                                        disabled={betPlaced}
+                                        style={{
+                                            width: "100%",
+                                            padding: "0.5rem 0.6rem",
+                                            borderRadius: "var(--radius-sm)",
+                                            border: "1px solid var(--color-border)",
+                                            background: betPlaced ? "var(--color-bg-disabled, var(--color-bg))" : "var(--color-bg)",
+                                            color: "var(--color-text)",
+                                            fontSize: "0.875rem",
+                                        }}
+                                    />
+
+                                    {potentialWin !== null && !betPlaced && (
+                                        <Typography
+                                            variant="caption"
+                                            style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)" }}
+                                        >
+                                            Win:{" "}
+                                            <span style={{ color: "var(--color-text)", fontWeight: 600 }}>
+                                                ${potentialWin.toFixed(2)}
+                                            </span>
+                                        </Typography>
+                                    )}
+
+                                    <Button
+                                        onClick={handlePlaceBet}
+                                        disabled={isBetButtonDisabled}
+                                        style={{
+                                            width: "100%",
+                                            opacity: isBetButtonDisabled ? 0.5 : 1,
+                                        }}
+                                    >
+                                        Place Bet
+                                    </Button>
+
+                                    <Typography
+                                        variant="caption"
+                                        style={{
+                                            fontSize: "0.75rem",
+                                            textAlign: "center",
+                                            color: betPlaced
+                                                ? "var(--color-success, #2ecc71)"
+                                                : "var(--color-text-secondary)",
+                                        }}
+                                    >
+                                        {betPlaced
+                                            ? "✓ Bet placed — get ready!"
+                                            : "Place a bet to get ready"}
+                                    </Typography>
+                                </Box>
+                            )}
+
+                            {betPlaced && placedBetInfo !== null && (
+                                <Box
+                                    style={{
+                                        borderTop: "1px solid var(--color-border)",
+                                        marginTop: "0.25rem",
+                                        paddingTop: "0.625rem",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "0.35rem",
+                                    }}
+                                >
+                                    <Box style={{ display: "flex", justifyContent: "space-between" }}>
+                                        <Typography variant="caption" style={{ color: "var(--color-text-secondary)" }}>
+                                            Bet
+                                        </Typography>
+                                        <Typography variant="caption" style={{ fontWeight: 600 }}>
+                                            ${placedBetInfo.amount.toFixed(2)}
+                                        </Typography>
+                                    </Box>
+                                    <Box style={{ display: "flex", justifyContent: "space-between" }}>
+                                        <Typography variant="caption" style={{ color: "var(--color-text-secondary)" }}>
+                                            Potential win
+                                        </Typography>
+                                        <Typography
+                                            variant="caption"
+                                            style={{ fontWeight: 700, color: "var(--color-success, #2ecc71)" }}
+                                        >
+                                            ${(placedBetInfo.amount * (odds[placedBetInfo.horseIndex] ?? 1)).toFixed(2)}
+                                        </Typography>
+                                    </Box>
+                                </Box>
                             )}
                         </Card>
                     </Box>
@@ -418,8 +662,8 @@ export default function HorseRaceRoom() {
 
                             <Button
                                 onClick={handleReady}
-                                disabled={ready || phase === "WAITING"}
-                                style={{ opacity: ready ? 0.5 : 1 }}
+                                disabled={!betPlaced || ready || phase === "WAITING"}
+                                style={{ opacity: (!betPlaced || ready) ? 0.5 : 1 }}
                             >
                                 {ready ? "Waiting..." : "Ready"}
                             </Button>
@@ -442,32 +686,6 @@ export default function HorseRaceRoom() {
                             </Button>
                         </Box>
                     )}
-
-                    {phase === "LOBBY" || phase === "WAITING" ? (
-                        <Box
-                            style={{
-                                display: "flex",
-                                justifyContent: "center",
-                                gap: "0.75rem",
-                                flexWrap: "wrap",
-                            }}
-                        >
-                            {players && Object.values(players).map((username) => (
-                                <Typography
-                                    key={username}
-                                    variant="caption"
-                                    style={{
-                                        padding: "0.25rem 0.75rem",
-                                        borderRadius: "var(--radius-sm)",
-                                        background: "var(--color-bg)",
-                                        border: "1px solid var(--color-border)",
-                                    }}
-                                >
-                                    {username}
-                                </Typography>
-                            ))}
-                        </Box>
-                    ) : null}
                 </Card>
             </Container>
 

@@ -29,4 +29,6 @@ export interface HorseRaceGameMessage extends WSMessage {
    winnerHorseIndex?: number;
    segmentsCount?: number;
    ticks?: HorseRaceGameTick[];
+   horseIndex?: number;
+   bet?: number;
 }
