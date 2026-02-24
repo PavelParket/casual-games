@@ -1,10 +1,12 @@
 package com.websocket_hub.factory;
 
 import com.websocket_hub.domain.entity.HorseRacePlayerBet;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
+@Component
 public class HorseRacePlayerBetFactory implements ObjectFactory<HorseRacePlayerBet> {
 
     @Override

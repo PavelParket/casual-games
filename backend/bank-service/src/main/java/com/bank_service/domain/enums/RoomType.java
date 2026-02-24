@@ -4,5 +4,6 @@ public enum RoomType {
 
     SYSTEM,
     TIC_TAC_TOE,
+    HORSE_RACE,
     ROOM_TEST
 }

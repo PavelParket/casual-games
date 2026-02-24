@@ -27,6 +27,8 @@ public interface HorseRaceGameMessageMapper extends MessageMapper {
 
     HorseRaceGamePreset toPreset(HorseRaceGameInternalResponse createResponse);
 
+    @Mapping(target = "horseIndex", ignore = true)
+    @Mapping(target = "bet", ignore = true)
     HorseRaceGameMessage toMessage(HorseRaceGameInternalResponse horseRaceGameInternalResponse,
                                    MessageType type,
                                    HorseRaceEvent event,
