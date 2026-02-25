@@ -13,8 +13,7 @@ import HorseSprite from "../../assets/sprites/HorseSprite";
 
 const TICK_DURATION_MS = 600;
 
-const HORSE_SIZE = 36;
-
+const HORSE_SPRITE_SIZE = 88;
 const HORSE_COLORS = [
     "#e74c3c",
     "#e67e22",
@@ -52,7 +51,7 @@ export default function HorseRaceRoom() {
 
     const [phase, setPhase] = useState<RacePhase>("LOBBY");
     const [ready, setReady] = useState(false);
-    const [horsePositions, setHorsePositions] = useState<number[]>([]);
+    //const [horsePositions, setHorsePositions] = useState<number[]>([]);
     const [winnerIndex, setWinnerIndex] = useState<number | undefined>();
 
     const [selectedHorse, setSelectedHorse] = useState<number | null>(null);
@@ -68,6 +67,7 @@ export default function HorseRaceRoom() {
 
     /* const trackRef = useRef<HTMLDivElement>(null);
     const trackWidthRef = useRef<number>(0); */
+    const horseElemsRef = useRef<(HTMLDivElement | null)[]>([]);
     const isAnimatingRef = useRef<boolean>(false);
 
     useEffect(() => {
@@ -129,6 +129,10 @@ export default function HorseRaceRoom() {
             return;
         }
 
+        horseElemsRef.current.forEach((el) => {
+            if (el) el.style.left = "0px";
+        });
+
         isAnimatingRef.current = true;
 
         const zeroTick: HorseRaceGameTick = { tickIndex: 0, positions: new Array(ticks[0].positions.length).fill(0) };
@@ -155,7 +159,12 @@ export default function HorseRaceRoom() {
                 lerp(fromPos, toTick.positions[i], localT)
             );
 
-            setHorsePositions(interpolated);
+            interpolated.forEach((pos, idx) => {
+                const el = horseElemsRef.current[idx];
+                if (el) {
+                    el.style.left = `calc(${pos / 100} * (100% - ${HORSE_SPRITE_SIZE}px))`;
+                }
+            });
 
             if (progress < 1) {
                 rafRef.current = requestAnimationFrame(frame);
@@ -362,11 +371,12 @@ export default function HorseRaceRoom() {
                             }}
                         >
                             <div
-                                //ref={trackRef}
                                 style={{
                                     display: "flex",
                                     flexDirection: "column",
-                                    gap: "0.875rem",
+                                    gap: "5rem",
+                                    paddingLeft: "24px",
+                                    position: "relative",
                                 }}
                             >
                                 {horseCount === 0 ? (
@@ -375,22 +385,34 @@ export default function HorseRaceRoom() {
                                     </Typography>
                                 ) : (
                                     Array.from({ length: horseCount }, (_, i) => {
-                                        const position = horsePositions[i] ?? 0;
                                         const color = HORSE_COLORS[i % HORSE_COLORS.length];
                                         const isWinner = phase === "FINISHED" && winnerIndex === i;
-                                        //const leftPx = positionToPx(position);
 
                                         return (
                                             <Box
                                                 key={i}
                                                 style={{
                                                     position: "relative",
-                                                    height: "64px",
+                                                    height: `${HORSE_SPRITE_SIZE}`,
                                                     display: "flex",
                                                     alignItems: "center",
                                                     overflow: "visible",
                                                 }}
                                             >
+                                                <span style={{
+                                                    position: "absolute",
+                                                    left: -24,
+                                                    width: 20,
+                                                    textAlign: "right",
+                                                    fontSize: "16px",
+                                                    fontWeight: 700,
+                                                    color: color,
+                                                    opacity: 0.85,
+                                                    userSelect: "none",
+                                                    lineHeight: `${HORSE_SPRITE_SIZE}px`,
+                                                }}>
+                                                    #{i + 1}
+                                                </span>
                                                 <Box
                                                     style={{
                                                         position: "absolute",
@@ -402,23 +424,24 @@ export default function HorseRaceRoom() {
                                                     }}
                                                 />
 
-                                                <Box
+                                                <div
+                                                    ref={(el) => { horseElemsRef.current[i] = el; }}
                                                     style={{
                                                         position: "absolute",
-                                                        left: `calc(${position}% - 24px)`,
-                                                        bottom: 0,
-                                                        transition: "left 0.12s linear",
+                                                        top: "50%",
+                                                        left: "0px",
+                                                        transform: "translateY(-50%)",
+                                                        transition: "left 0.15s linear",
                                                         zIndex: 1,
                                                     }}
                                                 >
                                                     <HorseSprite
                                                         color={color}
-                                                        size={96}
+                                                        size={HORSE_SPRITE_SIZE}
                                                         isRunning={phase === "RACING"}
                                                         isWinner={isWinner}
-                                                        label={`#${i + 1}`}
                                                     />
-                                                </Box>
+                                                </div>
                                             </Box>
                                         );
                                     })
@@ -479,27 +502,25 @@ export default function HorseRaceRoom() {
                                                 transition: "background 0.12s, border-color 0.12s, opacity 0.2s",
                                             }}
                                         >
-                                            <Box style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                                <Box
+
+                                            <Box style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                                                <Typography
+                                                    variant="body"
                                                     style={{
-                                                        width: "22px",
-                                                        height: "22px",
-                                                        borderRadius: "4px",
-                                                        background: color,
-                                                        flexShrink: 0,
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
+                                                        fontWeight: 700,
+                                                        fontSize: "16px",
+                                                        lineHeight: 1,
+                                                        color: `${HORSE_COLORS[i % HORSE_COLORS.length]}`
                                                     }}
                                                 >
-                                                    <Typography
-                                                        variant="caption"
-                                                        inverse
-                                                        style={{ fontWeight: 700, fontSize: "11px", lineHeight: 1 }}
-                                                    >
-                                                        {i}
-                                                    </Typography>
-                                                </Box>
+                                                    #{i + 1}
+                                                </Typography>
+                                                <HorseSprite
+                                                    color={color}
+                                                    size={48}
+                                                    isRunning={false}
+                                                    isWinner={isWinner}
+                                                />
                                             </Box>
 
                                             <Typography
