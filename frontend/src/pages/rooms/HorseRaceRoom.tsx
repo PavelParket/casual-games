@@ -148,7 +148,7 @@ export default function HorseRaceRoom() {
             const localT = rawIndex - tickIndex;
 
             const fromTick = allTicks[Math.min(tickIndex, lastIndex)];
-            const toTick = allTicks[Math.min(tickIndex + 1, lastIndex)];
+            const toTick = allTicks[Math.min(tickIndex + 1, lastIndex)] ?? fromTick;
 
             const interpolated = fromTick.positions.map((fromPos, i) =>
                 lerp(fromPos, toTick.positions[i], localT)
@@ -350,13 +350,14 @@ export default function HorseRaceRoom() {
                         {readyPlayersCount ?? 0} / {totalPlayersCount ?? 0} players ready
                     </Typography>
 
-                    <Box style={{ display: "flex", gap: "1.5rem", alignItems: "flex-start" }}>
+                    <Box style={{ display: "flex", gap: "1.5rem", alignItems: "flex-start", minHeight: "280px" }}>
 
                         <Card
                             style={{
                                 flex: 1,
                                 padding: "1.25rem",
                                 background: "var(--color-bg-secondary)",
+                                minHeight: "260px",
                             }}
                         >
                             <div
@@ -368,10 +369,7 @@ export default function HorseRaceRoom() {
                                 }}
                             >
                                 {horseCount === 0 ? (
-                                    <Typography
-                                        variant="body"
-                                        style={{ color: "var(--color-text-secondary)", textAlign: "center" }}
-                                    >
+                                    <Typography variant="caption" style={{ color: "var(--color-text-secondary)" }}>
                                         Loading race...
                                     </Typography>
                                 ) : (
@@ -416,13 +414,14 @@ export default function HorseRaceRoom() {
                                                             ? `0 0 12px 4px ${color}`
                                                             : "var(--shadow-sm)",
                                                         outline: isWinner ? `2px solid ${color}` : "none",
-                                                        zIndex: 1,
+                                                        outlineOffset: "2px",
+                                                        transition: "box-shadow 0.3s, outline 0.3s",
                                                     }}
                                                 >
                                                     <Typography
                                                         variant="caption"
                                                         inverse
-                                                        style={{ fontWeight: 700, fontSize: "14px", lineHeight: 1 }}
+                                                        style={{ fontWeight: 700, fontSize: "13px", lineHeight: 1 }}
                                                     >
                                                         {i}
                                                     </Typography>
@@ -436,15 +435,16 @@ export default function HorseRaceRoom() {
 
                         <Card
                             style={{
-                                minWidth: "170px",
-                                padding: "1rem 1.25rem",
-                                background: "var(--color-bg-secondary)",
+                                width: "220px",
+                                flexShrink: 0,
+                                padding: "1rem",
                                 display: "flex",
                                 flexDirection: "column",
-                                gap: "0.375rem",
+                                gap: "0.5rem",
+                                minHeight: "260px",
                             }}
                         >
-                            <Typography variant="h3" style={{ marginBottom: "0.375rem" }}>
+                            <Typography variant="h3" style={{ fontSize: "1rem", fontWeight: 700 }}>
                                 Place a Bet
                             </Typography>
 
@@ -513,6 +513,8 @@ export default function HorseRaceRoom() {
                                                 variant="body"
                                                 style={{
                                                     color: "var(--color-text-secondary)",
+                                                    fontSize: "0.875rem",
+                                                    fontWeight: 500,
                                                     fontVariantNumeric: "tabular-nums",
                                                 }}
                                             >
@@ -523,169 +525,249 @@ export default function HorseRaceRoom() {
                                 })
                             )}
 
-                            {(phase === "LOBBY" || phase === "WAITING") && (
-                                <Box
-                                    style={{
-                                        borderTop: "1px solid var(--color-border)",
-                                        marginTop: "0.375rem",
-                                        paddingTop: "0.75rem",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: "0.5rem",
-                                        opacity: betPlaced ? 0.5 : 1,
-                                        transition: "opacity 0.2s",
-                                    }}
-                                >
+                            <Box
+                                style={{
+                                    borderTop: "1px solid var(--color-border)",
+                                    marginTop: "0.375rem",
+                                    paddingTop: "0.75rem",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "0.5rem",
+                                    minHeight: "140px",
+                                }}
+                            >
+                                {balance !== undefined && (
                                     <Typography
                                         variant="caption"
-                                        style={{ color: "var(--color-text-secondary)", fontWeight: 600 }}
+                                        style={{ color: "var(--color-text-secondary)", fontSize: "0.75rem" }}
                                     >
-                                        {selectedHorse !== null
-                                            ? `Horse #${selectedHorse} · ${odds[selectedHorse]?.toFixed(1)}x`
-                                            : "Select a horse above"}
+                                        Balance: ${balance.toFixed(2)}
                                     </Typography>
+                                )}
 
-                                    {balance !== undefined && (
+                                {!betPlaced && (
+                                    <>
                                         <Typography
                                             variant="caption"
-                                            style={{ color: "var(--color-text-secondary)", fontSize: "0.75rem" }}
+                                            style={{ color: "var(--color-text-secondary)", fontWeight: 600 }}
                                         >
-                                            Balance: ${balance.toFixed(2)}
+                                            {selectedHorse !== null
+                                                ? `Horse #${selectedHorse} · ${odds[selectedHorse]?.toFixed(1)}x`
+                                                : "Select a horse above"}
                                         </Typography>
-                                    )}
 
-                                    <Input
-                                        type="number"
-                                        value={betInput}
-                                        onChange={(e) => setBetInput(e.target.value)}
-                                        placeholder="Amount"
-                                        disabled={betPlaced}
-                                        style={{
-                                            width: "100%",
-                                            padding: "0.5rem 0.6rem",
-                                            borderRadius: "var(--radius-sm)",
-                                            border: "1px solid var(--color-border)",
-                                            background: betPlaced ? "var(--color-bg-disabled, var(--color-bg))" : "var(--color-bg)",
-                                            color: "var(--color-text)",
-                                            fontSize: "0.875rem",
-                                        }}
-                                    />
+                                        <Input
+                                            type="number"
+                                            value={betInput}
+                                            onChange={(e) => setBetInput(e.target.value)}
+                                            placeholder="Amount"
+                                            disabled={betPlaced}
+                                            style={{
+                                                width: "100%",
+                                                padding: "0.5rem 0.6rem",
+                                                borderRadius: "var(--radius-sm)",
+                                                border: "1px solid var(--color-border)",
+                                                background: "var(--color-bg)",
+                                                color: "var(--color-text)",
+                                                fontSize: "0.875rem",
+                                            }}
+                                        />
 
-                                    {potentialWin !== null && !betPlaced && (
+                                        {potentialWin !== null && (
+                                            <Typography
+                                                variant="caption"
+                                                style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)" }}
+                                            >
+                                                Win:{" "}
+                                                <span style={{ color: "var(--color-success, #2ecc71)", fontWeight: 600 }}>
+                                                    ${potentialWin.toFixed(2)}
+                                                </span>
+                                            </Typography>
+                                        )}
+
+                                        <Button
+                                            onClick={handlePlaceBet}
+                                            disabled={isBetButtonDisabled}
+                                            style={{
+                                                width: "100%",
+                                                opacity: isBetButtonDisabled ? 0.5 : 1,
+                                            }}
+                                        >
+                                            Place Bet
+                                        </Button>
+
                                         <Typography
                                             variant="caption"
-                                            style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)" }}
+                                            style={{
+                                                fontSize: "0.75rem",
+                                                textAlign: "center",
+                                                color: "var(--color-text-secondary)",
+                                            }}
                                         >
-                                            Win:{" "}
-                                            <span style={{ color: "var(--color-text)", fontWeight: 600 }}>
-                                                ${potentialWin.toFixed(2)}
-                                            </span>
+                                            Place a bet to get ready
                                         </Typography>
-                                    )}
+                                    </>
+                                )}
 
-                                    <Button
-                                        onClick={handlePlaceBet}
-                                        disabled={isBetButtonDisabled}
-                                        style={{
-                                            width: "100%",
-                                            opacity: isBetButtonDisabled ? 0.5 : 1,
-                                        }}
-                                    >
-                                        Place Bet
-                                    </Button>
+                                {betPlaced && (() => {
+                                    const betHorse = placedBetInfo?.horseIndex ?? selectedHorse ?? 0;
+                                    const betAmount = placedBetInfo?.amount ?? (betAmountParsed || 0);
+                                    const betOdd = odds[betHorse] ?? 1;
+                                    return (
+                                        <>
+                                            <Box
+                                                style={{
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    gap: "0.35rem",
+                                                    padding: "0.5rem 0.6rem",
+                                                    borderRadius: "var(--radius-sm)",
+                                                    background: "rgba(128, 128, 128, 0.08)",
+                                                }}
+                                            >
+                                                <Typography
+                                                    variant="caption"
+                                                    style={{ fontWeight: 600, color: "var(--color-text)" }}
+                                                >
+                                                    Your bet: Horse #{betHorse}
+                                                </Typography>
+                                                <Typography
+                                                    variant="caption"
+                                                    style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)" }}
+                                                >
+                                                    Amount: ${betAmount.toFixed(2)}
+                                                </Typography>
+                                            </Box>
 
-                                    <Typography
-                                        variant="caption"
-                                        style={{
-                                            fontSize: "0.75rem",
-                                            textAlign: "center",
-                                            color: betPlaced
-                                                ? "var(--color-success, #2ecc71)"
-                                                : "var(--color-text-secondary)",
-                                        }}
-                                    >
-                                        {betPlaced
-                                            ? "✓ Bet placed — get ready!"
-                                            : "Place a bet to get ready"}
-                                    </Typography>
-                                </Box>
-                            )}
+                                            <Box style={{ display: "flex", justifyContent: "space-between" }}>
+                                                <Typography variant="caption" style={{ color: "var(--color-text-secondary)" }}>
+                                                    Potential win
+                                                </Typography>
+                                                <Typography
+                                                    variant="caption"
+                                                    style={{ fontWeight: 700, color: "var(--color-success, #2ecc71)" }}
+                                                >
+                                                    ${(betAmount * betOdd).toFixed(2)}
+                                                </Typography>
+                                            </Box>
 
-                            {betPlaced && placedBetInfo !== null && (
-                                <Box
-                                    style={{
-                                        borderTop: "1px solid var(--color-border)",
-                                        marginTop: "0.25rem",
-                                        paddingTop: "0.625rem",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: "0.35rem",
-                                    }}
-                                >
-                                    <Box style={{ display: "flex", justifyContent: "space-between" }}>
-                                        <Typography variant="caption" style={{ color: "var(--color-text-secondary)" }}>
-                                            Bet
-                                        </Typography>
-                                        <Typography variant="caption" style={{ fontWeight: 600 }}>
-                                            ${placedBetInfo.amount.toFixed(2)}
-                                        </Typography>
-                                    </Box>
-                                    <Box style={{ display: "flex", justifyContent: "space-between" }}>
-                                        <Typography variant="caption" style={{ color: "var(--color-text-secondary)" }}>
-                                            Potential win
-                                        </Typography>
-                                        <Typography
-                                            variant="caption"
-                                            style={{ fontWeight: 700, color: "var(--color-success, #2ecc71)" }}
-                                        >
-                                            ${(placedBetInfo.amount * (odds[placedBetInfo.horseIndex] ?? 1)).toFixed(2)}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            )}
+                                            <Button
+                                                disabled
+                                                style={{
+                                                    width: "100%",
+                                                    opacity: 0.5,
+                                                }}
+                                            >
+                                                Place Bet
+                                            </Button>
+
+                                            <Typography
+                                                variant="caption"
+                                                style={{
+                                                    fontSize: "0.75rem",
+                                                    textAlign: "center",
+                                                    color: "var(--color-success, #2ecc71)",
+                                                }}
+                                            >
+                                                ✓ Bet placed — get ready!
+                                            </Typography>
+                                        </>
+                                    );
+                                })()}
+                            </Box>
                         </Card>
                     </Box>
 
-                    {(phase === "LOBBY" || phase === "WAITING") && (
-                        <Box
-                            style={{
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                gap: "2rem",
-                                paddingTop: "0.5rem",
-                            }}
-                        >
-                            <Button variant="outline" onClick={handleLeave}>
-                                Leave
-                            </Button>
-
-                            <Button
-                                onClick={handleReady}
-                                disabled={!betPlaced || ready || phase === "WAITING"}
-                                style={{ opacity: (!betPlaced || ready) ? 0.5 : 1 }}
+                    {phase === "FINISHED" && winnerIndex !== undefined && (() => {
+                        const betHorse = placedBetInfo?.horseIndex ?? selectedHorse;
+                        const betAmount = placedBetInfo?.amount ?? (betAmountParsed || 0);
+                        if (betHorse === null || betHorse === undefined) return null;
+                        const won = betHorse === winnerIndex;
+                        const winAmount = betAmount * (odds[betHorse] ?? 1);
+                        return (
+                            <Box
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    gap: "0.25rem",
+                                    padding: "1rem 1.5rem",
+                                    borderRadius: "var(--radius-md)",
+                                    background: won
+                                        ? "rgba(46, 204, 113, 0.12)"
+                                        : "rgba(231, 76, 60, 0.10)",
+                                    border: won
+                                        ? "1px solid rgba(46, 204, 113, 0.3)"
+                                        : "1px solid rgba(231, 76, 60, 0.25)",
+                                }}
                             >
-                                {ready ? "Waiting..." : "Ready"}
-                            </Button>
-                        </Box>
-                    )}
+                                <Typography
+                                    variant="h3"
+                                    style={{
+                                        fontSize: "1.1rem",
+                                        fontWeight: 700,
+                                        color: won ? "#2ecc71" : "#e74c3c",
+                                    }}
+                                >
+                                    {won ? "You won!" : "You lost"}
+                                </Typography>
+                                <Typography
+                                    variant="caption"
+                                    style={{
+                                        fontSize: "0.85rem",
+                                        color: won ? "#27ae60" : "#c0392b",
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    {won
+                                        ? `+$${winAmount.toFixed(2)}`
+                                        : `-$${betAmount.toFixed(2)}`}
+                                </Typography>
+                            </Box>
+                        );
+                    })()}
 
-                    {phase === "RACING" && (
-                        <Typography
-                            variant="body"
-                            style={{ textAlign: "center", color: "var(--color-text-secondary)" }}
-                        >
-                            🏇 Race in progress...
-                        </Typography>
-                    )}
+                    <Box
+                        style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            minHeight: "44px",
+                            paddingTop: "0.5rem",
+                        }}
+                    >
+                        {(phase === "LOBBY" || phase === "WAITING") && (
+                            <Box style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
+                                <Button variant="outline" onClick={handleLeave}>
+                                    Leave
+                                </Button>
 
-                    {phase === "FINISHED" && (
-                        <Box style={{ display: "flex", justifyContent: "center", paddingTop: "0.5rem" }}>
+                                <Button
+                                    onClick={handleReady}
+                                    disabled={!betPlaced || ready || phase === "WAITING"}
+                                    style={{ opacity: (!betPlaced || ready) ? 0.5 : 1 }}
+                                >
+                                    {ready ? "Waiting..." : "Ready"}
+                                </Button>
+                            </Box>
+                        )}
+
+                        {phase === "RACING" && (
+                            <Typography
+                                variant="body"
+                                style={{ textAlign: "center", color: "var(--color-text-secondary)" }}
+                            >
+                                🏇 Race in progress...
+                            </Typography>
+                        )}
+
+                        {phase === "FINISHED" && (
                             <Button variant="outline" onClick={handleLeave}>
                                 Leave
                             </Button>
-                        </Box>
-                    )}
+                        )}
+                    </Box>
+
                 </Card>
             </Container>
 

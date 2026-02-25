@@ -17,10 +17,13 @@ import Profile from './pages/Profile'
 import ExperimentalPage from './pages/ExperimentalPage'
 import LoadingPage from './pages/LoadingPage'
 import HorseRaceRoom from './pages/rooms/HorseRaceRoom'
+import { useScrollbarVisibility } from './hooks/useScrollbarVisibility'
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
    const [isInitialized, setIsInitialized] = useState<boolean>(false);
+
+   useScrollbarVisibility();
 
    useEffect(() => {
       // todo: Переделать обновление токена и его прокид при вебсокетном подключении
