@@ -7,7 +7,6 @@ import type { Icons } from "../assets/icons";
 import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Img, Input, Toast, FormField } from "../ui";
 import { useThemedIcon } from "../ui";
 import { validateUsername } from "../utils/SecurityUtils";
-import LoadingPage from "./LoadingPage";
 import { Skeleton } from "../ui/components/common/Skeleton";
 
 const getStatusIconName = (status: string): keyof typeof Icons.light => {
@@ -150,12 +149,6 @@ export default function Profile() {
         boxShadow: "var(--shadow-sm)"
     };
 
-    /* if (isLoading && !user) {
-        return (
-            <LoadingPage />
-        );
-    } */
-
     return (
         <Box style={{ padding: "2rem 0" }}>
             <Container maxWidth="1000px">
@@ -239,21 +232,36 @@ export default function Profile() {
                                     </>)}
                             </Box>
 
-                            <Stack align="center" gap="0.5rem">
-                                <Icon src={statusIconSrc} alt={status} size={40} />
-                                <Typography variant="h3" style={{ textTransform: "capitalize" }}>
-                                    {status} Member
-                                </Typography>
-                            </Stack>
+                            {isLoading ? (
+                                <Stack align="center" gap="0.5rem">
+                                    <Skeleton variant="circular" width={40} height={40} />
+                                    <Skeleton variant="text" width={130} height={24} />
+                                </Stack>
+                            ) : (
+                                <Stack align="center" gap="0.5rem">
+                                    <Icon src={statusIconSrc} alt={status} size={40} />
+                                    <Typography variant="h3" style={{ textTransform: "capitalize" }}>
+                                        {status} Member
+                                    </Typography>
+                                </Stack>
+                            )}
 
-                            <Button variant="solid" style={{ width: "100%" }}>
-                                Upgrade
-                            </Button>
+                            {isLoading ? (
+                                <Skeleton variant="rectangular" width="100%" height={38} />
+                            ) : (
+                                <Button variant="solid" style={{ width: "100%" }}>
+                                    Upgrade
+                                </Button>
+                            )}
 
                             <Box style={{ marginTop: "auto", paddingTop: "2rem" }}>
-                                <Typography variant="caption" style={{ opacity: 0.6 }}>
-                                    Date: {formattedDate}
-                                </Typography>
+                                {isLoading ? (
+                                    <Skeleton variant="text" width={80} height={16} />
+                                ) : (
+                                    <Typography variant="caption" style={{ opacity: 0.6 }}>
+                                        Date: {formattedDate}
+                                    </Typography>
+                                )}
                             </Box>
                         </Stack>
 
@@ -266,37 +274,41 @@ export default function Profile() {
                             <Box style={infoBlockStyle}>
                                 <Stack gap="1rem">
                                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: "45px" }}>
-                                        <Box style={{ flex: 1, marginRight: "1rem" }}>
-                                            <Typography variant="caption" style={{ opacity: 0.7 }}>Username:</Typography>
+                                        {isLoading ? (
+                                            <Skeleton variant="text" width={150} height={28} />
+                                        ) : (
+                                            <Box style={{ flex: 1, marginRight: "1rem" }}>
+                                                <Typography variant="caption" style={{ opacity: 0.7 }}>Username:</Typography>
 
-                                            {isEditingUsername ? (
-                                                <>
-                                                    <Textfield
-                                                        value={tempUsername}
-                                                        onChange={handleUsernameChange}
-                                                        placeholder="Enter username"
-                                                    />
-                                                    {validationError && (
-                                                        <Typography variant="caption" style={{ color: 'red', marginTop: '4px' }}>
-                                                            {validationError}
-                                                        </Typography>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <Typography
-                                                    variant="h3"
-                                                    title={username}
-                                                    style={{
-                                                        overflow: "hidden",
-                                                        textOverflow: "ellipsis",
-                                                        display: 'block',
-                                                        maxWidth: '150px'
-                                                    }}
-                                                >
-                                                    {username}
-                                                </Typography>
-                                            )}
-                                        </Box>
+                                                {isEditingUsername ? (
+                                                    <>
+                                                        <Textfield
+                                                            value={tempUsername}
+                                                            onChange={handleUsernameChange}
+                                                            placeholder="Enter username"
+                                                        />
+                                                        {validationError && (
+                                                            <Typography variant="caption" style={{ color: 'red', marginTop: '4px' }}>
+                                                                {validationError}
+                                                            </Typography>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <Typography
+                                                        variant="h3"
+                                                        title={username}
+                                                        style={{
+                                                            overflow: "hidden",
+                                                            textOverflow: "ellipsis",
+                                                            display: 'block',
+                                                            maxWidth: '150px'
+                                                        }}
+                                                    >
+                                                        {username}
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                        )}
 
                                         {isEditingUsername ? (
                                             <Stack
@@ -322,36 +334,48 @@ export default function Profile() {
                                                 </Button>
                                             </Stack>
                                         ) : (
-                                            <Button
-                                                variant="outline"
-                                                onClick={handleEditClick}
-                                                style={{ display: "flex", gap: "8px", alignItems: "center" }}
-                                            >
-                                                Edit
-                                                <Icon src={getIcon("edit")} alt="edit" size={16} />
-                                            </Button>
+                                            isLoading ? (
+                                                <Skeleton variant="rectangular" width={75} height={34} />
+                                            ) : (
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={handleEditClick}
+                                                    style={{ display: "flex", gap: "8px", alignItems: "center" }}
+                                                >
+                                                    Edit
+                                                    <Icon src={getIcon("edit")} alt="edit" size={16} />
+                                                </Button>
+                                            )
                                         )}
                                     </Box>
 
-                                    <Box>
-                                        <Typography variant="caption" style={{ opacity: 0.7 }}>Email:</Typography>
-                                        <Typography variant="body">{email}</Typography>
-                                    </Box>
+                                    {isLoading ? (
+                                        <Skeleton variant="text" width={150} height={28} />
+                                    ) : (
+                                        <Box>
+                                            <Typography variant="caption" style={{ opacity: 0.7 }}>Email:</Typography>
+                                            <Typography variant="body">{email}</Typography>
+                                        </Box>
+                                    )}
 
                                     <Divider />
 
-                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <Box>
-                                            <Typography variant="caption" style={{ opacity: 0.7 }}>Balance:</Typography>
-                                            <Typography variant="h2" style={{ color: "var(--color-primary)" }}>
-                                                {balance}
-                                                <Typography variant="caption" style={{ marginLeft: "5px" }}>CG Coins</Typography>
-                                            </Typography>
+                                    {isLoading ? (
+                                        <Skeleton variant="text" width={150} height={36} />
+                                    ) : (
+                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                            <Box>
+                                                <Typography variant="caption" style={{ opacity: 0.7 }}>Balance:</Typography>
+                                                <Typography variant="h2" style={{ color: "var(--color-primary)" }}>
+                                                    {balance}
+                                                    <Typography variant="caption" style={{ marginLeft: "5px" }}>CG Coins</Typography>
+                                                </Typography>
+                                            </Box>
+                                            <Button variant="ghost" onClick={() => setDepositModalOpen(true)}>
+                                                Deposit
+                                            </Button>
                                         </Box>
-                                        <Button variant="ghost" onClick={() => setDepositModalOpen(true)}>
-                                            Deposit
-                                        </Button>
-                                    </Box>
+                                    )}
                                 </Stack>
                             </Box>
 
@@ -376,39 +400,37 @@ export default function Profile() {
                                         <Skeleton variant="rectangular" height={30} />
                                     </Box>
                                 ) : (
-                                    <>
-                                        {achievements.length > 0 ? (
-                                            <Box style={{
-                                                display: "flex",
-                                                gap: "10px",
-                                                flexWrap: "wrap",
-                                                overflow: "hidden",
-                                                maxHeight: "130px"
-                                            }}>
-                                                {achievements.slice(0, 5).map((ach, i) => (
-                                                    <Box key={i} style={{
-                                                        padding: "5px 12px",
-                                                        background: "var(--color-primary)",
-                                                        color: "var(--on-primary)",
-                                                        borderRadius: "20px",
-                                                        fontSize: "0.9rem",
-                                                        fontWeight: 500
-                                                    }}>
-                                                        {ach}
-                                                    </Box>
-                                                ))}
-                                                {achievements.length > 5 && (
-                                                    <Box style={{ padding: "5px 10px", fontSize: "0.9rem", opacity: 0.7, alignSelf: "center" }}>
-                                                        +{achievements.length - 5} more...
-                                                    </Box>
-                                                )}
-                                            </Box>
-                                        ) : (
-                                            <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
-                                                No achievements yet. Go play some games!
-                                            </Typography>
-                                        )}
-                                    </>
+                                    achievements.length > 0 ? (
+                                        <Box style={{
+                                            display: "flex",
+                                            gap: "10px",
+                                            flexWrap: "wrap",
+                                            overflow: "hidden",
+                                            maxHeight: "130px"
+                                        }}>
+                                            {achievements.slice(0, 5).map((ach, i) => (
+                                                <Box key={i} style={{
+                                                    padding: "5px 12px",
+                                                    background: "var(--color-primary)",
+                                                    color: "var(--on-primary)",
+                                                    borderRadius: "20px",
+                                                    fontSize: "0.9rem",
+                                                    fontWeight: 500
+                                                }}>
+                                                    {ach}
+                                                </Box>
+                                            ))}
+                                            {achievements.length > 5 && (
+                                                <Box style={{ padding: "5px 10px", fontSize: "0.9rem", opacity: 0.7, alignSelf: "center" }}>
+                                                    +{achievements.length - 5} more...
+                                                </Box>
+                                            )}
+                                        </Box>
+                                    ) : (
+                                        <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
+                                            No achievements yet. Go play some games!
+                                        </Typography>
+                                    )
                                 )}
                             </Box>
 
@@ -432,36 +454,34 @@ export default function Profile() {
                                         <Skeleton variant="rectangular" height={30} />
                                     </Box>
                                 ) : (
-                                    <>
-                                        {history.length > 0 ? (
-                                            <Stack gap="0.5rem">
-                                                {history.slice(0, 3).map((item, i) => (
-                                                    <Box key={i} style={{
-                                                        display: "flex",
-                                                        justifyContent: "space-between",
-                                                        borderBottom: i === 2 ? "none" : "1px solid var(--color-border)",
-                                                        paddingBottom: "10px",
-                                                        paddingTop: i === 0 ? "0" : "5px"
-                                                    }}>
-                                                        <Box>
-                                                            <Typography variant="body" style={{ fontWeight: 500 }}>{item.game}</Typography>
-                                                            <Typography variant="caption">{new Date(item.date).toLocaleDateString()}</Typography>
-                                                        </Box>
-                                                        <Typography variant="body" style={{
-                                                            fontWeight: "bold",
-                                                            color: item.result === "Win" ? "green" : item.result === "Loss" ? "red" : "gray"
-                                                        }}>
-                                                            {item.result}
-                                                        </Typography>
+                                    history.length > 0 ? (
+                                        <Stack gap="0.5rem">
+                                            {history.slice(0, 3).map((item, i) => (
+                                                <Box key={i} style={{
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    borderBottom: i === 2 ? "none" : "1px solid var(--color-border)",
+                                                    paddingBottom: "10px",
+                                                    paddingTop: i === 0 ? "0" : "5px"
+                                                }}>
+                                                    <Box>
+                                                        <Typography variant="body" style={{ fontWeight: 500 }}>{item.game}</Typography>
+                                                        <Typography variant="caption">{new Date(item.date).toLocaleDateString()}</Typography>
                                                     </Box>
-                                                ))}
-                                            </Stack>
-                                        ) : (
-                                            <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
-                                                No match history available.
-                                            </Typography>
-                                        )}
-                                    </>
+                                                    <Typography variant="body" style={{
+                                                        fontWeight: "bold",
+                                                        color: item.result === "Win" ? "green" : item.result === "Loss" ? "red" : "gray"
+                                                    }}>
+                                                        {item.result}
+                                                    </Typography>
+                                                </Box>
+                                            ))}
+                                        </Stack>
+                                    ) : (
+                                        <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
+                                            No match history available.
+                                        </Typography>
+                                    )
                                 )}
                             </Box>
 

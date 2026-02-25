@@ -6,7 +6,9 @@ type ThemeProviderProps = {
 };
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-   const [theme, setTheme] = useState<Theme>("light");
+   const [theme, setTheme] = useState<Theme>(() => {
+      return (localStorage.getItem("theme") as Theme) ?? "light"
+   });
 
    useEffect(() => {
       const root = document.documentElement;
@@ -18,7 +20,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
    }, [theme]);
 
    const toggleTheme = () =>
-      setTheme((prev) => (prev === "light" ? "dark" : "light"));
+      setTheme((prev) => {
+         const next = prev === "light" ? "dark" : "light";
+         localStorage.setItem("theme", next);
+         return next;
+      });
 
    return (
       <ThemeContext.Provider value={{ theme, toggleTheme }}>
