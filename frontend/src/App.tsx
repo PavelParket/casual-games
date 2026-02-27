@@ -13,8 +13,9 @@ import { refresh } from './store/slices/AuthSlice'
 import { ProtectedRoute } from './router/ProtectedRoute'
 import Rooms from './pages/rooms/Rooms'
 import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
+import DeCoderRoom from './pages/rooms/DeCoder/DeCoderRoom'
 import Profile from './pages/Profile'
-import ExperimentalPage from './pages/ExperimentalPage'
+//import ExperimentalPage from './pages/ExperimentalPage'
 import LoadingPage from './pages/LoadingPage'
 
 export default function App() {
@@ -62,10 +63,10 @@ export default function App() {
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/rooms" element={<Rooms />} />
                         <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
-                        {/* <Route path="/room/de-coder/:roomName" element={<DeCoderRoom />} /> */}
+                        <Route path="/room/de-coder/:roomName/:roomId" element={<DeCoderRoom />} />
 
-                        {/* ===== Experiment Room ===== */}
-                        <Route path="/ws" element={<ExperimentalPage />} />
+                        {/* ===== Experiment Room ===== 
+                        <Route path="/ws" element={<ExperimentalPage />} />*/}
                      </Route>
                   </Route>
 

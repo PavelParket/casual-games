@@ -17,3 +17,10 @@ export interface GameMessage extends WSMessage {
    winner?: string;
    bet?: number;
 }
+
+export interface DeCoderMessage extends WSMessage {
+   player?: string;
+   code?: number;
+   winner?: string;
+   gameState?: string;
+}

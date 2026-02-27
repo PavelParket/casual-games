@@ -16,10 +16,12 @@ export interface RoomRequest {
 
 export const ROOM_TYPE_HANDLERS: Record<string, string> = {
     "TIC_TAC_TOE": "t-t-t",
+    "DE_CODER":"de-coder",
 } as const;
 
 export const ROOM_TYPE_LABELS: Record<string, string> = {
     "TIC_TAC_TOE": "Tic Tac Toe",
+    "DE_CODER":"De-Coder",
     "ROOM_TEST": "Room Test",
 } as const;
 

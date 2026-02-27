@@ -20,6 +20,7 @@ export { Toast } from "./components/common/Toast";
 export { Menu, MenuList, MenuItem } from "./components/navigation/Menu";
 export { Switch } from "./components/common/Switch";
 export { Divider } from "./components/common/Divider";
+export { CooldownTimer } from "./components/common/CooldownTimer";
 
 export { ThemeProvider } from "./theme/ThemeProvider"
 export { useTheme } from "./theme/useTheme";
