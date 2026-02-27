@@ -4,5 +4,6 @@ public enum RoomType {
 
     SYSTEM,
     TIC_TAC_TOE,
+    DE_CODER,
     ROOM_TEST
 }
