@@ -1,6 +1,6 @@
 package com.websocket_hub.domain.dto.message;
 
-import com.websocket_hub.domain.entity.HorseRaceGameTick;
+import com.websocket_hub.domain.entity.HorseRaceHorseKeyframes;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
 import lombok.Builder;
@@ -39,7 +39,7 @@ public record HorseRaceGameMessage(
 
         Integer segmentsCount,
 
-        List<HorseRaceGameTick> ticks,
+        List<HorseRaceHorseKeyframes> horseKeyframes,
 
         Integer horseIndex,
 

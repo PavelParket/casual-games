@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import type { HorseRaceGameTick } from "../../models/HorseRace";
+import type { HorseRaceHorseKeyframes } from "../../models/HorseRace";
 import { validateToastMessage } from "../../utils/SecurityUtils";
 import { getPreset, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/HorseRaceRoomSlice";
 import { findByGuid } from "../../store/slices/UserSlice";
@@ -11,7 +11,7 @@ import type { HorseRaceGameMessage } from "../../models/WsMessage";
 import { Box, Button, Card, Container, Input, Toast, Typography } from "../../ui";
 import HorseSprite from "../../assets/sprites/HorseSprite";
 
-const TICK_DURATION_MS = 600;
+const RACE_DURATION_MS = 12_000;
 
 const HORSE_SPRITE_SIZE = 88;
 const HORSE_COLORS = [
@@ -51,7 +51,6 @@ export default function HorseRaceRoom() {
 
     const [phase, setPhase] = useState<RacePhase>("LOBBY");
     const [ready, setReady] = useState(false);
-    //const [horsePositions, setHorsePositions] = useState<number[]>([]);
     const [winnerIndex, setWinnerIndex] = useState<number | undefined>();
 
     const [selectedHorse, setSelectedHorse] = useState<number | null>(null);
@@ -60,15 +59,9 @@ export default function HorseRaceRoom() {
     const [placedBetInfo, setPlacedBetInfo] = useState<PlacedBetInfo | null>(null);
     const [hoveredHorse, setHoveredHorse] = useState<number | null>(null);
 
-    const ticksRef = useRef<HorseRaceGameTick[]>([]);
-    const rafRef = useRef<number | null>(null);
-    const startTimeRef = useRef<number>(0);
-    const winnerRef = useRef<number>(0);
-
-    /* const trackRef = useRef<HTMLDivElement>(null);
-    const trackWidthRef = useRef<number>(0); */
     const horseElemsRef = useRef<(HTMLDivElement | null)[]>([]);
-    const isAnimatingRef = useRef<boolean>(false);
+    const animationsRef = useRef<Animation[]>([]);
+    const winnerRef = useRef<number>(0);
 
     useEffect(() => {
         if (!roomId || !guid) {
@@ -79,22 +72,6 @@ export default function HorseRaceRoom() {
         dispatch(getRoomById({ roomId }));
         dispatch(findByGuid(guid));
     }, [dispatch, guid, navigate, roomId]);
-
-    /* useEffect(() => {
-        const el = trackRef.current;
-        if (!el) return;
-
-        trackWidthRef.current = el.getBoundingClientRect().width;
-
-        const observer = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                trackWidthRef.current = entry.contentRect.width;
-            }
-        });
-
-        observer.observe(el);
-        return () => observer.disconnect();
-    }, []); */
 
     const { isConnected, message, send } = useWebSocket<HorseRaceGameMessage>(
         roomId,
@@ -110,75 +87,66 @@ export default function HorseRaceRoom() {
         dispatch(getPreset({ roomId }));
     }, [dispatch, isConnected, room, roomId]);
 
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-
     const stopAnimation = useCallback(() => {
-        if (rafRef.current !== null) {
-            cancelAnimationFrame(rafRef.current);
-            rafRef.current = null;
-        }
-        isAnimatingRef.current = false;
+        animationsRef.current.forEach((anim) => {
+            try {
+                anim.cancel();
+            } catch {
+                /* already finished */
+            }
+        });
+        animationsRef.current = [];
     }, []);
 
-    const startAnimation = useCallback((ticks: HorseRaceGameTick[], winner: number) => {
-        if (isAnimatingRef.current) {
-            return;
-        }
+    const startAnimation = useCallback((
+        horseKeyframes: HorseRaceHorseKeyframes[],
+        winner: number
+    ) => {
+        stopAnimation();
 
-        if (!ticks || ticks.length === 0) {
-            return;
-        }
+        winnerRef.current = winner;
 
         horseElemsRef.current.forEach((el) => {
-            if (el) el.style.left = "0px";
+            if (el) el.style.transform = "translateY(-50%)";
         });
 
-        isAnimatingRef.current = true;
+        requestAnimationFrame(() => {
+            const animations: Animation[] = [];
 
-        const zeroTick: HorseRaceGameTick = { tickIndex: 0, positions: new Array(ticks[0].positions.length).fill(0) };
-        const allTicks = [zeroTick, ...ticks];
-        ticksRef.current = allTicks;
-        winnerRef.current = winner;
-        startTimeRef.current = performance.now();
+            for (const horse of horseKeyframes) {
+                const el = horseElemsRef.current[horse.horseIndex];
+                if (!el) continue;
 
-        const lastIndex = allTicks.length - 1;
-        const raceDuration = allTicks.length * TICK_DURATION_MS;
+                const trackWidth = el.parentElement?.clientWidth ?? 0;
+                const maxOffset = trackWidth - HORSE_SPRITE_SIZE;
 
-        const frame = (now: number) => {
-            const elapsed = now - startTimeRef.current;
-            const progress = Math.min(elapsed / raceDuration, 1);
+                const wapiKeyframes: Keyframe[] = horse.keyframes.map((kf) => ({
+                    transform: `translateX(${(kf.position / 100) * maxOffset}px) translateY(-50%)`,
+                    offset: kf.offset,
+                }));
 
-            const rawIndex = progress * lastIndex;
-            const tickIndex = Math.floor(rawIndex);
-            const localT = rawIndex - tickIndex;
+                const animation = el.animate(wapiKeyframes, {
+                    duration: RACE_DURATION_MS,
+                    easing: "linear",
+                    fill: "forwards",
+                });
 
-            const fromTick = allTicks[Math.min(tickIndex, lastIndex)];
-            const toTick = allTicks[Math.min(tickIndex + 1, lastIndex)] ?? fromTick;
-
-            const interpolated = fromTick.positions.map((fromPos, i) =>
-                lerp(fromPos, toTick.positions[i], localT)
-            );
-
-            interpolated.forEach((pos, idx) => {
-                const el = horseElemsRef.current[idx];
-                if (el) {
-                    el.style.left = `calc(${pos / 100} * (100% - ${HORSE_SPRITE_SIZE}px))`;
-                }
-            });
-
-            if (progress < 1) {
-                rafRef.current = requestAnimationFrame(frame);
-            } else {
-                rafRef.current = null;
-                isAnimatingRef.current = false;
-                setWinnerIndex(winnerRef.current);
-                setPhase("FINISHED");
-                showToast(`🏆 Horse #${winnerRef.current} wins!`);
+                animations.push(animation);
             }
-        };
 
-        rafRef.current = requestAnimationFrame(frame);
-    }, [showToast]);
+            animationsRef.current = animations;
+
+            if (animations.length > 0) {
+                animations[0].finished.then(() => {
+                    setWinnerIndex(winnerRef.current);
+                    setPhase("FINISHED");
+                    showToast(`🏆 Horse #${winnerRef.current + 1} wins!`);
+                }).catch(() => {
+
+                });
+            }
+        });
+    }, [showToast, stopAnimation]);
 
     useEffect(() => {
         return () => stopAnimation();
@@ -206,15 +174,15 @@ export default function HorseRaceRoom() {
                 break;
 
             case "START": {
-                const { ticks, winnerHorseIndex } = message;
+                const { horseKeyframes, winnerHorseIndex } = message;
 
-                if (!ticks || winnerHorseIndex === undefined) {
-                    console.warn("[START] Guard triggered — missing ticks or winner");
+                if (!horseKeyframes || winnerHorseIndex === undefined) {
+                    console.warn("[START] Guard triggered — missing horseKeyframes or winner");
                     break;
                 }
 
                 setPhase("RACING");
-                startAnimation(ticks, winnerHorseIndex);
+                startAnimation(horseKeyframes, winnerHorseIndex);
                 break;
             }
 
@@ -300,11 +268,6 @@ export default function HorseRaceRoom() {
         stopAnimation();
         navigate("/rooms");
     };
-
-    /* const positionToPx = (position: number): number => {
-        const usableWidth = trackWidthRef.current - HORSE_SIZE;
-        return (position / 100) * usableWidth;
-    }; */
 
     const horseCount = preset?.horseCount ?? 0;
     const odds = preset?.odds ?? [];
@@ -429,10 +392,10 @@ export default function HorseRaceRoom() {
                                                     style={{
                                                         position: "absolute",
                                                         top: "50%",
-                                                        left: "0px",
+                                                        left: 0,
                                                         transform: "translateY(-50%)",
-                                                        transition: "left 0.15s linear",
                                                         zIndex: 1,
+                                                        willChange: "transform",
                                                     }}
                                                 >
                                                     <HorseSprite

@@ -1,6 +1,7 @@
 package com.game_service.horse_race.util;
 
-import com.game_service.horse_race.domain.entity.HorseRaceTick;
+import com.game_service.horse_race.domain.entity.HorseRaceHorseKeyframes;
+import com.game_service.horse_race.domain.entity.HorseRaceKeyframe;
 import lombok.experimental.UtilityClass;
 
 import java.nio.charset.StandardCharsets;
@@ -16,11 +17,11 @@ import java.util.stream.IntStream;
 @UtilityClass
 public class HorseRaceGameUtils {
 
-    public final int MIN_HORSES = 3;
-    public final int MAX_HORSES = 6;
-    public final int MIN_SPEED = 10;
-    public final int MAX_SPEED = 11;
-    public final int SEGMENTS = 20;
+    public static final int MIN_HORSES = 3;
+    public static final int MAX_HORSES = 6;
+    public static final int MIN_SPEED = 10;
+    public static final int MAX_SPEED = 13;
+    public static final int SEGMENTS = 20;
 
     public final int ONE = 1;
 
@@ -72,39 +73,45 @@ public class HorseRaceGameUtils {
         return winner;
     }
 
-    public List<HorseRaceTick> buildTicks(Integer[][] speeds,
-                                          List<Double> totalDistances,
-                                          Integer horseCount,
-                                          Integer segmentsCount) {
+    public List<HorseRaceHorseKeyframes> buildKeyFrames(Integer[][] speeds,
+                                                        List<Double> totalDistances,
+                                                        Integer horseCount,
+                                                        Integer segmentsCount) {
         double maxDistance = totalDistances.stream()
                 .mapToDouble(Double::doubleValue)
                 .max()
                 .orElse(1.0);
 
-        double[] cumulative = new double[horseCount];
-        List<HorseRaceTick> ticks = new ArrayList<>(segmentsCount + ONE);
+        List<HorseRaceHorseKeyframes> result = new ArrayList<>(horseCount);
 
-        double[] zeroPositions = new double[horseCount];
-        ticks.add(HorseRaceTick.builder()
-                .tickIndex(0)
-                .positions(zeroPositions)
-                .build());
+        for (int horse = 0; horse < horseCount; horse++) {
+            List<HorseRaceKeyframe> keyframes = new ArrayList<>(segmentsCount + ONE);
 
-        for (int tick = 0; tick < segmentsCount; tick++) {
-            double[] positions = new double[horseCount];
+            keyframes.add(HorseRaceKeyframe.builder()
+                    .offset(0.0)
+                    .position(0.0)
+                    .build());
 
-            for (int horse = 0; horse < horseCount; horse++) {
-                cumulative[horse] += speeds[horse][tick];
-                positions[horse] = (cumulative[horse] / maxDistance) * 100.0;
+            double cumulative = 0.0;
+
+            for (int segment = 0; segment < segmentsCount; segment++) {
+                cumulative += speeds[horse][segment];
+                double position = (cumulative / maxDistance) * 100;
+                double offset = (double) (segment + ONE) / segmentsCount;
+
+                keyframes.add(HorseRaceKeyframe.builder()
+                        .offset(offset)
+                        .position(position)
+                        .build());
             }
 
-            ticks.add(HorseRaceTick.builder()
-                    .tickIndex(tick + ONE)
-                    .positions(positions)
+            result.add(HorseRaceHorseKeyframes.builder()
+                    .horseIndex(horse)
+                    .keyframes(keyframes)
                     .build());
         }
 
-        return ticks;
+        return result;
     }
 
     public String calculateHash(String input) {

@@ -1,4 +1,4 @@
-import type { HorseRaceGameTick } from "./HorseRace";
+import type { HorseRaceHorseKeyframes } from "./HorseRace";
 
 export interface WSMessage {
    type: string;
@@ -28,7 +28,7 @@ export interface HorseRaceGameMessage extends WSMessage {
    serverSeed?: string;
    winnerHorseIndex?: number;
    segmentsCount?: number;
-   ticks?: HorseRaceGameTick[];
+   horseKeyframes?: HorseRaceHorseKeyframes[];
    horseIndex?: number;
    bet?: number;
 }

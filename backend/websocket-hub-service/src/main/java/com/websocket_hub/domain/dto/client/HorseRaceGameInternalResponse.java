@@ -1,6 +1,6 @@
 package com.websocket_hub.domain.dto.client;
 
-import com.websocket_hub.domain.entity.HorseRaceGameTick;
+import com.websocket_hub.domain.entity.HorseRaceHorseKeyframes;
 import lombok.Builder;
 
 import java.util.List;
@@ -23,6 +23,6 @@ public record HorseRaceGameInternalResponse(
 
         Integer segmentsCount,
 
-        List<HorseRaceGameTick> ticks
+        List<HorseRaceHorseKeyframes> horseKeyframes
 ) {
 }

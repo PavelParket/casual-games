@@ -5,7 +5,7 @@ import com.game_service.horse_race.domain.dto.HorseRaceGamePresetResponse;
 import com.game_service.horse_race.domain.dto.HorseRaceGameRequest;
 import com.game_service.horse_race.domain.dto.HorseRaceGameResponse;
 import com.game_service.horse_race.domain.entity.HorseRace;
-import com.game_service.horse_race.domain.entity.HorseRaceTick;
+import com.game_service.horse_race.domain.entity.HorseRaceHorseKeyframes;
 import com.game_service.horse_race.domain.enums.HorseRaceEvent;
 import com.game_service.horse_race.domain.enums.HorseRaceStatus;
 import com.game_service.horse_race.factory.HorseRaceFactory;
@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+
+import static com.game_service.horse_race.util.HorseRaceGameUtils.SEGMENTS;
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +53,7 @@ public class HorseRaceGameService {
         horseRaceValidator.validateStart(request);
 
         Integer horseCount = request.horseCount();
-        Integer segmentsCount = HorseRaceGameUtils.SEGMENTS;
+        Integer segmentsCount = SEGMENTS;
 
         String serverSeed = UUID.randomUUID().toString();
         String seedHash = HorseRaceGameUtils.calculateHash(serverSeed);
@@ -62,7 +64,12 @@ public class HorseRaceGameService {
         List<Double> totalDistances = HorseRaceGameUtils.buildTotalDistances(speeds, horseCount, segmentsCount);
         Integer winnerHorseIndex = HorseRaceGameUtils.findWinner(totalDistances, horseCount);
 
-        List<HorseRaceTick> ticks = HorseRaceGameUtils.buildTicks(speeds, totalDistances, horseCount, segmentsCount);
+        List<HorseRaceHorseKeyframes> horseKeyframes = HorseRaceGameUtils.buildKeyFrames(
+                speeds,
+                totalDistances,
+                horseCount,
+                segmentsCount
+        );
 
         HorseRace horseRace = horseRaceRepository.save(horseRaceFactory.create(
                 request.roomId(),
@@ -79,7 +86,7 @@ public class HorseRaceGameService {
                 horseRace,
                 HorseRaceEvent.START,
                 HorseRaceGameUtils.calculateOdds(horseCount),
-                ticks
+                horseKeyframes
         );
     }
 

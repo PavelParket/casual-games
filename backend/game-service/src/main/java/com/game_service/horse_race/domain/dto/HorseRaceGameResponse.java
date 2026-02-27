@@ -1,6 +1,6 @@
 package com.game_service.horse_race.domain.dto;
 
-import com.game_service.horse_race.domain.entity.HorseRaceTick;
+import com.game_service.horse_race.domain.entity.HorseRaceHorseKeyframes;
 import lombok.Builder;
 
 import java.util.List;
@@ -25,6 +25,6 @@ public record HorseRaceGameResponse(
 
         Integer segmentsCount,
 
-        List<HorseRaceTick> ticks
+        List<HorseRaceHorseKeyframes> horseKeyframes
 ) {
 }

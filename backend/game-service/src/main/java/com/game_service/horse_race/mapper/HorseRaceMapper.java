@@ -3,7 +3,7 @@ package com.game_service.horse_race.mapper;
 import com.game_service.horse_race.domain.dto.HorseRaceGamePresetResponse;
 import com.game_service.horse_race.domain.dto.HorseRaceGameResponse;
 import com.game_service.horse_race.domain.entity.HorseRace;
-import com.game_service.horse_race.domain.entity.HorseRaceTick;
+import com.game_service.horse_race.domain.entity.HorseRaceHorseKeyframes;
 import com.game_service.horse_race.domain.enums.HorseRaceEvent;
 import org.mapstruct.Mapper;
 
@@ -18,5 +18,5 @@ public interface HorseRaceMapper {
     HorseRaceGameResponse toResponse(HorseRace horseRace,
                                      HorseRaceEvent event,
                                      List<Double> odds,
-                                     List<HorseRaceTick> ticks);
+                                     List<HorseRaceHorseKeyframes> horseKeyframes);
 }
