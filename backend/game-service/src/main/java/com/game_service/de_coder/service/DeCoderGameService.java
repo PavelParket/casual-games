@@ -7,11 +7,12 @@ import com.game_service.de_coder.exception.InvalidMoveException;
 import com.game_service.de_coder.mapper.DeCoderGameMapper;
 import com.game_service.de_coder.util.DeCoderGameLogicUtils;
 import com.game_service.de_coder.validator.DeCoderGameValidator;
-import com.game_service.tic_tac_toe.enums.MessageType;
+import com.game_service.de_coder.enums.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.BitSet;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,8 +28,14 @@ public class DeCoderGameService {
 
     private final Map<UUID, String> secretCodes = new ConcurrentHashMap<>();
 
+    private final Map<UUID, BitSet> roomState = new ConcurrentHashMap<>();
+
+    private static final int BITSET_SIZE = 10_000;
+
     public DeCoderGameResponse processStart(DeCoderGameRequest request) {
         deCoderGameValidator.validateStart(request);
+
+        deCoderGameValidator.validateGameNotExists(request.roomId(), secretCodes);
 
         String newCode = DeCoderGameLogicUtils.generateSecretCode();
         String existingCode = secretCodes.putIfAbsent(request.roomId(), newCode);
@@ -36,6 +43,8 @@ public class DeCoderGameService {
         if (existingCode != null) {
             throw new InvalidMoveException("Game already in progress in this room");
         }
+
+        roomState.put(request.roomId(), new BitSet(BITSET_SIZE));
 
         log.info("Starting new DE_CODER game in room '{}'. Secret code generated", request.roomId());
 
@@ -50,16 +59,22 @@ public class DeCoderGameService {
     public DeCoderGameResponse processMove(DeCoderGameRequest request) {
         deCoderGameValidator.validateMove(request);
 
-        String secretCode = secretCodes.get(request.roomId());
-        if (secretCode == null) {
-            throw new InvalidMoveException("Game not started in this room");
+        deCoderGameValidator.validateGameExists(request.roomId(), secretCodes);
+
+        BitSet state = roomState.computeIfAbsent(request.roomId(), k -> new BitSet(BITSET_SIZE));
+
+        synchronized (state) {
+            deCoderGameValidator.validateCodeNotUsed(request.code(), state);
+
+            state.set(request.code());
         }
 
-        if (DeCoderGameLogicUtils.isCodeCracked(request.code(), secretCode)) {
+        if (DeCoderGameLogicUtils.isCodeCracked(request.code(), secretCodes.get(request.roomId()))) {
 
             log.info("Player {} found the code in room {}!", request.player(), request.roomId());
 
             secretCodes.remove(request.roomId());
+            roomState.remove(request.roomId());
 
             return deCoderGameMapper.toWinResponse(MessageType.SYSTEM,
                     DeCoderGameEvent.WINNER,
@@ -74,5 +89,20 @@ public class DeCoderGameService {
                 "Does not match the winning code",
                 request.code(),
                 request.player());
+    }
+
+    public byte[] getGameState(UUID roomId) {
+        deCoderGameValidator.validateGetState(roomId);
+
+        deCoderGameValidator.validateGameExists(roomId, secretCodes);
+
+        BitSet state = roomState.get(roomId);
+        if (state == null) {
+            return new byte[0];
+        }
+
+        synchronized (state) {
+            return state.toByteArray();
+        }
     }
 }

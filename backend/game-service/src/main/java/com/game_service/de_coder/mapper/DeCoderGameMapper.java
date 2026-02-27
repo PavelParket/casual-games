@@ -2,7 +2,7 @@ package com.game_service.de_coder.mapper;
 
 import com.game_service.de_coder.dto.DeCoderGameResponse;
 import com.game_service.de_coder.enums.DeCoderGameEvent;
-import com.game_service.tic_tac_toe.enums.MessageType;
+import com.game_service.de_coder.enums.MessageType;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

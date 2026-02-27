@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum RoomType {
 
     TIC_TAC_TOE("Tic Tac Toe", "t-t-t"),
+    DE_CODER("De-Coder", "de-coder"),
     ROOM_TEST("Room Test", "room");
 
     private final String label;

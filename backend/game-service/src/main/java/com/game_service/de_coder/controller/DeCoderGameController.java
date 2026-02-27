@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/game/de_coder")
 @RequiredArgsConstructor
@@ -24,5 +26,13 @@ public class DeCoderGameController {
     @ResponseStatus(HttpStatus.OK)
     public DeCoderGameResponse processMove(@RequestBody DeCoderGameRequest request) {
         return deCoderGameService.processMove(request);
+    }
+
+    @GetMapping("/{roomId}/state")
+    @ResponseStatus(HttpStatus.OK)
+    public String getGameState(@PathVariable UUID roomId) {
+        byte[] bytes = deCoderGameService.getGameState(roomId);
+
+        return java.util.Base64.getEncoder().encodeToString(bytes);
     }
 }
