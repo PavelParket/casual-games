@@ -1,4 +1,4 @@
-package com.websocket_hub.domain.enums;
+package com.websocket_hub.domain.enums.events;
 
 /**
  * <h2>

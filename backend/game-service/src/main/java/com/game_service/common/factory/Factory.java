@@ -1,4 +1,4 @@
-package com.game_service.tic_tac_toe.factory;
+package com.game_service.common.factory;
 
 public interface Factory<T> {
 

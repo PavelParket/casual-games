@@ -8,12 +8,14 @@ import java.util.UUID;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "roomType")
 @JsonSubTypes({
+        @JsonSubTypes.Type(value = TestRoomTransactionRequest.class, name = "ROOM_TEST"),
         @JsonSubTypes.Type(value = TicTacToeTransactionRequest.class, name = "TIC_TAC_TOE"),
-        @JsonSubTypes.Type(value = TestRoomTransactionRequest.class, name = "ROOM_TEST")
+        @JsonSubTypes.Type(value = HorseRaceTransactionRequest.class, name = "HORSE_RACE")
 })
 public sealed interface GameTransactionRequest permits
+        TestRoomTransactionRequest,
         TicTacToeTransactionRequest,
-        TestRoomTransactionRequest {
+        HorseRaceTransactionRequest {
 
     UUID roomId();
 

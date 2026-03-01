@@ -1,6 +1,6 @@
 package com.websocket_hub.client;
 
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,10 +1,10 @@
 package com.websocket_hub.manager;
 
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
-import com.websocket_hub.domain.enums.RoomEvent;
 import com.websocket_hub.domain.enums.RoomType;
+import com.websocket_hub.domain.enums.events.RoomEvent;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
 import com.websocket_hub.factory.RoomFactory;
@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.util.UUID;
 
 @Deprecated
 @Service
@@ -72,5 +74,15 @@ public class RoomManager extends AbstractRoomManager {
                 room.getId(),
                 user.username() + " left room: " + room.getName()
         ));
+    }
+
+    @Override
+    protected void onCreateRoom(Room room) {
+
+    }
+
+    @Override
+    protected void onDeleteRoom(UUID roomId) {
+
     }
 }
