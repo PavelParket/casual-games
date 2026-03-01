@@ -2,14 +2,14 @@ package com.websocket_hub.handler;
 
 import com.websocket_hub.client.BankServiceClient;
 import com.websocket_hub.client.GameServiceClient;
-import com.websocket_hub.domain.dto.bank_service.PlayerBet;
-import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalRequest;
-import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalResponse;
+import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalRequest;
+import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
+import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.enums.MessageType;
-import com.websocket_hub.domain.enums.TicTacToeGameEvent;
+import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
@@ -82,7 +82,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
                 case BET -> handlePlayerBet(ticTacToeGameMessage, roomId, user);
 
-                default -> log.warn("Unknown game message event: {}", ticTacToeGameMessage.event());
+                default -> log.warn("Unhandled tic tac toe event: {}", ticTacToeGameMessage.event());
             }
         } catch (Exception e) {
             log.error("Failed to handle game message", e);

@@ -1,7 +1,7 @@
 package com.websocket_hub.handler;
 
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.DefaultMessage;
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.manager.RoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.serializer.MessageDeserializer;

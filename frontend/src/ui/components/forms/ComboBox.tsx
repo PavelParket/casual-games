@@ -40,6 +40,7 @@ export function ComboBox({
 
     const filteredOptions = isSearchable
         ? options.filter((opt) =>
+            typeof opt.label === "string" &&
             opt.label.toLowerCase().includes(searchQuery.toLowerCase())
         )
         : options;

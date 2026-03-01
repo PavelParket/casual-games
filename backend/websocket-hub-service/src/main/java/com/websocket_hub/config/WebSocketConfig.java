@@ -1,5 +1,6 @@
 package com.websocket_hub.config;
 
+import com.websocket_hub.handler.HorseRaceGameRoomHandler;
 import com.websocket_hub.handler.RoomHandler;
 import com.websocket_hub.handler.TicTacToeGameRoomHandler;
 import com.websocket_hub.interceptor.AppHandshakeInterceptor;
@@ -18,6 +19,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final TicTacToeGameRoomHandler ticTacToeGameRoomHandler;
 
+    private final HorseRaceGameRoomHandler horseRaceGameRoomHandler;
+
     private final AppHandshakeInterceptor handshakeInterceptor;
 
     @Override
@@ -27,6 +30,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 .addInterceptors(handshakeInterceptor);
 
         registry.addHandler(ticTacToeGameRoomHandler, "/ws/t-t-t")
+                .setAllowedOriginPatterns("*")
+                .addInterceptors(handshakeInterceptor);
+
+        registry.addHandler(horseRaceGameRoomHandler, "/ws/horse-race")
                 .setAllowedOriginPatterns("*")
                 .addInterceptors(handshakeInterceptor);
     }

@@ -1,0 +1,58 @@
+/* ─────────────────────────────────────────────────────────────
+   Horse Sprite — анимация через steps()
+   background-position НЕ конфликтует с left/transform родителя
+───────────────────────────────────────────────────────────── */
+
+.horse-sprite {
+    display: block;
+    flex-shrink: 0;
+}
+
+/* ── Галоп: сдвигаем background-position на 4 кадра ── */
+@keyframes horse-gallop-sprite {
+    from {
+        background-position-x: 0px;
+    }
+
+    to {
+        background-position-x: calc(-1 * var(--sprite-w));
+    }
+}
+
+.horse-sprite--running {
+    animation: horse-gallop-sprite 0.4s steps(4) infinite;
+}
+
+/* ── Победитель: drop-shadow пульсация ── */
+@keyframes horse-winner-glow {
+
+    0%,
+    100% {
+        filter: var(--horse-filter) drop-shadow(0 0 3px currentColor);
+    }
+
+    50% {
+        filter: var(--horse-filter) drop-shadow(0 0 10px currentColor);
+    }
+}
+
+/* 
+   Победитель: масштабируем через scale на отдельном враппере,
+   чтобы не трогать сам спрайт-элемент.
+   Применяется к родителю .horse-sprite-winner-wrapper.
+*/
+@keyframes horse-winner-scale {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+.horse-sprite--winner {
+    animation: horse-winner-scale 0.75s ease-in-out infinite;
+}

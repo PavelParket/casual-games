@@ -1,6 +1,6 @@
 package com.websocket_hub.service;
 
-import com.websocket_hub.domain.dto.bank_service.PlayerBet;
+import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -16,10 +16,14 @@ import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
 import Profile from './pages/Profile'
 import ExperimentalPage from './pages/ExperimentalPage'
 import LoadingPage from './pages/LoadingPage'
+import HorseRaceRoom from './pages/rooms/HorseRaceRoom'
+import { useScrollbarVisibility } from './hooks/useScrollbarVisibility'
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
    const [isInitialized, setIsInitialized] = useState<boolean>(false);
+
+   useScrollbarVisibility();
 
    useEffect(() => {
       // todo: Переделать обновление токена и его прокид при вебсокетном подключении
@@ -62,6 +66,7 @@ export default function App() {
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/rooms" element={<Rooms />} />
                         <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
+                        <Route path="/room/horse-race/:roomName/:roomId" element={<HorseRaceRoom />} />
                         {/* <Route path="/room/de-coder/:roomName" element={<DeCoderRoom />} /> */}
 
                         {/* ===== Experiment Room ===== */}

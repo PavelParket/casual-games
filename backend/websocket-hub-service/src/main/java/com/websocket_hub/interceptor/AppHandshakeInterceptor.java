@@ -1,7 +1,7 @@
 package com.websocket_hub.interceptor;
 
 import com.websocket_hub.client.UserServiceClient;
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.provider.IdentityProvider;
 import lombok.RequiredArgsConstructor;

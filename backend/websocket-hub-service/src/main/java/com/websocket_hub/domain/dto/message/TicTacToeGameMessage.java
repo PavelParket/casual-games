@@ -1,7 +1,7 @@
 package com.websocket_hub.domain.dto.message;
 
 import com.websocket_hub.domain.enums.MessageType;
-import com.websocket_hub.domain.enums.TicTacToeGameEvent;
+import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
 import lombok.Builder;
 
 import java.math.BigDecimal;

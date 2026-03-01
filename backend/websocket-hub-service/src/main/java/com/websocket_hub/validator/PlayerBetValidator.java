@@ -1,6 +1,6 @@
 package com.websocket_hub.validator;
 
-import com.websocket_hub.domain.dto.bank_service.PlayerBet;
+import com.websocket_hub.domain.entity.PlayerBet;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

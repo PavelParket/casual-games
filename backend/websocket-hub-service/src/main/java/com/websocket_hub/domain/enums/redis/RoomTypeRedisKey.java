@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum RoomTypeRedisKey {
 
-    TIC_TAC_TOE_ROOM("room:tic-tac-toe");
+    TIC_TAC_TOE_ROOM("room:tic-tac-toe"),
+    HORSE_RACE_ROOM("room:horse-race");
 
     private final String redisKey;
 }

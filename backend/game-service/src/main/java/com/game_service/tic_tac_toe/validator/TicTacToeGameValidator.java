@@ -1,8 +1,8 @@
 package com.game_service.tic_tac_toe.validator;
 
+import com.game_service.common.exception.GameValidationException;
+import com.game_service.common.exception.InvalidMoveException;
 import com.game_service.tic_tac_toe.dto.TicTacToeGameRequest;
-import com.game_service.tic_tac_toe.exception.GameValidationException;
-import com.game_service.tic_tac_toe.exception.InvalidMoveException;
 import com.game_service.tic_tac_toe.util.TicTacToeGameUtils;
 import org.springframework.stereotype.Component;
 
