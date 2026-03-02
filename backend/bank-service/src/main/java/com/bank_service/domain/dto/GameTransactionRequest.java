@@ -10,12 +10,14 @@ import java.util.UUID;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = TestRoomTransactionRequest.class, name = "ROOM_TEST"),
         @JsonSubTypes.Type(value = TicTacToeTransactionRequest.class, name = "TIC_TAC_TOE"),
-        @JsonSubTypes.Type(value = HorseRaceTransactionRequest.class, name = "HORSE_RACE")
+        @JsonSubTypes.Type(value = HorseRaceTransactionRequest.class, name = "HORSE_RACE"),
+        @JsonSubTypes.Type(value = DeCoderTransactionRequest.class, name = "DE_CODER"),
 })
 public sealed interface GameTransactionRequest permits
         TestRoomTransactionRequest,
         TicTacToeTransactionRequest,
-        HorseRaceTransactionRequest {
+        HorseRaceTransactionRequest,
+        DeCoderTransactionRequest {
 
     UUID roomId();
 
