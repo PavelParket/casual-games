@@ -1,7 +1,7 @@
 package com.websocket_hub.mapper;
 
-import com.websocket_hub.domain.dto.bank_service.DeCoderTransactionInternalRequest;
-import com.websocket_hub.domain.dto.bank_service.PlayerBet;
+import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalRequest;
+import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.enums.RoomType;
 import org.mapstruct.Mapper;
 

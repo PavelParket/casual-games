@@ -16,9 +16,9 @@ export const DeCoderPanel = React.memo(({ gridData }: DeCoderPanelProps) => {
    const [searchQuery, setSearchQuery] = useState("");
 
    const getSearchPlaceholder = () => {
-      if (searchMode === "SEQUENCE") return "e.g. 123";
-      if (searchMode === "ANY_ORDER") return "e.g. 51 (any order)";
-      if (searchMode === "MASK") return "e.g. 1*2*";
+      if (searchMode === "SEQUENCE") return "1234";
+      if (searchMode === "ANY_ORDER") return "in any order";
+      if (searchMode === "MASK") return "1*2*";
       return "Search...";
    };
 
@@ -32,6 +32,7 @@ export const DeCoderPanel = React.memo(({ gridData }: DeCoderPanelProps) => {
             const escaped = query.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
             maskRegex = new RegExp(escaped.replace(/\*/g, '\\d'));
          } catch (e) {
+            console.error("", e)
             maskRegex = null;
          }
       }
@@ -71,6 +72,7 @@ export const DeCoderPanel = React.memo(({ gridData }: DeCoderPanelProps) => {
          if (!matchesPattern) continue;
 
          arr.push(
+            //todo: Для компонента Box не корректно работает прокрутка: валивается из границ
             <div
                key={i}
                style={{
@@ -104,7 +106,7 @@ export const DeCoderPanel = React.memo(({ gridData }: DeCoderPanelProps) => {
       }}>               
          
          <Stack gap="10px" style={{ marginBottom: "1rem", flexShrink: 0 }}>
-            <Box style={{ display: "flex", gap: "5px", background: "var(--color-bg-glass)", padding: "4px", borderRadius: "var(--radius-sm)" }}>
+            <Box style={{ display: "flex", gap: "5px", padding: "4px", borderRadius: "var(--radius-sm)" }}>
                {(["ALL", "UNUSED", "USED"] as StateFilter[]).map(state => (
                   <Button 
                      key={state}
@@ -121,8 +123,8 @@ export const DeCoderPanel = React.memo(({ gridData }: DeCoderPanelProps) => {
                <Box style={{ flexShrink: 0, width: "150px" }}>
                   <ComboBox 
                      options={[
-                        { value: "SEQUENCE", label: "Strict" },
-                        { value: "ANY_ORDER", label: "Any Order" },
+                        { value: "SEQUENCE", label: "Sequence" },
+                        { value: "ANY_ORDER", label: "Any Digit" },
                         { value: "MASK", label: "Mask (*)" }
                      ]}
                      value={searchMode}

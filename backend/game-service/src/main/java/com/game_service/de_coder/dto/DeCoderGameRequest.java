@@ -1,9 +1,12 @@
 package com.game_service.de_coder.dto;
 
+import com.game_service.common.enums.MessageType;
 import com.game_service.de_coder.enums.DeCoderGameEvent;
-import com.game_service.de_coder.enums.MessageType;
+import lombok.Builder;
+
 import java.util.UUID;
 
+@Builder
 public record DeCoderGameRequest(
         MessageType type,
 
@@ -21,6 +24,10 @@ public record DeCoderGameRequest(
 
         UUID player,
 
-        UUID winner
+        UUID winner,
+
+        String gameState,
+
+        Boolean isGameStarted
 ) {
 }

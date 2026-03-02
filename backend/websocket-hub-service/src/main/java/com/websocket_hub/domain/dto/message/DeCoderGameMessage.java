@@ -1,7 +1,7 @@
 package com.websocket_hub.domain.dto.message;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.websocket_hub.domain.enums.DeCoderGameEvent;
+import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.MessageType;
 import lombok.Builder;
 
@@ -19,6 +19,8 @@ public record DeCoderGameMessage(
         UUID toUserId,
 
         UUID roomId,
+
+        boolean isGameStarted,
 
         String gameState,
 

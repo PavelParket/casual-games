@@ -2,19 +2,18 @@ package com.websocket_hub.handler;
 
 import com.websocket_hub.client.BankServiceClient;
 import com.websocket_hub.client.DeCoderGameServiceClient;
-import com.websocket_hub.domain.dto.bank_service.DeCoderTransactionInternalRequest;
-import com.websocket_hub.domain.dto.bank_service.DeCoderTransactionInternalResponse;
-import com.websocket_hub.domain.dto.bank_service.PlayerBet;
+import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalRequest;
+import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalResponse;
+import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
-import com.websocket_hub.domain.enums.DeCoderGameEvent;
+import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.manager.DeCoderGameRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.DeCoderGameMessageMapper;
 import com.websocket_hub.mapper.DeCoderGameTransactionMapper;
-import com.websocket_hub.serializer.JsonDeserializer;
 import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.util.WebSocketUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
     private static final BigDecimal WIN_REWARD = new BigDecimal("100.00");
 
-    private final MessageDeserializer deserializer;
+    private final MessageDeserializer messageDeserializer;
 
     private final DeCoderGameMessageMapper deCoderGameMessageMapper;
 
@@ -48,7 +47,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
     public DeCoderGameRoomHandler(
             SessionManager sessionManager,
             DeCoderGameRoomManager roomManager,
-            JsonDeserializer deserializer,
+            MessageDeserializer messageDeserializer,
             DeCoderGameMessageMapper deCoderGameMessageMapper,
             DeCoderGameTransactionMapper deCoderGameTransactionMapper,
             DeCoderGameServiceClient deCoderGameServiceClient,
@@ -56,7 +55,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
     ) {
         super(sessionManager, roomManager);
-        this.deserializer = deserializer;
+        this.messageDeserializer = messageDeserializer;
         this.deCoderGameMessageMapper = deCoderGameMessageMapper;
         this.deCoderGameTransactionMapper = deCoderGameTransactionMapper;
         this.deCoderGameServiceClient = deCoderGameServiceClient;
@@ -72,7 +71,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
         String payload = message.getPayload();
 
         try {
-            DeCoderGameMessage deCoderGameMessage = deserializer.deserialize(payload, DeCoderGameMessage.class);
+            DeCoderGameMessage deCoderGameMessage = messageDeserializer.deserialize(payload, DeCoderGameMessage.class);
             UUID roomId = WebSocketUtil.getRoomId(session);
             UserInternalResponse user = WebSocketUtil.getUser(session);
 
@@ -152,7 +151,28 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
                     message.code()
             );
 
-            DeCoderGameMessage moveResponse = deCoderGameServiceClient.processMove(moveRequest);
+            DeCoderGameMessage moveResponse;
+            //todo: закостылил сюда возврат средств, лучше варианта пока не придумал, в базе транзакций полный ужас
+            try {
+                moveResponse = deCoderGameServiceClient.processMove(moveRequest);
+            } catch (Exception e) {
+                log.warn("Game move failed. Refunding {} CGC to user {}", MOVE_COST, user.username());
+                try {
+                    PlayerBet refundPlayerBet = roomManager.markPlayerBet(user, MOVE_COST);
+                    DeCoderTransactionInternalRequest refundRequest = deCoderGameTransactionMapper.toInternalRequest(
+                            roomId,
+                            roomManager.getRoomType(),
+                            refundPlayerBet,
+                            user.guid()
+                    );
+                    bankServiceClient.sendDeCoderGameTransaction(refundRequest);
+                    log.info("Refund successful for user {}", user.username());
+                } catch (Exception refundEx) {
+                    log.error("CRITICAL: Failed to refund user {} after game error!", user.username(), refundEx);
+                }
+
+                throw e;
+            }
 
             if (DeCoderGameEvent.WINNER.equals(moveResponse.event())) {
                 handleWin(roomId, user, moveResponse);

@@ -1,7 +1,7 @@
 package com.websocket_hub.mapper;
 
 import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
-import com.websocket_hub.domain.enums.DeCoderGameEvent;
+import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.MessageType;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

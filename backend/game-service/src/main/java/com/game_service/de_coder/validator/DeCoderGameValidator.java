@@ -1,9 +1,9 @@
 package com.game_service.de_coder.validator;
 
+import com.game_service.common.exception.GameValidationException;
+import com.game_service.common.exception.InvalidMoveException;
 import com.game_service.de_coder.dto.DeCoderGameRequest;
-import com.game_service.de_coder.exception.GameValidationException;
-import com.game_service.de_coder.exception.CooldownException;
-import com.game_service.de_coder.exception.InvalidMoveException;
+import com.game_service.common.exception.CooldownException;
 import org.springframework.stereotype.Component;
 
 import java.util.BitSet;

@@ -1,4 +1,4 @@
-package com.game_service.de_coder.exception;
+package com.game_service.common.exception;
 
 import lombok.Getter;
 

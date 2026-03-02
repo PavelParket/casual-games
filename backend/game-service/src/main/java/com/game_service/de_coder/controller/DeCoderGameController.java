@@ -30,9 +30,7 @@ public class DeCoderGameController {
 
     @GetMapping("/{roomId}/state")
     @ResponseStatus(HttpStatus.OK)
-    public String getGameState(@PathVariable UUID roomId) {
-        byte[] bytes = deCoderGameService.getGameState(roomId);
-
-        return java.util.Base64.getEncoder().encodeToString(bytes);
+    public DeCoderGameResponse getGameState(@PathVariable UUID roomId) {
+        return deCoderGameService.getGameState(roomId);
     }
 }

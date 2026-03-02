@@ -15,7 +15,7 @@ import Rooms from './pages/rooms/Rooms'
 import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
 import DeCoderRoom from './pages/rooms/DeCoder/DeCoderRoom'
 import Profile from './pages/Profile'
-import ExperimentalPage from './pages/ExperimentalPage'
+//import ExperimentalPage from './pages/ExperimentalPage'
 import LoadingPage from './pages/LoadingPage'
 import HorseRaceRoom from './pages/rooms/HorseRaceRoom'
 import { useScrollbarVisibility } from './hooks/useScrollbarVisibility'
@@ -71,8 +71,8 @@ export default function App() {
                         <Route path="/room/de-coder/:roomName/:roomId" element={<DeCoderRoom />} />
 
 
-                        {/* ===== Experiment Room ===== */}
-                        <Route path="/ws" element={<ExperimentalPage />} />
+                        {/* ===== Experiment Room ===== 
+                        <Route path="/ws" element={<ExperimentalPage />} />*/}
                      </Route>
                   </Route>
 

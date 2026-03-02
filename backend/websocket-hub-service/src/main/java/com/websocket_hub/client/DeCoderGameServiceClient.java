@@ -54,23 +54,22 @@ public class DeCoderGameServiceClient {
         }
     }
 
-    public String getGameState(UUID roomId) {
+    public DeCoderGameMessage getGameState(UUID roomId) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
                 .path("/game/de_coder/{roomId}/state")
                 .buildAndExpand(roomId)
                 .toUri();
 
         try {
-            ResponseEntity<String> response = restTemplate.exchange(
+            ResponseEntity<DeCoderGameMessage> response = restTemplate.exchange(
                     new RequestEntity<>(HttpMethod.GET, uri),
-                    String.class
+                    DeCoderGameMessage.class // <--- Ожидаем JSON-объект
             );
 
-            return response.getBody() != null ? response.getBody() : "";
-
+            return response.getBody();
         } catch (Exception e) {
             log.warn("Failed to get game state for room {}: {}", roomId, e.getMessage());
-            return "";
+            return null;
         }
     }
 }

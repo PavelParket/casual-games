@@ -1,13 +1,13 @@
 package com.game_service.de_coder.service;
 
+import com.game_service.common.enums.MessageType;
+import com.game_service.common.exception.InvalidMoveException;
 import com.game_service.de_coder.dto.DeCoderGameRequest;
 import com.game_service.de_coder.dto.DeCoderGameResponse;
 import com.game_service.de_coder.enums.DeCoderGameEvent;
-import com.game_service.de_coder.exception.InvalidMoveException;
 import com.game_service.de_coder.mapper.DeCoderGameMapper;
 import com.game_service.de_coder.util.DeCoderGameLogicUtils;
 import com.game_service.de_coder.validator.DeCoderGameValidator;
-import com.game_service.de_coder.enums.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -91,18 +91,26 @@ public class DeCoderGameService {
                 request.player());
     }
 
-    public byte[] getGameState(UUID roomId) {
+    public DeCoderGameResponse getGameState(UUID roomId) {
         deCoderGameValidator.validateGetState(roomId);
 
-        deCoderGameValidator.validateGameExists(roomId, secretCodes);
+        boolean isStarted = secretCodes.containsKey(roomId);
 
         BitSet state = roomState.get(roomId);
-        if (state == null) {
-            return new byte[0];
+        String base64 = "";
+
+        if (state != null) {
+            synchronized (state) {
+                byte[] bytes = state.toByteArray();
+                if (bytes.length > 0) {
+                    base64 = java.util.Base64.getEncoder().encodeToString(bytes);
+                }
+            }
         }
 
-        synchronized (state) {
-            return state.toByteArray();
-        }
+        return DeCoderGameResponse.builder()
+                .isGameStarted(isStarted)
+                .gameState(base64)
+                .build();
     }
 }

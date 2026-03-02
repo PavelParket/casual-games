@@ -1,16 +1,19 @@
 package com.websocket_hub.manager;
 
 import com.websocket_hub.client.DeCoderGameServiceClient;
-import com.websocket_hub.domain.dto.bank_service.PlayerBet;
+import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
-import com.websocket_hub.domain.enums.DeCoderGameEvent;
+import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomType;
+import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
+import com.websocket_hub.domain.repository.RoomRedisRepository;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.factory.PlayerBetFactory;
+import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.mapper.DeCoderGameMessageMapper;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
@@ -38,16 +41,17 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
     private final DeCoderGameServiceClient deCoderGameServiceClient;
 
     public DeCoderGameRoomManager(
-            MessageSerializer<String> serializer,
-            ObjectFactory<Room> roomFactory,
+            MessageSerializer serializer,
+            RoomFactory roomFactory,
             DeCoderGameMessageMapper deCoderGameMessageMapper,
             PlayerBetFactory playerBetFactory,
             PlayerBetValidator playerBetValidator,
             RoomValidator roomValidator,
             SessionManager sessionManager,
+            RoomRedisRepository roomRedisRepository,
             DeCoderGameServiceClient deCoderGameServiceClient
     ) {
-        super(serializer, roomFactory, sessionManager, roomValidator);
+        super(serializer, roomFactory, sessionManager, roomValidator, roomRedisRepository);
         this.messageMapper = deCoderGameMessageMapper;
         this.sessionManager = sessionManager;
         this.playerBetFactory = playerBetFactory;
@@ -63,6 +67,10 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
     @Override
     public MessageMapper getMapper() {
         return this.messageMapper;
+    }
+
+    public RoomTypeRedisKey getRedisKey() {
+        return RoomTypeRedisKey.DE_CODER_ROOM;
     }
 
     @Override
@@ -95,6 +103,16 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
         ));
     }
 
+    @Override
+    protected void onCreateRoom(Room room) {
+
+    }
+
+    @Override
+    protected void onDeleteRoom(UUID roomId) {
+
+    }
+
     public PlayerBet  markPlayerBet(UserInternalResponse user, BigDecimal bet) {
         PlayerBet newPlayerBet = playerBetFactory.create(user.guid(), bet, user.balance());
 
@@ -106,11 +124,9 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
     public void sendGameStateAsync(UserInternalResponse user, UUID roomId) {
         Thread.ofVirtual().start(() -> {
             try {
-                String deCoderGameState = deCoderGameServiceClient.getGameState(roomId);
+                DeCoderGameMessage stateResponse = deCoderGameServiceClient.getGameState(roomId);
 
-                if (deCoderGameState == null || deCoderGameState.isEmpty()) {
-                    return;
-                }
+                if (stateResponse == null) return;
 
                 ClientSession clientSession = getClientSessionByGuid(user.guid());
                 if (clientSession == null || !clientSession.isOpen()) {
@@ -123,12 +139,12 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
                         .event(DeCoderGameEvent.STATE)
                         .roomId(roomId)
                         .toUserId(user.guid())
-                        .gameState(deCoderGameState)
+                        .gameState(stateResponse.gameState() != null ? stateResponse.gameState() : "")
+                        .isGameStarted(stateResponse.isGameStarted())
                         .message("Current game state loaded")
                         .build();
 
                 sessionManager.sendToSession(clientSession, stateMessage);
-                log.info("Sent game state to user {}", user.username());
 
             } catch (Exception e) {
                 log.error("Failed to fetch/send game state for user {}", user.username(), e);

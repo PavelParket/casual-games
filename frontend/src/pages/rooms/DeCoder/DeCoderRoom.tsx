@@ -6,7 +6,7 @@ import { useWebSocket } from "../../../hooks/useWebSocket";
 import { getBalance } from "../../../store/slices/UserSlice";
 import { RoomAPI } from "../../../api/WsHubApi";
 
-import { Box, Button, Card, Container, Typography, Toast, Stack, Divider, Grid, CooldownTimer } from "../../../ui";
+import { Box, Button, Card, Container, Typography, Toast, Stack, Divider, Grid, CooldownTimer, Modal } from "../../../ui";
 
 import { validateRoomName, validateWSMessage, validateToastMessage } from "../../../utils/SecurityUtils";
 import type { DeCoderMessage } from "../../../models/WsMessage";
@@ -31,6 +31,7 @@ export default function DeCoderRoom() {
 
    const[gameActive, setGameActive] = useState<boolean>(false);
    const [gridData, setGridData] = useState<Uint8Array>(new Uint8Array(1250));
+   const [gameOverModal, setGameOverModal] = useState<{ isOpen: boolean; isWin: boolean; winnerName?: string } | null>(null);
 
    const[digits, setDigits] = useState<string[]>(['', '', '', '']);
    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -75,22 +76,22 @@ export default function DeCoderRoom() {
    }, [isConnected, send, roomId]);
 
    useEffect(() => {
-      if (!isConnected || !gameActive) return;
+      if (!isConnected) return;
 
       const syncInterval = setInterval(() => {
-         console.log("Auto-syncing game state...");
+         console.debug("Auto-syncing game state...");
          requestSync();
       }, 120000);
 
       return () => clearInterval(syncInterval);
-   }, [isConnected, gameActive, requestSync]);
+   },[isConnected, requestSync]);
 
 
    useEffect(() => {
       if (!isConnected || !message) return;
 
       const sanitized = validateWSMessage(message,[
-         "type", "event", "message", "code", "player", "winner", "gameState"
+         "type", "event", "message", "code", "player", "winner", "gameState", "isGameStarted"
       ]) as DeCoderMessage;
 
       switch (sanitized.event) {
@@ -102,9 +103,13 @@ export default function DeCoderRoom() {
                   bytes[i] = binString.charCodeAt(i);
                }
                setGridData(bytes);
-               
+            } else {
+               setGridData(new Uint8Array(1250));
             }
-            setGameActive(true);
+            
+            if (sanitized.isGameStarted !== undefined) {
+               setGameActive(sanitized.isGameStarted);
+            }
             break;
 
          case "START":
@@ -112,6 +117,7 @@ export default function DeCoderRoom() {
             setGridData(new Uint8Array(1250));
             setDigits(['', '', '', '']);
             setCooldown(0);
+            setGameOverModal(null);
             showToast("Game started! System generated a new code.", 'success');
             break;
 
@@ -136,14 +142,17 @@ export default function DeCoderRoom() {
             break;
 
          case "WINNER": {
+            console.log("11::",sanitized)
             setGameActive(false);
-            const winnerName = playersRef.current[sanitized.player!];
+            const winnerName = playersRef.current[sanitized.winner!] || "Unknown Player";
+            const isMe = sanitized.winner === guid;
             
-            if (sanitized.player === guid) {
-               showToast("🎉 YOU CRACKED THE CODE! Reward received.", 'success');
-            } else {
-               showToast(`Game Over! ${winnerName} cracked the code!`, 'success');
-            }
+            setGameOverModal({
+               isOpen: true,
+               isWin: isMe,
+               winnerName: isMe ? "You" : winnerName
+            });
+
             refreshUserBalance();
             break;
          }
@@ -174,7 +183,7 @@ export default function DeCoderRoom() {
 
          case "JOIN":
          case "LEAVE":
-            showToast(sanitized.message || "", 'info');
+            //showToast(sanitized.message || "", 'info');
             fetchPlayers();
             break;
       }
@@ -215,12 +224,22 @@ export default function DeCoderRoom() {
 
 
    return (
-      <Box style={{ minHeight: "calc(100vh - 60px - 50px)", padding: "2rem 0", display: "flex" }}>
+      <Box style={{
+         minHeight: "calc(100vh - 60px - 50px)",
+         margin: "0 10rem",
+         padding: "0 1rem",
+         background: "var(--color-bg-glass)",
+         backdropFilter: "blur(2px)",
+         borderRadius: "var(--radius-md)",
+         boxShadow: "var(--shadow-lg)"
+      }}>
          <Container maxWidth="1100px" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
             
-            <Typography variant="h2" style={{ textAlign: "center", marginBottom: "1rem" }}>
-               {roomName}
-            </Typography>
+            <Box style={{ padding: "2rem 0" }}>
+               <Typography variant="h2" style={{ textAlign: "center" }}>
+                  {roomName}
+               </Typography>
+            </Box>
 
             <Card style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, padding: "1.5rem" }}>
                <Grid columns="250px 1fr 300px" gap="2rem" style={{ height: "65vh", minHeight: "500px", alignItems: "stretch" }}>
@@ -283,7 +302,8 @@ export default function DeCoderRoom() {
                                        color: "var(--color-text)",
                                        outline: "none",
                                        boxShadow: "var(--shadow-sm)",
-                                       transition: "border-color 0.2s"
+                                       transition: "border-color 0.2s",
+                                       caretColor: "transparent",
                                     }}
                                     onFocus={(e) => e.target.style.borderColor = "var(--color-primary)"}
                                     onBlur={(e) => e.target.style.borderColor = "var(--color-border)"}
@@ -296,67 +316,21 @@ export default function DeCoderRoom() {
                                 onClick={handleSendMove} 
                                 disabled={cooldown > 0 || digits.join('').length !== 4}
                                 style={{ 
-                                    display: "inline-flex",
-                                    alignItems: "center", 
-                                    justifyContent: "center",
-                                    gap: "12px", 
-                                    borderRadius: "40px", 
-                                    padding: "8px 16px 8px 24px",
-                                    fontSize: "1.1rem",
-                                    height: "56px",
-                                    whiteSpace: "nowrap"
+                                    display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "12px", 
+                                    borderRadius: "40px", padding: "8px 16px 8px 24px", fontSize: "1.1rem", height: "56px", whiteSpace: "nowrap"
                                 }}
                             >
-                                <Typography 
-                                    variant="caption" 
-                                    style={{ 
-                                        fontWeight: "bold", 
-                                        fontSize: "inherit", 
-                                        color: "inherit"
-                                    }}
-                                >
-                                    Send
-                                </Typography>
-                                
-                                <Typography 
-                                    variant="caption" 
-                                    style={{ 
-                                        opacity: 0.8, 
-                                        fontSize: "0.85rem", 
-                                        minWidth: "55px",
-                                        color: "inherit" 
-                                    }}
-                                >
-                                    10 CG Coins
-                                </Typography>
-
-                                <Box style={{ 
-                                    width: "1px", 
-                                    height: "24px", 
-                                    background: "currentColor",
-                                    opacity: 0.3,
-                                    margin: "0 4px" 
-                                }} />
-
+                                <Typography variant="caption" style={{ fontWeight: "bold", fontSize: "inherit", color: "inherit" }}>Send</Typography>
+                                <Typography variant="caption" style={{ opacity: 0.8, fontSize: "0.85rem", minWidth: "55px", color: "inherit" }}>10 CG Coins</Typography>
+                                <Box style={{ width: "1px", height: "24px", background: "currentColor", opacity: 0.3, margin: "0 4px" }} />
                                 <CooldownTimer timeLeft={cooldown} maxTime={5} />
                             </Button>
                         </Stack>
                      )}
                   </Box>
 
-                  <Box style={{ 
-                     display: "flex", 
-                     flexDirection: "column", 
-                     height: "100%", 
-                     minHeight: 0, 
-                     borderLeft: "1px solid var(--color-border)", 
-                     paddingLeft: "1rem",
-                     overflow: "hidden" 
-                  }}>
-                     <Typography variant="h3" style={{ textAlign: "center", marginBottom: "1rem" }}>
-                        Code Terminal
-                     </Typography>
-                     
+                  <Box style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, borderLeft: "1px solid var(--color-border)", paddingLeft: "1rem", overflow: "hidden" }}>
+                     <Typography variant="h3" style={{ textAlign: "center", marginBottom: "1rem" }}>Code Terminal</Typography>
                      <Box style={{ flex: 1, minHeight: 0 }}>
                         <DeCoderPanel gridData={gridData} />
                      </Box>
@@ -365,6 +339,31 @@ export default function DeCoderRoom() {
                </Grid>
             </Card>
          </Container>
+
+         {gameOverModal && (
+            <Modal
+               isOpen={gameOverModal.isOpen}
+               onClose={() => { }}
+               title={gameOverModal.isWin ? "Victory!" : "System Hacked"}
+            >
+               <Box style={{ textAlign: "center", padding: "1rem 0" }}>
+                  <Typography variant="h2" style={{ 
+                     color: gameOverModal.isWin ? "var(--color-success)" : "var(--color-text)",
+                     marginBottom: "1rem"
+                  }}>
+                     {gameOverModal.isWin ? "You Cracked the Code!" : `${gameOverModal.winnerName} won!`}
+                  </Typography>
+                  <Typography variant="body" style={{ marginBottom: "2rem", opacity: 0.8 }}>
+                     {gameOverModal.isWin 
+                        ? "Congratulations! The reward has been added to your balance."
+                        : "Better luck next time. The code has been deciphered."}
+                  </Typography>
+                  <Button variant="solid" onClick={() => navigate("/rooms")} style={{ width: "100%", padding: "12px" }}>
+                     Leave Room
+                  </Button>
+               </Box>
+            </Modal>
+         )}
 
          {toast && (
             <Toast message={toast.text} onClose={() => setToast(null)} />
