@@ -92,3 +92,11 @@
 .btn-ghost:active {
    background: var(--btn-ghost-active-bg);
 }
+
+.btn:disabled,
+.btn.disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+   pointer-events: none;
+   box-shadow: none;
+}

@@ -21,14 +21,22 @@ export interface TicTacToeGameMessage extends WSMessage {
 }
 
 export interface HorseRaceGameMessage extends WSMessage {
-   participants?: Record<string, string>;
-   horseCount?: number;
-   odds?: number[];
-   seedHash?: string;
-   serverSeed?: string;
-   winnerHorseIndex?: number;
-   segmentsCount?: number;
-   horseKeyframes?: HorseRaceHorseKeyframes[];
-   horseIndex?: number;
-   bet?: number;
+    participants?: Record<string, string>;
+    horseCount?: number;
+    odds?: number[];
+    seedHash?: string;
+    serverSeed?: string;
+    winnerHorseIndex?: number;
+    segmentsCount?: number;
+    horseKeyframes?: HorseRaceHorseKeyframes[];
+    horseIndex?: number;
+    bet?: number;
+}
+
+export interface DeCoderMessage extends WSMessage {
+   player?: string;
+   code?: number;
+   winner?: string;
+   gameState?: string;
+   isGameStarted?: boolean;
 }

@@ -1,0 +1,31 @@
+.cooldown-timer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cooldown-timer-svg {
+    transform: rotate(-90deg);
+}
+
+.cooldown-timer-bg {
+    stroke: currentColor;
+    fill: none;
+    opacity: 0.2;
+}
+
+.cooldown-timer-progress {
+    stroke: currentColor;
+    fill: none;
+    stroke-linecap: round;
+}
+
+.cooldown-timer-text {
+    position: absolute;
+    font-weight: bold;
+    color: currentColor;
+    font-size: 0.75rem;
+    line-height: 1;
+}

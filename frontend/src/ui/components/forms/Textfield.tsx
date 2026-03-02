@@ -7,9 +7,11 @@ type TextFieldProps = {
    placeholder?: string;
    rounded?: boolean;
    disabled?: boolean;
+   className?: string;
+   style?: React.CSSProperties;
 }
 
-export function Textfield({ value, onChange, placeholder, rounded, disabled }: TextFieldProps) {
+export function Textfield({ value, onChange, placeholder, rounded, disabled, style  }: TextFieldProps) {
    return (
       <Input
          type="text"
@@ -20,6 +22,7 @@ export function Textfield({ value, onChange, placeholder, rounded, disabled }: T
          disabled={disabled}
          style={{
             borderRadius: rounded ? 20 : undefined,
+            ...style,
          }}
       />
    );
