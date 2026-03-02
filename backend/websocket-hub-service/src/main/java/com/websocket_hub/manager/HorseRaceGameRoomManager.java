@@ -22,7 +22,7 @@ import com.websocket_hub.helper.WebSocketHelper;
 import com.websocket_hub.mapper.HorseRaceGameMessageMapper;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
-import com.websocket_hub.service.scheduler.HorseRaceRoomCountdownService;
+import com.websocket_hub.service.scheduler.HorseRaceRoomCountdownServiceScheduler;
 import com.websocket_hub.validator.HorseRacePlayerBetValidator;
 import com.websocket_hub.validator.RoomValidator;
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +63,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
 
     private final WebSocketHelper webSocketHelper;
 
-    private final HorseRaceRoomCountdownService countdownService;
+    private final HorseRaceRoomCountdownServiceScheduler countdownServiceScheduler;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -79,7 +79,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
             RoomPresetRedisRepository presetRedisRepository,
             GameServiceClient gameServiceClient,
             WebSocketHelper webSocketHelper,
-            HorseRaceRoomCountdownService countdownService,
+            HorseRaceRoomCountdownServiceScheduler countdownServiceScheduler,
             ApplicationEventPublisher eventPublisher
     ) {
         super(serializer, roomFactory, sessionManager, validator, redisRepository);
@@ -89,7 +89,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
         this.presetRedisRepository = presetRedisRepository;
         this.gameServiceClient = gameServiceClient;
         this.webSocketHelper = webSocketHelper;
-        this.countdownService = countdownService;
+        this.countdownServiceScheduler = countdownServiceScheduler;
         this.eventPublisher = eventPublisher;
     }
 
@@ -169,7 +169,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
         }
 
         countdownStartTimes.put(room.getId(), System.currentTimeMillis());
-        countdownService.startCountdown(
+        countdownServiceScheduler.startCountdown(
                 room.getId(),
                 COUNTDOWN_SECONDS,
                 () -> eventPublisher.publishEvent(new CountdownExpiredEvent(room.getId()))
@@ -180,7 +180,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
 
     @Override
     protected void onDeleteRoom(UUID roomId) {
-        countdownService.cancelCountdown(roomId);
+        countdownServiceScheduler.cancelCountdown(roomId);
         countdownStartTimes.remove(roomId);
 
         presetRedisRepository.deletePreset(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET);
@@ -320,7 +320,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
     }
 
     public void cancelCountdown(UUID roomId) {
-        countdownService.cancelCountdown(roomId);
+        countdownServiceScheduler.cancelCountdown(roomId);
         countdownStartTimes.remove(roomId);
     }
 
@@ -357,7 +357,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
     public void restartCountdown(UUID roomId) {
         countdownStartTimes.put(roomId, System.currentTimeMillis());
 
-        countdownService.startCountdown(
+        countdownServiceScheduler.startCountdown(
                 roomId,
                 COUNTDOWN_SECONDS,
                 () -> eventPublisher.publishEvent(new CountdownExpiredEvent(roomId))

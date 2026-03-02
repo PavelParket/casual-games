@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
-public class HorseRaceRoomCountdownService {
+public class HorseRaceRoomCountdownServiceScheduler {
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4);
 
