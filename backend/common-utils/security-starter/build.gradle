@@ -3,7 +3,6 @@ plugins {
     id 'org.springframework.boot' version '3.5.9'
     id 'io.spring.dependency-management'
     id 'maven-publish'
-
 }
 
 bootJar {

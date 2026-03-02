@@ -1,6 +1,6 @@
 package com.websocket_hub.controller;
 
-import com.websocket_hub.domain.dto.bank_service.PlayerBet;
+import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.service.TicTacToeGameRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

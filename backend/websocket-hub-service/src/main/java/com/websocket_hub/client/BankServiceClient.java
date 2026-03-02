@@ -1,13 +1,17 @@
 package com.websocket_hub.client;
 
+import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalRequest;
+import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalResponse;
+import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalRequest;
+import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalResponse;
 import com.websocket_hub.domain.dto.bank_service.DeCoderTransactionInternalRequest;
-import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalRequest;
-import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalResponse;
 import com.websocket_hub.domain.dto.bank_service.DeCoderTransactionInternalResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -47,7 +51,7 @@ public class BankServiceClient {
             TicTacToeTransactionInternalResponse body = response.getBody();
 
             if (body == null) {
-                log.error("Bank-service returned null body");
+                log.error("Bank-service returned null body during tic tac tor process");
                 throw new RuntimeException("Bank-service returned null response");
             }
 
@@ -58,6 +62,37 @@ public class BankServiceClient {
         } catch (RestClientException e) {
             log.error("Failed to call bank-service: {}", e.getMessage());
             throw new RuntimeException("Failed to process game results: " + e.getMessage(), e);
+        }
+    }
+
+    public HorseRaceTransactionInternalResponse sendHorseRaceGameResults(HorseRaceTransactionInternalRequest request) {
+        URI uri = UriComponentsBuilder.fromUriString(bankServiceUrl)
+                .path("/bank/save")
+                .build()
+                .toUri();
+
+        log.info("Calling bank-service to process horse race results: roomId={}, winnerHorseIndex={}, betsCount={}", request.roomId(), request.winnerHorseIndex(), request.playerBets().size());
+
+        try {
+            ResponseEntity<HorseRaceTransactionInternalResponse> response = restTemplate.exchange(
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    HorseRaceTransactionInternalResponse.class
+            );
+
+            HorseRaceTransactionInternalResponse body = response.getBody();
+
+            if (body == null) {
+                log.error("Bank-service returned null body during horse race process");
+                throw new RuntimeException("Bank-service returned null response");
+            }
+
+            log.info("Bank-service processed horse race results successfully: status={}, message={}, transactions={}",
+                    body.status(), body.message(), body.transactionsCreated());
+
+            return body;
+        } catch (RestClientException e) {
+            log.error("Failed to call bank-service for horse race: {}", e.getMessage());
+            throw new RuntimeException("Failed to process horse race results: " + e.getMessage(), e);
         }
     }
 

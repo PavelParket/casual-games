@@ -1,11 +1,13 @@
 package com.websocket_hub.manager;
 
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.MessageType;
-import com.websocket_hub.domain.enums.RoomEvent;
 import com.websocket_hub.domain.enums.RoomType;
-import com.websocket_hub.factory.ObjectFactory;
+import com.websocket_hub.domain.enums.events.RoomEvent;
+import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
+import com.websocket_hub.domain.repository.RoomRedisRepository;
+import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
 import com.websocket_hub.validator.RoomValidator;
@@ -13,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.util.UUID;
 
 @Deprecated
 @Service
@@ -22,13 +26,14 @@ public class RoomManager extends AbstractRoomManager {
     private final MessageMapper messageMapper;
 
     public RoomManager(
-            MessageSerializer<String> serializer,
-            ObjectFactory<Room> factory,
+            MessageSerializer serializer,
+            RoomFactory factory,
             SessionManager sessionManager,
             RoomValidator validator,
+            RoomRedisRepository roomRedisRepository,
             @Qualifier("messageMapperImpl") MessageMapper mapper
     ) {
-        super(serializer, factory, sessionManager, validator);
+        super(serializer, factory, sessionManager, validator, roomRedisRepository);
         this.messageMapper = mapper;
     }
 
@@ -40,6 +45,11 @@ public class RoomManager extends AbstractRoomManager {
     @Override
     public MessageMapper getMapper() {
         return this.messageMapper;
+    }
+
+    @Override
+    public RoomTypeRedisKey getRedisKey() {
+        return null;
     }
 
     @Override
@@ -64,5 +74,15 @@ public class RoomManager extends AbstractRoomManager {
                 room.getId(),
                 user.username() + " left room: " + room.getName()
         ));
+    }
+
+    @Override
+    protected void onCreateRoom(Room room) {
+
+    }
+
+    @Override
+    protected void onDeleteRoom(UUID roomId) {
+
     }
 }

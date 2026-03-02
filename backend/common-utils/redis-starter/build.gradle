@@ -1,0 +1,23 @@
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot' version '3.5.9'
+    id 'io.spring.dependency-management'
+    id 'maven-publish'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+dependencies {
+    // Spring Boot dependencies
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Optional config processor
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+}

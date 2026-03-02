@@ -7,7 +7,7 @@ import type { Icons } from "../assets/icons";
 import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Img, Input, Toast, FormField } from "../ui";
 import { useThemedIcon } from "../ui";
 import { validateUsername } from "../utils/SecurityUtils";
-import LoadingPage from "./LoadingPage";
+import { Skeleton } from "../ui/components/common/Skeleton";
 
 const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
@@ -26,7 +26,7 @@ export default function Profile() {
     const [tempUsername, setTempUsername] = useState("");
 
     const [validationError, setValidationError] = useState<string | null>(null);
-    const [toast, setToast] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+    const [toast, setToast] = useState<{ text: string, type: "success" | "error" } | null>(null);
 
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isAvatarHovered, setIsAvatarHovered] = useState(false);
@@ -36,6 +36,10 @@ export default function Profile() {
 
     const [depositModalOpen, setDepositModalOpen] = useState(false);
     const [depositAmount, setDepositAmount] = useState("");
+
+    const [loadingAvatar, setLoadingAvatar] = useState(false);
+    const [loadingAchievements, setLoadingAchievements] = useState(false);
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
     useEffect(() => {
         if (authUser?.guid) {
@@ -49,7 +53,6 @@ export default function Profile() {
         }
     }, [user]);
 
-
     const handleEditClick = () => {
         setValidationError(null);
         setIsEditingUsername(true);
@@ -58,7 +61,7 @@ export default function Profile() {
         const sanitizedUsername = validateUsername(tempUsername);
 
         if (sanitizedUsername.length < 3) {
-            setToast({ text: "Username must be at least 3 characters long.", type: 'error' });
+            setToast({ text: "Username must be at least 3 characters long.", type: "error" });
             return;
         }
 
@@ -68,7 +71,7 @@ export default function Profile() {
         }
 
         if (!authUser?.guid) {
-            setToast({ text: "User not authenticated", type: 'error' });
+            setToast({ text: "User not authenticated", type: "error" });
             return;
         }
 
@@ -77,9 +80,9 @@ export default function Profile() {
                 guid: authUser.guid,
                 updateData: { username: sanitizedUsername }
             })).unwrap();
-            setToast({ text: "Username updated successfully!", type: 'success' });
+            setToast({ text: "Username updated successfully!", type: "success" });
         } catch (error) {
-            setToast({ text: `Update failed: ${error}`, type: 'error' });
+            setToast({ text: `Update failed: ${error}`, type: "error" });
         } finally {
             setIsEditingUsername(false);
             setValidationError(null);
@@ -109,20 +112,19 @@ export default function Profile() {
         }
 
         if (!authUser?.guid) {
-            setToast({ text: "User not identified", type: 'error' });
+            setToast({ text: "User not identified", type: "error" });
             return;
         }
 
         try {
             await dispatch(deposit({ userGuid: authUser.guid, amount })).unwrap();
-            setToast({ text: "Deposit successful!", type: 'success' });
+            setToast({ text: "Deposit successful!", type: "success" });
             setDepositModalOpen(false);
             setDepositAmount("");
         } catch (err) {
-            setToast({ text: `Deposit failed: ${err}`, type: 'error' });
+            setToast({ text: `Deposit failed: ${err}`, type: "error" });
         }
     };
-
 
     const username = user?.username || "User";
     const email = user?.email || "";
@@ -141,17 +143,11 @@ export default function Profile() {
     const infoBlockStyle = {
         background: "var(--color-bg-glass)",
         backdropFilter: "blur(10px)",
-        padding: "1.5rem",
+        padding: "1rem",
         borderRadius: "var(--radius-md)",
         border: "1px solid var(--color-border)",
         boxShadow: "var(--shadow-sm)"
     };
-
-    if (isLoading && !user) {
-        return (
-            <LoadingPage />
-        );
-    }
 
     return (
         <Box style={{ padding: "2rem 0" }}>
@@ -171,80 +167,101 @@ export default function Profile() {
                                 onMouseEnter={() => setIsAvatarHovered(true)}
                                 onMouseLeave={() => setIsAvatarHovered(false)}
                             >
-                                <label htmlFor="avatar-upload">
-                                    <Box style={{
-                                        width: "150px",
-                                        height: "150px",
-                                        borderRadius: "50%",
-                                        background: "var(--color-bg)",
-                                        display: "flex", alignItems: "center", justifyContent: "center",
-                                        fontSize: "3rem", fontWeight: "bold",
-                                        color: "var(--color-text)",
-                                        boxShadow: "var(--shadow-md)",
-                                        overflow: "hidden",
-                                        position: "relative",
-                                        cursor: "pointer"
-                                    }}>
-                                        {avatarPreview || user?.avatarUrl ? (
-                                            <Img
-                                                src={avatarPreview || user?.avatarUrl || ""}
-                                                alt="Avatar"
-                                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                            />
-                                        ) : (
-                                            username.substring(0, 1).toUpperCase()
-                                        )}
-                                    </Box>
+                                {loadingAvatar ? (
+                                    <Skeleton variant="circular" height={150} width={150} />
+                                ) : (
+                                    <>
+                                        <label htmlFor="avatar-upload">
+                                            <Box style={{
+                                                width: "150px",
+                                                height: "150px",
+                                                borderRadius: "50%",
+                                                background: "var(--color-bg)",
+                                                display: "flex", alignItems: "center", justifyContent: "center",
+                                                fontSize: "3rem", fontWeight: "bold",
+                                                color: "var(--color-text)",
+                                                boxShadow: "var(--shadow-md)",
+                                                overflow: "hidden",
+                                                position: "relative",
+                                                cursor: "pointer"
+                                            }}>
+                                                {avatarPreview || user?.avatarUrl ? (
+                                                    <Img
+                                                        src={avatarPreview || user?.avatarUrl || ""}
+                                                        alt="Avatar"
+                                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                                    />
+                                                ) : (
+                                                    username.substring(0, 1).toUpperCase()
+                                                )}
+                                            </Box>
 
-                                    <Box
-                                        style={{
-                                            position: "absolute",
-                                            bottom: 5, right: 5,
-                                            borderRadius: "50%",
-                                            width: "40px", height: "40px",
-                                            background: "var(--color-bg)",
-                                            border: "1px solid var(--glass-border)",
-                                            display: "flex", alignItems: "center", justifyContent: "center",
-                                            zIndex: 2, boxShadow: "var(--shadow-sm)",
-                                            opacity: isAvatarHovered ? 1 : 0,
-                                            transform: isAvatarHovered ? "scale(1)" : "scale(0.8)",
-                                            transition: "all 0.2s ease"
-                                        }}
-                                    >
-                                        <Icon src={getIcon("edit")} alt="edit avatar" size={20} />
-                                    </Box>
-                                </label>
+                                            <Box
+                                                style={{
+                                                    position: "absolute",
+                                                    bottom: 5, right: 5,
+                                                    borderRadius: "50%",
+                                                    width: "40px", height: "40px",
+                                                    background: "var(--color-bg)",
+                                                    border: "1px solid var(--glass-border)",
+                                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                                    zIndex: 2, boxShadow: "var(--shadow-sm)",
+                                                    opacity: isAvatarHovered ? 1 : 0,
+                                                    transform: isAvatarHovered ? "scale(1)" : "scale(0.8)",
+                                                    transition: "all 0.2s ease",
+                                                    cursor: "pointer,"
+                                                }}
+                                            >
+                                                <Icon src={getIcon("edit")} alt="edit avatar" size={20} />
+                                            </Box>
+                                        </label>
 
-                                <Input
-                                    id="avatar-upload"
-                                    type="file"
-                                    style={{
-                                        width: 0,
-                                        height: 0,
-                                        opacity: 0,
-                                        position: "absolute",
-                                        zIndex: -1,
-                                    }}
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                />
+                                        <Input
+                                            id="avatar-upload"
+                                            type="file"
+                                            style={{
+                                                width: 0,
+                                                height: 0,
+                                                opacity: 0,
+                                                position: "absolute",
+                                                zIndex: -1,
+                                            }}
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                        />
+                                    </>)}
                             </Box>
 
-                            <Stack align="center" gap="0.5rem">
-                                <Icon src={statusIconSrc} alt={status} size={40} />
-                                <Typography variant="h3" style={{ textTransform: "capitalize" }}>
-                                    {status} Member
-                                </Typography>
-                            </Stack>
+                            {isLoading ? (
+                                <Stack align="center" gap="0.5rem">
+                                    <Skeleton variant="circular" width={40} height={40} />
+                                    <Skeleton variant="text" width={130} height={24} />
+                                </Stack>
+                            ) : (
+                                <Stack align="center" gap="0.5rem">
+                                    <Icon src={statusIconSrc} alt={status} size={40} />
+                                    <Typography variant="h3" style={{ textTransform: "capitalize" }}>
+                                        {status} Member
+                                    </Typography>
+                                </Stack>
+                            )}
 
-                            <Button variant="solid" style={{ width: "100%" }}>
-                                Upgrade
-                            </Button>
+                            {isLoading ? (
+                                <Skeleton variant="rectangular" width="100%" height={38} />
+                            ) : (
+                                <Button variant="solid" style={{ width: "100%" }}>
+                                    Upgrade
+                                </Button>
+                            )}
 
                             <Box style={{ marginTop: "auto", paddingTop: "2rem" }}>
-                                <Typography variant="caption" style={{ opacity: 0.6 }}>
-                                    Date: {formattedDate}
-                                </Typography>
+                                {isLoading ? (
+                                    <Skeleton variant="text" width={80} height={16} />
+                                ) : (
+                                    <Typography variant="caption" style={{ opacity: 0.6 }}>
+                                        Date: {formattedDate}
+                                    </Typography>
+                                )}
                             </Box>
                         </Stack>
 
@@ -257,37 +274,41 @@ export default function Profile() {
                             <Box style={infoBlockStyle}>
                                 <Stack gap="1rem">
                                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: "45px" }}>
-                                        <Box style={{ flex: 1, marginRight: "1rem" }}>
-                                            <Typography variant="caption" style={{ opacity: 0.7 }}>Username:</Typography>
+                                        {isLoading ? (
+                                            <Skeleton variant="text" width={150} height={28} />
+                                        ) : (
+                                            <Box style={{ flex: 1, marginRight: "1rem" }}>
+                                                <Typography variant="caption" style={{ opacity: 0.7 }}>Username:</Typography>
 
-                                            {isEditingUsername ? (
-                                                <>
-                                                    <Textfield
-                                                        value={tempUsername}
-                                                        onChange={handleUsernameChange}
-                                                        placeholder="Enter username"
-                                                    />
-                                                    {validationError && (
-                                                        <Typography variant="caption" style={{ color: 'red', marginTop: '4px' }}>
-                                                            {validationError}
-                                                        </Typography>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <Typography
-                                                    variant="h3"
-                                                    title={username}
-                                                    style={{
-                                                        overflow: "hidden",
-                                                        textOverflow: "ellipsis",
-                                                        display: 'block',
-                                                        maxWidth: '150px'
-                                                    }}
-                                                >
-                                                    {username}
-                                                </Typography>
-                                            )}
-                                        </Box>
+                                                {isEditingUsername ? (
+                                                    <>
+                                                        <Textfield
+                                                            value={tempUsername}
+                                                            onChange={handleUsernameChange}
+                                                            placeholder="Enter username"
+                                                        />
+                                                        {validationError && (
+                                                            <Typography variant="caption" style={{ color: 'red', marginTop: '4px' }}>
+                                                                {validationError}
+                                                            </Typography>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <Typography
+                                                        variant="h3"
+                                                        title={username}
+                                                        style={{
+                                                            overflow: "hidden",
+                                                            textOverflow: "ellipsis",
+                                                            display: 'block',
+                                                            maxWidth: '150px'
+                                                        }}
+                                                    >
+                                                        {username}
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                        )}
 
                                         {isEditingUsername ? (
                                             <Stack
@@ -313,36 +334,48 @@ export default function Profile() {
                                                 </Button>
                                             </Stack>
                                         ) : (
-                                            <Button
-                                                variant="outline"
-                                                onClick={handleEditClick}
-                                                style={{ display: "flex", gap: "8px", alignItems: "center" }}
-                                            >
-                                                Edit
-                                                <Icon src={getIcon("edit")} alt="edit" size={16} />
-                                            </Button>
+                                            isLoading ? (
+                                                <Skeleton variant="rectangular" width={75} height={34} />
+                                            ) : (
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={handleEditClick}
+                                                    style={{ display: "flex", gap: "8px", alignItems: "center" }}
+                                                >
+                                                    Edit
+                                                    <Icon src={getIcon("edit")} alt="edit" size={16} />
+                                                </Button>
+                                            )
                                         )}
                                     </Box>
 
-                                    <Box>
-                                        <Typography variant="caption" style={{ opacity: 0.7 }}>Email:</Typography>
-                                        <Typography variant="body">{email}</Typography>
-                                    </Box>
+                                    {isLoading ? (
+                                        <Skeleton variant="text" width={150} height={28} />
+                                    ) : (
+                                        <Box>
+                                            <Typography variant="caption" style={{ opacity: 0.7 }}>Email:</Typography>
+                                            <Typography variant="body">{email}</Typography>
+                                        </Box>
+                                    )}
 
                                     <Divider />
 
-                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <Box>
-                                            <Typography variant="caption" style={{ opacity: 0.7 }}>Balance:</Typography>
-                                            <Typography variant="h2" style={{ color: "var(--color-primary)" }}>
-                                                {balance}
-                                                <Typography variant="caption" style={{ marginLeft: "5px" }}>CG Coins</Typography>
-                                            </Typography>
+                                    {isLoading ? (
+                                        <Skeleton variant="text" width={150} height={36} />
+                                    ) : (
+                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                            <Box>
+                                                <Typography variant="caption" style={{ opacity: 0.7 }}>Balance:</Typography>
+                                                <Typography variant="h2" style={{ color: "var(--color-primary)" }}>
+                                                    {balance}
+                                                    <Typography variant="caption" style={{ marginLeft: "5px" }}>CG Coins</Typography>
+                                                </Typography>
+                                            </Box>
+                                            <Button variant="ghost" onClick={() => setDepositModalOpen(true)}>
+                                                Deposit
+                                            </Button>
                                         </Box>
-                                        <Button variant="ghost" onClick={() => setDepositModalOpen(true)}>
-                                            Пополнить
-                                        </Button>
-                                    </Box>
+                                    )}
                                 </Stack>
                             </Box>
 
@@ -352,43 +385,52 @@ export default function Profile() {
                                     <Button
                                         variant="ghost"
                                         onClick={() => setAchievementsModalOpen(true)}
-                                        disabled={achievements.length === 0}
+                                        disabled={!achievements || achievements.length === 0}
                                         style={{ fontSize: "0.8rem" }}
                                     >
                                         See All
                                     </Button>
                                 </Box>
 
-                                {achievements.length > 0 ? (
-                                    <Box style={{
-                                        display: "flex",
-                                        gap: "10px",
-                                        flexWrap: "wrap",
-                                        overflow: "hidden",
-                                        maxHeight: "130px"
-                                    }}>
-                                        {achievements.slice(0, 5).map((ach, i) => (
-                                            <Box key={i} style={{
-                                                padding: "5px 12px",
-                                                background: "var(--color-primary)",
-                                                color: "var(--on-primary)",
-                                                borderRadius: "20px",
-                                                fontSize: "0.9rem",
-                                                fontWeight: 500
-                                            }}>
-                                                {ach}
-                                            </Box>
-                                        ))}
-                                        {achievements.length > 5 && (
-                                            <Box style={{ padding: "5px 10px", fontSize: "0.9rem", opacity: 0.7, alignSelf: "center" }}>
-                                                +{achievements.length - 5} more...
-                                            </Box>
-                                        )}
+
+                                {loadingAchievements ? (
+                                    <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                                        <Skeleton variant="rectangular" height={30} />
+                                        <Skeleton variant="rectangular" height={30} />
+                                        <Skeleton variant="rectangular" height={30} />
                                     </Box>
                                 ) : (
-                                    <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
-                                        No achievements yet. Go play some games!
-                                    </Typography>
+                                    achievements.length > 0 ? (
+                                        <Box style={{
+                                            display: "flex",
+                                            gap: "10px",
+                                            flexWrap: "wrap",
+                                            overflow: "hidden",
+                                            maxHeight: "130px"
+                                        }}>
+                                            {achievements.slice(0, 5).map((ach, i) => (
+                                                <Box key={i} style={{
+                                                    padding: "5px 12px",
+                                                    background: "var(--color-primary)",
+                                                    color: "var(--on-primary)",
+                                                    borderRadius: "20px",
+                                                    fontSize: "0.9rem",
+                                                    fontWeight: 500
+                                                }}>
+                                                    {ach}
+                                                </Box>
+                                            ))}
+                                            {achievements.length > 5 && (
+                                                <Box style={{ padding: "5px 10px", fontSize: "0.9rem", opacity: 0.7, alignSelf: "center" }}>
+                                                    +{achievements.length - 5} more...
+                                                </Box>
+                                            )}
+                                        </Box>
+                                    ) : (
+                                        <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
+                                            No achievements yet. Go play some games!
+                                        </Typography>
+                                    )
                                 )}
                             </Box>
 
@@ -405,47 +447,57 @@ export default function Profile() {
                                     </Button>
                                 </Box>
 
-                                {history.length > 0 ? (
-                                    <Stack gap="0.5rem">
-                                        {history.slice(0, 3).map((item, i) => (
-                                            <Box key={i} style={{
-                                                display: "flex",
-                                                justifyContent: "space-between",
-                                                borderBottom: i === 2 ? "none" : "1px solid var(--color-border)",
-                                                paddingBottom: "10px",
-                                                paddingTop: i === 0 ? "0" : "5px"
-                                            }}>
-                                                <Box>
-                                                    <Typography variant="body" style={{ fontWeight: 500 }}>{item.game}</Typography>
-                                                    <Typography variant="caption">{new Date(item.date).toLocaleDateString()}</Typography>
-                                                </Box>
-                                                <Typography variant="body" style={{
-                                                    fontWeight: "bold",
-                                                    color: item.result === "Win" ? "green" : item.result === "Loss" ? "red" : "gray"
-                                                }}>
-                                                    {item.result}
-                                                </Typography>
-                                            </Box>
-                                        ))}
-                                    </Stack>
+                                {loadingHistory ? (
+                                    <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                                        <Skeleton variant="rectangular" height={30} />
+                                        <Skeleton variant="rectangular" height={30} />
+                                        <Skeleton variant="rectangular" height={30} />
+                                    </Box>
                                 ) : (
-                                    <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
-                                        No match history available.
-                                    </Typography>
+                                    history.length > 0 ? (
+                                        <Stack gap="0.5rem">
+                                            {history.slice(0, 3).map((item, i) => (
+                                                <Box key={i} style={{
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    borderBottom: i === 2 ? "none" : "1px solid var(--color-border)",
+                                                    paddingBottom: "10px",
+                                                    paddingTop: i === 0 ? "0" : "5px"
+                                                }}>
+                                                    <Box>
+                                                        <Typography variant="body" style={{ fontWeight: 500 }}>{item.game}</Typography>
+                                                        <Typography variant="caption">{new Date(item.date).toLocaleDateString()}</Typography>
+                                                    </Box>
+                                                    <Typography variant="body" style={{
+                                                        fontWeight: "bold",
+                                                        color: item.result === "Win" ? "green" : item.result === "Loss" ? "red" : "gray"
+                                                    }}>
+                                                        {item.result}
+                                                    </Typography>
+                                                </Box>
+                                            ))}
+                                        </Stack>
+                                    ) : (
+                                        <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
+                                            No match history available.
+                                        </Typography>
+                                    )
                                 )}
                             </Box>
 
                         </Stack>
                     </Grid>
-                </Card>
-            </Container>
+                </Card >
+            </Container >
 
             {toast && (
                 <Toast
                     message={toast.text}
                     onClose={() => setToast(null)}
                 />
-            )}
+            )
+            }
+
             <Modal isOpen={achievementsModalOpen} onClose={() => setAchievementsModalOpen(false)} title="All Achievements">
                 <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap", padding: "1rem 0" }}>
                     {achievements.map((ach, i) => (
@@ -469,6 +521,7 @@ export default function Profile() {
                     ))}
                 </Stack>
             </Modal>
+
             <Modal
                 isOpen={depositModalOpen}
                 onClose={() => setDepositModalOpen(false)}
@@ -499,6 +552,6 @@ export default function Profile() {
                     </Button>
                 </Stack>
             </Modal>
-        </Box>
+        </Box >
     );
 }

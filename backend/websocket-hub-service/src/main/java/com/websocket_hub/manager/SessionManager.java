@@ -1,9 +1,9 @@
 package com.websocket_hub.manager;
 
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.Message;
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
-import com.websocket_hub.domain.enums.EventType;
+import com.websocket_hub.domain.enums.events.EventType;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.serializer.MessageSerializer;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class SessionManager {
 
     private final ObjectFactory<ClientSession> factory;
 
-    private final MessageSerializer<String> serializer;
+    private final MessageSerializer serializer;
 
     public void register(UUID guid, UserInternalResponse user, WebSocketSession session, Instant connectedAt) {
         if (guid == null || user == null || session == null) {

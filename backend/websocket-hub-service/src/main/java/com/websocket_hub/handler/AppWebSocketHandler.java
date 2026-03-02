@@ -1,6 +1,6 @@
 package com.websocket_hub.handler;
 
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.util.WebSocketUtil;

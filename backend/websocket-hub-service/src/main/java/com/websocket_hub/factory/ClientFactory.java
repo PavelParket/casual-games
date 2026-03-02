@@ -1,6 +1,6 @@
 package com.websocket_hub.factory;
 
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;

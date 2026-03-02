@@ -2,19 +2,18 @@ package com.websocket_hub.handler;
 
 import com.websocket_hub.client.BankServiceClient;
 import com.websocket_hub.client.GameServiceClient;
-import com.websocket_hub.domain.dto.bank_service.PlayerBet;
-import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalRequest;
-import com.websocket_hub.domain.dto.bank_service.TicTacToeTransactionInternalResponse;
+import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalRequest;
+import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalResponse;
+import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
-import com.websocket_hub.domain.dto.user_service.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
+import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.enums.MessageType;
-import com.websocket_hub.domain.enums.TicTacToeGameEvent;
+import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.mapper.TicTacToeTransactionMapper;
-import com.websocket_hub.serializer.JsonDeserializer;
 import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.util.WebSocketUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameRoomManager> {
 
-    private final MessageDeserializer deserializer;
+    private final MessageDeserializer messageDeserializer;
 
     private final TicTacToeGameMessageMapper ticTacToeGameMessageMapper;
 
@@ -45,14 +44,14 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
     public TicTacToeGameRoomHandler(
             SessionManager sessionManager,
             TicTacToeGameRoomManager roomManager,
-            JsonDeserializer deserializer,
+            MessageDeserializer messageDeserializer,
             TicTacToeGameMessageMapper ticTacToeGameMessageMapper,
             TicTacToeTransactionMapper ticTacToeTransactionMapper,
             GameServiceClient gameServiceClient,
             BankServiceClient bankServiceClient
     ) {
         super(sessionManager, roomManager);
-        this.deserializer = deserializer;
+        this.messageDeserializer = messageDeserializer;
         this.ticTacToeGameMessageMapper = ticTacToeGameMessageMapper;
         this.ticTacToeTransactionMapper = ticTacToeTransactionMapper;
         this.gameServiceClient = gameServiceClient;
@@ -70,7 +69,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         }
 
         try {
-            TicTacToeGameMessage ticTacToeGameMessage = deserializer.deserialize(payload, TicTacToeGameMessage.class);
+            TicTacToeGameMessage ticTacToeGameMessage = messageDeserializer.deserialize(payload, TicTacToeGameMessage.class);
             UUID roomId = WebSocketUtil.getRoomId(session);
             UserInternalResponse user = WebSocketUtil.getUser(session);
 
@@ -83,7 +82,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
                 case BET -> handlePlayerBet(ticTacToeGameMessage, roomId, user);
 
-                default -> log.warn("Unknown game message event: {}", ticTacToeGameMessage.event());
+                default -> log.warn("Unhandled tic tac toe event: {}", ticTacToeGameMessage.event());
             }
         } catch (Exception e) {
             log.error("Failed to handle game message", e);
