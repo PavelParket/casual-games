@@ -79,7 +79,7 @@ public class SessionManager {
             String json = serializer.serialize(message);
 
             client.sendMessage(new TextMessage(json));
-            log.info("Sent message: {}", json);
+            log.info("Sent message to user id={} name={} content={}", client.getGuid(), client.getUsername(), json);
         } catch (Exception e) {
             log.error("Failed to send private message to session \"{}\": {}", client.getEmail(), e.getMessage());
         }

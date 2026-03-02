@@ -207,6 +207,15 @@ public abstract class AbstractRoomManager {
         }
     }
 
+    protected void sendToClient(ClientSession client, Message<? extends EventType> message) {
+        if (client == null) {
+            log.warn("Cannot send message — client is null");
+            return;
+        }
+
+        sessionManager.sendToSession(client, message);
+    }
+
     public Map<UUID, Room> getRoomsMap() {
         Map<UUID, Set<UUID>> participants = redisRepository.getParticipantsByRoom();
 

@@ -12,6 +12,7 @@ import com.websocket_hub.domain.entity.HorseRaceGamePreset;
 import com.websocket_hub.domain.entity.HorseRacePlayerBet;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
+import com.websocket_hub.event.CountdownExpiredEvent;
 import com.websocket_hub.manager.HorseRaceGameRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.HorseRaceGameMessageMapper;
@@ -19,6 +20,7 @@ import com.websocket_hub.mapper.HorseRaceTransactionMapper;
 import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.util.WebSocketUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
@@ -95,6 +97,38 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
     @Override
     protected void onLeave(UUID roomId, UserInternalResponse user) {
 
+    }
+
+    @EventListener
+    public void onCountdownExpired(CountdownExpiredEvent event) {
+        UUID roomId = event.roomId();
+
+        log.info("Countdown expired for room={}", roomId);
+
+        if (roomManager.getPlayersInRoom(roomId).isEmpty()) {
+            log.warn("Countdown expired for room={} but room is empty — skipping race start", roomId);
+            return;
+        }
+
+        if (!roomManager.hasAnyBets(roomId)) {
+            log.warn("Countdown expired for room={} but no bets placed — restarting countdown", roomId);
+            restartCountdown(roomId);
+            return;
+        }
+
+        HorseRaceGamePreset preset = roomManager.getPreset(roomId);
+
+        if (preset == null) {
+            log.error("Countdown expired for room={} but preset not found — cannot start race", roomId);
+            return;
+        }
+
+        startRace(roomId, preset);
+        roomManager.removeReadyPlayers(roomId);
+    }
+
+    private void restartCountdown(UUID roomId) {
+        roomManager.restartCountdown(roomId);
     }
 
     private void handleBet(HorseRaceGameMessage message, UUID roomId, UserInternalResponse user) {
