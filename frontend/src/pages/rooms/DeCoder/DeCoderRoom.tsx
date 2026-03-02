@@ -135,7 +135,7 @@ export default function DeCoderRoom() {
                
                if (sanitized.player !== guid) {
                    showToast(`${playerName} checked ${String(sanitized.code).padStart(4, '0')}`, 'info');
-               }
+               } else {showToast(`${String(sanitized.code).padStart(4, '0')} does not match the winning code`, 'info');}
 
                if (sanitized.player === guid) refreshUserBalance();
             }
