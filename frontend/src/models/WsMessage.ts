@@ -31,6 +31,7 @@ export interface HorseRaceGameMessage extends WSMessage {
     horseKeyframes?: HorseRaceHorseKeyframes[];
     horseIndex?: number;
     bet?: number;
+    remainingSeconds?: number;
 }
 
 export interface DeCoderMessage extends WSMessage {
