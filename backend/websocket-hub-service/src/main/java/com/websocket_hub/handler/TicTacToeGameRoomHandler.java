@@ -9,6 +9,7 @@ import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.enums.MessageType;
+import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
@@ -138,6 +139,8 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
                     .orElseThrow(() -> new RuntimeException("Empty state"));
 
             roomManager.broadcast(roomId, startGameResponse);
+
+            roomManager.updateRoomStatus(roomId, RoomStatus.IN_PROGRESS);
         } catch (IllegalStateException e) {
             log.warn("Cannot start game in room {}: {}", roomId, e.getMessage());
 
@@ -218,6 +221,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             log.error("Failed to process game results for room {}", roomId, e);
         } finally {
             roomManager.removePlayerBets(roomId);
+            roomManager.updateRoomStatus(roomId, RoomStatus.FINISHED);
         }
     }
 

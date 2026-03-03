@@ -4,12 +4,13 @@ import com.websocket_hub.client.BankServiceClient;
 import com.websocket_hub.client.DeCoderGameServiceClient;
 import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalRequest;
 import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalResponse;
-import com.websocket_hub.domain.entity.PlayerBet;
-import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
+import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
 import com.websocket_hub.domain.entity.ClientSession;
-import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
+import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.enums.MessageType;
+import com.websocket_hub.domain.enums.RoomStatus;
+import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.manager.DeCoderGameRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.DeCoderGameMessageMapper;
@@ -118,6 +119,8 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
             roomManager.broadcast(roomId, startResponse);
 
+            roomManager.updateRoomStatus(roomId, RoomStatus.IN_PROGRESS);
+
         } catch (Exception e) {
             log.error("Failed to start game in room {}", roomId, e);
         }
@@ -214,6 +217,8 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
         } catch (Exception e) {
             log.error("Failed to process reward transaction for user {}", user.email(), e);
             roomManager.broadcast(roomId, gameResponse);
+        } finally {
+            roomManager.updateRoomStatus(roomId, RoomStatus.FINISHED);
         }
     }
 
@@ -248,5 +253,4 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
             sessionManager.sendToSession(session, errorMsg);
         }
     }
-
 }
