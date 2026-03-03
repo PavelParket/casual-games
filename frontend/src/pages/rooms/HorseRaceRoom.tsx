@@ -32,6 +32,13 @@ interface PlacedBetInfo {
     amount: number;
 }
 
+function formatCountdown(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+
+    return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function HorseRaceRoom() {
     const guid = useSelector((state: RootState) => state.auth.user?.guid);
     const balance = useSelector((state: RootState) => state.user.user?.balance);
@@ -58,6 +65,9 @@ export default function HorseRaceRoom() {
     const [betPlaced, setBetPlaced] = useState<boolean>(false);
     const [placedBetInfo, setPlacedBetInfo] = useState<PlacedBetInfo | null>(null);
     const [hoveredHorse, setHoveredHorse] = useState<number | null>(null);
+
+    const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+    const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const horseElemsRef = useRef<(HTMLDivElement | null)[]>([]);
     const animationsRef = useRef<Animation[]>([]);
@@ -86,6 +96,31 @@ export default function HorseRaceRoom() {
         dispatch(syncRoomState({ roomId, roomType: room.type }));
         dispatch(getPreset({ roomId }));
     }, [dispatch, isConnected, room, roomId]);
+
+    const clearCountdown = useCallback(() => {
+        if (countdownIntervalRef.current !== null) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+        }
+    }, []);
+
+    const startCountdown = useCallback((initialSeconds: number) => {
+        clearCountdown();
+        setSecondsLeft(initialSeconds);
+        countdownIntervalRef.current = setInterval(() => {
+            setSecondsLeft((prev) => {
+                if (prev === null || prev <= 1) {
+                    clearCountdown();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    }, [clearCountdown]);
+
+    useEffect(() => {
+        return () => clearCountdown();
+    }, [clearCountdown]);
 
     const stopAnimation = useCallback(() => {
         animationsRef.current.forEach((anim) => {
@@ -177,10 +212,10 @@ export default function HorseRaceRoom() {
                 const { horseKeyframes, winnerHorseIndex } = message;
 
                 if (!horseKeyframes || winnerHorseIndex === undefined) {
-                    console.warn("[START] Guard triggered — missing horseKeyframes or winner");
                     break;
                 }
 
+                clearCountdown();
                 setPhase("RACING");
                 startAnimation(horseKeyframes, winnerHorseIndex);
                 break;
@@ -213,10 +248,25 @@ export default function HorseRaceRoom() {
                 showToast(message.message ?? "You must place a bet before becoming ready.");
                 break;
 
+            case "COUNTDOWN": {
+                const remaining = message.remainingSeconds;
+                if (remaining !== undefined && remaining > 0) {
+                    startCountdown(remaining);
+                }
+                break;
+            }
+
+            case "CANCELED": {
+                clearCountdown();
+                setSecondsLeft(null);
+                showToast(message.message ?? "Race was canceled — no players in the room.");
+                break;
+            }
+
             default:
                 break;
         }
-    }, [dispatch, guid, isConnected, message, room, roomId, showToast, startAnimation]);
+    }, [dispatch, guid, isConnected, message, room, roomId, showToast, startAnimation, clearCountdown, startCountdown]);
 
     const handlePlaceBet = () => {
         if (!room || !isConnected || betPlaced || phase !== "LOBBY") {
@@ -266,6 +316,7 @@ export default function HorseRaceRoom() {
 
     const handleLeave = () => {
         stopAnimation();
+        clearCountdown();
         navigate("/rooms");
     };
 
@@ -325,92 +376,126 @@ export default function HorseRaceRoom() {
 
                     <Box style={{ display: "flex", gap: "1.5rem", alignItems: "flex-start", minHeight: "280px" }}>
 
-                        <Card
-                            style={{
-                                flex: 1,
-                                padding: "1.25rem",
-                                background: "var(--color-bg-secondary)",
-                                minHeight: "260px",
-                            }}
-                        >
-                            <div
+                        <Box style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                            {secondsLeft !== null && (
+                                <Box
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        padding: "0.5rem 1rem",
+                                        borderRadius: "var(--radius-sm)",
+                                        background: secondsLeft > 0 && secondsLeft <= 10
+                                            ? "rgba(231,76,60,0.12)"
+                                            : "rgba(255,255,255,0.04)",
+                                        border: `1px solid ${secondsLeft > 0 && secondsLeft <= 10
+                                            ? "rgba(231,76,60,0.4)"
+                                            : "var(--color-border)"}`,
+                                    }}
+                                >
+                                    <Typography
+                                        variant="caption"
+                                        style={{
+                                            fontWeight: 700,
+                                            fontSize: "0.9rem",
+                                            color: secondsLeft <= 10
+                                                ? "var(--color-error, #e74c3c)"
+                                                : "var(--color-text-secondary)",
+                                            letterSpacing: "0.04em",
+                                        }}
+                                    >
+                                        🏁 Race starts in {formatCountdown(secondsLeft)}
+                                    </Typography>
+                                </Box>
+                            )}
+
+                            <Card
                                 style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: "5rem",
-                                    paddingLeft: "24px",
-                                    position: "relative",
+                                    flex: 1,
+                                    padding: "1.25rem",
+                                    background: "var(--color-bg-secondary)",
+                                    minHeight: "260px",
                                 }}
                             >
-                                {horseCount === 0 ? (
-                                    <Typography variant="caption" style={{ color: "var(--color-text-secondary)" }}>
-                                        Loading race...
-                                    </Typography>
-                                ) : (
-                                    Array.from({ length: horseCount }, (_, i) => {
-                                        const color = HORSE_COLORS[i % HORSE_COLORS.length];
-                                        const isWinner = phase === "FINISHED" && winnerIndex === i;
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "5rem",
+                                        paddingLeft: "24px",
+                                        position: "relative",
+                                    }}
+                                >
+                                    {horseCount === 0 ? (
+                                        <Typography variant="caption" style={{ color: "var(--color-text-secondary)" }}>
+                                            Loading race...
+                                        </Typography>
+                                    ) : (
+                                        Array.from({ length: horseCount }, (_, i) => {
+                                            const color = HORSE_COLORS[i % HORSE_COLORS.length];
+                                            const isWinner = phase === "FINISHED" && winnerIndex === i;
 
-                                        return (
-                                            <Box
-                                                key={i}
-                                                style={{
-                                                    position: "relative",
-                                                    height: `${HORSE_SPRITE_SIZE}`,
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    overflow: "visible",
-                                                }}
-                                            >
-                                                <span style={{
-                                                    position: "absolute",
-                                                    left: -24,
-                                                    width: 20,
-                                                    textAlign: "right",
-                                                    fontSize: "16px",
-                                                    fontWeight: 700,
-                                                    color: color,
-                                                    opacity: 0.85,
-                                                    userSelect: "none",
-                                                    lineHeight: `${HORSE_SPRITE_SIZE}px`,
-                                                }}>
-                                                    #{i + 1}
-                                                </span>
+                                            return (
                                                 <Box
+                                                    key={i}
                                                     style={{
-                                                        position: "absolute",
-                                                        left: 0,
-                                                        right: 0,
-                                                        height: "2px",
-                                                        background: "var(--color-border)",
-                                                        borderRadius: "1px",
-                                                    }}
-                                                />
-
-                                                <div
-                                                    ref={(el) => { horseElemsRef.current[i] = el; }}
-                                                    style={{
-                                                        position: "absolute",
-                                                        top: "50%",
-                                                        left: 0,
-                                                        transform: "translateY(-50%)",
-                                                        zIndex: 1,
-                                                        willChange: "transform",
+                                                        position: "relative",
+                                                        height: `${HORSE_SPRITE_SIZE}`,
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        overflow: "visible",
                                                     }}
                                                 >
-                                                    <HorseSprite
-                                                        color={color}
-                                                        size={HORSE_SPRITE_SIZE}
-                                                        isRunning={phase === "RACING"}
-                                                        isWinner={isWinner}
+                                                    <span style={{
+                                                        position: "absolute",
+                                                        left: -24,
+                                                        width: 20,
+                                                        textAlign: "right",
+                                                        fontSize: "16px",
+                                                        fontWeight: 700,
+                                                        color: color,
+                                                        opacity: 0.85,
+                                                        userSelect: "none",
+                                                        lineHeight: `${HORSE_SPRITE_SIZE}px`,
+                                                    }}>
+                                                        #{i + 1}
+                                                    </span>
+                                                    <Box
+                                                        style={{
+                                                            position: "absolute",
+                                                            left: 0,
+                                                            right: 0,
+                                                            height: "2px",
+                                                            background: "var(--color-border)",
+                                                            borderRadius: "1px",
+                                                        }}
                                                     />
-                                                </div>
-                                            </Box>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        </Card>
+
+                                                    <div
+                                                        ref={(el) => { horseElemsRef.current[i] = el; }}
+                                                        style={{
+                                                            position: "absolute",
+                                                            top: "50%",
+                                                            left: 0,
+                                                            transform: "translateY(-50%)",
+                                                            zIndex: 1,
+                                                            willChange: "transform",
+                                                        }}
+                                                    >
+                                                        <HorseSprite
+                                                            color={color}
+                                                            size={HORSE_SPRITE_SIZE}
+                                                            isRunning={phase === "RACING"}
+                                                            isWinner={isWinner}
+                                                        />
+                                                    </div>
+                                                </Box>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </Card>
+                        </Box>
 
                         <Card
                             style={{

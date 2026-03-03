@@ -15,15 +15,18 @@ import com.websocket_hub.domain.enums.redis.RoomPresetRedisKey;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomPresetRedisRepository;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
+import com.websocket_hub.event.CountdownExpiredEvent;
 import com.websocket_hub.factory.HorseRacePlayerBetFactory;
 import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.helper.WebSocketHelper;
 import com.websocket_hub.mapper.HorseRaceGameMessageMapper;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
+import com.websocket_hub.service.scheduler.HorseRaceRoomCountdownServiceScheduler;
 import com.websocket_hub.validator.HorseRacePlayerBetValidator;
 import com.websocket_hub.validator.RoomValidator;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -40,9 +43,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class HorseRaceGameRoomManager extends AbstractRoomManager {
 
+    private static final int COUNTDOWN_SECONDS = 90;
+
     private final Map<UUID, Set<UUID>> readyPlayers = new ConcurrentHashMap<>();
 
     private final Map<UUID, Map<UUID, HorseRacePlayerBet>> playerBets = new ConcurrentHashMap<>();
+
+    private final Map<UUID, Long> countdownStartTimes = new ConcurrentHashMap<>();
 
     private final HorseRaceGameMessageMapper horseRaceGameMessageMapper;
 
@@ -56,6 +63,10 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
 
     private final WebSocketHelper webSocketHelper;
 
+    private final HorseRaceRoomCountdownServiceScheduler countdownServiceScheduler;
+
+    private final ApplicationEventPublisher eventPublisher;
+
     public HorseRaceGameRoomManager(
             MessageSerializer serializer,
             RoomFactory roomFactory,
@@ -67,7 +78,9 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
             HorseRacePlayerBetFactory horseRacePlayerBetFactory,
             RoomPresetRedisRepository presetRedisRepository,
             GameServiceClient gameServiceClient,
-            WebSocketHelper webSocketHelper
+            WebSocketHelper webSocketHelper,
+            HorseRaceRoomCountdownServiceScheduler countdownServiceScheduler,
+            ApplicationEventPublisher eventPublisher
     ) {
         super(serializer, roomFactory, sessionManager, validator, redisRepository);
         this.horseRaceGameMessageMapper = horseRaceGameMessageMapper;
@@ -76,6 +89,8 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
         this.presetRedisRepository = presetRedisRepository;
         this.gameServiceClient = gameServiceClient;
         this.webSocketHelper = webSocketHelper;
+        this.countdownServiceScheduler = countdownServiceScheduler;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -105,6 +120,8 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
                 room.getId(),
                 "Player " + user.username() + " has joined the room " + room.getName()
         ));
+
+        sendCountdownToPlayer(room.getId(), user.guid());
     }
 
     @Override
@@ -150,10 +167,22 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
             log.error("Failed to create preset for room={}: {}", room.getId(), e.getMessage());
             // TODO: decide on failure strategy - delete room or allow without preset?
         }
+
+        countdownStartTimes.put(room.getId(), System.currentTimeMillis());
+        countdownServiceScheduler.startCountdown(
+                room.getId(),
+                COUNTDOWN_SECONDS,
+                () -> eventPublisher.publishEvent(new CountdownExpiredEvent(room.getId()))
+        );
+
+        log.info("Countdown started for room={}", room.getId());
     }
 
     @Override
     protected void onDeleteRoom(UUID roomId) {
+        countdownServiceScheduler.cancelCountdown(roomId);
+        countdownStartTimes.remove(roomId);
+
         presetRedisRepository.deletePreset(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET);
 
         removeReadyPlayers(roomId);
@@ -280,8 +309,69 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
         return Collections.unmodifiableCollection(bets.values());
     }
 
+    public boolean hasAnyBets(UUID roomId) {
+        Map<UUID, HorseRacePlayerBet> bets = playerBets.get(roomId);
+        return bets != null && !bets.isEmpty();
+    }
+
     public void removePlayerBets(UUID roomId) {
         playerBets.remove(roomId);
         log.info("Cleared player bets for room={}", roomId);
+    }
+
+    public void cancelCountdown(UUID roomId) {
+        countdownServiceScheduler.cancelCountdown(roomId);
+        countdownStartTimes.remove(roomId);
+    }
+
+    private void sendCountdownToPlayer(UUID roomId, UUID playerGuid) {
+        Long startTime = countdownStartTimes.get(roomId);
+
+        if (startTime == null) {
+            log.warn("No countdown start time found for room={}, skipping personal COUNTDOWN message", roomId);
+            return;
+        }
+
+        long elapsed = (System.currentTimeMillis() - startTime) / 1000;
+        int remaining = (int) Math.max(0, COUNTDOWN_SECONDS - elapsed);
+
+        ClientSession client = getClientSessionByGuid(playerGuid);
+
+        if (client == null) {
+            log.warn("Client not found for player={}, skipping COUNTDOWN message", playerGuid);
+            return;
+        }
+
+        sendToClient(client, horseRaceGameMessageMapper.toCountdownMessage(
+                MessageType.SYSTEM,
+                HorseRaceEvent.COUNTDOWN,
+                null,
+                playerGuid,
+                roomId,
+                remaining
+        ));
+
+        log.info("Sent COUNTDOWN message to player={} in room={}: remainingSeconds={}", playerGuid, roomId, remaining);
+    }
+
+    public void restartCountdown(UUID roomId) {
+        countdownStartTimes.put(roomId, System.currentTimeMillis());
+
+        countdownServiceScheduler.startCountdown(
+                roomId,
+                COUNTDOWN_SECONDS,
+                () -> eventPublisher.publishEvent(new CountdownExpiredEvent(roomId))
+        );
+
+        broadcast(roomId, horseRaceGameMessageMapper.toCountdownMessage(
+                MessageType.SYSTEM,
+                HorseRaceEvent.COUNTDOWN,
+                null,
+                null,
+                roomId,
+                COUNTDOWN_SECONDS
+        ));
+
+        log.info("Countdown restarted for room={}", roomId);
     }
 }

@@ -43,7 +43,9 @@ public record HorseRaceGameMessage(
 
         Integer horseIndex,
 
-        BigDecimal bet
+        BigDecimal bet,
+
+        Integer remainingSeconds
 
 ) implements Message<HorseRaceEvent> {
 }
