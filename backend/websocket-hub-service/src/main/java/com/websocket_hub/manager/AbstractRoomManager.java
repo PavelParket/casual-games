@@ -6,6 +6,7 @@ import com.websocket_hub.domain.dto.message.Message;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.entity.RoomMetadata;
+import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.events.EventType;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
@@ -20,6 +21,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +60,38 @@ public abstract class AbstractRoomManager {
 
     protected abstract void onDeleteRoom(UUID roomId);
 
+    protected boolean allowsLateJoin() {
+        return false;
+    }
+
     public void addSession(UUID roomId, UserInternalResponse user, WebSocketSession session) {
-        Room room = restoreRoom(roomId);
+        RoomMetadata metadata = redisRepository.get(roomId, getRedisKey());
+
+        if (metadata != null) {
+            RoomStatus status = metadata.getStatus() != null ? metadata.getStatus() : RoomStatus.WAITING;
+
+            switch (status) {
+                case FINISHED -> {
+                    log.warn("Rejected join — room is FINISHED: roomId={}, user={}", roomId, user.username());
+                    return;
+                }
+                case IN_PROGRESS -> {
+                    if (!allowsLateJoin()) {
+                        log.warn("Rejected join — game IN_PROGRESS, late join not allowed: roomId={}, user={}", roomId, user.username());
+                        return;
+                    }
+                }
+                case PENDING_DELETE -> {
+                    log.info("Room id={} was PENDING_DELETE — rolling back to WAITING (user={} joined)", roomId, user.username());
+                    metadata.setStatus(RoomStatus.WAITING);
+                    redisRepository.save(metadata, getRedisKey());
+                }
+                default -> {
+                }
+            }
+        }
+
+        Room room = metadata != null ? restoreRoom(metadata) : restoreRoom(roomId);
         ClientSession client = sessionManager.getByGuid(user.guid());
 
         if (room == null) {
@@ -123,28 +155,16 @@ public abstract class AbstractRoomManager {
     }
 
     public void delete(UUID roomId) {
-        Map<UUID, Set<UUID>> participants = redisRepository.getParticipantsByRoom();
-        Set<UUID> roomIds = roomFactory.createSetFromMetadata(
-                        redisRepository.getAll(getRedisKey()),
-                        participants,
-                        sessionManager.getAll()
-                ).stream()
-                .map(Room::getId)
-                .collect(Collectors.toSet());
-
-        synchronized (roomIds) {
-            if (roomIds.isEmpty() || !roomIds.contains(roomId)) {
-                log.warn("Room id={} not found", roomId);
-
-                return;
-            }
-
-            redisRepository.deleteFullRoom(roomId, getRedisKey());
-
-            onDeleteRoom(roomId);
-
-            log.info("Room id={} was deleted", roomId);
+        if (!redisRepository.roomExists(roomId, getRedisKey())) {
+            log.warn("Room id={} not found", roomId);
+            return;
         }
+
+        redisRepository.deleteFullRoom(roomId, getRedisKey());
+
+        onDeleteRoom(roomId);
+
+        log.info("Room id={} was deleted", roomId);
     }
 
     public void broadcast(UUID roomId, Message<? extends EventType> message) {
@@ -263,8 +283,40 @@ public abstract class AbstractRoomManager {
             return null;
         }
 
-        Set<UUID> participants = redisRepository.getParticipants(roomId);
+        return restoreRoom(metadata);
+    }
 
+    private Room restoreRoom(RoomMetadata metadata) {
+        Set<UUID> participants = redisRepository.getParticipants(metadata.getId());
         return roomFactory.createFromMetadata(metadata, participants, sessionManager.getAll());
+    }
+
+    public void updateRoomStatus(UUID roomId, RoomStatus status) {
+        RoomMetadata metadata = redisRepository.get(roomId, getRedisKey());
+
+        if (metadata == null) {
+            log.warn("Cannot update status — room not found: roomId={}", roomId);
+            return;
+        }
+
+        metadata.setStatus(status);
+
+        if (status == RoomStatus.FINISHED) {
+            metadata.setGameFinishedAt(Instant.now());
+        }
+
+        redisRepository.save(metadata, getRedisKey());
+
+        log.info("Room id={} status updated to {}", roomId, status);
+    }
+
+    public Set<RoomMetadata> getAllMetadata() {
+        return redisRepository.getAll(getRedisKey());
+    }
+
+    public void kickAll(UUID roomId) {
+        getPlayersInRoom(roomId).forEach(client -> {
+            sessionManager.remove(client.getGuid());
+        });
     }
 }

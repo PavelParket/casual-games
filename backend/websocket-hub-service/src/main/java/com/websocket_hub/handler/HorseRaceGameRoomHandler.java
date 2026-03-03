@@ -11,6 +11,7 @@ import com.websocket_hub.domain.dto.message.HorseRaceGameMessage;
 import com.websocket_hub.domain.entity.HorseRaceGamePreset;
 import com.websocket_hub.domain.entity.HorseRacePlayerBet;
 import com.websocket_hub.domain.enums.MessageType;
+import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
 import com.websocket_hub.event.CountdownExpiredEvent;
 import com.websocket_hub.manager.HorseRaceGameRoomManager;
@@ -181,6 +182,8 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
 
             roomManager.broadcast(roomId, horseRaceGameMessage);
 
+            roomManager.updateRoomStatus(roomId, RoomStatus.IN_PROGRESS);
+
             log.info("Race started and broadcasted for room={}: winner=horse#{}", roomId, startResponse.winnerHorseIndex());
 
             processGameEnd(roomId, startResponse.winnerHorseIndex());
@@ -200,11 +203,12 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
 
             sendTransactions(roomId, winnerHorseIndex);
 
-            roomManager.removePlayerBets(roomId);
-
             log.info("Race result sent to game-service for room={}", roomId);
         } catch (Exception e) {
             log.error("Failed to notify result for room={}", roomId, e);
+        } finally {
+            roomManager.removePlayerBets(roomId);
+            roomManager.updateRoomStatus(roomId, RoomStatus.FINISHED);
         }
     }
 

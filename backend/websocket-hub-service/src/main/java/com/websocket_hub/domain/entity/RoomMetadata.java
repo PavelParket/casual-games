@@ -1,5 +1,6 @@
 package com.websocket_hub.domain.entity;
 
+import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.RoomType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +25,11 @@ public class RoomMetadata {
     private Instant createdAt;
 
     private Integer participantCount;
+
+    @Builder.Default
+    private RoomStatus status = RoomStatus.WAITING;
+
+    private Instant gameFinishedAt;
 
     public static RoomMetadata create(Room room) {
         return RoomMetadata.builder()

@@ -30,6 +30,13 @@ app:
   bank-service:
     url: http://localhost:8084
 
+scheduler:
+  room-cleanup:
+    scheduler-delay-minutes: 5
+    scheduler-initial-delay-minutes: 5
+    finished-kick-timeout-minutes: 2
+    pending-delete-delay-seconds: 2
+
 logging:
   level:
     org.springframework.web: DEBUG
