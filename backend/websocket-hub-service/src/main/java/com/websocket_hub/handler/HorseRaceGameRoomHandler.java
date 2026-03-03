@@ -13,6 +13,7 @@ import com.websocket_hub.domain.entity.HorseRacePlayerBet;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
+import com.websocket_hub.event.CountdownExpiredEvent;
 import com.websocket_hub.manager.HorseRaceGameRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.DefaultMessageMapper;
