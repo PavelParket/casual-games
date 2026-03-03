@@ -1,5 +1,6 @@
 package com.websocket_hub.service.scheduler;
 
+import com.websocket_hub.config.properies.RoomCleanupProperties;
 import com.websocket_hub.domain.entity.RoomMetadata;
 import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.manager.AbstractRoomManager;
@@ -18,23 +19,23 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class RoomCleanupScheduler {
 
-    private static final Duration WAITING_GRACE_PERIOD = Duration.ofMinutes(5);
-    private static final Duration FINISHED_KICK_TIMEOUT = Duration.ofMinutes(2);
-    private static final long PENDING_DELETE_DELAY_SECONDS = 120;
+    private final RoomCleanupProperties roomCleanupProperties;
 
     private final List<AbstractRoomManager> roomManagers;
 
-    @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelayString = "${scheduler.room-cleanup.scheduler-delay-minutes}",
+            initialDelayString = "${scheduler.room-cleanup.scheduler-initial-delay-minutes}",
+            timeUnit = TimeUnit.MINUTES)
     public void cleanup() {
         log.info("Room cleanup: first iteration started");
 
         runMainCleanup();
 
-        log.info("Room cleanup: first iteration finished, scheduling second iteration in {}s", PENDING_DELETE_DELAY_SECONDS);
+        log.info("Room cleanup: first iteration finished, scheduling second iteration in {}m", roomCleanupProperties.pendingDeleteDelaySeconds());
 
         Thread.ofVirtual().start(() -> {
             try {
-                Thread.sleep(Duration.ofSeconds(PENDING_DELETE_DELAY_SECONDS));
+                Thread.sleep(Duration.ofMinutes(roomCleanupProperties.pendingDeleteDelaySeconds()));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.warn("Room cleanup: second iteration interrupted before start");
@@ -72,7 +73,7 @@ public class RoomCleanupScheduler {
 
             case FINISHED -> {
                 boolean timeoutOver = metadata.getGameFinishedAt() != null
-                        && Instant.now().isAfter(metadata.getGameFinishedAt().plus(FINISHED_KICK_TIMEOUT));
+                        && Instant.now().isAfter(metadata.getGameFinishedAt().plus(Duration.ofMinutes(roomCleanupProperties.finishedKickTimeoutMinutes())));
 
                 if (timeoutOver) {
                     log.info("Room cleanup: kicking and deleting FINISHED room — roomId={}, type={}", metadata.getId(), metadata.getType());

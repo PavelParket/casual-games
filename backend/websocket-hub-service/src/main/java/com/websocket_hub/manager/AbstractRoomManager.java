@@ -156,10 +156,8 @@ public abstract class AbstractRoomManager {
 
     public void delete(UUID roomId) {
         if (!redisRepository.roomExists(roomId, getRedisKey())) {
-            if (!redisRepository.roomExists(roomId, getRedisKey())) {
-                log.warn("Room id={} not found", roomId);
-                return;
-            }
+            log.warn("Room id={} not found", roomId);
+            return;
         }
 
         redisRepository.deleteFullRoom(roomId, getRedisKey());
