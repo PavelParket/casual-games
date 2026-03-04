@@ -8,9 +8,11 @@ import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.PlayerBet;
+import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
+import com.websocket_hub.exception.BusinessGameException;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
@@ -72,6 +74,10 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         TicTacToeGameMessage ticTacToeGameMessage = messageDeserializer.deserialize(payload, TicTacToeGameMessage.class);
         UUID roomId = WebSocketUtil.getRoomId(session);
         UserInternalResponse user = WebSocketUtil.getUser(session);
+
+        if (ticTacToeGameMessage.event() == null) {
+            throw new BusinessGameException(ErrorCode.INVALID_MESSAGE, roomId, "Missing or unrecognized event in message: " + payload);
+        }
 
         log.info("Received game message: {}", ticTacToeGameMessage);
 
@@ -205,6 +211,23 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
     }
 
     private void handlePlayerBet(TicTacToeGameMessage ticTacToeGameMessage, UUID roomId, UserInternalResponse user) {
-        roomManager.markPlayerBet(roomId, user, ticTacToeGameMessage.bet());
+        try {
+            roomManager.markPlayerBet(roomId, user, ticTacToeGameMessage.bet());
+        } catch (IllegalArgumentException e) {
+            log.warn("Bet rejected for user={} in room={}: {}", user.username(), roomId, e.getMessage());
+
+            ClientSession client = sessionManager.getByGuid(user.guid());
+
+            if (client != null) {
+                sessionManager.sendToSession(client, ticTacToeGameMessageMapper.toResponse(
+                        MessageType.SYSTEM,
+                        TicTacToeGameEvent.BET_REJECT,
+                        null,
+                        user.guid(),
+                        roomId,
+                        e.getMessage()
+                ));
+            }
+        }
     }
 }

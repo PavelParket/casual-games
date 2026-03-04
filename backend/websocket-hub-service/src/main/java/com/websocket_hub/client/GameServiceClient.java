@@ -13,6 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -95,6 +96,9 @@ public class GameServiceClient {
             return body;
         } catch (BusinessGameException | InfrastructureGameException e) {
             throw e;
+        } catch (HttpClientErrorException e) {
+            log.warn("Game-service rejected move ({}): roomId={}, body={}", e.getStatusCode(), request.roomId(), e.getResponseBodyAsString());
+            throw new BusinessGameException(ErrorCode.INVALID_MOVE, request.roomId(), e.getResponseBodyAsString());
         } catch (RestClientException e) {
             log.error("Game-service unavailable on processMove: roomId={}, error={}", request.roomId(), e.getMessage());
             throw new InfrastructureGameException(request.roomId(), "Game-service unavailable on processMove: " + e.getMessage(), e);
