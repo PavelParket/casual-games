@@ -1,11 +1,12 @@
 package com.websocket_hub.client;
 
+import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalRequest;
+import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalResponse;
 import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalResponse;
 import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalRequest;
 import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalResponse;
-import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalRequest;
-import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalResponse;
+import com.websocket_hub.exception.InfrastructureGameException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,7 +36,7 @@ public class BankServiceClient {
                 .build()
                 .toUri();
 
-        log.info("Calling bank-service to process game results: roomId={}, winner={}", request.roomId(), request.winner());
+        log.info("Calling bank-service to process tic-tac-toe game results: roomId={}, winner={}", request.roomId(), request.winner());
 
         try {
             ResponseEntity<TicTacToeTransactionInternalResponse> response = restTemplate.exchange(
@@ -45,23 +46,24 @@ public class BankServiceClient {
 
             if (!response.getStatusCode().is2xxSuccessful()) {
                 log.error("Bank-service returned error status: {}", response.getStatusCode());
-                throw new RuntimeException("Bank-service returned error code: " + response.getStatusCode());
+                throw new InfrastructureGameException(request.roomId(), "Bank-service returned error code: " + response.getStatusCode());
             }
 
             TicTacToeTransactionInternalResponse body = response.getBody();
 
             if (body == null) {
-                log.error("Bank-service returned null body during tic tac tor process");
-                throw new RuntimeException("Bank-service returned null response");
+                log.error("Bank-service returned null body: roomId={}", request.roomId());
+                throw new InfrastructureGameException(request.roomId(), "Bank-service returned null response");
             }
 
-            log.info("Bank-service processed results successfully: status={}, message={}, transactions={}",
-                    body.status(), body.message(), body.transactionsCreated());
+            log.info("Bank-service processed results successfully: status={}, message={}, transactions={}", body.status(), body.message(), body.transactionsCreated());
 
             return body;
+        } catch (InfrastructureGameException e) {
+            throw e;
         } catch (RestClientException e) {
-            log.error("Failed to call bank-service: {}", e.getMessage());
-            throw new RuntimeException("Failed to process game results: " + e.getMessage(), e);
+            log.error("Failed to call bank-service: roomId={}, error={}", request.roomId(), e.getMessage());
+            throw new InfrastructureGameException(request.roomId(), "Bank-service unavailable: " + e.getMessage(), e);
         }
     }
 

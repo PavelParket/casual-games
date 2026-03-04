@@ -3,6 +3,9 @@ package com.websocket_hub.client;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
+import com.websocket_hub.domain.enums.ErrorCode;
+import com.websocket_hub.exception.BusinessGameException;
+import com.websocket_hub.exception.InfrastructureGameException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -30,7 +34,7 @@ public class GameServiceClient {
     // TicTacToe
     // -------------------------------------------------------------------------
 
-    public Optional<TicTacToeGameMessage> startGame(TicTacToeGameMessage request) {
+    public TicTacToeGameMessage startGame(TicTacToeGameMessage request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
                 .path("/game/t-t-t/start")
                 .build()
@@ -40,24 +44,32 @@ public class GameServiceClient {
 
         try {
             ResponseEntity<TicTacToeGameMessage> response = restTemplate.exchange(
-                    new RequestEntity<>(
-                            request,
-                            HttpMethod.POST,
-                            uri
-                    ),
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
                     TicTacToeGameMessage.class
             );
 
-            log.info("Game started successfully: {}", response);
+            TicTacToeGameMessage body = response.getBody();
 
-            return Optional.ofNullable(response.getBody());
+            if (body == null) {
+                log.error("Game-service returned null body on startGame: roomId={}", request.roomId());
+                throw new BusinessGameException(ErrorCode.GAME_NOT_STARTED, request.roomId(), "Game-service returned null response on startGame");
+            }
+
+            log.info("Game started successfully: roomId={}", request.roomId());
+
+            return body;
+        } catch (BusinessGameException | InfrastructureGameException e) {
+            throw e;
+        } catch (RestClientException e) {
+            log.error("Game-service unavailable on startGame: roomId={}, error={}", request.roomId(), e.getMessage());
+            throw new InfrastructureGameException(request.roomId(), "Game-service unavailable on startGame: " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Failed to start game {}", e.getMessage());
-            throw new RuntimeException("Failed to start game" + e.getMessage(), e);
+            log.error("Unexpected error on startGame: roomId={}", request.roomId());
+            throw new InfrastructureGameException(request.roomId(), "Unexpected error on startGame: " + e.getMessage(), e);
         }
     }
 
-    public Optional<TicTacToeGameMessage> processMove(TicTacToeGameMessage request) {
+    public TicTacToeGameMessage processMove(TicTacToeGameMessage request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
                 .path("game/t-t-t/move")
                 .build()
@@ -67,19 +79,28 @@ public class GameServiceClient {
 
         try {
             ResponseEntity<TicTacToeGameMessage> response = restTemplate.exchange(
-                    new RequestEntity<>(
-                            request,
-                            HttpMethod.POST,
-                            uri
-                    ), TicTacToeGameMessage.class
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    TicTacToeGameMessage.class
             );
 
-            log.info("Move processed successfully: {}", response);
+            TicTacToeGameMessage body = response.getBody();
 
-            return Optional.ofNullable(response.getBody());
+            if (body == null) {
+                log.error("Game-service returned null body on processMove: roomId={}", request.roomId());
+                throw new BusinessGameException(ErrorCode.INVALID_MOVE, request.roomId(), "Game-service returned empty state on processMove");
+            }
+
+            log.info("Move processed successfully: roomId={}", request.roomId());
+
+            return body;
+        } catch (BusinessGameException | InfrastructureGameException e) {
+            throw e;
+        } catch (RestClientException e) {
+            log.error("Game-service unavailable on processMove: roomId={}, error={}", request.roomId(), e.getMessage());
+            throw new InfrastructureGameException(request.roomId(), "Game-service unavailable on processMove: " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Failed to process move {}", e.getMessage());
-            throw new RuntimeException("Failed to process move" + e.getMessage(), e);
+            log.error("Unexpected error on processMove: roomId={}", request.roomId());
+            throw new InfrastructureGameException(request.roomId(), "Unexpected error on processMove: " + e.getMessage(), e);
         }
     }
 
