@@ -64,7 +64,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
     }
 
     @Override
-    public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         if (message.getPayload().isEmpty()) {
             return;
         }

@@ -42,7 +42,7 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
     }
 
     @Override
-    public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
 
         if (payload.isBlank()) {
