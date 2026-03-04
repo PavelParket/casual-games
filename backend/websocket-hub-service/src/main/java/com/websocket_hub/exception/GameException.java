@@ -22,4 +22,22 @@ public class GameException extends RuntimeException {
         this.errorCode = errorCode;
         this.roomId = roomId;
     }
+
+    protected static String extractMessage(Throwable e) {
+        if (e == null) {
+            return "unknown error";
+        }
+
+        if (e.getMessage() != null && !e.getMessage().endsWith(": null")) {
+            return e.getMessage();
+        }
+
+        Throwable cause = e.getCause();
+
+        if (cause != null && cause.getMessage() != null) {
+            return String.format("%s: %s", cause.getClass().getSimpleName(), cause.getMessage());
+        }
+
+        return String.format("%s (no message)", e.getClass().getSimpleName());
+    }
 }

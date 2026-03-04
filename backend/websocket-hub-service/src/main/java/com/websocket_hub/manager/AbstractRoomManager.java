@@ -6,13 +6,13 @@ import com.websocket_hub.domain.dto.message.Message;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.entity.RoomMetadata;
-import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.events.EventType;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
 import com.websocket_hub.exception.BusinessGameException;
+import com.websocket_hub.exception.RoomAlreadyExistsException;
 import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;
@@ -97,7 +97,7 @@ public abstract class AbstractRoomManager {
         ClientSession client = sessionManager.getByGuid(user.guid());
 
         if (room == null) {
-            throw new BusinessGameException(ErrorCode.ROOM_NOT_FOUND, roomId, "Cannot add session — room not found: roomId=" + roomId);
+            throw BusinessGameException.roomNotFound(roomId);
         }
 
         if (client == null || !client.validateSession(session)) {
@@ -140,7 +140,7 @@ public abstract class AbstractRoomManager {
 
         synchronized (metadata) {
             if (validator.isRoomNameExists(roomRequest, metadata)) {
-                throw new RuntimeException("Room with name: " + roomRequest.roomName() + " already exists!");
+                throw new RoomAlreadyExistsException(roomRequest.roomName());
             }
 
             Room room = roomFactory.create(roomRequest.roomName(), roomRequest.roomType());

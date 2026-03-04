@@ -3,7 +3,6 @@ package com.websocket_hub.client;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
-import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.exception.BusinessGameException;
 import com.websocket_hub.exception.InfrastructureGameException;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -41,7 +39,7 @@ public class GameServiceClient {
                 .build()
                 .toUri();
 
-        log.info("Calling game-service to start game: {}", request);
+        log.info("Calling game-service to start tic-tac-toe game: {}", request);
 
         try {
             ResponseEntity<TicTacToeGameMessage> response = restTemplate.exchange(
@@ -52,8 +50,7 @@ public class GameServiceClient {
             TicTacToeGameMessage body = response.getBody();
 
             if (body == null) {
-                log.error("Game-service returned null body on startGame: roomId={}", request.roomId());
-                throw new BusinessGameException(ErrorCode.GAME_NOT_STARTED, request.roomId(), "Game-service returned null response on startGame");
+                throw BusinessGameException.gameNotStarted(request.roomId());
             }
 
             log.info("Game started successfully: roomId={}", request.roomId());
@@ -61,12 +58,10 @@ public class GameServiceClient {
             return body;
         } catch (BusinessGameException | InfrastructureGameException e) {
             throw e;
-        } catch (RestClientException e) {
-            log.error("Game-service unavailable on startGame: roomId={}, error={}", request.roomId(), e.getMessage());
-            throw new InfrastructureGameException(request.roomId(), "Game-service unavailable on startGame: " + e.getMessage(), e);
+        } catch (HttpClientErrorException e) {
+            throw BusinessGameException.fromHttpResponse(request.roomId(), e);
         } catch (Exception e) {
-            log.error("Unexpected error on startGame: roomId={}", request.roomId());
-            throw new InfrastructureGameException(request.roomId(), "Unexpected error on startGame: " + e.getMessage(), e);
+            throw InfrastructureGameException.gameServiceUnavailable("startGame", request.roomId(), e);
         }
     }
 
@@ -87,8 +82,7 @@ public class GameServiceClient {
             TicTacToeGameMessage body = response.getBody();
 
             if (body == null) {
-                log.error("Game-service returned null body on processMove: roomId={}", request.roomId());
-                throw new BusinessGameException(ErrorCode.INVALID_MOVE, request.roomId(), "Game-service returned empty state on processMove");
+                throw BusinessGameException.invalidMove(request.roomId());
             }
 
             log.info("Move processed successfully: roomId={}", request.roomId());
@@ -97,14 +91,9 @@ public class GameServiceClient {
         } catch (BusinessGameException | InfrastructureGameException e) {
             throw e;
         } catch (HttpClientErrorException e) {
-            log.warn("Game-service rejected move ({}): roomId={}, body={}", e.getStatusCode(), request.roomId(), e.getResponseBodyAsString());
-            throw new BusinessGameException(ErrorCode.INVALID_MOVE, request.roomId(), e.getResponseBodyAsString());
-        } catch (RestClientException e) {
-            log.error("Game-service unavailable on processMove: roomId={}, error={}", request.roomId(), e.getMessage());
-            throw new InfrastructureGameException(request.roomId(), "Game-service unavailable on processMove: " + e.getMessage(), e);
+            throw BusinessGameException.fromHttpResponse(request.roomId(), e);
         } catch (Exception e) {
-            log.error("Unexpected error on processMove: roomId={}", request.roomId());
-            throw new InfrastructureGameException(request.roomId(), "Unexpected error on processMove: " + e.getMessage(), e);
+            throw InfrastructureGameException.gameServiceUnavailable("processMove", request.roomId(), e);
         }
     }
 

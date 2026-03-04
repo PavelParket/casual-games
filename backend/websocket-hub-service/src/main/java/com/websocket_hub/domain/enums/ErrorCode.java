@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ErrorCode {
 
-    // Business errors
     INVALID_MOVE("INVALID_MOVE"),
     NOT_YOUR_TURN("NOT_YOUR_TURN"),
     ROOM_NOT_FOUND("ROOM_NOT_FOUND"),
@@ -15,8 +14,9 @@ public enum ErrorCode {
     GAME_NOT_STARTED("GAME_NOT_STARTED"),
     GAME_ALREADY_FINISHED("GAME_ALREADY_FINISHED"),
     INSUFFICIENT_BALANCE("INSUFFICIENT_BALANCE"),
+    ROOM_ALREADY_EXISTS("ROOM_ALREADY_EXISTS"),
+    ROOM_TYPE_NOT_FOUND("ROOM_TYPE_NOT_FOUND"),
 
-    // Infrastructure / system errors
     SERVICE_UNAVAILABLE("SERVICE_UNAVAILABLE"),
     INTERNAL_ERROR("INTERNAL_ERROR"),
     INVALID_MESSAGE("INVALID_MESSAGE");

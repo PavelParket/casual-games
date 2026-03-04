@@ -8,7 +8,6 @@ import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.PlayerBet;
-import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
@@ -76,7 +75,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         UserInternalResponse user = WebSocketUtil.getUser(session);
 
         if (ticTacToeGameMessage.event() == null) {
-            throw new BusinessGameException(ErrorCode.INVALID_MESSAGE, roomId, "Missing or unrecognized event in message: " + payload);
+            throw BusinessGameException.invalidMessage(roomId, "Invalid message event");
         }
 
         log.info("Received game message: {}", ticTacToeGameMessage);

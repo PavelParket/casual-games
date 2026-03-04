@@ -45,25 +45,30 @@ public class BankServiceClient {
             );
 
             if (!response.getStatusCode().is2xxSuccessful()) {
-                log.error("Bank-service returned error status: {}", response.getStatusCode());
-                throw new InfrastructureGameException(request.roomId(), "Bank-service returned error code: " + response.getStatusCode());
+                throw InfrastructureGameException.bankServiceUnexpectedStatus(
+                        "sendTicTacToeGameResults",
+                        request.roomId(),
+                        response.getStatusCode().value()
+                );
             }
 
             TicTacToeTransactionInternalResponse body = response.getBody();
 
             if (body == null) {
-                log.error("Bank-service returned null body: roomId={}", request.roomId());
-                throw new InfrastructureGameException(request.roomId(), "Bank-service returned null response");
+                throw InfrastructureGameException.bankServiceNullResponse(
+                        "sendTicTacToeGameResults",
+                        request.roomId()
+                );
             }
 
-            log.info("Bank-service processed results successfully: status={}, message={}, transactions={}", body.status(), body.message(), body.transactionsCreated());
+            log.info("Bank-service processed t-t-t results: status={}, message={}, transactions={}", body.status(), body.message(), body.transactionsCreated());
 
             return body;
+
         } catch (InfrastructureGameException e) {
             throw e;
-        } catch (RestClientException e) {
-            log.error("Failed to call bank-service: roomId={}, error={}", request.roomId(), e.getMessage());
-            throw new InfrastructureGameException(request.roomId(), "Bank-service unavailable: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw InfrastructureGameException.bankServiceUnavailable("sendTicTacToeGameResults", request.roomId(), e);
         }
     }
 
