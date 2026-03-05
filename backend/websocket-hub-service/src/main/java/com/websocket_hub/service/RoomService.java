@@ -2,6 +2,7 @@ package com.websocket_hub.service;
 
 import com.websocket_hub.domain.dto.RoomRequest;
 import com.websocket_hub.domain.dto.RoomResponse;
+import com.websocket_hub.domain.dto.RoomStatusResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.exception.RoomNotFoundException;
@@ -89,5 +90,11 @@ public class RoomService {
         }
 
         return roomManager;
+    }
+
+    public RoomStatusResponse getStatus(UUID roomId, RoomType roomType) {
+        return RoomStatusResponse.builder()
+                .roomStatus(getManager(roomType).getStatus(roomId))
+                .build();
     }
 }

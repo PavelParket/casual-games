@@ -2,6 +2,7 @@ package com.websocket_hub.controller;
 
 import com.websocket_hub.domain.dto.RoomRequest;
 import com.websocket_hub.domain.dto.RoomResponse;
+import com.websocket_hub.domain.dto.RoomStatusResponse;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.service.RoomService;
 import lombok.RequiredArgsConstructor;
@@ -56,5 +57,10 @@ public class RoomController {
     @GetMapping("{id}")
     public RoomResponse getById(@PathVariable UUID id) {
         return roomService.getById(id);
+    }
+
+    @GetMapping("status/{roomId}/{roomType}")
+    public RoomStatusResponse getStatus(@PathVariable UUID roomId, @PathVariable RoomType roomType) {
+        return roomService.getStatus(roomId, roomType);
     }
 }

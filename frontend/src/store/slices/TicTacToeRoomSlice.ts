@@ -1,11 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { PlayerBet, Room, RoomType } from "../../models/Room";
+import type { PlayerBet, Room, RoomStatus, RoomType } from "../../models/Room";
 import { RoomAPI, TicTacToeRoomApi } from "../../api/WsHubApi";
 import type { AxiosError } from "axios";
 import type { RootState } from "../store";
 
 export interface TicTacToeRoomState {
     room?: Room;
+    roomStatus?: RoomStatus;
     players?: Record<string, string>;
     readyPlayersCount?: number;
     totalPlayersCount?: number;
@@ -25,6 +26,19 @@ export const getRoomById = createAsyncThunk<Room, { roomId: string }, { rejectVa
         } catch (err: unknown) {
             const error = err as AxiosError<{ message?: string }>;
             return rejectWithValue(error.response?.data?.message ?? "Failed to fetch room");
+        }
+    }
+);
+
+export const getRoomStatus = createAsyncThunk<RoomStatus, { roomId: string, roomType: RoomType }, { rejectValue: string }>(
+    "ticTacToeRoom/getRoomStatus",
+    async ({ roomId, roomType }, { rejectWithValue }) => {
+        try {
+            const response = await RoomAPI.getRoomStatus(roomId, roomType);
+            return response.data;
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message?: string }>;
+            return rejectWithValue(error.response?.data?.message ?? "Failed to fetch room status");
         }
     }
 );
@@ -89,6 +103,7 @@ export const syncReadiness = createAsyncThunk<void, { roomId: string; roomType: 
 
 const initialState: TicTacToeRoomState = {
     room: undefined,
+    roomStatus: undefined,
     players: undefined,
     readyPlayersCount: undefined,
     totalPlayersCount: undefined,
@@ -117,6 +132,13 @@ const ticTacToeRoomSlice = createSlice({
             })
             .addCase(getRoomById.rejected, (state, action) => {
                 state.error = action.payload ?? "Failed to fetch room";
+            })
+
+            .addCase(getRoomStatus.fulfilled, (state, action) => {
+                state.roomStatus = action.payload;
+            })
+            .addCase(getRoomStatus.rejected, (state, action) => {
+                state.error = action.payload ?? "Failed to fetch room status";
             })
 
             /* === Get Players === */

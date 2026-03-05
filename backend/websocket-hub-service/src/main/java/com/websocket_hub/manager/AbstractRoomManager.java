@@ -320,4 +320,14 @@ public abstract class AbstractRoomManager {
             sessionManager.remove(client.getGuid());
         });
     }
+
+    public RoomStatus getStatus(UUID roomId) {
+        RoomMetadata metadata = redisRepository.get(roomId, getRedisKey());
+
+        if (metadata == null) {
+            return null;
+        }
+
+        return metadata.getStatus();
+    }
 }
