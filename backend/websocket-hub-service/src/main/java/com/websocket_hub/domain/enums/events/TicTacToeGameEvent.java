@@ -5,6 +5,7 @@ public enum TicTacToeGameEvent implements EventType {
     JOIN,
     LEAVE,
     START,
+    START_FAILED,
     READY,
     MOVE,
     WINNER_X,

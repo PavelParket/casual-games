@@ -152,6 +152,19 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
                     roomId,
                     e.getMessage()
             ));
+        } catch (Exception e) {
+            log.error("Failed to start game in room {}: {}", roomId, e.getMessage(), e);
+
+            roomManager.removeReadyPlayers(roomId);
+
+            roomManager.broadcast(roomId, ticTacToeGameMessageMapper.toResponse(
+                    MessageType.SYSTEM,
+                    TicTacToeGameEvent.START_FAILED,
+                    null,
+                    null,
+                    roomId,
+                    "Game service unavailable, please try again"
+            ));
         }
     }
 
