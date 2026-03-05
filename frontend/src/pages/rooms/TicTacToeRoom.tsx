@@ -1,13 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
-import { Box, Button, Card, Container, Icon, Input, Toast, Typography, useThemedIcon } from "../../ui";
+import { Box, Button, Card, Container, Icon, Input, ToastContainer, Typography, useThemedIcon } from "../../ui";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import type { TicTacToeGameMessage } from "../../models/WsMessage";
+import type { ErrorWSMessage, TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage } from "../../utils/SecurityUtils";
 import { findByGuid } from "../../store/slices/UserSlice";
 import { getPlayersBets, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/TicTacToeRoomSlice";
+import { useGameToast } from "../../hooks/useGameToast";
+import { useSystemToastContext } from "../../providers/SystemToastContext";
+import { errorCodeMessages, SYSTEM_ERROR_CODES } from "../../models/constants/ErrorCodeMessages";
 
 export default function TicTacToeRoom() {
    const { getInverseIcon } = useThemedIcon();
@@ -20,7 +23,8 @@ export default function TicTacToeRoom() {
    const roomId: string | undefined = useParams<{ roomId?: string }>().roomId;
    const { room, players, readyPlayersCount, totalPlayersCount, playerBetMap } = useSelector((state: RootState) => state.ticTacToeRoom);
 
-   const [toast, setToast] = useState<{ text: string } | null>(null);
+   const { toasts, showGameToast, dismiss } = useGameToast();
+   const { showSystemToast } = useSystemToastContext();
 
    const [ready, setReady] = useState<boolean>(false);
 
@@ -51,7 +55,7 @@ export default function TicTacToeRoom() {
    );
 
    const processReset = useCallback(() => {
-      showToast("Your opponent left the room. Waiting for a new player...");
+      showGameToast("Your opponent left the room. Waiting for a new player...", "game-info");
       setBoard(Array(9).fill(null));
       setCurrentPlayerSymbol(undefined);
       setMySymbol(undefined);
@@ -61,7 +65,7 @@ export default function TicTacToeRoom() {
       setIsGame(false);
       setBetPlaced(false);
       setBetInput("");
-   }, []);
+   }, [showGameToast]);
 
    const processStart = useCallback((message: TicTacToeGameMessage) => {
       setBoard(message.board!);
@@ -107,13 +111,13 @@ export default function TicTacToeRoom() {
       setWinner(message.players[message.winner]);
 
       if (message.winner === mySymbol) {
-         showToast("You are the winner!");
+         showGameToast("You are the winner!", "game-info");
       } else {
-         showToast(`Your opponent won!`);
+         showGameToast("Your opponent won!", "game-info");
       }
 
       setIsGame(false);
-   }, [mySymbol]);
+   }, [mySymbol, showGameToast]);
 
    const processDraw = useCallback((message: TicTacToeGameMessage) => {
       if (!message.board || !message.message) {
@@ -122,9 +126,9 @@ export default function TicTacToeRoom() {
 
       setBoard(message.board);
       setWinner(message.winner);
-      showToast(message.message);
+      showGameToast(validateToastMessage(message.message), "game-info");
       setIsGame(false);
-   }, []);
+   }, [showGameToast]);
 
    useEffect(() => {
       if (!isConnected || !message || !guid || !roomId || !room) {
@@ -133,7 +137,7 @@ export default function TicTacToeRoom() {
 
       switch (message.event) {
          case "JOIN":
-            showToast(message.message ?? "Player join the room");
+            showGameToast(validateToastMessage(message.message ?? "Player joined the room"), "game-info");
             dispatch(syncRoomState({ roomId, roomType: room.type }));
             break;
 
@@ -141,7 +145,7 @@ export default function TicTacToeRoom() {
             if (isGame) {
                processReset();
             } else {
-               showToast(message.message ?? "Player leave the room");
+               showGameToast(validateToastMessage(message.message ?? "Player left the room"), "game-info");
             }
 
             dispatch(syncRoomState({ roomId, roomType: room.type }));
@@ -149,10 +153,11 @@ export default function TicTacToeRoom() {
 
          case "START":
             processStart(message);
+            showGameToast(message.message ?? "Game started", "game-info");
             break;
 
          case "READY":
-            showToast(message.message ?? "Player is ready");
+            showGameToast(validateToastMessage(message.message ?? "Player is ready"), "game-info");
             dispatch(syncReadiness({ roomId, roomType: room.type }));
             break;
 
@@ -173,9 +178,9 @@ export default function TicTacToeRoom() {
          case "BET":
             if (message.fromUserId === guid) {
                setBetPlaced(true);
-               showToast(message.message || "Your bet has been accepted!");
+               showGameToast(validateToastMessage(message.message ?? "Your bet has been accepted!"), "game-info");
             } else {
-               showToast(message.message || "Opponent placed a bet");
+               showGameToast(validateToastMessage(message.message ?? "Opponent placed a bet"), "game-info");
             }
 
             dispatch(syncReadiness({ roomId, roomType: room.type }));
@@ -183,28 +188,46 @@ export default function TicTacToeRoom() {
 
          case "BET_REJECT":
             setBetPlaced(false);
-            showToast(message.message || "Your bet was rejected. Please increase your bet.");
+            showGameToast(validateToastMessage(message.message ?? "Your bet has been rejected") || errorCodeMessages.BET_REJECT, "game-error");
             dispatch(getPlayersBets({ roomId }));
             break;
 
          case "BET_OUTBID":
             setBetPlaced(false);
             setReady(false);
-            showToast(message.message || "You have been outbid! Please place a new bet.");
+            showGameToast(validateToastMessage(message.message ?? "You have been outbid! Please place a new bet."), "game-error");
 
             dispatch(syncReadiness({ roomId, roomType: room.type }));
             break;
 
          case "BET_REQUIRED":
-            showToast(message.message || "You must place a bet before becoming ready");
+            showGameToast(validateToastMessage(message.message ?? "You must place a bet before becoming ready"), "game-error");
             break;
+
+         case "START_FAILED":
+            setReady(false);
+            showGameToast(errorCodeMessages.START_FAILED, "game-error");
+            break;
+
+         case "ERROR": {
+            const errorMsg = message as ErrorWSMessage;
+            const code = errorMsg.errorCode ?? "";
+            const text = errorCodeMessages[code] ?? errorCodeMessages.DEFAULT;
+
+            if (SYSTEM_ERROR_CODES.has(code)) {
+               showSystemToast(text, "system-error");
+            } else {
+               showGameToast(text, "game-error");
+            }
+            break;
+         }
 
          default:
             break;
       }
-   }, [dispatch, guid, isConnected, isGame, message, processDraw, processMove, processReset, processStart, processWin, room, roomId]);
+   }, [dispatch, guid, isConnected, isGame, message, processDraw, processMove, processReset, processStart, processWin, room, roomId, showGameToast, showSystemToast]);
 
-   const handleClick = (index: number) => {
+   const handleMove = (index: number) => {
       if (!guid || !room || !isConnected || board[index] || winner || currentPlayerSymbol !== mySymbol) {
          return;
       }
@@ -227,7 +250,7 @@ export default function TicTacToeRoom() {
       }
 
       if (!betPlaced) {
-         showToast("You must place a bet before becoming ready!");
+         showGameToast("You must place a bet before becoming ready!", "game-error");
          return;
       }
 
@@ -248,12 +271,12 @@ export default function TicTacToeRoom() {
       const betAmount = parseFloat(betInput);
 
       if (isNaN(betAmount) || betAmount <= 0) {
-         showToast("Please enter a valid bet amount greater than 0");
+         showGameToast("Please enter a valid bet amount greater than 0", "game-error");
          return;
       }
 
       if (balance && betAmount > balance) {
-         showToast("Insufficient balance");
+         showGameToast("Insufficient balance", "game-error");
          return;
       }
 
@@ -268,10 +291,6 @@ export default function TicTacToeRoom() {
 
    const handleLeave = () => {
       navigate("/rooms");
-   };
-
-   const showToast = (text: string): void => {
-      setToast({ text: validateToastMessage(text) })
    };
 
    // todo: Сделать нормальный компонент-страницу с сообщение о несуществующей комнате
@@ -329,6 +348,8 @@ export default function TicTacToeRoom() {
                   alignItems: "center",
                   justifyContent: "center",
                }}>
+
+                  {/* ===== PLAYERS ===== */}
                   <Box style={{
                      display: "flex",
                      flexDirection: "column",
@@ -351,6 +372,7 @@ export default function TicTacToeRoom() {
                      )}
                   </Box>
 
+                  {/* ===== BOARD ===== */}
                   <Box style={{
                      display: "flex",
                      alignItems: "center",
@@ -387,7 +409,7 @@ export default function TicTacToeRoom() {
                                  key={index}
                                  variant="ghost"
                                  style={style}
-                                 onClick={() => handleClick(index)}
+                                 onClick={() => handleMove(index)}
                                  disabled={!!cell || !!winner || !isGame}
                               >
                                  {cell}
@@ -397,6 +419,7 @@ export default function TicTacToeRoom() {
                      </Box>
                   </Box>
 
+                  {/* ===== BETS ===== */}
                   <Box style={{
                      display: "flex",
                      flexDirection: "column",
@@ -534,9 +557,7 @@ export default function TicTacToeRoom() {
             </Card>
          </Container>
 
-         {toast && (
-            <Toast message={toast.text} onClose={() => setToast(null)} />
-         )}
+         <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
       </Box>
    );
 }

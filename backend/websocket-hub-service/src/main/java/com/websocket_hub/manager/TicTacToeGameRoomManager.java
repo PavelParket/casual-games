@@ -207,7 +207,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
 
             if (bets.isEmpty()) {
                 bets.add(newPlayerBet);
-                webSocketHelper.notifyBetAccepted(roomId, newClient, TicTacToeGameEvent.BET, bet);
+                webSocketHelper.notifyBetAcceptedToAll(roomId, newClient, players, TicTacToeGameEvent.BET, bet);
                 log.info("First bet in room {} by player {}: {}", roomId, user.username(), bet);
                 return;
             }
@@ -227,7 +227,7 @@ public class TicTacToeGameRoomManager extends AbstractRoomManager {
                 bets.clear();
                 bets.add(newPlayerBet);
 
-                webSocketHelper.notifyBetAcceptedToAll(roomId, newClient, players, TicTacToeGameEvent.BET, bet);
+                webSocketHelper.notifyBetAccepted(roomId, newClient, TicTacToeGameEvent.BET, bet);
                 webSocketHelper.notifyBetOutbid(roomId, existingClient, TicTacToeGameEvent.BET_OUTBID, newPlayerBet.getBet());
 
                 removeReadyPlayer(roomId, existingClient.getGuid());

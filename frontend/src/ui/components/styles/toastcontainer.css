@@ -1,0 +1,207 @@
+/* ─── Variables ─────────────────────────────────────────────────────────────── */
+
+:root {
+    --toast-color-info: #3b82f6;
+    --toast-color-error: #ef4444;
+    --toast-animation-enter-duration: 0.3s;
+    --toast-animation-exit-duration: 0.3s;
+}
+
+/* ─── Container ─────────────────────────────────────────────────────────────── */
+
+.toast-container {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 9999;
+    width: 320px;
+}
+
+.toast-container--system {
+    top: 1.5rem;
+    right: 1.5rem;
+}
+
+.toast-container--game {
+    top: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* ─── Toast Item: base ──────────────────────────────────────────────────────── */
+
+.toast-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    background: var(--glass-surface);
+    backdrop-filter: blur(var(--glass-blur));
+    color: var(--color-text);
+    overflow: hidden;
+    border-left: 3px solid transparent;
+    min-height: 56px;
+}
+
+/* ─── Toast Item: variants ──────────────────────────────────────────────────── */
+
+.toast-item--game-info,
+.toast-item--system-info {
+    border-left-color: var(--toast-color-info);
+}
+
+.toast-item--game-error,
+.toast-item--system-error {
+    border-left-color: var(--toast-color-error);
+}
+
+/* ─── Toast Item: icon ──────────────────────────────────────────────────────── */
+
+.toast-item__icon {
+    flex-shrink: 0;
+    width: 1.25rem;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.toast-item--game-info .toast-item__icon,
+.toast-item--system-info .toast-item__icon {
+    color: var(--toast-color-info);
+}
+
+.toast-item--game-error .toast-item__icon,
+.toast-item--system-error .toast-item__icon {
+    color: var(--toast-color-error);
+}
+
+/* ─── Toast Item: message ───────────────────────────────────────────────────── */
+
+.toast-item__message {
+    flex: 1;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+/* ─── Toast Item: close button ──────────────────────────────────────────────── */
+
+.toast-item__close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text);
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0 0.25rem;
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
+    align-self: flex-start;
+}
+
+.toast-item__close:hover {
+    opacity: 1;
+}
+
+/* ─── Toast Item: progress bar ──────────────────────────────────────────────── */
+
+.toast-item__progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    animation: toast-progress-shrink var(--toast-duration) linear forwards;
+}
+
+.toast-item--game-info .toast-item__progress,
+.toast-item--system-info .toast-item__progress {
+    background: var(--toast-color-info);
+}
+
+.toast-item--game-error .toast-item__progress,
+.toast-item--system-error .toast-item__progress {
+    background: var(--toast-color-error);
+}
+
+@keyframes toast-progress-shrink {
+    from {
+        width: 100%;
+    }
+
+    to {
+        width: 0%;
+    }
+}
+
+/* ─── System animations: slide from left ────────────────────────────────────── */
+
+.toast-container--system .toast-item--entering {
+    animation: system-slide-in var(--toast-animation-enter-duration) ease forwards;
+}
+
+.toast-container--system .toast-item--closing {
+    animation: system-slide-out var(--toast-animation-exit-duration) ease forwards;
+}
+
+@keyframes system-slide-in {
+    from {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes system-slide-out {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+}
+
+/* ─── Game animations: slide from top ───────────────────────────────────────── */
+
+.toast-container--game .toast-item--entering {
+    animation: game-slide-in var(--toast-animation-enter-duration) ease forwards;
+}
+
+.toast-container--game .toast-item--closing {
+    animation: game-slide-out var(--toast-animation-exit-duration) ease forwards;
+}
+
+@keyframes game-slide-in {
+    from {
+        transform: translateY(-120%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes game-slide-out {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateY(-120%);
+        opacity: 0;
+    }
+}

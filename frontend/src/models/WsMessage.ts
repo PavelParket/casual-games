@@ -9,6 +9,10 @@ export interface WSMessage {
    message?: string;
 }
 
+export interface ErrorWSMessage extends WSMessage {
+   errorCode?: string;
+}
+
 export interface TicTacToeGameMessage extends WSMessage {
    board?: string[];
    cell?: number;
@@ -21,17 +25,17 @@ export interface TicTacToeGameMessage extends WSMessage {
 }
 
 export interface HorseRaceGameMessage extends WSMessage {
-    participants?: Record<string, string>;
-    horseCount?: number;
-    odds?: number[];
-    seedHash?: string;
-    serverSeed?: string;
-    winnerHorseIndex?: number;
-    segmentsCount?: number;
-    horseKeyframes?: HorseRaceHorseKeyframes[];
-    horseIndex?: number;
-    bet?: number;
-    remainingSeconds?: number;
+   participants?: Record<string, string>;
+   horseCount?: number;
+   odds?: number[];
+   seedHash?: string;
+   serverSeed?: string;
+   winnerHorseIndex?: number;
+   segmentsCount?: number;
+   horseKeyframes?: HorseRaceHorseKeyframes[];
+   horseIndex?: number;
+   bet?: number;
+   remainingSeconds?: number;
 }
 
 export interface DeCoderMessage extends WSMessage {
