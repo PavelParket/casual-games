@@ -7,11 +7,11 @@ import java.util.UUID;
 public class InfrastructureGameException extends GameException {
 
     private InfrastructureGameException(UUID roomId, String debugMessage) {
-        super(ErrorCode.SERVICE_UNAVAILABLE.getCode(), roomId, debugMessage);
+        super(ErrorCode.SERVICE_UNAVAILABLE, roomId, debugMessage);
     }
 
     private InfrastructureGameException(UUID roomId, String debugMessage, Throwable cause) {
-        super(ErrorCode.SERVICE_UNAVAILABLE.getCode(), roomId, debugMessage, cause);
+        super(ErrorCode.SERVICE_UNAVAILABLE, roomId, debugMessage, cause);
     }
 
     public static InfrastructureGameException gameServiceUnavailable(String operation, UUID roomId, Throwable cause) {

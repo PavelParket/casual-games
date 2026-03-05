@@ -96,12 +96,12 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
                     user,
                     e.getRoomId() != null ? e.getRoomId() : roomId,
                     session,
-                    ErrorCode.SERVICE_UNAVAILABLE.getCode(),
+                    ErrorCode.SERVICE_UNAVAILABLE,
                     e.getMessage()
             );
         } catch (Exception e) {
             log.error("Unexpected error handling message: userId={}, roomId={}", user != null ? user.guid() : null, roomId, e);
-            sendError(user, roomId, session, ErrorCode.INTERNAL_ERROR.getCode(), e.getMessage());
+            sendError(user, roomId, session, ErrorCode.INTERNAL_ERROR, e.getMessage());
         }
     }
 
@@ -111,7 +111,7 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
     protected abstract void onLeave(UUID roomId, UserInternalResponse user);
 
-    protected void sendError(UserInternalResponse user, UUID roomId, WebSocketSession session, String errorCode, String debugMessage) {
+    protected void sendError(UserInternalResponse user, UUID roomId, WebSocketSession session, ErrorCode errorCode, String debugMessage) {
         if (user == null || user.guid() == null) {
             log.warn("Cannot send error — userId is null. errorCode={}, session={}", errorCode, session.getId());
             return;
@@ -124,11 +124,13 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
             return;
         }
 
+        log.info("Error detail for userId={}, errorCode={}: {}", user.guid(), errorCode, debugMessage);
+
         ErrorMessage errorMessage = ErrorMessage.builder()
                 .type(MessageType.SYSTEM)
                 .event(ErrorEvent.ERROR)
                 .errorCode(errorCode)
-                .message(debugMessage)
+                .message(errorCode.getMessage())
                 .roomId(roomId)
                 .toUserId(user.guid())
                 .build();

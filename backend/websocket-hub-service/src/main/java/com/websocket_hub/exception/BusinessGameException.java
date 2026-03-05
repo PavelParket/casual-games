@@ -8,7 +8,7 @@ import java.util.UUID;
 public class BusinessGameException extends GameException {
 
     private BusinessGameException(ErrorCode errorCode, UUID roomId, String debugMessage) {
-        super(errorCode.getCode(), roomId, debugMessage);
+        super(errorCode, roomId, debugMessage);
     }
 
     public static BusinessGameException roomNotFound(UUID roomId) {

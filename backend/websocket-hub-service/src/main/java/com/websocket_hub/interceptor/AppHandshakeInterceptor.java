@@ -2,7 +2,10 @@ package com.websocket_hub.interceptor;
 
 import com.websocket_hub.client.UserServiceClient;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
-import com.websocket_hub.domain.enums.RoomType;
+import com.websocket_hub.domain.entity.RoomMetadata;
+import com.websocket_hub.domain.enums.RoomStatus;
+import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
+import com.websocket_hub.domain.repository.RoomRedisRepository;
 import com.websocket_hub.provider.IdentityProvider;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +19,9 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Component
@@ -28,6 +33,8 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
 
     private final UserServiceClient client;
 
+    private final RoomRedisRepository roomRedisRepository;
+
     @Override
     public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
         String ip = request.getRemoteAddress().getHostString();
@@ -36,16 +43,31 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
             String token = identityProvider.resolveToken(request);
             UUID guid = identityProvider.resolveGuid(request);
             UUID roomId = identityProvider.resolveRoomId(request);
-            RoomType roomType = identityProvider.resolveRoomType(request);
             UserInternalResponse user = client.getUserByGuid(guid, token);
+
+            RoomMetadata metadata = findMetadataByRoomId(roomId);
+            if (metadata != null) {
+                RoomStatus status = metadata.getStatus() != null ? metadata.getStatus() : RoomStatus.WAITING;
+
+                if (status == RoomStatus.IN_PROGRESS) {
+                    log.warn("Handshake rejected — room IN_PROGRESS: user={}, roomId={}", user.email(), roomId);
+                    response.setStatusCode(HttpStatus.FORBIDDEN);
+                    return false;
+                }
+
+                if (status == RoomStatus.FINISHED) {
+                    log.warn("Handshake rejected — room FINISHED: user={}, roomId={}", user.email(), roomId);
+                    response.setStatusCode(HttpStatus.FORBIDDEN);
+                    return false;
+                }
+            }
 
             attributes.put("guid", guid);
             attributes.put("user", user);
             attributes.put("roomId", roomId);
-            attributes.put("roomType", roomType);
             attributes.put("connectedAt", Instant.now());
 
-            log.info("Preparing handshake for user={} room={} type={} ip={}", user.email(), roomId, roomType, ip);
+            log.info("Preparing handshake for user={} room={} ip={}", user.email(), roomId, ip);
 
             return true;
         } catch (JwtException e) {
@@ -71,5 +93,13 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
             String ip = request.getRemoteAddress().getHostString();
             log.warn("Handshake failed from ip={}: {}", ip, exception.getMessage());
         }
+    }
+
+    private RoomMetadata findMetadataByRoomId(UUID roomId) {
+        return Arrays.stream(RoomTypeRedisKey.values())
+                .map(key -> roomRedisRepository.get(roomId, key))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
     }
 }

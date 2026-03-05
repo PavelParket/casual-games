@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Input, ToastContainer, Typography, useThemedIcon } from "../../ui";
 import { useDispatch, useSelector } from "react-redux";
@@ -38,6 +38,8 @@ export default function TicTacToeRoom() {
 
    const [betInput, setBetInput] = useState<string>("");
    const [betPlaced, setBetPlaced] = useState<boolean>(false);
+
+   const processedMessageRef = useRef<TicTacToeGameMessage | null>(null);
 
    useEffect(() => {
       if (!roomId || !guid) {
@@ -110,14 +112,14 @@ export default function TicTacToeRoom() {
       setBoard(message.board);
       setWinner(message.players[message.winner]);
 
-      if (message.winner === mySymbol) {
+      if (message.winner === guid) {
          showGameToast("You are the winner!", "game-info");
       } else {
          showGameToast("Your opponent won!", "game-info");
       }
 
       setIsGame(false);
-   }, [mySymbol, showGameToast]);
+   }, [guid, showGameToast]);
 
    const processDraw = useCallback((message: TicTacToeGameMessage) => {
       if (!message.board || !message.message) {
@@ -134,6 +136,12 @@ export default function TicTacToeRoom() {
       if (!isConnected || !message || !guid || !roomId || !room) {
          return;
       }
+
+      if (message === processedMessageRef.current) {
+         return;
+      }
+
+      processedMessageRef.current = message;
 
       switch (message.event) {
          case "JOIN":
