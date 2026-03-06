@@ -99,12 +99,12 @@ html.is-scrolling.dark {
    --color-primary-hover: #000000;
    --on-primary: #ffffff;
 
-   --color-income-text: #1e7d41;
+   --color-income-text: #1e7d41cb;
    --color-income-bg: rgba(34, 176, 93, 0.08);
    --color-income-border: rgba(34, 176, 93, 0.2);
    --color-income-icon-bg: rgba(34, 176, 93, 0.25);
 
-   --color-expense-text: #b32d2d;
+   --color-expense-text: #b32d2dcb;
    --color-expense-bg: rgba(212, 56, 56, 0.08);
    --color-expense-border: rgba(212, 56, 56, 0.2);
    --color-expense-icon-bg: rgba(212, 56, 56, 0.25);

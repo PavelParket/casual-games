@@ -19,7 +19,7 @@ export default function Profile() {
 
     const { user, isLoading } = useSelector((state: RootState) => state.user);
     const authUser = useSelector((state: RootState) => state.auth.user);
-    const { isDepositing, error: bankError, transactions, isLoadingTransactions } = useSelector((state: RootState) => state.bank);
+    const { isDepositing, error: bankError, transactions, isLoadingTransactions, currentPage, totalPages  } = useSelector((state: RootState) => state.bank);
 
     const { getIcon } = useThemedIcon();
 
@@ -142,6 +142,12 @@ export default function Profile() {
             setToast({ text: `Deposit failed: ${err}`, type: "error" });
         }
     };
+
+    const handlePageChange = (newPage: number) => {
+    if (authUser?.guid) {
+        dispatch(getByUserGuid({ guid: authUser.guid, page: newPage, size: 20 }));
+    }
+};
 
     const username = user?.username || "User";
     const email = user?.email || "";
@@ -548,9 +554,9 @@ export default function Profile() {
                                             }
                                         }}
                                         disabled={isLoadingTransactions}
-                                        style={{ fontSize: "0.8rem" }}
+                                        style={{ fontSize: "0.8rem", padding: "7px"}}
                                     >
-                                        {isLoadingTransactions ? 'Updating...' : 'Refresh'}
+                                        {isLoadingTransactions ? 'Updating...' : <Icon src={getIcon("refresh")} alt="refresh" size={16} />}
                                     </Button>
                                 </Box>
 
@@ -617,14 +623,14 @@ export default function Profile() {
                                                             {roomName}
                                                         </Typography>
                                                         <Typography variant="caption" style={{ opacity: 0.6, fontSize: "0.75rem" }}>
-                                                            {transaction.createdAtDate} • {time}
+                                                            {transaction.createdAtDate} • {time} {/*Время в транзакциях смещено на 3 часа */}
                                                         </Typography>
                                                     </Stack>
                                                         
                                                     <Typography 
                                                         variant="body" 
                                                         style={{ 
-                                                            fontWeight: "800", 
+                                                            fontWeight: "100", 
                                                             color: `var(--color-${typeTransaction}-text)`,
                                                             fontSize: "1.1rem",
                                                             textAlign: "right",
@@ -677,6 +683,55 @@ export default function Profile() {
                                         </Typography>
                                     )}
                                 </Box>
+                                {totalPages > 1 && (
+                                    <Box style={{
+                                        marginTop: "1rem",
+                                        paddingTop: "0.5rem",
+                                        borderTop: "1px solid var(--color-border)",
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                        gap: "1rem"
+                                    }}>
+                                        <Button 
+                                            variant="ghost" 
+                                            disabled={currentPage === 0 || isLoadingTransactions}
+                                            onClick={() => handlePageChange(0)}
+                                            style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem"}}
+                                        >
+                                            <Icon src={getIcon("doubleLeftArrow")} alt="to the first page" size={16} />
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            disabled={currentPage === 0 || isLoadingTransactions}
+                                            onClick={() => handlePageChange(currentPage - 1)}
+                                            style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem"}}
+                                        >
+                                            <Icon src={getIcon("leftArrow")} alt="prev page" size={16} />
+                                        </Button>
+
+                                        <Typography variant="caption" style={{ fontVariantNumeric: "tabular-nums" }}>
+                                            Page {currentPage + 1} of {totalPages}
+                                        </Typography>
+
+                                        <Button 
+                                            variant="ghost" 
+                                            disabled={currentPage >= totalPages - 1 || isLoadingTransactions}
+                                            onClick={() => handlePageChange(currentPage + 1)}
+                                            style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem"}}
+                                        >
+                                            <Icon src={getIcon("rightArrow")} alt="next page" size={16} />
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            disabled={currentPage >= totalPages - 1 || isLoadingTransactions}
+                                            onClick={() => handlePageChange(totalPages - 1)}
+                                            style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem"}}
+                                        >
+                                            <Icon src={getIcon("doubleRightArrow")} alt="to the last page" size={16} />
+                                        </Button>
+                                    </Box>
+                                )}
                             </Box>
                         )}
 

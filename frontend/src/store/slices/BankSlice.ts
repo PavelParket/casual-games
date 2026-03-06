@@ -8,6 +8,8 @@ export interface BankState {
     error?: string;
     transactions: TransactionResponse[];
     isLoadingTransactions: boolean;
+    currentPage: number;
+    totalPages: number;
 }
 
 const initialState: BankState = {
@@ -15,6 +17,8 @@ const initialState: BankState = {
     error: undefined,
     transactions:[],
     isLoadingTransactions: false,
+    currentPage: 0,
+    totalPages: 0,
 };
 
 // ------------------ Thunks ------------------
@@ -84,6 +88,8 @@ const bankSlice = createSlice({
             .addCase(getByUserGuid.fulfilled, (state, action) => {
                 state.isLoadingTransactions = false;
                 state.transactions = action.payload.content;
+                state.currentPage = action.payload.page;
+                state.totalPages = action.payload.totalPages;
             })
             .addCase(getByUserGuid.rejected, (state, action) => {
                 state.isLoadingTransactions = false;
