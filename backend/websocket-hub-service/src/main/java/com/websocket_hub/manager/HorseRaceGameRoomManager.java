@@ -254,10 +254,6 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
         return presetRedisRepository.get(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET, HorseRaceGamePreset.class);
     }
 
-    public void delete(UUID roomId) {
-        presetRedisRepository.delete(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET);
-    }
-
     public void placeBet(UUID roomId, UserInternalResponse user, Integer horseIndex, BigDecimal amount) {
         ClientSession client = getClientSessionByGuid(user.guid());
 
