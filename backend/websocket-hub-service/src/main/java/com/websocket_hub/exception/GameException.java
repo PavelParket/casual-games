@@ -12,33 +12,21 @@ public class GameException extends RuntimeException {
 
     private final UUID roomId;
 
-    protected GameException(ErrorCode errorCode, UUID roomId, String message) {
-        super(message);
+    public GameException(ErrorCode errorCode, UUID roomId) {
+        super(errorCode.getMessage());
         this.errorCode = errorCode;
         this.roomId = roomId;
     }
 
-    protected GameException(ErrorCode errorCode, UUID roomId, String message, Throwable cause) {
-        super(message, cause);
+    public GameException(ErrorCode errorCode, UUID roomId, String debugMessage) {
+        super(debugMessage);
         this.errorCode = errorCode;
         this.roomId = roomId;
     }
 
-    protected static String extractMessage(Throwable e) {
-        if (e == null) {
-            return "unknown error";
-        }
-
-        if (e.getMessage() != null && !e.getMessage().endsWith(": null")) {
-            return e.getMessage();
-        }
-
-        Throwable cause = e.getCause();
-
-        if (cause != null && cause.getMessage() != null) {
-            return String.format("%s: %s", cause.getClass().getSimpleName(), cause.getMessage());
-        }
-
-        return String.format("%s (no message)", e.getClass().getSimpleName());
+    public GameException(ErrorCode errorCode, UUID roomId, Throwable cause) {
+        super(errorCode.getMessage(), cause);
+        this.errorCode = errorCode;
+        this.roomId = roomId;
     }
 }

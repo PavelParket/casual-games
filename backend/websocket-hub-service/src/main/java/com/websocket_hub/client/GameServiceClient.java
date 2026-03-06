@@ -3,8 +3,8 @@ package com.websocket_hub.client;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
-import com.websocket_hub.exception.BusinessGameException;
-import com.websocket_hub.exception.InfrastructureGameException;
+import com.websocket_hub.domain.enums.ErrorCode;
+import com.websocket_hub.exception.GameException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,18 +50,24 @@ public class GameServiceClient {
             TicTacToeGameMessage body = response.getBody();
 
             if (body == null) {
-                throw BusinessGameException.gameNotStarted(request.roomId());
+                throw new GameException(ErrorCode.GAME_NOT_STARTED, request.roomId());
             }
 
             log.info("Game started successfully: roomId={}", request.roomId());
 
             return body;
-        } catch (BusinessGameException | InfrastructureGameException e) {
+        } catch (GameException e) {
             throw e;
         } catch (HttpClientErrorException e) {
-            throw BusinessGameException.fromHttpResponse(request.roomId(), e);
+            ErrorCode code = switch (e.getStatusCode().value()) {
+                case 402 -> ErrorCode.INSUFFICIENT_BALANCE;
+                case 404 -> ErrorCode.ROOM_NOT_FOUND;
+                case 409 -> ErrorCode.INVALID_MOVE;
+                default -> ErrorCode.INTERNAL_SERVER_ERROR;
+            };
+            throw new GameException(code, request.roomId());
         } catch (Exception e) {
-            throw InfrastructureGameException.gameServiceUnavailable("startGame", request.roomId(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId(), e);
         }
     }
 
@@ -82,18 +88,24 @@ public class GameServiceClient {
             TicTacToeGameMessage body = response.getBody();
 
             if (body == null) {
-                throw BusinessGameException.invalidMove(request.roomId());
+                throw new GameException(ErrorCode.INVALID_MOVE, request.roomId());
             }
 
             log.info("Move processed successfully: roomId={}", request.roomId());
 
             return body;
-        } catch (BusinessGameException | InfrastructureGameException e) {
+        } catch (GameException e) {
             throw e;
         } catch (HttpClientErrorException e) {
-            throw BusinessGameException.fromHttpResponse(request.roomId(), e);
+            ErrorCode code = switch (e.getStatusCode().value()) {
+                case 402 -> ErrorCode.INSUFFICIENT_BALANCE;
+                case 404 -> ErrorCode.ROOM_NOT_FOUND;
+                case 409 -> ErrorCode.INVALID_MOVE;
+                default -> ErrorCode.INTERNAL_SERVER_ERROR;
+            };
+            throw new GameException(code, request.roomId());
         } catch (Exception e) {
-            throw InfrastructureGameException.gameServiceUnavailable("processMove", request.roomId(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId(), e);
         }
     }
 

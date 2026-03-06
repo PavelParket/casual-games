@@ -6,7 +6,8 @@ import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalResponse;
 import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalRequest;
 import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalResponse;
-import com.websocket_hub.exception.InfrastructureGameException;
+import com.websocket_hub.domain.enums.ErrorCode;
+import com.websocket_hub.exception.GameException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,30 +45,23 @@ public class BankServiceClient {
             );
 
             if (!response.getStatusCode().is2xxSuccessful()) {
-                throw InfrastructureGameException.bankServiceUnexpectedStatus(
-                        "sendTicTacToeGameResults",
-                        request.roomId(),
-                        response.getStatusCode().value()
-                );
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
             }
 
             TicTacToeTransactionInternalResponse body = response.getBody();
 
             if (body == null) {
-                throw InfrastructureGameException.bankServiceNullResponse(
-                        "sendTicTacToeGameResults",
-                        request.roomId()
-                );
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
             }
 
             log.info("Bank-service processed t-t-t results: status={}, message={}, transactions={}", body.status(), body.message(), body.transactionsCreated());
 
             return body;
 
-        } catch (InfrastructureGameException e) {
+        } catch (GameException e) {
             throw e;
         } catch (Exception e) {
-            throw InfrastructureGameException.bankServiceUnavailable("sendTicTacToeGameResults", request.roomId(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId(), e);
         }
     }
 
@@ -88,20 +82,17 @@ public class BankServiceClient {
             HorseRaceTransactionInternalResponse body = response.getBody();
 
             if (body == null) {
-                throw InfrastructureGameException.bankServiceNullResponse(
-                        "sendHorseRaceGameResults",
-                        request.roomId()
-                );
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
             }
 
             log.info("Bank-service processed horse race results: status={}, message={}, transactions={}", body.status(), body.message(), body.transactionsCreated());
 
             return body;
 
-        } catch (InfrastructureGameException e) {
+        } catch (GameException e) {
             throw e;
         } catch (Exception e) {
-            throw InfrastructureGameException.bankServiceUnavailable("sendHorseRaceGameResults", request.roomId(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId(), e);
         }
     }
 
@@ -110,6 +101,7 @@ public class BankServiceClient {
                 .path("/bank/save")
                 .build()
                 .toUri();
+
         log.info("Calling bank-service to process game results: roomId={}, winner={}", request.roomId(), request.winner());
 
         try {
@@ -119,37 +111,26 @@ public class BankServiceClient {
             );
 
             if (!response.getStatusCode().is2xxSuccessful()) {
-                throw InfrastructureGameException.bankServiceUnexpectedStatus(
-                        "sendDeCoderGameTransaction",
-                        request.roomId(),
-                        response.getStatusCode().value()
-                );
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
             }
 
             DeCoderTransactionInternalResponse body = response.getBody();
 
             if (body == null) {
-                throw InfrastructureGameException.bankServiceNullResponse(
-                        "sendDeCoderGameTransaction",
-                        request.roomId()
-                );
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
             }
 
             if ("FAILED".equalsIgnoreCase(body.status())) {
-                throw InfrastructureGameException.bankServiceUnexpectedStatus(
-                        "sendDeCoderGameTransaction",
-                        request.roomId(),
-                        response.getStatusCode().value()
-                );
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
             }
 
             log.info("Bank-service processed De-Coder transaction: status={}, message={}", body.status(), body.message());
             return body;
 
-        } catch (InfrastructureGameException e) {
+        } catch (GameException e) {
             throw e;
         } catch (Exception e) {
-            throw InfrastructureGameException.bankServiceUnavailable("sendDeCoderGameTransaction", request.roomId(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId(), e);
         }
     }
 }

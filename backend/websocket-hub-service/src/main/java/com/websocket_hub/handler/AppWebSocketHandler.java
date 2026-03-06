@@ -6,8 +6,7 @@ import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.ErrorEvent;
-import com.websocket_hub.exception.BusinessGameException;
-import com.websocket_hub.exception.InfrastructureGameException;
+import com.websocket_hub.exception.GameException;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.util.WebSocketUtil;
@@ -46,11 +45,16 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
             onJoin(roomId, user);
 
             log.info("Connection established: userId={}, roomId={}", user.guid(), roomId);
-        } catch (BusinessGameException e) {
-            log.warn("Business error on connection: errorCode={}, roomId={}, message={}", e.getErrorCode(), e.getRoomId(), e.getMessage());
-            sendError(user, roomId, session, e.getErrorCode(), e.getMessage());
+
+        } catch (GameException e) {
+            log.warn("Game error on connect: errorCode={}, roomId={}, message={}", e.getErrorCode(), e.getRoomId(), e.getMessage());
+            sendError(user, e.getRoomId() != null ? e.getRoomId() : roomId, session, e.getErrorCode(), e.getMessage());
             closeSession(session, CloseStatus.POLICY_VIOLATION);
 
+        } catch (Exception e) {
+            log.error("Unexpected error on connect: session={}", session.getId(), e);
+            sendError(user, roomId, session, ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
+            closeSession(session, CloseStatus.SERVER_ERROR);
         }
     }
 
@@ -81,22 +85,14 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
             roomId = WebSocketUtil.getRoomId(session);
 
             handleMessage(session, message);
-        } catch (BusinessGameException e) {
-            log.warn("Business error: errorCode={}, roomId={}, message={}", e.getErrorCode(), e.getRoomId(), e.getMessage());
+
+        } catch (GameException e) {
+            log.warn("Game error: errorCode={}, roomId={}, message={}", e.getErrorCode(), e.getRoomId(), e.getMessage());
             sendError(
                     user,
                     e.getRoomId() != null ? e.getRoomId() : roomId,
                     session,
                     e.getErrorCode(),
-                    e.getMessage()
-            );
-        } catch (InfrastructureGameException e) {
-            log.error("Infrastructure error: roomId={}, message={}", e.getRoomId(), e.getMessage(), e);
-            sendError(
-                    user,
-                    e.getRoomId() != null ? e.getRoomId() : roomId,
-                    session,
-                    ErrorCode.SERVICE_UNAVAILABLE,
                     e.getMessage()
             );
         } catch (Exception e) {
