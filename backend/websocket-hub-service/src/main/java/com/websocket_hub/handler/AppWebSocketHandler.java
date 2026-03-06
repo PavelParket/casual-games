@@ -47,8 +47,8 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
             log.info("Connection established: userId={}, roomId={}", user.guid(), roomId);
 
         } catch (GameException e) {
-            log.warn("Game error on connect: errorCode={}, roomId={}, message={}", e.getErrorCode(), e.getRoomId(), e.getMessage());
-            sendError(user, e.getRoomId() != null ? e.getRoomId() : roomId, session, e.getErrorCode(), e.getMessage());
+            log.warn("Game error on connect: errorCode={}, roomId={}, message={}", e.getErrorCode(), roomId, e.getMessage());
+            sendError(user, roomId, session, e.getErrorCode(), e.getMessage());
             closeSession(session, CloseStatus.POLICY_VIOLATION);
 
         } catch (Exception e) {
@@ -87,14 +87,8 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
             handleMessage(session, message);
 
         } catch (GameException e) {
-            log.warn("Game error: errorCode={}, roomId={}, message={}", e.getErrorCode(), e.getRoomId(), e.getMessage());
-            sendError(
-                    user,
-                    e.getRoomId() != null ? e.getRoomId() : roomId,
-                    session,
-                    e.getErrorCode(),
-                    e.getMessage()
-            );
+            log.warn("Game error: errorCode={}, roomId={}, message={}", e.getErrorCode(), roomId, e.getMessage());
+            sendError(user, roomId, session, e.getErrorCode(), e.getMessage());
         } catch (Exception e) {
             log.error("Unexpected error handling message: userId={}, roomId={}", user != null ? user.guid() : null, roomId, e);
             sendError(user, roomId, session, ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());

@@ -50,7 +50,7 @@ public class GameServiceClient {
             TicTacToeGameMessage body = response.getBody();
 
             if (body == null) {
-                throw new GameException(ErrorCode.GAME_NOT_STARTED, request.roomId());
+                throw new GameException(ErrorCode.GAME_NOT_STARTED);
             }
 
             log.info("Game started successfully: roomId={}", request.roomId());
@@ -65,9 +65,9 @@ public class GameServiceClient {
                 case 409 -> ErrorCode.INVALID_MOVE;
                 default -> ErrorCode.INTERNAL_SERVER_ERROR;
             };
-            throw new GameException(code, request.roomId());
+            throw new GameException(code);
         } catch (Exception e) {
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
 
@@ -88,7 +88,7 @@ public class GameServiceClient {
             TicTacToeGameMessage body = response.getBody();
 
             if (body == null) {
-                throw new GameException(ErrorCode.INVALID_MOVE, request.roomId());
+                throw new GameException(ErrorCode.INVALID_MOVE);
             }
 
             log.info("Move processed successfully: roomId={}", request.roomId());
@@ -103,9 +103,9 @@ public class GameServiceClient {
                 case 409 -> ErrorCode.INVALID_MOVE;
                 default -> ErrorCode.INTERNAL_SERVER_ERROR;
             };
-            throw new GameException(code, request.roomId());
+            throw new GameException(code);
         } catch (Exception e) {
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
 

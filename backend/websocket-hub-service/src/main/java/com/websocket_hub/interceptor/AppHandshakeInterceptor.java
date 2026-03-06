@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import static com.websocket_hub.config.ResourceMessageConstants.ROOM_ALREADY_FINISHED;
+import static com.websocket_hub.config.ResourceMessageConstants.ROOM_ALREADY_IN_PROGRESS;
 import static com.websocket_hub.config.ResourceMessageConstants.SERVICE_UNAVAILABLE;
 
 @Component
@@ -107,8 +109,10 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
 
         RoomStatus status = metadata.getStatus();
 
-        if (status == RoomStatus.IN_PROGRESS || status == RoomStatus.FINISHED) {
-            throw new ForbiddenException("Room is " + status.name().toLowerCase());
+        if (RoomStatus.FINISHED.equals(status)) {
+            throw new ForbiddenException(ROOM_ALREADY_FINISHED);
+        } else if (RoomStatus.IN_PROGRESS.equals(status) && !metadata.getType().isAllowsLateJoin()) {
+            throw new ForbiddenException(ROOM_ALREADY_IN_PROGRESS);
         }
     }
 

@@ -188,31 +188,35 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
         TicTacToeGameMessage moveGameResponse = gameServiceClient.processMove(moveGameRequest);
 
-        if (moveGameResponse.winner() != null
-                && (TicTacToeGameEvent.WINNER_X.equals(moveGameResponse.event())
-                || TicTacToeGameEvent.WINNER_O.equals(moveGameResponse.event()))) {
-            processGameEnd(roomId, moveGameResponse);
+        TicTacToeGameEvent event = moveGameResponse.event();
+
+        if (TicTacToeGameEvent.WINNER_X.equals(event)
+                || TicTacToeGameEvent.WINNER_O.equals(event)
+                || TicTacToeGameEvent.DRAW.equals(event)) {
+            processEndGame(roomId, moveGameResponse);
         } else {
             roomManager.broadcast(roomId, moveGameResponse);
         }
     }
 
-    private void processGameEnd(UUID roomId, TicTacToeGameMessage moveGameResponse) {
+    private void processEndGame(UUID roomId, TicTacToeGameMessage moveGameResponse) {
         roomManager.broadcast(roomId, moveGameResponse);
 
         try {
-            List<PlayerBet> bets = roomManager.getPlayerBets(roomId);
+            if (!TicTacToeGameEvent.DRAW.equals(moveGameResponse.event())) {
+                List<PlayerBet> bets = roomManager.getPlayerBets(roomId);
 
-            TicTacToeTransactionInternalRequest transactionRequest = ticTacToeTransactionMapper.toInternalRequest(
-                    roomId,
-                    roomManager.getRoomType(),
-                    bets,
-                    moveGameResponse.winner()
-            );
+                TicTacToeTransactionInternalRequest transactionRequest = ticTacToeTransactionMapper.toInternalRequest(
+                        roomId,
+                        roomManager.getRoomType(),
+                        bets,
+                        moveGameResponse.winner()
+                );
 
-            TicTacToeTransactionInternalResponse transactionResponse = bankServiceClient.sendTicTacToeGameResults(transactionRequest);
+                TicTacToeTransactionInternalResponse transactionResponse = bankServiceClient.sendTicTacToeGameResults(transactionRequest);
 
-            log.info("Bank service response: status={}, message={}, transactions={}", transactionResponse.status(), transactionResponse.message(), transactionResponse.transactionsCreated());
+                log.info("Bank service response: status={}, message={}, transactions={}", transactionResponse.status(), transactionResponse.message(), transactionResponse.transactionsCreated());
+            }
         } catch (Exception e) {
             log.error("Failed to process game results for room {}", roomId, e);
         } finally {

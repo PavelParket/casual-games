@@ -45,13 +45,13 @@ public class BankServiceClient {
             );
 
             if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
             }
 
             TicTacToeTransactionInternalResponse body = response.getBody();
 
             if (body == null) {
-                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
             }
 
             log.info("Bank-service processed t-t-t results: status={}, message={}, transactions={}", body.status(), body.message(), body.transactionsCreated());
@@ -61,7 +61,7 @@ public class BankServiceClient {
         } catch (GameException e) {
             throw e;
         } catch (Exception e) {
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
 
@@ -82,7 +82,7 @@ public class BankServiceClient {
             HorseRaceTransactionInternalResponse body = response.getBody();
 
             if (body == null) {
-                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
             }
 
             log.info("Bank-service processed horse race results: status={}, message={}, transactions={}", body.status(), body.message(), body.transactionsCreated());
@@ -92,7 +92,7 @@ public class BankServiceClient {
         } catch (GameException e) {
             throw e;
         } catch (Exception e) {
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
 
@@ -111,17 +111,17 @@ public class BankServiceClient {
             );
 
             if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
             }
 
             DeCoderTransactionInternalResponse body = response.getBody();
 
             if (body == null) {
-                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
             }
 
             if ("FAILED".equalsIgnoreCase(body.status())) {
-                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId());
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
             }
 
             log.info("Bank-service processed De-Coder transaction: status={}, message={}", body.status(), body.message());
@@ -130,7 +130,7 @@ public class BankServiceClient {
         } catch (GameException e) {
             throw e;
         } catch (Exception e) {
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, request.roomId(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
 }
