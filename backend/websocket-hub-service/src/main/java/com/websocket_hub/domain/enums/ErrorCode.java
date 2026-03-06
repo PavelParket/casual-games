@@ -17,8 +17,15 @@ public enum ErrorCode {
     ROOM_ALREADY_EXISTS("A room with this name already exists"),
     ROOM_TYPE_NOT_FOUND("Unknown room type"),
 
+    BAD_REQUEST("Bad Request"),
+    UNAUTHORIZED("Unauthorized"),
+    FORBIDDEN("Forbidden"),
+    NOT_FOUND("Not Found"),
+    CONFLICT("Conflict"),
+
+    INTERNAL_SERVER_ERROR("An unexpected error occurred. Please try again"),
     SERVICE_UNAVAILABLE("Service temporarily unavailable. Please try again later"),
-    INTERNAL_ERROR("An unexpected error occurred. Please try again"),
+
     INVALID_MESSAGE("Invalid message format");
 
     private final String message;

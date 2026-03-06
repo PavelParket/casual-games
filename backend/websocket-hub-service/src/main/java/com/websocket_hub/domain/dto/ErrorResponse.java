@@ -1,19 +1,17 @@
 package com.websocket_hub.domain.dto;
 
-import com.websocket_hub.domain.enums.ErrorCode;
+import lombok.Builder;
+import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
 
+@Builder
 public record ErrorResponse(
 
-        ErrorCode errorCode,
+        HttpStatus status,
 
         String message,
 
         Instant timestamp
 ) {
-
-    public static ErrorResponse of(ErrorCode errorCode, String message) {
-        return new ErrorResponse(errorCode, message, Instant.now());
-    }
 }

@@ -101,7 +101,7 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
             );
         } catch (Exception e) {
             log.error("Unexpected error handling message: userId={}, roomId={}", user != null ? user.guid() : null, roomId, e);
-            sendError(user, roomId, session, ErrorCode.INTERNAL_ERROR, e.getMessage());
+            sendError(user, roomId, session, ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 
@@ -129,10 +129,9 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
         ErrorMessage errorMessage = ErrorMessage.builder()
                 .type(MessageType.SYSTEM)
                 .event(ErrorEvent.ERROR)
-                .errorCode(errorCode)
-                .message(errorCode.getMessage())
-                .roomId(roomId)
                 .toUserId(user.guid())
+                .roomId(roomId)
+                .message(errorCode.getMessage())
                 .build();
 
         sessionManager.sendToSession(client, errorMessage);

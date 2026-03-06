@@ -25,8 +25,8 @@ public class RoomController {
     private final RoomService roomService;
 
     @GetMapping("/all")
-    public List<RoomResponse> getRooms() {
-        return roomService.getRooms();
+    public List<RoomResponse> getAll() {
+        return roomService.getAll();
     }
 
     @GetMapping("/type/{roomType}")

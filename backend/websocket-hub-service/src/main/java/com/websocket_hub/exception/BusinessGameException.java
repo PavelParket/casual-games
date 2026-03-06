@@ -48,7 +48,7 @@ public class BusinessGameException extends GameException {
             case 402 -> ErrorCode.INSUFFICIENT_BALANCE;
             case 404 -> ErrorCode.ROOM_NOT_FOUND;
             case 409 -> ErrorCode.INVALID_MOVE;
-            default -> ErrorCode.INTERNAL_ERROR;
+            default -> ErrorCode.INTERNAL_SERVER_ERROR;
         };
 
         return new BusinessGameException(
