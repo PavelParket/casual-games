@@ -44,7 +44,7 @@ export const deposit = createAsyncThunk<TransactionResponse, { userGuid: string;
 
 export const getByUserGuid = createAsyncThunk<PageResponse<TransactionResponse>, { guid: string; page?: number; size?: number }, { rejectValue: string }>(
     "bank/getByUserGuid",
-    async ({ guid, page = 0, size = 20 }, { rejectWithValue }) => {
+    async ({ guid, page = 0, size = 4 }, { rejectWithValue }) => {
         try {
             const response = await BankAPI.getByUserGuid(guid, page, size);
             return response.data;

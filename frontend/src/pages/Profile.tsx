@@ -19,7 +19,7 @@ export default function Profile() {
 
     const { user, isLoading } = useSelector((state: RootState) => state.user);
     const authUser = useSelector((state: RootState) => state.auth.user);
-    const { isDepositing, error: bankError, transactions, isLoadingTransactions, currentPage, totalPages  } = useSelector((state: RootState) => state.bank);
+    const { isDepositing, error: bankError, transactions, isLoadingTransactions, currentPage, totalPages } = useSelector((state: RootState) => state.bank);
 
     const { getIcon } = useThemedIcon();
 
@@ -144,10 +144,10 @@ export default function Profile() {
     };
 
     const handlePageChange = (newPage: number) => {
-    if (authUser?.guid) {
-        dispatch(getByUserGuid({ guid: authUser.guid, page: newPage, size: 20 }));
-    }
-};
+        if (authUser?.guid) {
+            dispatch(getByUserGuid({ guid: authUser.guid, page: newPage, size: 4 }));
+        }
+    };
 
     const username = user?.username || "User";
     const email = user?.email || "";
@@ -174,7 +174,7 @@ export default function Profile() {
 
     return (
         <Box style={{ padding: "2rem 0" }}>
-            <Container maxWidth="1000px">
+            <Container >
                 <Card style={{ minHeight: "100%" }}>
 
                     <Grid
@@ -216,7 +216,7 @@ export default function Profile() {
                                                 username.substring(0, 1).toUpperCase()
                                             )}
                                         </Box>
-                                        
+
                                         <label htmlFor="avatar-upload">
                                             <Box
                                                 style={{
@@ -395,32 +395,32 @@ export default function Profile() {
                                             </Box>
 
                                             <Stack direction="row" gap="10px" align="center">
-                                                
-                                                <Button 
-                                                    variant="ghost" 
+
+                                                <Button
+                                                    variant="ghost"
                                                     onClick={() => setDepositModalOpen(true)}
                                                 >
                                                     Deposit
                                                 </Button>
 
                                                 {/*todo: рассмотреть вариант с кэшированием, на данный момент кнопка подвергает DoS-атаке bank-service*/}
-                                                <Button 
+                                                <Button
                                                     variant={activeTab === 'balanceHistory' ? "solid" : "outline"}
                                                     onClick={() => {
                                                         if (activeTab === 'balanceHistory') {
                                                             setActiveTab('default');
                                                         } else {
                                                             if (authUser?.guid) {
-                                                                dispatch(getByUserGuid({ guid: authUser.guid, size: 20 }));
+                                                                dispatch(getByUserGuid({ guid: authUser.guid, size: 4 }));
                                                             }
                                                             setActiveTab('balanceHistory');
                                                         }
                                                     }}
-                                                    style={{ width: "135px" }} 
+                                                    style={{ width: "135px" }}
                                                 >
                                                     {activeTab === 'balanceHistory' ? 'Close History' : 'History'}
                                                 </Button>
-                                                
+
                                             </Stack>
 
                                         </Box>
@@ -536,204 +536,204 @@ export default function Profile() {
                                         )}
                                     </Box>
                                 </>
-                            )}  
-                        {activeTab === 'balanceHistory' && (
-                            <Box style={{ 
-                                ...infoBlockStyle, 
-                                display: "flex", 
-                                flexDirection: "column", 
-                                maxHeight: "360px"
-                            }}>
-                                <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                                    <Typography variant="h3">Balance History</Typography>
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() => {
-                                            if (authUser?.guid) {
-                                                dispatch(getByUserGuid({ guid: authUser.guid, size: 20 }));
-                                            }
-                                        }}
-                                        disabled={isLoadingTransactions}
-                                        style={{ fontSize: "0.8rem", padding: "7px"}}
-                                    >
-                                        {isLoadingTransactions ? 'Updating...' : <Icon src={getIcon("refresh")} alt="refresh" size={16} />}
-                                    </Button>
-                                </Box>
-
-                                <Box style={{ 
-                                        flex: 1, 
-                                        overflowY: "auto", 
-                                        paddingRight: "12px",
-                                        display: "flex", 
-                                        flexDirection: "column", 
-                                        gap: "0.5rem" 
-                                    }}>
-                                    {isLoadingTransactions ? (
-                                        <Box style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                                            <Skeleton variant="rectangular" height={45} />
-                                            <Skeleton variant="rectangular" height={45} />
-                                            <Skeleton variant="rectangular" height={45} />
-                                        </Box>
-                                    ) : transactions && transactions.length > 0 ? (
-                                        transactions.map(transaction => {
-                                            const typeTransaction = transaction.type === 'ADDITION' ? 'income' : 'expense';
-                                            const sign = typeTransaction === 'income' ? '+' : '-';
-                                            const roomName = transaction.roomType ? (ROOM_TYPE_LABELS[transaction.roomType] || transaction.roomType) : 'Deposit';
-                                            const time = transaction.createdAtTime ? transaction.createdAtTime.substring(0, 5) : '';
-
-                                            return (
-                                                <Box key={transaction.id} style={{ 
-                                                padding: "8px 12px", 
-                                                display: "grid", 
-                                                gridTemplateColumns: "32px 1fr auto 90px", 
-                                                gap: "12px",
-                                                alignItems: "center", 
-                                                background: `var(--color-${typeTransaction}-bg)`,
-                                                border: `1px solid var(--color-${typeTransaction}-border)`,
-                                                borderRadius: "var(--radius-sm)",
-                                                flexShrink: 0,
-                                                transition: "transform 0.2s ease"
-                                            }}>
-                                                    <Box style={{ 
-                                                        width: "32px", 
-                                                        height: "32px", 
-                                                        borderRadius: "50%", 
-                                                        background: `var(--color-${typeTransaction}-icon-bg)`,
-                                                        display: "flex", 
-                                                        alignItems: "center", 
-                                                        justifyContent: "center",
-                                                        color: "#ffffff",
-                                                        fontWeight: "bold",
-                                                        fontSize: "1.2rem"
-                                                    }}>
-                                                        {sign}
-                                                    </Box>
-
-                                                    <Stack gap="2px" justify="center" style={{ overflow: "hidden" }}>
-                                                        <Typography 
-                                                            variant="body" 
-                                                            style={{ 
-                                                                fontWeight: 600, 
-                                                                fontSize: "0.95rem",
-                                                                whiteSpace: "nowrap", 
-                                                                overflow: "hidden", 
-                                                                textOverflow: "ellipsis" 
-                                                            }}
-                                                        >
-                                                            {roomName}
-                                                        </Typography>
-                                                        <Typography variant="caption" style={{ opacity: 0.6, fontSize: "0.75rem" }}>
-                                                            {transaction.createdAtDate} • {time} {/*Время в транзакциях смещено на 3 часа */}
-                                                        </Typography>
-                                                    </Stack>
-                                                        
-                                                    <Typography 
-                                                        variant="body" 
-                                                        style={{ 
-                                                            fontWeight: "100", 
-                                                            color: `var(--color-${typeTransaction}-text)`,
-                                                            fontSize: "1.1rem",
-                                                            textAlign: "right",
-                                                            paddingRight: "4px"
-                                                        }}
-                                                    >
-                                                        {transaction.amount}
-                                                    </Typography>
-
-                                                    <Stack gap="0px" style={{ alignItems: "flex-start", minWidth: "90px" }}>
-                                                        <Stack direction="row" justify="space-between" style={{ width: "100%" }}>
-                                                            <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.7rem" }}>
-                                                                Before:
-                                                            </Typography>
-                                                            <Typography variant="caption" 
-                                                                style={{ 
-                                                                    opacity: 0.8, 
-                                                                    fontWeight: "500", 
-                                                                    fontFamily: "monospace", 
-                                                                    fontSize: "0.7rem" 
-                                                                }}
-                                                            >
-                                                                {transaction.balanceBefore}
-                                                            </Typography>
-                                                        </Stack>
-
-                                                        <Stack direction="row" justify="space-between" style={{ width: "100%" }}>
-                                                            <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.7rem" }}>
-                                                                After:
-                                                            </Typography>
-                                                            <Typography 
-                                                                variant="caption" 
-                                                                style={{ 
-                                                                    opacity: 0.8, 
-                                                                    fontWeight: "500", 
-                                                                    fontFamily: "monospace", 
-                                                                    fontSize: "0.7rem" 
-                                                                }}
-                                                            >
-                                                                {transaction.balanceAfter}
-                                                            </Typography>
-                                                        </Stack>
-                                                    </Stack>
-                                                </Box>
-                                            );
-                                        })
-                                    ) : (
-                                        <Typography variant="body" style={{ textAlign: "center", opacity: 0.6, padding: "2rem 0" }}>
-                                            No transactions found.
-                                        </Typography>
-                                    )}
-                                </Box>
-                                {totalPages > 1 && (
-                                    <Box style={{
-                                        marginTop: "1rem",
-                                        paddingTop: "0.5rem",
-                                        borderTop: "1px solid var(--color-border)",
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                        gap: "1rem"
-                                    }}>
-                                        <Button 
-                                            variant="ghost" 
-                                            disabled={currentPage === 0 || isLoadingTransactions}
-                                            onClick={() => handlePageChange(0)}
-                                            style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem"}}
+                            )}
+                            {activeTab === 'balanceHistory' && (
+                                <Box style={{
+                                    ...infoBlockStyle,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    maxHeight: "360px"
+                                }}>
+                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                                        <Typography variant="h3">Balance History</Typography>
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => {
+                                                if (authUser?.guid) {
+                                                    dispatch(getByUserGuid({ guid: authUser.guid, size: 4 }));
+                                                }
+                                            }}
+                                            disabled={isLoadingTransactions}
+                                            style={{ fontSize: "0.8rem", padding: "7px" }}
                                         >
-                                            <Icon src={getIcon("doubleLeftArrow")} alt="to the first page" size={16} />
-                                        </Button>
-                                        <Button 
-                                            variant="ghost" 
-                                            disabled={currentPage === 0 || isLoadingTransactions}
-                                            onClick={() => handlePageChange(currentPage - 1)}
-                                            style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem"}}
-                                        >
-                                            <Icon src={getIcon("leftArrow")} alt="prev page" size={16} />
-                                        </Button>
-
-                                        <Typography variant="caption" style={{ fontVariantNumeric: "tabular-nums" }}>
-                                            Page {currentPage + 1} of {totalPages}
-                                        </Typography>
-
-                                        <Button 
-                                            variant="ghost" 
-                                            disabled={currentPage >= totalPages - 1 || isLoadingTransactions}
-                                            onClick={() => handlePageChange(currentPage + 1)}
-                                            style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem"}}
-                                        >
-                                            <Icon src={getIcon("rightArrow")} alt="next page" size={16} />
-                                        </Button>
-                                        <Button 
-                                            variant="ghost" 
-                                            disabled={currentPage >= totalPages - 1 || isLoadingTransactions}
-                                            onClick={() => handlePageChange(totalPages - 1)}
-                                            style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem"}}
-                                        >
-                                            <Icon src={getIcon("doubleRightArrow")} alt="to the last page" size={16} />
+                                            {isLoadingTransactions ? 'Updating...' : <Icon src={getIcon("refresh")} alt="refresh" size={16} />}
                                         </Button>
                                     </Box>
-                                )}
-                            </Box>
-                        )}
+
+                                    <Box style={{
+                                        flex: 1,
+                                        overflowY: "auto",
+                                        paddingRight: "12px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "0.5rem"
+                                    }}>
+                                        {isLoadingTransactions ? (
+                                            <Box style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                                <Skeleton variant="rectangular" height={45} />
+                                                <Skeleton variant="rectangular" height={45} />
+                                                <Skeleton variant="rectangular" height={45} />
+                                            </Box>
+                                        ) : transactions && transactions.length > 0 ? (
+                                            transactions.map(transaction => {
+                                                const typeTransaction = transaction.type === 'ADDITION' ? 'income' : 'expense';
+                                                const sign = typeTransaction === 'income' ? '+' : '-';
+                                                const roomName = transaction.roomType ? (ROOM_TYPE_LABELS[transaction.roomType] || transaction.roomType) : 'Deposit';
+                                                const time = transaction.createdAtTime ? transaction.createdAtTime.substring(0, 5) : '';
+
+                                                return (
+                                                    <Box key={transaction.id} style={{
+                                                        padding: "8px 12px",
+                                                        display: "grid",
+                                                        gridTemplateColumns: "32px 1fr auto 90px",
+                                                        gap: "12px",
+                                                        alignItems: "center",
+                                                        background: `var(--color-${typeTransaction}-bg)`,
+                                                        border: `1px solid var(--color-${typeTransaction}-border)`,
+                                                        borderRadius: "var(--radius-sm)",
+                                                        flexShrink: 0,
+                                                        transition: "transform 0.2s ease"
+                                                    }}>
+                                                        <Box style={{
+                                                            width: "32px",
+                                                            height: "32px",
+                                                            borderRadius: "50%",
+                                                            background: `var(--color-${typeTransaction}-icon-bg)`,
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "center",
+                                                            color: "#ffffff",
+                                                            fontWeight: "bold",
+                                                            fontSize: "1.2rem"
+                                                        }}>
+                                                            {sign}
+                                                        </Box>
+
+                                                        <Stack gap="2px" justify="center" style={{ overflow: "hidden" }}>
+                                                            <Typography
+                                                                variant="body"
+                                                                style={{
+                                                                    fontWeight: 600,
+                                                                    fontSize: "0.95rem",
+                                                                    whiteSpace: "nowrap",
+                                                                    overflow: "hidden",
+                                                                    textOverflow: "ellipsis"
+                                                                }}
+                                                            >
+                                                                {roomName}
+                                                            </Typography>
+                                                            <Typography variant="caption" style={{ opacity: 0.6, fontSize: "0.75rem" }}>
+                                                                {transaction.createdAtDate} • {time} UTC
+                                                            </Typography>
+                                                        </Stack>
+
+                                                        <Typography
+                                                            variant="body"
+                                                            style={{
+                                                                fontWeight: "100",
+                                                                color: `var(--color-${typeTransaction}-text)`,
+                                                                fontSize: "1.1rem",
+                                                                textAlign: "right",
+                                                                paddingRight: "4px"
+                                                            }}
+                                                        >
+                                                            {transaction.amount}
+                                                        </Typography>
+
+                                                        <Stack gap="0px" style={{ alignItems: "flex-start", minWidth: "90px" }}>
+                                                            <Stack direction="row" justify="space-between" style={{ width: "100%" }}>
+                                                                <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.7rem" }}>
+                                                                    Before:
+                                                                </Typography>
+                                                                <Typography variant="caption"
+                                                                    style={{
+                                                                        opacity: 0.8,
+                                                                        fontWeight: "500",
+                                                                        fontFamily: "monospace",
+                                                                        fontSize: "0.7rem"
+                                                                    }}
+                                                                >
+                                                                    {transaction.balanceBefore}
+                                                                </Typography>
+                                                            </Stack>
+
+                                                            <Stack direction="row" justify="space-between" style={{ width: "100%" }}>
+                                                                <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.7rem" }}>
+                                                                    After:
+                                                                </Typography>
+                                                                <Typography
+                                                                    variant="caption"
+                                                                    style={{
+                                                                        opacity: 0.8,
+                                                                        fontWeight: "500",
+                                                                        fontFamily: "monospace",
+                                                                        fontSize: "0.7rem"
+                                                                    }}
+                                                                >
+                                                                    {transaction.balanceAfter}
+                                                                </Typography>
+                                                            </Stack>
+                                                        </Stack>
+                                                    </Box>
+                                                );
+                                            })
+                                        ) : (
+                                            <Typography variant="body" style={{ textAlign: "center", opacity: 0.6, padding: "2rem 0" }}>
+                                                No transactions found.
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                    {totalPages > 1 && (
+                                        <Box style={{
+                                            marginTop: "1rem",
+                                            paddingTop: "0.5rem",
+                                            borderTop: "1px solid var(--color-border)",
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            gap: "1rem"
+                                        }}>
+                                            <Button
+                                                variant="ghost"
+                                                disabled={currentPage === 0 || isLoadingTransactions}
+                                                onClick={() => handlePageChange(0)}
+                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
+                                            >
+                                                <Icon src={getIcon("doubleLeftArrow")} alt="to the first page" size={16} />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                disabled={currentPage === 0 || isLoadingTransactions}
+                                                onClick={() => handlePageChange(currentPage - 1)}
+                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
+                                            >
+                                                <Icon src={getIcon("leftArrow")} alt="prev page" size={16} />
+                                            </Button>
+
+                                            <Typography variant="caption" style={{ fontVariantNumeric: "tabular-nums" }}>
+                                                Page {currentPage + 1} of {totalPages}
+                                            </Typography>
+
+                                            <Button
+                                                variant="ghost"
+                                                disabled={currentPage >= totalPages - 1 || isLoadingTransactions}
+                                                onClick={() => handlePageChange(currentPage + 1)}
+                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
+                                            >
+                                                <Icon src={getIcon("rightArrow")} alt="next page" size={16} />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                disabled={currentPage >= totalPages - 1 || isLoadingTransactions}
+                                                onClick={() => handlePageChange(totalPages - 1)}
+                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
+                                            >
+                                                <Icon src={getIcon("doubleRightArrow")} alt="to the last page" size={16} />
+                                            </Button>
+                                        </Box>
+                                    )}
+                                </Box>
+                            )}
 
                         </Stack>
                     </Grid>
@@ -785,7 +785,7 @@ export default function Profile() {
                         Enter the amount you wish to add to your balance.
                     </Typography>
                     <FormField
-                        type="text" 
+                        type="text"
                         inputMode="decimal"
                         value={depositAmount}
                         onChange={handleDepositAmountChange}
