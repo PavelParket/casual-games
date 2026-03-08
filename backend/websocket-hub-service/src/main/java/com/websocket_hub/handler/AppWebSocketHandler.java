@@ -7,6 +7,7 @@ import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.ErrorEvent;
 import com.websocket_hub.exception.GameException;
+import com.websocket_hub.helper.WebSocketHelper;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.util.WebSocketUtil;
@@ -28,6 +29,8 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
     protected final SessionManager sessionManager;
 
     protected final T roomManager;
+
+    protected final WebSocketHelper webSocketHelper;
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
