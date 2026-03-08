@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
 import { findByGuid, update } from "../store/slices/UserSlice";
-import { deposit } from "../store/slices/BankSlice";
+import { deposit, getByUserGuid } from "../store/slices/BankSlice";
 import type { Icons } from "../assets/icons";
 import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Img, Input, Toast, FormField } from "../ui";
 import { useThemedIcon } from "../ui";
 import { validateUsername } from "../utils/SecurityUtils";
 import { Skeleton } from "../ui/components/common/Skeleton";
+import { ROOM_TYPE_LABELS } from "../models/Room";
 
 const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
@@ -18,7 +19,7 @@ export default function Profile() {
 
     const { user, isLoading } = useSelector((state: RootState) => state.user);
     const authUser = useSelector((state: RootState) => state.auth.user);
-    const { isDepositing, error: bankError } = useSelector((state: RootState) => state.bank);
+    const { isDepositing, error: bankError, transactions, isLoadingTransactions, currentPage, totalPages } = useSelector((state: RootState) => state.bank);
 
     const { getIcon } = useThemedIcon();
 
@@ -27,6 +28,7 @@ export default function Profile() {
 
     const [validationError, setValidationError] = useState<string | null>(null);
     const [toast, setToast] = useState<{ text: string, type: "success" | "error" } | null>(null);
+    const [activeTab, setActiveTab] = useState<'default' | 'balanceHistory'>('default');
 
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isAvatarHovered, setIsAvatarHovered] = useState(false);
@@ -104,6 +106,21 @@ export default function Profile() {
         }
     };
 
+    const handleDepositAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.replace(',', '.');
+
+        if (val === '') {
+            setDepositAmount('');
+            return;
+        }
+
+        const regex = /^\d{0,5}(\.\d{0,2})?$/;
+
+        if (regex.test(val)) {
+            setDepositAmount(val);
+        }
+    };
+
     const handleDeposit = async () => {
         const amount = parseFloat(depositAmount);
 
@@ -123,6 +140,12 @@ export default function Profile() {
             setDepositAmount("");
         } catch (err) {
             setToast({ text: `Deposit failed: ${err}`, type: "error" });
+        }
+    };
+
+    const handlePageChange = (newPage: number) => {
+        if (authUser?.guid) {
+            dispatch(getByUserGuid({ guid: authUser.guid, page: newPage, size: 4 }));
         }
     };
 
@@ -151,7 +174,7 @@ export default function Profile() {
 
     return (
         <Box style={{ padding: "2rem 0" }}>
-            <Container maxWidth="1000px">
+            <Container >
                 <Card style={{ minHeight: "100%" }}>
 
                     <Grid
@@ -163,7 +186,7 @@ export default function Profile() {
                         <Stack align="center" gap="1.5rem" style={{ paddingRight: "1rem" }}>
 
                             <Box
-                                style={{ position: "relative", cursor: "pointer" }}
+                                style={{ position: "relative" }}
                                 onMouseEnter={() => setIsAvatarHovered(true)}
                                 onMouseLeave={() => setIsAvatarHovered(false)}
                             >
@@ -171,31 +194,30 @@ export default function Profile() {
                                     <Skeleton variant="circular" height={150} width={150} />
                                 ) : (
                                     <>
-                                        <label htmlFor="avatar-upload">
-                                            <Box style={{
-                                                width: "150px",
-                                                height: "150px",
-                                                borderRadius: "50%",
-                                                background: "var(--color-bg)",
-                                                display: "flex", alignItems: "center", justifyContent: "center",
-                                                fontSize: "3rem", fontWeight: "bold",
-                                                color: "var(--color-text)",
-                                                boxShadow: "var(--shadow-md)",
-                                                overflow: "hidden",
-                                                position: "relative",
-                                                cursor: "pointer"
-                                            }}>
-                                                {avatarPreview || user?.avatarUrl ? (
-                                                    <Img
-                                                        src={avatarPreview || user?.avatarUrl || ""}
-                                                        alt="Avatar"
-                                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                                    />
-                                                ) : (
-                                                    username.substring(0, 1).toUpperCase()
-                                                )}
-                                            </Box>
+                                        <Box style={{
+                                            width: "150px",
+                                            height: "150px",
+                                            borderRadius: "50%",
+                                            background: "var(--color-bg)",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            fontSize: "3rem", fontWeight: "bold",
+                                            color: "var(--color-text)",
+                                            boxShadow: "var(--shadow-md)",
+                                            overflow: "hidden",
+                                            position: "relative",
+                                        }}>
+                                            {avatarPreview || user?.avatarUrl ? (
+                                                <Img
+                                                    src={avatarPreview || user?.avatarUrl || ""}
+                                                    alt="Avatar"
+                                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                                />
+                                            ) : (
+                                                username.substring(0, 1).toUpperCase()
+                                            )}
+                                        </Box>
 
+                                        <label htmlFor="avatar-upload">
                                             <Box
                                                 style={{
                                                     position: "absolute",
@@ -209,7 +231,7 @@ export default function Profile() {
                                                     opacity: isAvatarHovered ? 1 : 0,
                                                     transform: isAvatarHovered ? "scale(1)" : "scale(0.8)",
                                                     transition: "all 0.2s ease",
-                                                    cursor: "pointer,"
+                                                    cursor: "pointer"
                                                 }}
                                             >
                                                 <Icon src={getIcon("edit")} alt="edit avatar" size={20} />
@@ -371,119 +393,347 @@ export default function Profile() {
                                                     <Typography variant="caption" style={{ marginLeft: "5px" }}>CG Coins</Typography>
                                                 </Typography>
                                             </Box>
-                                            <Button variant="ghost" onClick={() => setDepositModalOpen(true)}>
-                                                Deposit
-                                            </Button>
+
+                                            <Stack direction="row" gap="10px" align="center">
+
+                                                <Button
+                                                    variant="ghost"
+                                                    onClick={() => setDepositModalOpen(true)}
+                                                >
+                                                    Deposit
+                                                </Button>
+
+                                                {/*todo: рассмотреть вариант с кэшированием, на данный момент кнопка подвергает DoS-атаке bank-service*/}
+                                                <Button
+                                                    variant={activeTab === 'balanceHistory' ? "solid" : "outline"}
+                                                    onClick={() => {
+                                                        if (activeTab === 'balanceHistory') {
+                                                            setActiveTab('default');
+                                                        } else {
+                                                            if (authUser?.guid) {
+                                                                dispatch(getByUserGuid({ guid: authUser.guid, size: 4 }));
+                                                            }
+                                                            setActiveTab('balanceHistory');
+                                                        }
+                                                    }}
+                                                    style={{ width: "135px" }}
+                                                >
+                                                    {activeTab === 'balanceHistory' ? 'Close History' : 'History'}
+                                                </Button>
+
+                                            </Stack>
+
                                         </Box>
                                     )}
                                 </Stack>
                             </Box>
 
-                            <Box style={infoBlockStyle}>
-                                <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                                    <Typography variant="h3">Achievements</Typography>
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() => setAchievementsModalOpen(true)}
-                                        disabled={!achievements || achievements.length === 0}
-                                        style={{ fontSize: "0.8rem" }}
-                                    >
-                                        See All
-                                    </Button>
-                                </Box>
-
-
-                                {loadingAchievements ? (
-                                    <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                                        <Skeleton variant="rectangular" height={30} />
-                                        <Skeleton variant="rectangular" height={30} />
-                                        <Skeleton variant="rectangular" height={30} />
-                                    </Box>
-                                ) : (
-                                    achievements.length > 0 ? (
-                                        <Box style={{
-                                            display: "flex",
-                                            gap: "10px",
-                                            flexWrap: "wrap",
-                                            overflow: "hidden",
-                                            maxHeight: "130px"
-                                        }}>
-                                            {achievements.slice(0, 5).map((ach, i) => (
-                                                <Box key={i} style={{
-                                                    padding: "5px 12px",
-                                                    background: "var(--color-primary)",
-                                                    color: "var(--on-primary)",
-                                                    borderRadius: "20px",
-                                                    fontSize: "0.9rem",
-                                                    fontWeight: 500
-                                                }}>
-                                                    {ach}
-                                                </Box>
-                                            ))}
-                                            {achievements.length > 5 && (
-                                                <Box style={{ padding: "5px 10px", fontSize: "0.9rem", opacity: 0.7, alignSelf: "center" }}>
-                                                    +{achievements.length - 5} more...
-                                                </Box>
-                                            )}
+                            {activeTab === 'default' && (
+                                <>
+                                    <Box style={infoBlockStyle}>
+                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                                            <Typography variant="h3">Achievements</Typography>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => setAchievementsModalOpen(true)}
+                                                disabled={!achievements || achievements.length === 0}
+                                                style={{ fontSize: "0.8rem" }}
+                                            >
+                                                See All
+                                            </Button>
                                         </Box>
-                                    ) : (
-                                        <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
-                                            No achievements yet. Go play some games!
-                                        </Typography>
-                                    )
-                                )}
-                            </Box>
 
-                            <Box style={infoBlockStyle}>
-                                <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                                    <Typography variant="h3">History</Typography>
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() => setHistoryModalOpen(true)}
-                                        disabled={history.length === 0}
-                                        style={{ fontSize: "0.8rem" }}
-                                    >
-                                        See All
-                                    </Button>
-                                </Box>
 
-                                {loadingHistory ? (
-                                    <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                                        <Skeleton variant="rectangular" height={30} />
-                                        <Skeleton variant="rectangular" height={30} />
-                                        <Skeleton variant="rectangular" height={30} />
-                                    </Box>
-                                ) : (
-                                    history.length > 0 ? (
-                                        <Stack gap="0.5rem">
-                                            {history.slice(0, 3).map((item, i) => (
-                                                <Box key={i} style={{
+                                        {loadingAchievements ? (
+                                            <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                                                <Skeleton variant="rectangular" height={30} />
+                                                <Skeleton variant="rectangular" height={30} />
+                                                <Skeleton variant="rectangular" height={30} />
+                                            </Box>
+                                        ) : (
+                                            achievements.length > 0 ? (
+                                                <Box style={{
                                                     display: "flex",
-                                                    justifyContent: "space-between",
-                                                    borderBottom: i === 2 ? "none" : "1px solid var(--color-border)",
-                                                    paddingBottom: "10px",
-                                                    paddingTop: i === 0 ? "0" : "5px"
+                                                    gap: "10px",
+                                                    flexWrap: "wrap",
+                                                    overflow: "hidden",
+                                                    maxHeight: "130px"
                                                 }}>
-                                                    <Box>
-                                                        <Typography variant="body" style={{ fontWeight: 500 }}>{item.game}</Typography>
-                                                        <Typography variant="caption">{new Date(item.date).toLocaleDateString()}</Typography>
-                                                    </Box>
-                                                    <Typography variant="body" style={{
-                                                        fontWeight: "bold",
-                                                        color: item.result === "Win" ? "green" : item.result === "Loss" ? "red" : "gray"
-                                                    }}>
-                                                        {item.result}
-                                                    </Typography>
+                                                    {achievements.slice(0, 5).map((ach, i) => (
+                                                        <Box key={i} style={{
+                                                            padding: "5px 12px",
+                                                            background: "var(--color-primary)",
+                                                            color: "var(--on-primary)",
+                                                            borderRadius: "20px",
+                                                            fontSize: "0.9rem",
+                                                            fontWeight: 500
+                                                        }}>
+                                                            {ach}
+                                                        </Box>
+                                                    ))}
+                                                    {achievements.length > 5 && (
+                                                        <Box style={{ padding: "5px 10px", fontSize: "0.9rem", opacity: 0.7, alignSelf: "center" }}>
+                                                            +{achievements.length - 5} more...
+                                                        </Box>
+                                                    )}
                                                 </Box>
-                                            ))}
-                                        </Stack>
-                                    ) : (
-                                        <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
-                                            No match history available.
-                                        </Typography>
-                                    )
-                                )}
-                            </Box>
+                                            ) : (
+                                                <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
+                                                    No achievements yet. Go play some games!
+                                                </Typography>
+                                            )
+                                        )}
+                                    </Box>
+
+                                    <Box style={infoBlockStyle}>
+                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                                            <Typography variant="h3">Game History</Typography>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => setHistoryModalOpen(true)}
+                                                disabled={history.length === 0}
+                                                style={{ fontSize: "0.8rem" }}
+                                            >
+                                                See All
+                                            </Button>
+                                        </Box>
+
+                                        {loadingHistory ? (
+                                            <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                                                <Skeleton variant="rectangular" height={30} />
+                                                <Skeleton variant="rectangular" height={30} />
+                                                <Skeleton variant="rectangular" height={30} />
+                                            </Box>
+                                        ) : (
+                                            history.length > 0 ? (
+                                                <Stack gap="0.5rem">
+                                                    {history.slice(0, 3).map((item, i) => (
+                                                        <Box key={i} style={{
+                                                            display: "flex",
+                                                            justifyContent: "space-between",
+                                                            borderBottom: i === 2 ? "none" : "1px solid var(--color-border)",
+                                                            paddingBottom: "10px",
+                                                            paddingTop: i === 0 ? "0" : "5px"
+                                                        }}>
+                                                            <Box>
+                                                                <Typography variant="body" style={{ fontWeight: 500 }}>{item.game}</Typography>
+                                                                <Typography variant="caption">{new Date(item.date).toLocaleDateString()}</Typography>
+                                                            </Box>
+                                                            <Typography variant="body" style={{
+                                                                fontWeight: "bold",
+                                                                color: item.result === "Win" ? "green" : item.result === "Loss" ? "red" : "gray"
+                                                            }}>
+                                                                {item.result}
+                                                            </Typography>
+                                                        </Box>
+                                                    ))}
+                                                </Stack>
+                                            ) : (
+                                                <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
+                                                    No match history available.
+                                                </Typography>
+                                            )
+                                        )}
+                                    </Box>
+                                </>
+                            )}
+                            {activeTab === 'balanceHistory' && (
+                                <Box style={{
+                                    ...infoBlockStyle,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    maxHeight: "360px"
+                                }}>
+                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                                        <Typography variant="h3">Balance History</Typography>
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => {
+                                                if (authUser?.guid) {
+                                                    dispatch(getByUserGuid({ guid: authUser.guid, size: 4 }));
+                                                }
+                                            }}
+                                            disabled={isLoadingTransactions}
+                                            style={{ fontSize: "0.8rem", padding: "7px" }}
+                                        >
+                                            {isLoadingTransactions ? 'Updating...' : <Icon src={getIcon("refresh")} alt="refresh" size={16} />}
+                                        </Button>
+                                    </Box>
+
+                                    <Box style={{
+                                        flex: 1,
+                                        overflowY: "auto",
+                                        paddingRight: "12px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "0.5rem"
+                                    }}>
+                                        {isLoadingTransactions ? (
+                                            <Box style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                                <Skeleton variant="rectangular" height={45} />
+                                                <Skeleton variant="rectangular" height={45} />
+                                                <Skeleton variant="rectangular" height={45} />
+                                            </Box>
+                                        ) : transactions && transactions.length > 0 ? (
+                                            transactions.map(transaction => {
+                                                const typeTransaction = transaction.type === 'ADDITION' ? 'income' : 'expense';
+                                                const sign = typeTransaction === 'income' ? '+' : '-';
+                                                const roomName = transaction.roomType ? (ROOM_TYPE_LABELS[transaction.roomType] || transaction.roomType) : 'Deposit';
+                                                const time = transaction.createdAtTime ? transaction.createdAtTime.substring(0, 5) : '';
+
+                                                return (
+                                                    <Box key={transaction.id} style={{
+                                                        padding: "8px 12px",
+                                                        display: "grid",
+                                                        gridTemplateColumns: "32px 1fr auto 90px",
+                                                        gap: "12px",
+                                                        alignItems: "center",
+                                                        background: `var(--color-${typeTransaction}-bg)`,
+                                                        border: `1px solid var(--color-${typeTransaction}-border)`,
+                                                        borderRadius: "var(--radius-sm)",
+                                                        flexShrink: 0,
+                                                        transition: "transform 0.2s ease"
+                                                    }}>
+                                                        <Box style={{
+                                                            width: "32px",
+                                                            height: "32px",
+                                                            borderRadius: "50%",
+                                                            background: `var(--color-${typeTransaction}-icon-bg)`,
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "center",
+                                                            color: "#ffffff",
+                                                            fontWeight: "bold",
+                                                            fontSize: "1.2rem"
+                                                        }}>
+                                                            {sign}
+                                                        </Box>
+
+                                                        <Stack gap="2px" justify="center" style={{ overflow: "hidden" }}>
+                                                            <Typography
+                                                                variant="body"
+                                                                style={{
+                                                                    fontWeight: 600,
+                                                                    fontSize: "0.95rem",
+                                                                    whiteSpace: "nowrap",
+                                                                    overflow: "hidden",
+                                                                    textOverflow: "ellipsis"
+                                                                }}
+                                                            >
+                                                                {roomName}
+                                                            </Typography>
+                                                            <Typography variant="caption" style={{ opacity: 0.6, fontSize: "0.75rem" }}>
+                                                                {transaction.createdAtDate} • {time} UTC
+                                                            </Typography>
+                                                        </Stack>
+
+                                                        <Typography
+                                                            variant="body"
+                                                            style={{
+                                                                fontWeight: "100",
+                                                                color: `var(--color-${typeTransaction}-text)`,
+                                                                fontSize: "1.1rem",
+                                                                textAlign: "right",
+                                                                paddingRight: "4px"
+                                                            }}
+                                                        >
+                                                            {transaction.amount}
+                                                        </Typography>
+
+                                                        <Stack gap="0px" style={{ alignItems: "flex-start", minWidth: "90px" }}>
+                                                            <Stack direction="row" justify="space-between" style={{ width: "100%" }}>
+                                                                <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.7rem" }}>
+                                                                    Before:
+                                                                </Typography>
+                                                                <Typography variant="caption"
+                                                                    style={{
+                                                                        opacity: 0.8,
+                                                                        fontWeight: "500",
+                                                                        fontFamily: "monospace",
+                                                                        fontSize: "0.7rem"
+                                                                    }}
+                                                                >
+                                                                    {transaction.balanceBefore}
+                                                                </Typography>
+                                                            </Stack>
+
+                                                            <Stack direction="row" justify="space-between" style={{ width: "100%" }}>
+                                                                <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.7rem" }}>
+                                                                    After:
+                                                                </Typography>
+                                                                <Typography
+                                                                    variant="caption"
+                                                                    style={{
+                                                                        opacity: 0.8,
+                                                                        fontWeight: "500",
+                                                                        fontFamily: "monospace",
+                                                                        fontSize: "0.7rem"
+                                                                    }}
+                                                                >
+                                                                    {transaction.balanceAfter}
+                                                                </Typography>
+                                                            </Stack>
+                                                        </Stack>
+                                                    </Box>
+                                                );
+                                            })
+                                        ) : (
+                                            <Typography variant="body" style={{ textAlign: "center", opacity: 0.6, padding: "2rem 0" }}>
+                                                No transactions found.
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                    {totalPages > 1 && (
+                                        <Box style={{
+                                            marginTop: "1rem",
+                                            paddingTop: "0.5rem",
+                                            borderTop: "1px solid var(--color-border)",
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            gap: "1rem"
+                                        }}>
+                                            <Button
+                                                variant="ghost"
+                                                disabled={currentPage === 0 || isLoadingTransactions}
+                                                onClick={() => handlePageChange(0)}
+                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
+                                            >
+                                                <Icon src={getIcon("doubleLeftArrow")} alt="to the first page" size={16} />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                disabled={currentPage === 0 || isLoadingTransactions}
+                                                onClick={() => handlePageChange(currentPage - 1)}
+                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
+                                            >
+                                                <Icon src={getIcon("leftArrow")} alt="prev page" size={16} />
+                                            </Button>
+
+                                            <Typography variant="caption" style={{ fontVariantNumeric: "tabular-nums" }}>
+                                                Page {currentPage + 1} of {totalPages}
+                                            </Typography>
+
+                                            <Button
+                                                variant="ghost"
+                                                disabled={currentPage >= totalPages - 1 || isLoadingTransactions}
+                                                onClick={() => handlePageChange(currentPage + 1)}
+                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
+                                            >
+                                                <Icon src={getIcon("rightArrow")} alt="next page" size={16} />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                disabled={currentPage >= totalPages - 1 || isLoadingTransactions}
+                                                onClick={() => handlePageChange(totalPages - 1)}
+                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
+                                            >
+                                                <Icon src={getIcon("doubleRightArrow")} alt="to the last page" size={16} />
+                                            </Button>
+                                        </Box>
+                                    )}
+                                </Box>
+                            )}
 
                         </Stack>
                     </Grid>
@@ -524,7 +774,10 @@ export default function Profile() {
 
             <Modal
                 isOpen={depositModalOpen}
-                onClose={() => setDepositModalOpen(false)}
+                onClose={() => {
+                    setDepositModalOpen(false)
+                    setDepositAmount('');
+                }}
                 title="Deposit Funds"
             >
                 <Stack gap="1rem">
@@ -532,10 +785,12 @@ export default function Profile() {
                         Enter the amount you wish to add to your balance.
                     </Typography>
                     <FormField
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         value={depositAmount}
-                        onChange={(e) => setDepositAmount(e.target.value)}
-                        placeholder="Amount (e.g., 500)"
+                        onChange={handleDepositAmountChange}
+                        onFocus={(e) => e.target.select()}
+                        placeholder="Amount"
                         rounded
                     />
                     {bankError && (
@@ -546,7 +801,7 @@ export default function Profile() {
                     <Button
                         variant="solid"
                         onClick={handleDeposit}
-                        disabled={isDepositing}
+                        disabled={isDepositing || !depositAmount || depositAmount === '.'}
                     >
                         {isDepositing ? "Processing..." : "Confirm Deposit"}
                     </Button>

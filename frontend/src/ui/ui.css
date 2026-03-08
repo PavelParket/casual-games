@@ -99,6 +99,16 @@ html.is-scrolling.dark {
    --color-primary-hover: #000000;
    --on-primary: #ffffff;
 
+   --color-income-text: #1e7d41cb;
+   --color-income-bg: rgba(34, 176, 93, 0.08);
+   --color-income-border: rgba(34, 176, 93, 0.2);
+   --color-income-icon-bg: rgba(34, 176, 93, 0.25);
+
+   --color-expense-text: #b32d2dcb;
+   --color-expense-bg: rgba(212, 56, 56, 0.08);
+   --color-expense-border: rgba(212, 56, 56, 0.2);
+   --color-expense-icon-bg: rgba(212, 56, 56, 0.25);
+
    --radius-sm: 6px;
    --radius-md: 12px;
    --radius-lg: 20px;
@@ -155,6 +165,16 @@ html.dark {
    --color-primary: #f5f5f5;
    --color-primary-hover: #ffffff;
    --on-primary: #000000;
+
+   --color-income-text: #22b05d;
+   --color-income-bg: rgba(46, 204, 113, 0.08);
+   --color-income-border: rgba(46, 204, 113, 0.2);
+   --color-income-icon-bg: rgba(46, 204, 113, 0.25);
+
+   --color-expense-text: #d43838;
+   --color-expense-bg: rgba(255, 82, 82, 0.08);
+   --color-expense-border: rgba(255, 82, 82, 0.2);
+   --color-expense-icon-bg: rgba(255, 82, 82, 0.25);
 
    /* Background image for dark theme (set as needed) */
    --bg-image: url("../assets/images/bg-dark.jpeg");
