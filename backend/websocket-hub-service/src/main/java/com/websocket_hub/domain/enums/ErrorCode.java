@@ -7,26 +7,29 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ErrorCode {
 
-    INVALID_MOVE("This move is not allowed"),
-    NOT_YOUR_TURN("It's not your turn"),
-    ROOM_NOT_FOUND("Room not found"),
-    ROOM_FULL("Room is full"),
-    GAME_NOT_STARTED("The game has not started yet"),
-    GAME_ALREADY_FINISHED("The game has already finished"),
-    INSUFFICIENT_BALANCE("Insufficient balance"),
-    ROOM_ALREADY_EXISTS("A room with this name already exists"),
-    ROOM_TYPE_NOT_FOUND("Unknown room type"),
+    // GAME — invalid game state or action
+    INVALID_MOVE("This move is not allowed", ErrorCategory.GAME),
+    NOT_YOUR_TURN("It's not your turn", ErrorCategory.GAME),
+    GAME_NOT_STARTED("The game has not started yet", ErrorCategory.GAME),
+    GAME_ALREADY_FINISHED("The game has already finished", ErrorCategory.GAME),
+    ROOM_NOT_FOUND("Room not found", ErrorCategory.GAME),
+    ROOM_FULL("Room is full", ErrorCategory.GAME),
+    ROOM_ALREADY_EXISTS("A room with this name already exists", ErrorCategory.GAME),
+    ROOM_TYPE_NOT_FOUND("Unknown room type", ErrorCategory.GAME),
 
-    BAD_REQUEST("Bad Request"),
-    UNAUTHORIZED("Unauthorized"),
-    FORBIDDEN("Forbidden"),
-    NOT_FOUND("Not Found"),
-    CONFLICT("Conflict"),
+    // BUSINESS — business rule violations
+    INSUFFICIENT_BALANCE("Insufficient balance", ErrorCategory.BUSINESS),
 
-    INTERNAL_SERVER_ERROR("An unexpected error occurred. Please try again"),
-    SERVICE_UNAVAILABLE("Service temporarily unavailable. Please try again later"),
-
-    INVALID_MESSAGE("Invalid message format");
+    // SYSTEM — infrastructure failures
+    INVALID_MESSAGE("Invalid message format", ErrorCategory.SYSTEM),
+    BAD_REQUEST("Bad Request", ErrorCategory.SYSTEM),
+    UNAUTHORIZED("Unauthorized", ErrorCategory.SYSTEM),
+    FORBIDDEN("Forbidden", ErrorCategory.SYSTEM),
+    NOT_FOUND("Not Found", ErrorCategory.SYSTEM),
+    CONFLICT("Conflict", ErrorCategory.SYSTEM),
+    INTERNAL_SERVER_ERROR("An unexpected error occurred. Please try again", ErrorCategory.SYSTEM),
+    SERVICE_UNAVAILABLE("Service temporarily unavailable. Please try again later", ErrorCategory.SYSTEM);
 
     private final String message;
+    private final ErrorCategory category;
 }

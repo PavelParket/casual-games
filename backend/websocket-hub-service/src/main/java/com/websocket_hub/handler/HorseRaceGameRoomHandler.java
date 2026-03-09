@@ -48,13 +48,14 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
     public HorseRaceGameRoomHandler(
             SessionManager sessionManager,
             HorseRaceGameRoomManager roomManager,
+            ErrorWebSocketHandler errorHandler,
             MessageDeserializer messageDeserializer,
             HorseRaceGameMessageMapper horseRaceMessageMapper,
             HorseRaceTransactionMapper horseRaceTransactionMapper,
             GameServiceClient gameServiceClient,
             BankServiceClient bankServiceClient
     ) {
-        super(sessionManager, roomManager);
+        super(sessionManager, roomManager, errorHandler);
         this.messageDeserializer = messageDeserializer;
         this.horseRaceMessageMapper = horseRaceMessageMapper;
         this.horseRaceTransactionMapper = horseRaceTransactionMapper;

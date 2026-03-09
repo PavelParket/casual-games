@@ -45,19 +45,21 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
     public TicTacToeGameRoomHandler(
             SessionManager sessionManager,
             TicTacToeGameRoomManager roomManager,
+            ErrorWebSocketHandler errorHandler,
             MessageDeserializer messageDeserializer,
             TicTacToeGameMessageMapper ticTacToeGameMessageMapper,
             TicTacToeTransactionMapper ticTacToeTransactionMapper,
             GameServiceClient gameServiceClient,
             BankServiceClient bankServiceClient
     ) {
-        super(sessionManager, roomManager);
+        super(sessionManager, roomManager, errorHandler);
         this.messageDeserializer = messageDeserializer;
         this.ticTacToeGameMessageMapper = ticTacToeGameMessageMapper;
         this.ticTacToeTransactionMapper = ticTacToeTransactionMapper;
         this.gameServiceClient = gameServiceClient;
         this.bankServiceClient = bankServiceClient;
     }
+
 
     @Override
     protected void handleMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {

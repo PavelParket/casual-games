@@ -1,24 +1,25 @@
 package com.websocket_hub.domain.context;
 
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.time.Instant;
 import java.util.UUID;
 
-@Data
-@AllArgsConstructor
 @Builder
-public class WebSocketContext {
+public record WebSocketContext(
 
-    private final UserInternalResponse user;
+        UserInternalResponse user,
 
-    private final UUID roomId;
+        UUID roomId,
 
-    private final WebSocketSession session;
+        WebSocketSession session,
 
-    private final Instant connectedAt;
+        Instant connectedAt
+) {
+
+    public static WebSocketContext of(UserInternalResponse user, UUID roomId, WebSocketSession session, Instant connectedAt) {
+        return new WebSocketContext(user, roomId, session, connectedAt);
+    }
 }

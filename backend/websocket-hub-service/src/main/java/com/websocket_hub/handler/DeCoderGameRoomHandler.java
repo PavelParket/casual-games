@@ -48,6 +48,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
     public DeCoderGameRoomHandler(
             SessionManager sessionManager,
             DeCoderGameRoomManager roomManager,
+            ErrorWebSocketHandler errorHandler,
             MessageDeserializer messageDeserializer,
             DeCoderGameMessageMapper deCoderGameMessageMapper,
             DeCoderGameTransactionMapper deCoderGameTransactionMapper,
@@ -55,7 +56,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
             BankServiceClient bankServiceClient
 
     ) {
-        super(sessionManager, roomManager);
+        super(sessionManager, roomManager, errorHandler);
         this.messageDeserializer = messageDeserializer;
         this.deCoderGameMessageMapper = deCoderGameMessageMapper;
         this.deCoderGameTransactionMapper = deCoderGameTransactionMapper;

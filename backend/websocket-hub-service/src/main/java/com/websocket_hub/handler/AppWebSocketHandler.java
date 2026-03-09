@@ -1,13 +1,7 @@
 package com.websocket_hub.handler;
 
+import com.websocket_hub.domain.context.WebSocketContext;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
-import com.websocket_hub.domain.dto.message.ErrorMessage;
-import com.websocket_hub.domain.entity.ClientSession;
-import com.websocket_hub.domain.enums.ErrorCode;
-import com.websocket_hub.domain.enums.MessageType;
-import com.websocket_hub.domain.enums.events.ErrorEvent;
-import com.websocket_hub.exception.GameException;
-import com.websocket_hub.helper.WebSocketHelper;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.util.WebSocketUtil;
@@ -30,17 +24,18 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
     protected final T roomManager;
 
-    protected final WebSocketHelper webSocketHelper;
+    protected ErrorWebSocketHandler errorHandler;
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
         UserInternalResponse user = null;
         UUID roomId = null;
+        Instant connectedAt = null;
 
         try {
             user = WebSocketUtil.getUser(session);
             roomId = WebSocketUtil.getRoomId(session);
-            Instant connectedAt = WebSocketUtil.getConnectedAt(session);
+            connectedAt = WebSocketUtil.getConnectedAt(session);
 
             sessionManager.register(user.guid(), user, session, connectedAt);
             roomManager.addSession(roomId, user, session);
@@ -49,15 +44,8 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
             log.info("Connection established: userId={}, roomId={}", user.guid(), roomId);
 
-        } catch (GameException e) {
-            log.warn("Game error on connect: errorCode={}, roomId={}, message={}", e.getErrorCode(), roomId, e.getMessage());
-            sendError(user, roomId, session, e.getErrorCode(), e.getMessage());
-            closeSession(session, CloseStatus.POLICY_VIOLATION);
-
         } catch (Exception e) {
-            log.error("Unexpected error on connect: session={}", session.getId(), e);
-            sendError(user, roomId, session, ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
-            closeSession(session, CloseStatus.SERVER_ERROR);
+            errorHandler.handle(WebSocketContext.of(user, roomId, session, connectedAt), e, true);
         }
     }
 
@@ -82,19 +70,17 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
     public final void handleTextMessage(@NonNull WebSocketSession session, @NonNull TextMessage message) {
         UserInternalResponse user = null;
         UUID roomId = null;
+        Instant connectedAt = null;
 
         try {
             user = WebSocketUtil.getUser(session);
             roomId = WebSocketUtil.getRoomId(session);
+            connectedAt = WebSocketUtil.getConnectedAt(session);
 
             handleMessage(session, message);
 
-        } catch (GameException e) {
-            log.warn("Game error: errorCode={}, roomId={}, message={}", e.getErrorCode(), roomId, e.getMessage());
-            sendError(user, roomId, session, e.getErrorCode(), e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error handling message: userId={}, roomId={}", user != null ? user.guid() : null, roomId, e);
-            sendError(user, roomId, session, ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
+            errorHandler.handle(WebSocketContext.of(user, roomId, session, connectedAt), e, false);
         }
     }
 
@@ -103,42 +89,4 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
     protected abstract void onJoin(UUID roomId, UserInternalResponse user);
 
     protected abstract void onLeave(UUID roomId, UserInternalResponse user);
-
-    protected void sendError(UserInternalResponse user, UUID roomId, WebSocketSession session, ErrorCode errorCode, String debugMessage) {
-        if (user == null || user.guid() == null) {
-            log.warn("Cannot send error — userId is null. errorCode={}, session={}", errorCode, session.getId());
-            return;
-        }
-
-        ClientSession client = sessionManager.getByGuid(user.guid());
-
-        if (client == null) {
-            log.warn("Cannot send error — client not found. userId={}, errorCode={}", user.guid(), errorCode);
-            return;
-        }
-
-        log.info("Error detail for userId={}, errorCode={}: {}", user.guid(), errorCode, debugMessage);
-
-        ErrorMessage errorMessage = ErrorMessage.builder()
-                .type(MessageType.SYSTEM)
-                .event(ErrorEvent.ERROR)
-                .toUserId(user.guid())
-                .roomId(roomId)
-                .message(errorCode.getMessage())
-                .build();
-
-        sessionManager.sendToSession(client, errorMessage);
-
-        log.info("Error sent: userId={}, roomId={}, errorCode={}", user.guid(), roomId, errorCode);
-    }
-
-    private void closeSession(WebSocketSession session, CloseStatus status) {
-        try {
-            if (session.isOpen()) {
-                session.close(status);
-            }
-        } catch (Exception e) {
-            log.warn("Failed to close session {}: {}", session.getId(), e.getMessage());
-        }
-    }
 }
