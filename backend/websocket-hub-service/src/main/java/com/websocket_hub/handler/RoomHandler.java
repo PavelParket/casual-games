@@ -39,7 +39,7 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
     public RoomHandler(
             SessionManager sessionManager,
             RoomManager roomManager,
-            ErrorWebSocketHandler errorHandler,
+            WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer
     ) {
         super(sessionManager, roomManager, errorHandler);

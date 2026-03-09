@@ -12,7 +12,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -58,8 +57,6 @@ public class GameServiceClient {
             return body;
         } catch (GameException e) {
             throw e;
-        } catch (HttpClientErrorException e) {
-            throw errorMapper.mapToException(e);
         } catch (Exception e) {
             throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
@@ -90,8 +87,6 @@ public class GameServiceClient {
             return body;
         } catch (GameException e) {
             throw e;
-        } catch (HttpClientErrorException e) {
-            throw errorMapper.mapToException(e);
         } catch (Exception e) {
             throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
@@ -143,8 +138,6 @@ public class GameServiceClient {
             return Optional.ofNullable(response.getBody());
         } catch (GameException e) {
             throw e;
-        } catch (HttpClientErrorException e) {
-            throw errorMapper.mapToException(e);
         } catch (Exception e) {
             throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }

@@ -19,7 +19,7 @@ import org.springframework.web.socket.WebSocketSession;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ErrorWebSocketHandler {
+public class WebSocketErrorHandler {
 
     private final SessionManager sessionManager;
 

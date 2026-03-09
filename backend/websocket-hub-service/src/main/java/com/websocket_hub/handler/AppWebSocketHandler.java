@@ -24,7 +24,7 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
     protected final T roomManager;
 
-    protected ErrorWebSocketHandler errorHandler;
+    protected WebSocketErrorHandler errorHandler;
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {

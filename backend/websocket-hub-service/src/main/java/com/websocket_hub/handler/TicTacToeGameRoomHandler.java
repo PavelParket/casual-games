@@ -45,7 +45,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
     public TicTacToeGameRoomHandler(
             SessionManager sessionManager,
             TicTacToeGameRoomManager roomManager,
-            ErrorWebSocketHandler errorHandler,
+            WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
             TicTacToeGameMessageMapper ticTacToeGameMessageMapper,
             TicTacToeTransactionMapper ticTacToeTransactionMapper,

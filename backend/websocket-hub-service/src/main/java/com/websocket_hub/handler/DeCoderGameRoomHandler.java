@@ -48,7 +48,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
     public DeCoderGameRoomHandler(
             SessionManager sessionManager,
             DeCoderGameRoomManager roomManager,
-            ErrorWebSocketHandler errorHandler,
+            WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
             DeCoderGameMessageMapper deCoderGameMessageMapper,
             DeCoderGameTransactionMapper deCoderGameTransactionMapper,

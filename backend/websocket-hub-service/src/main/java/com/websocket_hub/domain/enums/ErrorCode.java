@@ -20,6 +20,7 @@ public enum ErrorCode {
 
     // BUSINESS — business rule violations
     INSUFFICIENT_BALANCE("Insufficient balance", ErrorCategory.BUSINESS),
+    COOLDOWN("Too many requests. Please wait before trying again", ErrorCategory.BUSINESS),
 
     // SYSTEM — infrastructure failures
     INVALID_MESSAGE("Invalid message format", ErrorCategory.SYSTEM),

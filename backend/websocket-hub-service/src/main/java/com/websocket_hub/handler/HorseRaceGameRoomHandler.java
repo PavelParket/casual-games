@@ -48,7 +48,7 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
     public HorseRaceGameRoomHandler(
             SessionManager sessionManager,
             HorseRaceGameRoomManager roomManager,
-            ErrorWebSocketHandler errorHandler,
+            WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
             HorseRaceGameMessageMapper horseRaceMessageMapper,
             HorseRaceTransactionMapper horseRaceTransactionMapper,
