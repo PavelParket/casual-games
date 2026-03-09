@@ -4,5 +4,6 @@ public enum ErrorCategory {
 
     GAME,
     BUSINESS,
+    PROTOCOL,
     SYSTEM
 }

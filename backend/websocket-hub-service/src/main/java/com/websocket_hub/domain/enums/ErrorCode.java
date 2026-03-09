@@ -22,13 +22,15 @@ public enum ErrorCode {
     INSUFFICIENT_BALANCE("Insufficient balance", ErrorCategory.BUSINESS),
     COOLDOWN("Too many requests. Please wait before trying again", ErrorCategory.BUSINESS),
 
+    // PROTOCOL — malformed or unauthorized messages
+    INVALID_MESSAGE("Invalid message format", ErrorCategory.PROTOCOL),
+    BAD_REQUEST("Bad Request", ErrorCategory.PROTOCOL),
+    UNAUTHORIZED("Unauthorized", ErrorCategory.PROTOCOL),
+    FORBIDDEN("Forbidden", ErrorCategory.PROTOCOL),
+    NOT_FOUND("Not Found", ErrorCategory.PROTOCOL),
+    CONFLICT("Conflict", ErrorCategory.PROTOCOL),
+
     // SYSTEM — infrastructure failures
-    INVALID_MESSAGE("Invalid message format", ErrorCategory.SYSTEM),
-    BAD_REQUEST("Bad Request", ErrorCategory.SYSTEM),
-    UNAUTHORIZED("Unauthorized", ErrorCategory.SYSTEM),
-    FORBIDDEN("Forbidden", ErrorCategory.SYSTEM),
-    NOT_FOUND("Not Found", ErrorCategory.SYSTEM),
-    CONFLICT("Conflict", ErrorCategory.SYSTEM),
     INTERNAL_SERVER_ERROR("An unexpected error occurred. Please try again", ErrorCategory.SYSTEM),
     SERVICE_UNAVAILABLE("Service temporarily unavailable. Please try again later", ErrorCategory.SYSTEM);
 

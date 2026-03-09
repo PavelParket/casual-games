@@ -121,7 +121,7 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
-                .status(status)
+                .status(status.value())
                 .message(message)
                 .timestamp(Instant.now())
                 .build();

@@ -4,6 +4,8 @@ import com.websocket_hub.domain.enums.ErrorCode;
 import lombok.Builder;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 @Builder
 public record ErrorResponse(
@@ -14,7 +16,11 @@ public record ErrorResponse(
 
         int status,
 
-        Instant timestamp
+        Instant timestamp,
+
+        String path,
+
+        Map<String, List<String>> details
 
 ) {
 }

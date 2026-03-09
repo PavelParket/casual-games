@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.time.Instant;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -32,14 +34,15 @@ public class WebSocketErrorHandler {
 
         sendErrorToClient(webSocketContext, code, message);
 
-        if (forceClose || ErrorCategory.SYSTEM.equals(category)) {
-            closeSession(webSocketContext.session(), CloseStatus.SERVER_ERROR);
+        if (forceClose || category == ErrorCategory.PROTOCOL) {
+            CloseStatus closeStatus = forceClose ? CloseStatus.SERVER_ERROR : CloseStatus.POLICY_VIOLATION;
+            closeSession(webSocketContext.session(), closeStatus);
         }
     }
 
-    private ErrorCode resolveErrorCode(Exception e) {
-        if (e instanceof GameException gameException) {
-            return gameException.getErrorCode();
+    private ErrorCode resolveErrorCode(Exception exception) {
+        if (exception instanceof GameException e) {
+            return e.getErrorCode();
         }
 
         return ErrorCode.INTERNAL_SERVER_ERROR;
@@ -48,7 +51,7 @@ public class WebSocketErrorHandler {
     private String resolveMessage(ErrorCode code, ErrorCategory category, Exception e) {
         return switch (category) {
             case GAME, BUSINESS -> e.getMessage();
-            case SYSTEM -> code.getMessage();
+            case PROTOCOL, SYSTEM -> code.getMessage();
         };
     }
 
@@ -88,6 +91,8 @@ public class WebSocketErrorHandler {
                 .toUserId(user.guid())
                 .roomId(context.roomId())
                 .message(clientMessage)
+                .errorCode(errorCode)
+                .timestamp(Instant.now())
                 .build();
 
         sessionManager.sendToSession(clientSession, errorMessage);

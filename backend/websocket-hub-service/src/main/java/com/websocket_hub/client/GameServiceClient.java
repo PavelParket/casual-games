@@ -64,7 +64,7 @@ public class GameServiceClient {
 
     public TicTacToeGameMessage processMove(TicTacToeGameMessage request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
-                .path("game/t-t-t/move")
+                .path("/game/t-t-t/move")
                 .build()
                 .toUri();
 
