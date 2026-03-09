@@ -19,6 +19,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
+import static com.game_service.config.ResourceMessageConstants.GAME_STARTED;
+import static com.game_service.config.ResourceMessageConstants.TTT_DRAW;
+import static com.game_service.config.ResourceMessageConstants.TTT_NEXT_PLAYER_MOVE;
+import static com.game_service.config.ResourceMessageConstants.TTT_PLAYER_WINS;
+import static com.game_service.config.ResourceMessageConstants.TTT_WINNER_PLAYER_NOT_FOUND;
 import static com.game_service.tic_tac_toe.util.TicTacToeGameUtils.SYMBOL_O;
 import static com.game_service.tic_tac_toe.util.TicTacToeGameUtils.SYMBOL_X;
 
@@ -49,8 +54,6 @@ public class TicTacToeGameService {
                 players.get(1), SYMBOL_O
         );
 
-        String message = "Game started!";
-
         log.info("Starting new game in room '{}': {}=X, {}=O", request.roomId(), players.get(0), players.get(1));
 
         return ticTacToeGameMapper.toStartResponse(
@@ -62,7 +65,7 @@ public class TicTacToeGameService {
                 playersSymbols.get(players.get(1)),
                 playersSymbols,
                 request.players(),
-                message
+                GAME_STARTED
         );
     }
 
@@ -89,16 +92,14 @@ public class TicTacToeGameService {
                     .filter(playerId -> playerId.getValue().equals(winnerSymbol))
                     .map(Map.Entry::getKey)
                     .findFirst()
-                    .orElseThrow(() ->
-                            new GameValidationException("Winner symbol exists but player not found")
-                    );
+                    .orElseThrow(() -> new GameValidationException(TTT_WINNER_PLAYER_NOT_FOUND));
 
-            message = "Player " + request.players().get(winner) + " wins!";
+            message = String.format(TTT_PLAYER_WINS, request.players().get(winner));
         } else if (TicTacToeGameEvent.DRAW.equals(event)) {
-            message = "It's a draw!";
+            message = TTT_DRAW;
         } else {
             nextPlayerSymbol = TicTacToeGameUtils.nextPlayerSymbol(currentPlayerSymbol);
-            message = "Player with symbol " + nextPlayerSymbol + " move now.";
+            message = String.format(TTT_NEXT_PLAYER_MOVE, nextPlayerSymbol);
         }
 
         return ticTacToeGameMapper.toMoveResponse(

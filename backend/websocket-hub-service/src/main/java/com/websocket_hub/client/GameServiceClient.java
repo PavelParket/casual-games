@@ -59,13 +59,7 @@ public class GameServiceClient {
         } catch (GameException e) {
             throw e;
         } catch (HttpClientErrorException e) {
-            ErrorCode code = switch (e.getStatusCode().value()) {
-                case 402 -> ErrorCode.INSUFFICIENT_BALANCE;
-                case 404 -> ErrorCode.ROOM_NOT_FOUND;
-                case 409 -> ErrorCode.INVALID_MOVE;
-                default -> ErrorCode.INTERNAL_SERVER_ERROR;
-            };
-            throw new GameException(code);
+            throw errorMapper.mapToException(e);
         } catch (Exception e) {
             throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
@@ -97,13 +91,7 @@ public class GameServiceClient {
         } catch (GameException e) {
             throw e;
         } catch (HttpClientErrorException e) {
-            ErrorCode code = switch (e.getStatusCode().value()) {
-                case 402 -> ErrorCode.INSUFFICIENT_BALANCE;
-                case 404 -> ErrorCode.ROOM_NOT_FOUND;
-                case 409 -> ErrorCode.INVALID_MOVE;
-                default -> ErrorCode.INTERNAL_SERVER_ERROR;
-            };
-            throw new GameException(code);
+            throw errorMapper.mapToException(e);
         } catch (Exception e) {
             throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
@@ -153,9 +141,12 @@ public class GameServiceClient {
             log.info("Race started successfully: roomId={}, race={}", request.roomId(), response.getBody());
 
             return Optional.ofNullable(response.getBody());
+        } catch (GameException e) {
+            throw e;
+        } catch (HttpClientErrorException e) {
+            throw errorMapper.mapToException(e);
         } catch (Exception e) {
-            log.error("Failed to start race: {}", e.getMessage());
-            throw new RuntimeException("Failed to start race: " + e.getMessage(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
 

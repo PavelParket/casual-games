@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum ErrorType {
+public enum ErrorCode {
 
     VALIDATION_ERROR("Validation error"),
     INVALID_MOVE("Invalid move"),
@@ -13,5 +13,5 @@ public enum ErrorType {
     UNEXPECTED_ERROR("Unexpected error"),
     COOLDOWN("Cooldown");
 
-    private final String description;
+    private final String message;
 }

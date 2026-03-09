@@ -1,6 +1,7 @@
 package com.websocket_hub.exception;
 
 import com.websocket_hub.domain.dto.ErrorResponse;
+import com.websocket_hub.domain.enums.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,7 +19,8 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleBadRequestException(Exception e) {
         log.warn(e.getMessage());
         return ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
+                .errorCode(ErrorCode.BAD_REQUEST)
+                .status(HttpStatus.BAD_REQUEST.value())
                 .message(e.getMessage())
                 .timestamp(Instant.now())
                 .build();
@@ -29,7 +31,8 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleAuthenticationException(Exception e) {
         log.warn(e.getMessage());
         return ErrorResponse.builder()
-                .status(HttpStatus.UNAUTHORIZED)
+                .errorCode(ErrorCode.UNAUTHORIZED)
+                .status(HttpStatus.UNAUTHORIZED.value())
                 .message(e.getMessage())
                 .timestamp(Instant.now())
                 .build();
@@ -40,7 +43,8 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleForbiddenException(Exception e) {
         log.warn(e.getMessage());
         return ErrorResponse.builder()
-                .status(HttpStatus.FORBIDDEN)
+                .errorCode(ErrorCode.FORBIDDEN)
+                .status(HttpStatus.FORBIDDEN.value())
                 .message(e.getMessage())
                 .timestamp(Instant.now())
                 .build();
@@ -51,7 +55,8 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleNotFoundException(Exception e) {
         log.warn(e.getMessage());
         return ErrorResponse.builder()
-                .status(HttpStatus.NOT_FOUND)
+                .errorCode(ErrorCode.NOT_FOUND)
+                .status(HttpStatus.NOT_FOUND.value())
                 .message(e.getMessage())
                 .timestamp(Instant.now())
                 .build();
@@ -62,7 +67,8 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleConflictException(Exception e) {
         log.warn(e.getMessage());
         return ErrorResponse.builder()
-                .status(HttpStatus.CONFLICT)
+                .errorCode(ErrorCode.CONFLICT)
+                .status(HttpStatus.CONFLICT.value())
                 .message(e.getMessage())
                 .timestamp(Instant.now())
                 .build();
@@ -73,8 +79,9 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleGeneral(Exception e) {
         log.error("An unexpected error occurred: {}", e.getMessage());
         return ErrorResponse.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .message("An unexpected error occurred")
+                .errorCode(ErrorCode.INTERNAL_SERVER_ERROR)
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .message(ErrorCode.INTERNAL_SERVER_ERROR.getMessage())
                 .timestamp(Instant.now())
                 .build();
     }

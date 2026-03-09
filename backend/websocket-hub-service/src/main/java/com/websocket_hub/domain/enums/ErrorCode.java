@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum ErrorCode {
 
     // GAME — invalid game state or action
+    VALIDATION_ERROR("Validation error", ErrorCategory.GAME),
     INVALID_MOVE("This move is not allowed", ErrorCategory.GAME),
     NOT_YOUR_TURN("It's not your turn", ErrorCategory.GAME),
     GAME_NOT_STARTED("The game has not started yet", ErrorCategory.GAME),
