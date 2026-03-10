@@ -9,4 +9,6 @@ public class ResourceMessageConstants {
     public static final String AUTHENTICATION_FAILED = "Authentication failed";
     public static final String ROOM_ALREADY_FINISHED = "Room is already finished";
     public static final String ROOM_ALREADY_IN_PROGRESS = "Room is already in progress";
+    public static final String UNREADABLE_REQUEST_BODY = "Malformed or unreadable request body";
+    public static final String VALIDATION_FAILED = "Validation failed";
 }

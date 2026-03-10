@@ -5,6 +5,8 @@ public class ResourceMessageConstants {
     public static final String REQUEST_CANNOT_BE_NULL = "Request cannot be null";
     public static final String ROOM_CANNOT_BE_EMPTY = "Room cannot be empty";
     public static final String UNEXPECTED_SERVER_ERROR = "Unexpected server error";
+    public static final String UNREADABLE_REQUEST_BODY = "Malformed or unreadable request body";
+    public static final String VALIDATION_FAILED = "Validation failed";
 
     public static final String COOLDOWN_WAIT_SECONDS = "Please wait %d seconds before trying again.";
 

@@ -3,16 +3,27 @@ package com.game_service.common.exception;
 import com.game_service.common.dto.ErrorResponse;
 import com.game_service.common.enums.ErrorCode;
 import com.game_service.common.factory.ErrorFactory;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import static com.game_service.config.ResourceMessageConstants.COOLDOWN_WAIT_SECONDS;
 import static com.game_service.config.ResourceMessageConstants.UNEXPECTED_SERVER_ERROR;
+import static com.game_service.config.ResourceMessageConstants.UNREADABLE_REQUEST_BODY;
+import static com.game_service.config.ResourceMessageConstants.VALIDATION_FAILED;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -20,6 +31,45 @@ import static com.game_service.config.ResourceMessageConstants.UNEXPECTED_SERVER
 public class GlobalExceptionHandler {
 
     private final ErrorFactory factory;
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidation(MethodArgumentNotValidException e, HttpServletRequest request) {
+        Map<String, List<String>> details = e.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.groupingBy(
+                        FieldError::getField,
+                        Collectors.mapping(FieldError::getDefaultMessage, Collectors.toList())
+                ));
+
+        String message = details.values().stream()
+                .flatMap(List::stream)
+                .findFirst()
+                .orElse(VALIDATION_FAILED);
+
+        log.warn("Validation error on {}: {}", request.getRequestURI(), details);
+
+        return ErrorResponse.builder()
+                .errorCode(ErrorCode.BAD_REQUEST)
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(message)
+                .timestamp(Instant.now())
+                .path(request.getRequestURI())
+                .details(details)
+                .build();
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleNotReadable(HttpMessageNotReadableException e, HttpServletRequest request) {
+        log.warn("Malformed request on {}: {}", request.getRequestURI(), e.getMessage());
+        return ErrorResponse.builder()
+                .errorCode(ErrorCode.BAD_REQUEST)
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(UNREADABLE_REQUEST_BODY)
+                .timestamp(Instant.now())
+                .path(request.getRequestURI())
+                .build();
+    }
 
     @ExceptionHandler(GameValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
