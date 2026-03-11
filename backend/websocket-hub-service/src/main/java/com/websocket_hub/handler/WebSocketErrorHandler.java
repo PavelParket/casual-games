@@ -32,7 +32,7 @@ public class WebSocketErrorHandler {
 
         log(exception, code, category, webSocketContext);
 
-        sendErrorToClient(webSocketContext, code, message);
+        sendErrorToClient(webSocketContext, code, category, message);
 
         if (forceClose || category == ErrorCategory.PROTOCOL) {
             CloseStatus closeStatus = forceClose ? CloseStatus.SERVER_ERROR : CloseStatus.POLICY_VIOLATION;
@@ -57,20 +57,17 @@ public class WebSocketErrorHandler {
 
     private void log(Exception exception, ErrorCode errorCode, ErrorCategory category, WebSocketContext context) {
         switch (category) {
-            case GAME -> log.warn(
-                    "Game error: errorCode={}, roomId={}, message={}",
-                    errorCode, context.roomId(), exception.getMessage()
-            );
-            case BUSINESS -> log.warn(
-                    "Business error: errorCode={}, userId={}, message={}",
-                    errorCode, context.user().guid(), exception.getMessage()
-            );
+            case GAME ->
+                    log.warn("Game error: errorCode={}, roomId={}, message={}", errorCode, context.roomId(), exception.getMessage());
+            case BUSINESS ->
+                    log.warn("Business error: errorCode={}, userId={}, message={}", errorCode, context.user().guid(), exception.getMessage());
+
             case SYSTEM ->
                     log.error("System error: errorCode={}, userId={}", errorCode, context.user().guid(), exception);
         }
     }
 
-    private void sendErrorToClient(WebSocketContext context, ErrorCode errorCode, String clientMessage) {
+    private void sendErrorToClient(WebSocketContext context, ErrorCode errorCode, ErrorCategory errorCategory, String clientMessage) {
         UserInternalResponse user = context.user();
 
         if (user == null || user.guid() == null) {
@@ -92,12 +89,13 @@ public class WebSocketErrorHandler {
                 .roomId(context.roomId())
                 .message(clientMessage)
                 .errorCode(errorCode)
+                .errorCategory(errorCategory)
                 .timestamp(Instant.now())
                 .build();
 
         sessionManager.sendToSession(clientSession, errorMessage);
 
-        log.info("Error sent to client: userId={}, roomId={}, errorCode={}", user.guid(), context.roomId(), errorCode);
+        log.info("Error sent to client: userId={}, roomId={}, errorCode={}, errorCategory={}", user.guid(), context.roomId(), errorCode, errorCategory);
     }
 
     private void closeSession(WebSocketSession session, CloseStatus status) {

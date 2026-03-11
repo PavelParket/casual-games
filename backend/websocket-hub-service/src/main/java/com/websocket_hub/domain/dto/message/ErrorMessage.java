@@ -1,5 +1,6 @@
 package com.websocket_hub.domain.dto.message;
 
+import com.websocket_hub.domain.enums.ErrorCategory;
 import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.ErrorEvent;
@@ -24,6 +25,8 @@ public record ErrorMessage(
         String message,
 
         ErrorCode errorCode,
+
+        ErrorCategory errorCategory,
 
         Instant timestamp
 
