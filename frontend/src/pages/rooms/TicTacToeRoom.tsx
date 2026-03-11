@@ -7,10 +7,12 @@ import type { AppDispatch, RootState } from "../../store/store";
 import type { ErrorWSMessage, TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage } from "../../utils/SecurityUtils";
 import { findByGuid } from "../../store/slices/UserSlice";
-import { getPlayersBets, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/TicTacToeRoomSlice";
+import { clearError, getPlayersBets, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/TicTacToeRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { errorCodeMessages, SYSTEM_ERROR_CODES } from "../../models/constants/ErrorCodeMessages";
+import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
+import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
 
 export default function TicTacToeRoom() {
    const { getInverseIcon } = useThemedIcon();
@@ -26,6 +28,8 @@ export default function TicTacToeRoom() {
    const { toasts, showGameToast, dismiss } = useGameToast();
    const { showSystemToast } = useSystemToastContext();
 
+   useSliceErrorToast((state: RootState) => state.ticTacToeRoom.errors, clearError);
+
    const [ready, setReady] = useState<boolean>(false);
 
    const [isGame, setIsGame] = useState(false);
@@ -38,8 +42,6 @@ export default function TicTacToeRoom() {
 
    const [betInput, setBetInput] = useState<string>("");
    const [betPlaced, setBetPlaced] = useState<boolean>(false);
-
-   const processedMessageRef = useRef<TicTacToeGameMessage | null>(null);
 
    useEffect(() => {
       if (!roomId || !guid) {
@@ -132,108 +134,24 @@ export default function TicTacToeRoom() {
       setIsGame(false);
    }, [showGameToast]);
 
-   useEffect(() => {
-      if (!isConnected || !message || !guid || !roomId || !room) {
-         return;
-      }
-
-      if (message === processedMessageRef.current) {
-         return;
-      }
-
-      processedMessageRef.current = message;
-
-      switch (message.event) {
-         case "JOIN":
-            showGameToast(validateToastMessage(message.message ?? "Player joined the room"), "game-info");
-            dispatch(syncRoomState({ roomId, roomType: room.type }));
-            break;
-
-         case "LEAVE":
-            if (isGame) {
-               processReset();
-            } else {
-               showGameToast(validateToastMessage(message.message ?? "Player left the room"), "game-info");
-            }
-
-            dispatch(syncRoomState({ roomId, roomType: room.type }));
-            break;
-
-         case "START":
-            processStart(message);
-            showGameToast(message.message ?? "Game started", "game-info");
-            break;
-
-         case "READY":
-            showGameToast(validateToastMessage(message.message ?? "Player is ready"), "game-info");
-            dispatch(syncReadiness({ roomId, roomType: room.type }));
-            break;
-
-         case "MOVE":
-            processMove(message);
-            break;
-
-         case "WINNER_X":
-         case "WINNER_O": {
-            processWin(message);
-            break;
-         }
-
-         case "DRAW":
-            processDraw(message);
-            break;
-
-         case "BET":
-            if (message.fromUserId === guid) {
-               setBetPlaced(true);
-               showGameToast(validateToastMessage(message.message ?? "Your bet has been accepted!"), "game-info");
-            } else {
-               showGameToast(validateToastMessage(message.message ?? "Opponent placed a bet"), "game-info");
-            }
-
-            dispatch(syncReadiness({ roomId, roomType: room.type }));
-            break;
-
-         case "BET_REJECT":
-            setBetPlaced(false);
-            showGameToast(validateToastMessage(message.message ?? "Your bet has been rejected") || errorCodeMessages.BET_REJECT, "game-error");
-            dispatch(getPlayersBets({ roomId }));
-            break;
-
-         case "BET_OUTBID":
-            setBetPlaced(false);
-            setReady(false);
-            showGameToast(validateToastMessage(message.message ?? "You have been outbid! Please place a new bet."), "game-error");
-
-            dispatch(syncReadiness({ roomId, roomType: room.type }));
-            break;
-
-         case "BET_REQUIRED":
-            showGameToast(validateToastMessage(message.message ?? "You must place a bet before becoming ready"), "game-error");
-            break;
-
-         case "START_FAILED":
-            setReady(false);
-            showGameToast(errorCodeMessages.START_FAILED, "game-error");
-            break;
-
-         case "ERROR": {
-            const errorMsg = message as ErrorWSMessage;
-            const code = errorMsg.errorCode ?? "";
-            const text = errorCodeMessages[code] ?? errorCodeMessages.DEFAULT;
-
-            if (SYSTEM_ERROR_CODES.has(code)) {
-               showSystemToast(text, "system-error");
-            } else {
-               showGameToast(text, "game-error");
-            }
-            break;
-         }
-
-         default:
-            break;
-      }
-   }, [dispatch, guid, isConnected, isGame, message, processDraw, processMove, processReset, processStart, processWin, room, roomId, showGameToast, showSystemToast]);
+   useTicTacToeMessages({
+      message,
+      isConnected,
+      guid,
+      roomId,
+      room,
+      isGame,
+      processStart,
+      processMove,
+      processWin,
+      processDraw,
+      processReset,
+      setBetPlaced,
+      setReady,
+      showGameToast,
+      showSystemToast,
+      dispatch,
+   });
 
    const handleMove = (index: number) => {
       if (!guid || !room || !isConnected || board[index] || winner || currentPlayerSymbol !== mySymbol) {

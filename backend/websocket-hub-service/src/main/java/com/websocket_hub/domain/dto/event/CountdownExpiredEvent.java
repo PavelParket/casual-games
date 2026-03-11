@@ -1,4 +1,4 @@
-package com.websocket_hub.event;
+package com.websocket_hub.domain.dto.event;
 
 import java.util.UUID;
 
