@@ -134,6 +134,7 @@ export function useTicTacToeMessages({
             case "START_FAILED":
                 setReady(false);
                 showGameToast(errorCodeMessages.START_FAILED, "game-error");
+                dispatch(syncReadiness({ roomId, roomType: room.type }));
                 break;
 
             case "ERROR": {

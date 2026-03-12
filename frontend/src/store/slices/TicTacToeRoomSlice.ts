@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { PlayerBet, Room, RoomStatus, RoomType } from "../../models/Room";
 import { RoomAPI, TicTacToeRoomApi } from "../../api/WsHubApi";
-import type { AxiosError } from "axios";
 import type { RootState } from "../store";
 import { extractErrorResponse, extractErrorResponseMessage, type ErrorResponse } from "../../helpers/ApiErrorHelper";
 
