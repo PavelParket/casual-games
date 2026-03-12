@@ -79,7 +79,7 @@ public class GameServiceClient {
             TicTacToeGameMessage body = response.getBody();
 
             if (body == null) {
-                throw new GameException(ErrorCode.INVALID_MOVE);
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
             }
 
             log.info("Move processed successfully: roomId={}", request.roomId());
