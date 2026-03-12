@@ -3,7 +3,7 @@ import type { PlayerBet, Room, RoomStatus, RoomType } from "../../models/Room";
 import { RoomAPI, TicTacToeRoomApi } from "../../api/WsHubApi";
 import type { AxiosError } from "axios";
 import type { RootState } from "../store";
-import { extractErrorResponseMessage } from "../../helpers/ApiErrorHelper";
+import { extractErrorResponse, extractErrorResponseMessage, type ErrorResponse } from "../../helpers/ApiErrorHelper";
 
 export const TTT_OPERATION_REYS = {
     GET_ROOM: "getRoom",
@@ -26,14 +26,14 @@ export interface TicTacToeRoomState {
 
 // ------------------ Thunks ------------------
 
-export const getRoomById = createAsyncThunk<Room, { roomId: string }, { rejectValue: string }>(
+export const getRoomById = createAsyncThunk<Room, { roomId: string }, { rejectValue: ErrorResponse }>(
     "ticTacToeRoom/getRoom",
     async ({ roomId }, { rejectWithValue }) => {
         try {
             const response = await RoomAPI.getRoomById(roomId);
             return response.data;
         } catch (err: unknown) {
-            return rejectWithValue(extractErrorResponseMessage(err, "Failed to fetch room"));
+            return rejectWithValue(extractErrorResponse(err, "Failed to fetch room"));
         }
     }
 );
@@ -138,7 +138,7 @@ const ticTacToeRoomSlice = createSlice({
                 state.room = action.payload;
             })
             .addCase(getRoomById.rejected, (state, action) => {
-                state.errors[TTT_OPERATION_REYS.GET_ROOM] = action.payload ?? "Failed to fetch room";
+                state.errors[TTT_OPERATION_REYS.GET_ROOM] = action.payload?.message ?? "Failed to fetch room";
             })
 
             .addCase(getRoomStatus.pending, (state) => {

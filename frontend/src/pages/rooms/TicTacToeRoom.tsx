@@ -1,18 +1,20 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Input, ToastContainer, Typography, useThemedIcon } from "../../ui";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import type { ErrorWSMessage, TicTacToeGameMessage } from "../../models/WsMessage";
+import type { TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage } from "../../utils/SecurityUtils";
 import { findByGuid } from "../../store/slices/UserSlice";
-import { clearError, getPlayersBets, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/TicTacToeRoomSlice";
+import { clearError, getRoomById } from "../../store/slices/TicTacToeRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
-import { errorCodeMessages, SYSTEM_ERROR_CODES } from "../../models/constants/ErrorCodeMessages";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
 import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
+import type { ErrorResponse } from "../../helpers/ApiErrorHelper";
+import LoadingPage from "../LoadingPage";
+import InvalidRoomPage from "./InvalidRoomPage";
 
 export default function TicTacToeRoom() {
    const { getInverseIcon } = useThemedIcon();
@@ -43,19 +45,39 @@ export default function TicTacToeRoom() {
    const [betInput, setBetInput] = useState<string>("");
    const [betPlaced, setBetPlaced] = useState<boolean>(false);
 
+   const [isLoading, setIsLoading] = useState(true);
+   const [roomError, setRoomError] = useState<ErrorResponse | null>(null);
+
    useEffect(() => {
       if (!roomId || !guid) {
          navigate("/rooms");
          return;
       }
 
-      dispatch(getRoomById({ roomId }));
-      dispatch(findByGuid(guid));
+      setIsLoading(true);
+      setRoomError(null);
+
+      Promise.all([
+         dispatch(getRoomById({ roomId })),
+         dispatch(findByGuid(guid)),
+      ])
+         .then(([roomResult]) => {
+            if (getRoomById.rejected.match(roomResult)) {
+               setRoomError(roomResult.payload ?? { message: "Failed to fetch room" });
+            }
+         })
+         .finally(() => setIsLoading(false));
    }, [dispatch, guid, navigate, roomId]);
+
+   const handleDisconnect = useCallback(() => {
+      showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
+      setTimeout(() => navigate("/rooms"), 5000);
+   }, [navigate, showSystemToast]);
 
    const { isConnected, message, send } = useWebSocket<TicTacToeGameMessage>(
       roomId,
       room?.type,
+      handleDisconnect,
    );
 
    const processReset = useCallback(() => {
@@ -219,17 +241,15 @@ export default function TicTacToeRoom() {
       navigate("/rooms");
    };
 
-   // todo: Сделать нормальный компонент-страницу с сообщение о несуществующей комнате
-   if (!roomId || !room) {
+   if (isLoading) {
       return (
-         <Container>
-            <Card style={{ textAlign: "center", padding: "2rem" }}>
-               <Typography variant="h2">Invalid Room</Typography>
-               <Button onClick={() => navigate("/rooms")} style={{ marginTop: "1rem" }}>
-                  Back to Rooms
-               </Button>
-            </Card>
-         </Container>
+         <LoadingPage />
+      );
+   }
+
+   if (roomError) {
+      return (
+         <InvalidRoomPage message={roomError.message} />
       );
    }
 
@@ -246,7 +266,7 @@ export default function TicTacToeRoom() {
          <Container>
             <Box style={{ padding: "2rem 0" }}>
                <Typography variant="h2" style={{ textAlign: "center" }}>
-                  Tic-Tac-Toe: {room.name}
+                  Tic-Tac-Toe: {room?.name}
                </Typography>
             </Box>
 

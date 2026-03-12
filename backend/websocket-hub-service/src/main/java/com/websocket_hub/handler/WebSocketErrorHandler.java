@@ -59,6 +59,7 @@ public class WebSocketErrorHandler {
         switch (category) {
             case GAME ->
                     log.warn("Game error: errorCode={}, roomId={}, message={}", errorCode, context.roomId(), exception.getMessage());
+
             case BUSINESS ->
                     log.warn("Business error: errorCode={}, userId={}, message={}", errorCode, context.user().guid(), exception.getMessage());
 

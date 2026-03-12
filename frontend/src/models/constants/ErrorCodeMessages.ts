@@ -19,5 +19,3 @@ export const errorCodeMessages: Record<string, string> = {
 
     DEFAULT: "Something went wrong. Please try again",
 };
-
-export const SYSTEM_ERROR_CODES = new Set(["SERVICE_UNAVAILABLE", "INTERNAL_ERROR"]);
