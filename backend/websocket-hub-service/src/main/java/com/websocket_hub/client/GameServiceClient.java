@@ -3,6 +3,8 @@ package com.websocket_hub.client;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
+import com.websocket_hub.domain.enums.ErrorCode;
+import com.websocket_hub.exception.GameException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,36 +32,39 @@ public class GameServiceClient {
     // TicTacToe
     // -------------------------------------------------------------------------
 
-    public Optional<TicTacToeGameMessage> startGame(TicTacToeGameMessage request) {
+    public TicTacToeGameMessage startGame(TicTacToeGameMessage request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
                 .path("/game/t-t-t/start")
                 .build()
                 .toUri();
 
-        log.info("Calling game-service to start game: {}", request);
+        log.info("Calling game-service to start tic-tac-toe game: {}", request);
 
         try {
             ResponseEntity<TicTacToeGameMessage> response = restTemplate.exchange(
-                    new RequestEntity<>(
-                            request,
-                            HttpMethod.POST,
-                            uri
-                    ),
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
                     TicTacToeGameMessage.class
             );
 
-            log.info("Game started successfully: {}", response);
+            TicTacToeGameMessage body = response.getBody();
 
-            return Optional.ofNullable(response.getBody());
+            if (body == null) {
+                throw new GameException(ErrorCode.GAME_NOT_STARTED);
+            }
+
+            log.info("Game started successfully: roomId={}", request.roomId());
+
+            return body;
+        } catch (GameException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to start game {}", e.getMessage());
-            throw new RuntimeException("Failed to start game" + e.getMessage(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
 
-    public Optional<TicTacToeGameMessage> processMove(TicTacToeGameMessage request) {
+    public TicTacToeGameMessage processMove(TicTacToeGameMessage request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
-                .path("game/t-t-t/move")
+                .path("/game/t-t-t/move")
                 .build()
                 .toUri();
 
@@ -67,19 +72,23 @@ public class GameServiceClient {
 
         try {
             ResponseEntity<TicTacToeGameMessage> response = restTemplate.exchange(
-                    new RequestEntity<>(
-                            request,
-                            HttpMethod.POST,
-                            uri
-                    ), TicTacToeGameMessage.class
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    TicTacToeGameMessage.class
             );
 
-            log.info("Move processed successfully: {}", response);
+            TicTacToeGameMessage body = response.getBody();
 
-            return Optional.ofNullable(response.getBody());
+            if (body == null) {
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
+            }
+
+            log.info("Move processed successfully: roomId={}", request.roomId());
+
+            return body;
+        } catch (GameException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to process move {}", e.getMessage());
-            throw new RuntimeException("Failed to process move" + e.getMessage(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
 
@@ -127,9 +136,10 @@ public class GameServiceClient {
             log.info("Race started successfully: roomId={}, race={}", request.roomId(), response.getBody());
 
             return Optional.ofNullable(response.getBody());
+        } catch (GameException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to start race: {}", e.getMessage());
-            throw new RuntimeException("Failed to start race: " + e.getMessage(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
 

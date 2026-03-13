@@ -5,6 +5,7 @@ import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.entity.RoomMetadata;
 import com.websocket_hub.domain.enums.RoomType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
 import java.util.Map;
@@ -42,7 +43,7 @@ public class RoomFactory implements ObjectFactory<Room> {
     public Room createFromMetadata(RoomMetadata roomMetadata,
                                    Set<UUID> participantsFromRedis,
                                    Map<UUID, ClientSession> participantsFromSessions) {
-        Set<ClientSession> participants = (participantsFromRedis == null || participantsFromRedis.isEmpty())
+        Set<ClientSession> participants = (CollectionUtils.isEmpty(participantsFromRedis))
                 ? ConcurrentHashMap.newKeySet()
                 : participantsFromRedis.stream()
                 .map(participantsFromSessions::get)
@@ -61,7 +62,7 @@ public class RoomFactory implements ObjectFactory<Room> {
     public Set<Room> createSetFromMetadata(Set<RoomMetadata> roomMetadata,
                                            Map<UUID, Set<UUID>> participantsFromRedis,
                                            Map<UUID, ClientSession> participantsFromSessions) {
-        if (roomMetadata == null || roomMetadata.isEmpty()) {
+        if (CollectionUtils.isEmpty(roomMetadata)) {
             return Set.of();
         }
 

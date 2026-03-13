@@ -7,13 +7,13 @@ import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
 import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
+import com.websocket_hub.domain.dto.event.CountdownExpiredEvent;
 import com.websocket_hub.domain.dto.message.HorseRaceGameMessage;
 import com.websocket_hub.domain.entity.HorseRaceGamePreset;
 import com.websocket_hub.domain.entity.HorseRacePlayerBet;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
-import com.websocket_hub.event.CountdownExpiredEvent;
 import com.websocket_hub.manager.HorseRaceGameRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.HorseRaceGameMessageMapper;
@@ -48,13 +48,14 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
     public HorseRaceGameRoomHandler(
             SessionManager sessionManager,
             HorseRaceGameRoomManager roomManager,
+            WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
             HorseRaceGameMessageMapper horseRaceMessageMapper,
             HorseRaceTransactionMapper horseRaceTransactionMapper,
             GameServiceClient gameServiceClient,
             BankServiceClient bankServiceClient
     ) {
-        super(sessionManager, roomManager);
+        super(sessionManager, roomManager, errorHandler);
         this.messageDeserializer = messageDeserializer;
         this.horseRaceMessageMapper = horseRaceMessageMapper;
         this.horseRaceTransactionMapper = horseRaceTransactionMapper;
@@ -63,7 +64,7 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
     }
 
     @Override
-    public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
 
         if (payload.isBlank()) {

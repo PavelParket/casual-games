@@ -48,6 +48,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
     public DeCoderGameRoomHandler(
             SessionManager sessionManager,
             DeCoderGameRoomManager roomManager,
+            WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
             DeCoderGameMessageMapper deCoderGameMessageMapper,
             DeCoderGameTransactionMapper deCoderGameTransactionMapper,
@@ -55,7 +56,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
             BankServiceClient bankServiceClient
 
     ) {
-        super(sessionManager, roomManager);
+        super(sessionManager, roomManager, errorHandler);
         this.messageDeserializer = messageDeserializer;
         this.deCoderGameMessageMapper = deCoderGameMessageMapper;
         this.deCoderGameTransactionMapper = deCoderGameTransactionMapper;
@@ -64,7 +65,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
     }
 
     @Override
-    public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         if (message.getPayload().isEmpty()) {
             return;
         }

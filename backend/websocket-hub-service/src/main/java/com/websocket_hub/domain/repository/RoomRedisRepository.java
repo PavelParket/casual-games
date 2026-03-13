@@ -10,6 +10,7 @@ import com.websocket_hub.serializer.RedisSerializer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Map;
 import java.util.Objects;
@@ -39,12 +40,31 @@ public class RoomRedisRepository {
             String hashKey = roomMetadata.getId().toString();
             String value = redisSerializer.serialize(roomMetadata);
 
-            redisHashRepository.put(key, hashKey, value);
+            redisHashRepository.add(key, hashKey, value);
 
             log.info("Saved room metadata: roomId={}, type={}", roomMetadata.getId(), roomMetadata.getType());
         } catch (Exception e) {
-            log.error("Failed to serialize room {} metadata: {}", roomMetadata.getId(), e.getMessage());
+            log.error("Failed to serialize saved room {} metadata: {}", roomMetadata.getId(), e.getMessage());
             throw new RuntimeException("Failed to save room metadata", e);
+        }
+    }
+
+    public void update(RoomMetadata roomMetadata, RoomTypeRedisKey roomTypeRedisKey) {
+        try {
+            String key = roomTypeRedisKey.getRedisKey();
+            String hashKey = roomMetadata.getId().toString();
+            String value = redisSerializer.serialize(roomMetadata);
+
+            boolean saved = redisHashRepository.update(key, hashKey, value);
+
+            if (!saved) {
+                throw new RuntimeException("Room not saved");
+            }
+
+            log.info("Updated room metadata: roomId={}, type={}", roomMetadata.getId(), roomMetadata.getType());
+        } catch (Exception e) {
+            log.error("Failed to serialize updated room {} metadata: {}", roomMetadata.getId(), e.getMessage());
+            throw new RuntimeException("Failed to update room metadata", e);
         }
     }
 
@@ -70,6 +90,10 @@ public class RoomRedisRepository {
         try {
             String key = roomTypeRedisKey.getRedisKey();
             Map<String, String> rooms = redisHashRepository.findAll(key);
+
+            if (CollectionUtils.isEmpty(rooms)) {
+                return Set.of();
+            }
 
             return rooms.values().stream()
                     .map(room -> redisDeserializer.deserialize(room, RoomMetadata.class))
@@ -99,7 +123,7 @@ public class RoomRedisRepository {
         }
 
         roomMetadata.setParticipantCount(count.intValue());
-        save(roomMetadata, roomTypeRedisKey);
+        update(roomMetadata, roomTypeRedisKey);
 
         log.info("Updated participant count: roomId={}, count={}", roomId, count);
     }
@@ -182,7 +206,6 @@ public class RoomRedisRepository {
             log.info("Cleared all participants: roomId={}", roomId);
         } else {
             log.warn("No participants to clear: roomId={}", roomId);
-
         }
     }
 
@@ -195,8 +218,6 @@ public class RoomRedisRepository {
     public void deleteFullRoom(UUID roomId, RoomTypeRedisKey roomTypeRedisKey) {
         delete(roomId, roomTypeRedisKey);
         clearParticipants(roomId);
-
-        log.info("Completely deleted room: roomId={}, type={}", roomId, roomTypeRedisKey);
     }
 
     public void addParticipantAndUpdateCount(UUID roomId, UUID participantId, RoomTypeRedisKey roomTypeRedisKey) {

@@ -1,19 +1,26 @@
 package com.game_service.common.dto;
 
-import com.game_service.common.enums.ErrorType;
+import com.game_service.common.enums.ErrorCode;
 import lombok.Builder;
-import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 @Builder
 public record ErrorResponse(
-        ErrorType error,
+
+        ErrorCode errorCode,
 
         String message,
 
-        HttpStatus status,
+        int status,
 
-        Instant timestamp
+        Instant timestamp,
+
+        String path,
+
+        Map<String, List<String>> details
+
 ) {
 }

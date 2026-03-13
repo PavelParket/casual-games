@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import static com.game_service.config.ResourceMessageConstants.HORSE_RACE_NOT_FOUND;
 import static com.game_service.horse_race.util.HorseRaceGameUtils.SEGMENTS;
 
 @Service
@@ -95,7 +96,7 @@ public class HorseRaceGameService {
         horseRaceValidator.validateResult(request);
 
         HorseRace race = horseRaceRepository.findByRoomId(request.roomId())
-                .orElseThrow(() -> new GameValidationException("Race not found for room=" + request.roomId()));
+                .orElseThrow(() -> new GameValidationException(String.format(HORSE_RACE_NOT_FOUND, request.roomId())));
 
         race.setStatus(HorseRaceStatus.FINISHED);
 

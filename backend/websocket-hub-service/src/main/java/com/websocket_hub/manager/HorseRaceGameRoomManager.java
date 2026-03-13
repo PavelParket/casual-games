@@ -4,6 +4,7 @@ import com.websocket_hub.client.GameServiceClient;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
+import com.websocket_hub.domain.dto.event.CountdownExpiredEvent;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.HorseRaceGamePreset;
 import com.websocket_hub.domain.entity.HorseRacePlayerBet;
@@ -15,7 +16,6 @@ import com.websocket_hub.domain.enums.redis.RoomPresetRedisKey;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomPresetRedisRepository;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
-import com.websocket_hub.event.CountdownExpiredEvent;
 import com.websocket_hub.factory.HorseRacePlayerBetFactory;
 import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.helper.WebSocketHelper;
@@ -160,7 +160,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
 
             HorseRaceGamePreset preset = horseRaceGameMessageMapper.toPreset(createResponse);
 
-            presetRedisRepository.savePreset(room.getId(), preset, RoomPresetRedisKey.HORSE_RACE_PRESET);
+            presetRedisRepository.save(room.getId(), preset, RoomPresetRedisKey.HORSE_RACE_PRESET);
 
             log.info("Race preset created and saved for room={}: horseCount={}, odds={}", room.getId(), preset.horseCount(), preset.odds());
         } catch (Exception e) {
@@ -183,7 +183,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
         countdownServiceScheduler.cancelCountdown(roomId);
         countdownStartTimes.remove(roomId);
 
-        presetRedisRepository.deletePreset(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET);
+        presetRedisRepository.delete(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET);
 
         removeReadyPlayers(roomId);
         removePlayerBets(roomId);
@@ -251,11 +251,7 @@ public class HorseRaceGameRoomManager extends AbstractRoomManager {
     }
 
     public HorseRaceGamePreset getPreset(UUID roomId) {
-        return presetRedisRepository.getPreset(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET, HorseRaceGamePreset.class);
-    }
-
-    public void removePreset(UUID roomId) {
-        presetRedisRepository.deletePreset(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET);
+        return presetRedisRepository.get(roomId, RoomPresetRedisKey.HORSE_RACE_PRESET, HorseRaceGamePreset.class);
     }
 
     public void placeBet(UUID roomId, UserInternalResponse user, Integer horseIndex, BigDecimal amount) {

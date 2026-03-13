@@ -1,8 +1,8 @@
 package com.websocket_hub.provider;
 
-import com.websocket_hub.domain.enums.RoomType;
+import com.websocket_hub.exception.AuthenticationException;
+import com.websocket_hub.exception.NotFoundException;
 import com.websocket_hub.jwt.JwtProvider;
-import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.UUID;
+
+import static com.websocket_hub.config.ResourceMessageConstants.AUTHENTICATION_FAILED;
+import static com.websocket_hub.config.ResourceMessageConstants.ROOM_NOT_FOUND;
 
 @Component
 @RequiredArgsConstructor
@@ -25,13 +28,13 @@ public class DefaultIdentityProvider implements IdentityProvider {
         String guid = provider.getGuid(token);
 
         if (guid == null || guid.isBlank()) {
-            throw new JwtException("JWT token does not contain GUID!");
+            throw new AuthenticationException(AUTHENTICATION_FAILED);
         }
 
         try {
             return UUID.fromString(guid);
         } catch (IllegalArgumentException e) {
-            throw new JwtException("Malformed GUID inside JWT: " + guid, e);
+            throw new AuthenticationException(AUTHENTICATION_FAILED);
         }
     }
 
@@ -42,24 +45,14 @@ public class DefaultIdentityProvider implements IdentityProvider {
         String roomId = params.getFirst("roomId");
 
         if (roomId == null || roomId.isBlank()) {
-            throw new IllegalArgumentException("Missing room name parameter!");
+            throw new NotFoundException(ROOM_NOT_FOUND);
         }
 
-        return UUID.fromString(roomId);
-    }
-
-    @Override
-    public RoomType resolveRoomType(ServerHttpRequest request) {
-        /*var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
-
-        String roomType = params.getFirst("roomType");
-
-        if (roomType == null || roomType.isBlank()) {
-            throw new IllegalArgumentException("Missing room type parameter!");
+        try {
+            return UUID.fromString(roomId);
+        } catch (IllegalArgumentException e) {
+            throw new NotFoundException(ROOM_NOT_FOUND);
         }
-
-        return RoomType.valueOf(roomType);*/
-        return null;
     }
 
     @Override
@@ -69,11 +62,11 @@ public class DefaultIdentityProvider implements IdentityProvider {
         String token = params.getFirst("token");
 
         if (!provider.isToken(token)) {
-            throw new JwtException("Missing JWT token!");
+            throw new AuthenticationException(AUTHENTICATION_FAILED);
         }
 
         if (!provider.validate(token)) {
-            throw new JwtException("Invalid JWT token!");
+            throw new AuthenticationException(AUTHENTICATION_FAILED);
         }
 
         return token;

@@ -2,8 +2,10 @@ package com.websocket_hub.controller;
 
 import com.websocket_hub.domain.dto.RoomRequest;
 import com.websocket_hub.domain.dto.RoomResponse;
+import com.websocket_hub.domain.dto.RoomStatusResponse;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.service.RoomService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,8 +26,8 @@ public class RoomController {
     private final RoomService roomService;
 
     @GetMapping("/all")
-    public List<RoomResponse> getRooms() {
-        return roomService.getRooms();
+    public List<RoomResponse> getAll() {
+        return roomService.getAll();
     }
 
     @GetMapping("/type/{roomType}")
@@ -49,12 +51,17 @@ public class RoomController {
     }
 
     @PostMapping
-    public RoomResponse create(@RequestBody RoomRequest roomRequest) {
+    public RoomResponse create(@Valid @RequestBody RoomRequest roomRequest) {
         return roomService.create(roomRequest);
     }
 
     @GetMapping("{id}")
     public RoomResponse getById(@PathVariable UUID id) {
         return roomService.getById(id);
+    }
+
+    @GetMapping("status/{roomId}/{roomType}")
+    public RoomStatusResponse getStatus(@PathVariable UUID roomId, @PathVariable RoomType roomType) {
+        return roomService.getStatus(roomId, roomType);
     }
 }
