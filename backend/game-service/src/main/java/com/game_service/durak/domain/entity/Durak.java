@@ -64,7 +64,7 @@ public class Durak {
 
     @Transient
     @Builder.Default
-    private DurakEvent phase = DurakEvent.ATTACKING;
+    private DurakEvent event = DurakEvent.ATTACKING;
 
     @Transient
     private UUID currentActorId;
