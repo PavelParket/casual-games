@@ -1,7 +1,7 @@
 package com.game_service.durak.utils;
 
 import com.game_service.durak.domain.entity.Card;
-import com.game_service.durak.domain.entity.DurakMatch;
+import com.game_service.durak.domain.entity.Durak;
 import com.game_service.durak.domain.enums.CardRank;
 import com.game_service.durak.domain.enums.CardSuit;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class DurakGameUtils {
 
     private static final int INITIAL_HAND_SIZE = 6;
 
-    public static DurakMatch initialize(UUID roomId, UUID firstPlayerId, UUID secondPlayerId) {
+    public static Durak initialize(UUID roomId, UUID firstPlayerId, UUID secondPlayerId) {
         List<Card> deck = buildShuffledDeck();
 
         List<Card> firstHand = new ArrayList<>(deck.subList(0, INITIAL_HAND_SIZE));
@@ -41,8 +41,7 @@ public class DurakGameUtils {
 
         log.info("New durak match initialized: roomId={} trump={} firstAttacker={}", roomId, trumpCard, firstAttacker);
 
-        return DurakMatch.builder()
-                .gameId(UUID.randomUUID())
+        return Durak.builder()
                 .roomId(roomId)
                 .deck(deck)
                 .trumpCard(trumpCard)
@@ -54,14 +53,14 @@ public class DurakGameUtils {
                 .build();
     }
 
-    public static void dealCards(DurakMatch match) {
+    public static void dealCards(Durak match) {
         replenishHand(match, match.getAttackerId());
         replenishHand(match, match.getDefenderId());
 
-        log.info("Deal cards gameId={} deckRemaining={} attackerCards={} defenderCards={}", match.getGameId(), match.getDeck().size(), match.attackerHand().size(), match.defenderHand().size());
+        log.info("Deal cards gameId={} deckRemaining={} attackerCards={} defenderCards={}", match.getId(), match.getDeck().size(), match.attackerHand().size(), match.defenderHand().size());
     }
 
-    public static boolean isGameOver(DurakMatch match) {
+    public static boolean isGameOver(Durak match) {
         if (!match.isDeckEmpty()) {
             return false;
         }
@@ -70,7 +69,7 @@ public class DurakGameUtils {
                 .anyMatch(List::isEmpty);
     }
 
-    public static Optional<UUID> determineWinner(DurakMatch match) {
+    public static Optional<UUID> determineWinner(Durak match) {
         List<UUID> emptyHands = match.getHands().entrySet().stream()
                 .filter(hand -> hand.getValue().isEmpty())
                 .map(Map.Entry::getKey)
@@ -98,7 +97,7 @@ public class DurakGameUtils {
         return deck;
     }
 
-    private static void replenishHand(DurakMatch match, UUID playerId) {
+    private static void replenishHand(Durak match, UUID playerId) {
         List<Card> hand = match.getHands().get(playerId);
         List<Card> deck = match.getDeck();
 

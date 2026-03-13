@@ -1,6 +1,6 @@
 package com.game_service.durak.domain.enums;
 
-public enum DurakPhase {
+public enum DurakEvent {
 
     ATTACKING,
     DEFENDING,

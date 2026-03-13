@@ -2,10 +2,10 @@ package com.game_service.durak.validator;
 
 import com.game_service.common.exception.InvalidMoveException;
 import com.game_service.durak.domain.entity.Card;
-import com.game_service.durak.domain.entity.DurakMatch;
+import com.game_service.durak.domain.entity.Durak;
 import com.game_service.durak.domain.entity.TablePair;
 import com.game_service.durak.domain.enums.DurakAction;
-import com.game_service.durak.domain.enums.DurakPhase;
+import com.game_service.durak.domain.enums.DurakEvent;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.UUID;
 @Component
 public class DurakGameValidator {
 
-    public void validate(DurakMatch match, UUID playerId, DurakAction action, Card card) {
+    public void validate(Durak match, UUID playerId, DurakAction action, Card card) {
         if (!playerId.equals(match.getCurrentActorId())) {
             throw new InvalidMoveException("Not your turn. Current actor: " + match.getCurrentActorId());
         }
@@ -31,7 +31,7 @@ public class DurakGameValidator {
             }
         }
 
-        DurakPhase phase = match.getPhase();
+        DurakEvent phase = match.getPhase();
 
         switch (phase) {
             case ATTACKING -> validateAttacking(match, action, card);
@@ -42,7 +42,7 @@ public class DurakGameValidator {
         }
     }
 
-    private void validateAttacking(DurakMatch match, DurakAction action, Card card) {
+    private void validateAttacking(Durak match, DurakAction action, Card card) {
         switch (action) {
             case PLAY_CARD -> {
                 if (match.getTable().isEmpty()) {
@@ -66,7 +66,7 @@ public class DurakGameValidator {
         }
     }
 
-    private void validateDefending(DurakMatch match, DurakAction action, Card card) {
+    private void validateDefending(Durak match, DurakAction action, Card card) {
         switch (action) {
             case PLAY_CARD -> {
                 TablePair undefendedPair = match.getTable().stream()
@@ -85,7 +85,7 @@ public class DurakGameValidator {
         }
     }
 
-    private void validateThrowingMore(DurakMatch match, DurakAction action, Card card) {
+    private void validateThrowingMore(Durak match, DurakAction action, Card card) {
         switch (action) {
             case PLAY_CARD -> {
                 requireRankOnTable(match, card);
@@ -97,7 +97,7 @@ public class DurakGameValidator {
         }
     }
 
-    private void validatePickingUp(DurakMatch match, DurakAction action, Card card) {
+    private void validatePickingUp(Durak match, DurakAction action, Card card) {
         switch (action) {
             case PLAY_CARD -> {
                 requireRankOnTable(match, card);
@@ -109,7 +109,7 @@ public class DurakGameValidator {
         }
     }
 
-    private void requireRankOnTable(DurakMatch match, Card card) {
+    private void requireRankOnTable(Durak match, Card card) {
         boolean rankPresent = match.getTable().stream()
                 .anyMatch(pair ->
                         pair.attackCard().rank() == card.rank()
@@ -121,7 +121,7 @@ public class DurakGameValidator {
         }
     }
 
-    private void requireThrowInLimit(DurakMatch match) {
+    private void requireThrowInLimit(Durak match) {
         int defenderHandSize = match.defenderHand().size();
         int maxAllowed = Math.min(6, defenderHandSize);
 

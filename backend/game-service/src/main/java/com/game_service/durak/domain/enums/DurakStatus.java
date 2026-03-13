@@ -1,6 +1,6 @@
 package com.game_service.durak.domain.enums;
 
-public enum DurakMatchStatus {
+public enum DurakStatus {
 
     STARTED,
     WINNER,
