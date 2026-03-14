@@ -36,13 +36,18 @@ public class RoomHandler extends AppWebSocketHandler<RoomManager> {
 
     private final MessageDeserializer deserializer;
 
-    public RoomHandler(SessionManager sessionManager, RoomManager roomManager, MessageDeserializer messageDeserializer) {
-        super(sessionManager, roomManager);
+    public RoomHandler(
+            SessionManager sessionManager,
+            RoomManager roomManager,
+            WebSocketErrorHandler errorHandler,
+            MessageDeserializer messageDeserializer
+    ) {
+        super(sessionManager, roomManager, errorHandler);
         this.deserializer = messageDeserializer;
     }
 
     @Override
-    public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
 
         if (payload.isBlank()) {
