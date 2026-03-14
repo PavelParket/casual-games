@@ -21,20 +21,20 @@ public class RoomPresetRedisRepository {
 
     private final RedisDeserializer redisDeserializer;
 
-    public <T> void savePreset(UUID roomId, T preset, RoomPresetRedisKey presetRedisKey) {
+    public <T> void save(UUID roomId, T preset, RoomPresetRedisKey presetRedisKey) {
         try {
             String key = presetRedisKey.getRedisKey();
             String hashKey = roomId.toString();
             String value = redisSerializer.serialize(preset);
 
-            redisHashRepository.put(key, hashKey, value);
+            redisHashRepository.add(key, hashKey, value);
         } catch (Exception e) {
             log.error("Failed to save preset for room={}: {}", roomId, e.getMessage());
             throw new RuntimeException("Failed to save preset", e);
         }
     }
 
-    public <T> T getPreset(UUID roomId, RoomPresetRedisKey presetRedisKey, Class<T> clazz) {
+    public <T> T get(UUID roomId, RoomPresetRedisKey presetRedisKey, Class<T> clazz) {
         try {
             String key = presetRedisKey.getRedisKey();
             String hashKey = roomId.toString();
@@ -52,7 +52,7 @@ public class RoomPresetRedisRepository {
         }
     }
 
-    public void deletePreset(UUID roomId, RoomPresetRedisKey presetRedisKey) {
+    public void delete(UUID roomId, RoomPresetRedisKey presetRedisKey) {
         String key = presetRedisKey.getRedisKey();
         String hashKey = roomId.toString();
 

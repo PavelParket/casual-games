@@ -48,13 +48,14 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
     public HorseRaceGameRoomHandler(
             SessionManager sessionManager,
             HorseRaceGameRoomManager roomManager,
+            WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
             HorseRaceGameMessageMapper horseRaceMessageMapper,
             HorseRaceTransactionMapper horseRaceTransactionMapper,
             GameServiceClient gameServiceClient,
             BankServiceClient bankServiceClient
     ) {
-        super(sessionManager, roomManager);
+        super(sessionManager, roomManager, errorHandler);
         this.messageDeserializer = messageDeserializer;
         this.horseRaceMessageMapper = horseRaceMessageMapper;
         this.horseRaceTransactionMapper = horseRaceTransactionMapper;
@@ -63,7 +64,7 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
     }
 
     @Override
-    public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
 
         if (payload.isBlank()) {

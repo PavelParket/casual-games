@@ -45,13 +45,14 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
     public TicTacToeGameRoomHandler(
             SessionManager sessionManager,
             TicTacToeGameRoomManager roomManager,
+            WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
             TicTacToeGameMessageMapper ticTacToeGameMessageMapper,
             TicTacToeTransactionMapper ticTacToeTransactionMapper,
             GameServiceClient gameServiceClient,
             BankServiceClient bankServiceClient
     ) {
-        super(sessionManager, roomManager);
+        super(sessionManager, roomManager, errorHandler);
         this.messageDeserializer = messageDeserializer;
         this.ticTacToeGameMessageMapper = ticTacToeGameMessageMapper;
         this.ticTacToeTransactionMapper = ticTacToeTransactionMapper;
@@ -59,8 +60,9 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
         this.bankServiceClient = bankServiceClient;
     }
 
+
     @Override
-    public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
 
         if (payload.isBlank()) {
@@ -69,24 +71,24 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             return;
         }
 
-        try {
-            TicTacToeGameMessage ticTacToeGameMessage = messageDeserializer.deserialize(payload, TicTacToeGameMessage.class);
-            UUID roomId = WebSocketUtil.getRoomId(session);
-            UserInternalResponse user = WebSocketUtil.getUser(session);
+        TicTacToeGameMessage ticTacToeGameMessage = messageDeserializer.deserialize(payload, TicTacToeGameMessage.class);
+        UUID roomId = WebSocketUtil.getRoomId(session);
+        UserInternalResponse user = WebSocketUtil.getUser(session);
 
-            log.info("Received game message: {}", ticTacToeGameMessage);
+        if (ticTacToeGameMessage.event() == null) {
+            return;
+        }
 
-            switch (ticTacToeGameMessage.event()) {
-                case READY -> handlePlayerReady(roomId, user);
+        log.info("Received game message: {}", ticTacToeGameMessage);
 
-                case MOVE -> handleGameMove(ticTacToeGameMessage, roomId, user);
+        switch (ticTacToeGameMessage.event()) {
+            case READY -> handlePlayerReady(roomId, user);
 
-                case BET -> handlePlayerBet(ticTacToeGameMessage, roomId, user);
+            case MOVE -> handleGameMove(ticTacToeGameMessage, roomId, user);
 
-                default -> log.warn("Unhandled tic tac toe event: {}", ticTacToeGameMessage.event());
-            }
-        } catch (Exception e) {
-            log.error("Failed to handle game message", e);
+            case BET -> handlePlayerBet(ticTacToeGameMessage, roomId, user);
+
+            default -> log.warn("Unhandled tic tac toe event: {}", ticTacToeGameMessage.event());
         }
     }
 
@@ -107,7 +109,6 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
         if (roomManager.areBothPlayersReady(roomId)) {
             startGame(roomId);
-
             roomManager.removeReadyPlayers(roomId);
         }
     }
@@ -135,11 +136,9 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
                     players
             );
 
-            TicTacToeGameMessage startGameResponse = gameServiceClient.startGame(startGameRequest)
-                    .orElseThrow(() -> new RuntimeException("Empty state"));
+            TicTacToeGameMessage startGameResponse = gameServiceClient.startGame(startGameRequest);
 
             roomManager.broadcast(roomId, startGameResponse);
-
             roomManager.updateRoomStatus(roomId, RoomStatus.IN_PROGRESS);
         } catch (IllegalStateException e) {
             log.warn("Cannot start game in room {}: {}", roomId, e.getMessage());
@@ -155,67 +154,70 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
                     e.getMessage()
             ));
         } catch (Exception e) {
-            log.error("Failed to start game in room {}", roomId);
+            log.error("Failed to start game in room {}: {}", roomId, e.getMessage(), e);
+
+            roomManager.removeReadyPlayers(roomId);
+
+            roomManager.broadcast(roomId, ticTacToeGameMessageMapper.toResponse(
+                    MessageType.SYSTEM,
+                    TicTacToeGameEvent.START_FAILED,
+                    null,
+                    null,
+                    roomId,
+                    "Game service unavailable, please try again"
+            ));
         }
     }
 
     private void handleGameMove(TicTacToeGameMessage ticTacToeGameMessage, UUID roomId, UserInternalResponse user) {
-        try {
-            Map<UUID, String> players = roomManager.getPlayersInRoom(roomId).stream()
-                    .collect(Collectors.toMap(
-                            ClientSession::getGuid,
-                            ClientSession::getUsername
-                    ));
+        Map<UUID, String> players = roomManager.getPlayersInRoom(roomId).stream()
+                .collect(Collectors.toMap(
+                        ClientSession::getGuid,
+                        ClientSession::getUsername
+                ));
 
-            TicTacToeGameMessage moveGameRequest = ticTacToeGameMessageMapper.toGameMoveMessage(
-                    MessageType.SYSTEM,
-                    ticTacToeGameMessage.event(),
-                    user.guid(),
-                    roomId,
-                    ticTacToeGameMessage.board(),
-                    ticTacToeGameMessage.cell(),
-                    ticTacToeGameMessage.currentPlayerSymbol(),
-                    ticTacToeGameMessage.playersSymbols(),
-                    players
-            );
+        TicTacToeGameMessage moveGameRequest = ticTacToeGameMessageMapper.toGameMoveMessage(
+                MessageType.SYSTEM,
+                ticTacToeGameMessage.event(),
+                user.guid(),
+                roomId,
+                ticTacToeGameMessage.board(),
+                ticTacToeGameMessage.cell(),
+                ticTacToeGameMessage.currentPlayerSymbol(),
+                ticTacToeGameMessage.playersSymbols(),
+                players
+        );
 
-            TicTacToeGameMessage moveGameResponse = gameServiceClient.processMove(moveGameRequest)
-                    .orElseThrow(() -> new RuntimeException(("Empty state")));
+        TicTacToeGameMessage moveGameResponse = gameServiceClient.processMove(moveGameRequest);
 
-            if (moveGameResponse.winner() != null
-                    && (TicTacToeGameEvent.WINNER_X.equals(moveGameResponse.event())
-                    || TicTacToeGameEvent.WINNER_O.equals(moveGameResponse.event()))) {
-                processGameEnd(roomId, moveGameResponse);
-            } else {
-                roomManager.broadcast(roomId, moveGameResponse);
-            }
-        } catch (Exception e) {
-            log.error("Failed to process move in room {}", roomId, e);
+        TicTacToeGameEvent event = moveGameResponse.event();
+
+        if (TicTacToeGameEvent.WINNER_X.equals(event)
+                || TicTacToeGameEvent.WINNER_O.equals(event)
+                || TicTacToeGameEvent.DRAW.equals(event)) {
+            processEndGame(roomId, moveGameResponse);
+        } else {
+            roomManager.broadcast(roomId, moveGameResponse);
         }
     }
 
-    private void processGameEnd(UUID roomId, TicTacToeGameMessage moveGameResponse) {
+    private void processEndGame(UUID roomId, TicTacToeGameMessage moveGameResponse) {
         roomManager.broadcast(roomId, moveGameResponse);
 
         try {
-            List<PlayerBet> bets = roomManager.getPlayerBets(roomId);
+            if (!TicTacToeGameEvent.DRAW.equals(moveGameResponse.event())) {
+                List<PlayerBet> bets = roomManager.getPlayerBets(roomId);
 
-            TicTacToeTransactionInternalRequest transactionRequest = ticTacToeTransactionMapper.toInternalRequest(
-                    roomId,
-                    roomManager.getRoomType(),
-                    bets,
-                    moveGameResponse.winner()
-            );
+                TicTacToeTransactionInternalRequest transactionRequest = ticTacToeTransactionMapper.toInternalRequest(
+                        roomId,
+                        roomManager.getRoomType(),
+                        bets,
+                        moveGameResponse.winner()
+                );
 
-            TicTacToeTransactionInternalResponse transactionResponse = bankServiceClient.sendTicTacToeGameResults(transactionRequest);
+                TicTacToeTransactionInternalResponse transactionResponse = bankServiceClient.sendTicTacToeGameResults(transactionRequest);
 
-            if (transactionResponse != null) {
-                log.info("Bank service response: status={}, message={}, transactions={}",
-                        transactionResponse.status(),
-                        transactionResponse.message(),
-                        transactionResponse.transactionsCreated());
-            } else {
-                log.warn("Bank service returned null response for room {}", roomId);
+                log.info("Bank service response: status={}, message={}, transactions={}", transactionResponse.status(), transactionResponse.message(), transactionResponse.transactionsCreated());
             }
         } catch (Exception e) {
             log.error("Failed to process game results for room {}", roomId, e);
@@ -226,6 +228,23 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
     }
 
     private void handlePlayerBet(TicTacToeGameMessage ticTacToeGameMessage, UUID roomId, UserInternalResponse user) {
-        roomManager.markPlayerBet(roomId, user, ticTacToeGameMessage.bet());
+        try {
+            roomManager.markPlayerBet(roomId, user, ticTacToeGameMessage.bet());
+        } catch (IllegalArgumentException e) {
+            log.warn("Bet rejected for user={} in room={}: {}", user.username(), roomId, e.getMessage());
+
+            ClientSession client = sessionManager.getByGuid(user.guid());
+
+            if (client != null) {
+                sessionManager.sendToSession(client, ticTacToeGameMessageMapper.toResponse(
+                        MessageType.SYSTEM,
+                        TicTacToeGameEvent.BET_REJECT,
+                        null,
+                        user.guid(),
+                        roomId,
+                        e.getMessage()
+                ));
+            }
+        }
     }
 }

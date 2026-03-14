@@ -17,20 +17,23 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.game_service.config.ResourceMessageConstants.DECODER_GAME_ALREADY_IN_PROGRESS;
+import static com.game_service.config.ResourceMessageConstants.GAME_STARTED;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class DeCoderGameService {
 
-    private final DeCoderGameValidator deCoderGameValidator;
-
-    private final DeCoderGameMapper deCoderGameMapper;
+    private static final int BITSET_SIZE = 10_000;
 
     private final Map<UUID, String> secretCodes = new ConcurrentHashMap<>();
 
     private final Map<UUID, BitSet> roomState = new ConcurrentHashMap<>();
 
-    private static final int BITSET_SIZE = 10_000;
+    private final DeCoderGameValidator deCoderGameValidator;
+
+    private final DeCoderGameMapper deCoderGameMapper;
 
     public DeCoderGameResponse processStart(DeCoderGameRequest request) {
         deCoderGameValidator.validateStart(request);
@@ -41,7 +44,7 @@ public class DeCoderGameService {
         String existingCode = secretCodes.putIfAbsent(request.roomId(), newCode);
 
         if (existingCode != null) {
-            throw new InvalidMoveException("Game already in progress in this room");
+            throw new InvalidMoveException(DECODER_GAME_ALREADY_IN_PROGRESS);
         }
 
         roomState.put(request.roomId(), new BitSet(BITSET_SIZE));
@@ -52,7 +55,7 @@ public class DeCoderGameService {
                 MessageType.SYSTEM,
                 DeCoderGameEvent.START,
                 request.roomId(),
-                "Game started!",
+                GAME_STARTED,
                 request.player());
     }
 

@@ -15,10 +15,11 @@ import Rooms from './pages/rooms/Rooms'
 import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
 import DeCoderRoom from './pages/rooms/decoder/DeCoderRoom'
 import Profile from './pages/Profile'
-//import ExperimentalPage from './pages/ExperimentalPage'
+import ExperimentalPage from './pages/ExperimentalPage'
 import LoadingPage from './pages/LoadingPage'
 import HorseRaceRoom from './pages/rooms/HorseRaceRoom'
 import { useScrollbarVisibility } from './hooks/useScrollbarVisibility'
+import { SystemToastProvider } from './providers/SystemToastContext'
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
@@ -48,42 +49,44 @@ export default function App() {
    return (
       <BrowserRouter>
          <ThemeProvider>
-            {!isInitialized ? (
-               <Routes>
-                  <Route element={<Layout centered />}>
-                     <Route path="*" element={<LoadingPage />} />
-                  </Route>
-               </Routes>
-            ) : (
-               <Routes>
-                  {/* Public Routes */}
-                  <Route element={<Layout />}>
-                     <Route path="/" element={<Home />} />
-                  </Route>
-
-                  {/* Protected Routes */}
-                  <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>
-                     <Route element={<Layout />}>
-                        <Route path="/profile" element={<Profile />} />
-                        <Route path="/rooms" element={<Rooms />} />
-                        <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
-                        <Route path="/room/horse-race/:roomName/:roomId" element={<HorseRaceRoom />} />
-                        <Route path="/room/de-coder/:roomName/:roomId" element={<DeCoderRoom />} />
-
-
-                        {/* ===== Experiment Room ===== 
-                        <Route path="/ws" element={<ExperimentalPage />} />*/}
+            <SystemToastProvider>
+               {!isInitialized ? (
+                  <Routes>
+                     <Route element={<Layout centered />}>
+                        <Route path="*" element={<LoadingPage />} />
                      </Route>
-                  </Route>
+                  </Routes>
+               ) : (
+                  <Routes>
+                     {/* Public Routes */}
+                     <Route element={<Layout />}>
+                        <Route path="/" element={<Home />} />
+                     </Route>
 
-                  {/* Auth and Error Routes*/}
-                  <Route element={<Layout centered />}>
-                     <Route path="/register" element={<Register />} />
-                     <Route path="/login" element={<Login />} />
-                     <Route path="/forbidden" element={<Forbidden />} />
-                     <Route path="*" element={<NotFound />} />
-                  </Route>
-               </Routes>)}
+                     {/* ===== Experiment Room ===== */}
+                     <Route path="/ws" element={<ExperimentalPage />} />
+
+                     {/* Protected Routes */}
+                     <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>
+                        <Route element={<Layout />}>
+                           <Route path="/profile" element={<Profile />} />
+                           <Route path="/rooms" element={<Rooms />} />
+                           <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
+                           <Route path="/room/horse-race/:roomName/:roomId" element={<HorseRaceRoom />} />
+                           <Route path="/room/de-coder/:roomName/:roomId" element={<DeCoderRoom />} />
+
+                        </Route>
+                     </Route>
+
+                     {/* Auth and Error Routes*/}
+                     <Route element={<Layout centered />}>
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/forbidden" element={<Forbidden />} />
+                        <Route path="*" element={<NotFound />} />
+                     </Route>
+                  </Routes>)}
+            </SystemToastProvider>
          </ThemeProvider>
       </BrowserRouter>
    );

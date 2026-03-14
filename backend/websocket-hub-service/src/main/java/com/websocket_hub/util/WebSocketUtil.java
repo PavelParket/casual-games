@@ -1,7 +1,6 @@
 package com.websocket_hub.util;
 
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
-import com.websocket_hub.domain.enums.RoomType;
 import lombok.experimental.UtilityClass;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -21,10 +20,6 @@ public class WebSocketUtil {
 
     public UUID getRoomId(WebSocketSession session) {
         return (UUID) session.getAttributes().get("roomId");
-    }
-
-    public RoomType getRoomType(WebSocketSession session) {
-        return (RoomType) session.getAttributes().get("roomType");
     }
 
     public static Instant getConnectedAt(WebSocketSession session) {
