@@ -123,7 +123,7 @@ public class RoomRedisRepository {
         }
 
         roomMetadata.setParticipantCount(count.intValue());
-        save(roomMetadata, roomTypeRedisKey);
+        update(roomMetadata, roomTypeRedisKey);
 
         log.info("Updated participant count: roomId={}, count={}", roomId, count);
     }
