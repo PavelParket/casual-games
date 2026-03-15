@@ -4,6 +4,7 @@ import com.game_service.durak.domain.entity.Card;
 import com.game_service.durak.domain.entity.Durak;
 import com.game_service.durak.domain.enums.CardRank;
 import com.game_service.durak.domain.enums.CardSuit;
+import com.game_service.durak.domain.enums.DurakStatus;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -22,6 +23,8 @@ public class DurakGameUtils {
 
     private static final int INITIAL_HAND_SIZE = 6;
 
+    private static final Comparator<Card> HAND_ORDER = Comparator.comparing(Card::suit).thenComparing(Card::rank);
+
     public static Durak initialize(UUID roomId, UUID firstPlayerId, UUID secondPlayerId) {
         List<Card> deck = buildShuffledDeck();
 
@@ -31,10 +34,12 @@ public class DurakGameUtils {
 
         Card trumpCard = drawPile.getLast();
 
-        Map<UUID, List<Card>> hands = new HashMap<>() {{
-            put(firstPlayerId, firstHand);
-            put(secondPlayerId, secondHand);
-        }};
+        firstHand.sort(HAND_ORDER);
+        secondHand.sort(HAND_ORDER);
+
+        Map<UUID, List<Card>> hands = new HashMap<>();
+        hands.put(firstPlayerId, firstHand);
+        hands.put(secondPlayerId, secondHand);
 
         UUID firstAttacker = determineFirstAttacker(firstPlayerId, firstHand, secondPlayerId, secondHand, trumpCard.suit());
         UUID firstDefender = firstAttacker.equals(firstPlayerId) ? secondPlayerId : firstPlayerId;
@@ -43,7 +48,9 @@ public class DurakGameUtils {
 
         return Durak.builder()
                 .roomId(roomId)
-                .deck(deck)
+                .status(DurakStatus.STARTED)
+                .players(List.of(firstPlayerId, secondPlayerId))
+                .deck(drawPile)
                 .trumpCard(trumpCard)
                 .trumpSuit(trumpCard.suit())
                 .hands(hands)
@@ -104,6 +111,8 @@ public class DurakGameUtils {
         while (hand.size() < INITIAL_HAND_SIZE && !deck.isEmpty()) {
             hand.add(deck.removeFirst());
         }
+
+        hand.sort(HAND_ORDER);
     }
 
     private static UUID determineFirstAttacker(UUID firstPlayerId,

@@ -17,7 +17,7 @@ public record DurakPlayerViewResponse(
 
         UUID playerGuid,
 
-        DurakEvent phase,
+        DurakEvent event,
 
         List<Card> myCards,
 
