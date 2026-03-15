@@ -4,16 +4,14 @@ import com.bank_service.domain.dto.TicTacToeTransactionRequest;
 import com.bank_service.domain.entity.PlayerBet;
 import com.bank_service.exception.BusinessValidationException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-@Configuration
+@Component
 @Slf4j
 public class TicTacToeBusinessValidator implements GameBusinessValidator<TicTacToeTransactionRequest> {
-
-    private final BigDecimal MAX_BALANCE = new BigDecimal("999999999.99");
 
     @Override
     public void validate(TicTacToeTransactionRequest request) {
