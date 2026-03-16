@@ -2,11 +2,11 @@ package com.game_service.durak.validator;
 
 import com.game_service.common.exception.InvalidMoveException;
 import com.game_service.durak.domain.dto.DurakGameRequest;
-import com.game_service.durak.domain.entity.Card;
 import com.game_service.durak.domain.entity.Durak;
-import com.game_service.durak.domain.entity.TablePair;
+import com.game_service.durak.domain.entity.DurakCard;
+import com.game_service.durak.domain.entity.DurakTablePair;
 import com.game_service.durak.domain.enums.DurakAction;
-import com.game_service.durak.domain.enums.DurakEvent;
+import com.game_service.durak.domain.enums.DurakPhase;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -24,14 +24,14 @@ public class DurakGameValidator {
         }
 
         if (request.action() == DurakAction.PLAY_CARD) {
-            List<Card> hand = game.getHands().get(request.currentActorId());
+            List<DurakCard> hand = game.getHands().get(request.currentActorId());
 
             if (hand == null || !hand.contains(request.card())) {
                 throw new InvalidMoveException("Card " + request.card() + " is not in your hand");
             }
         }
 
-        DurakEvent phase = game.getEvent();
+        DurakPhase phase = game.getPhase();
 
         switch (phase) {
             case ATTACKING -> validateAttacking(game, request.action(), request.card());
@@ -42,7 +42,7 @@ public class DurakGameValidator {
         }
     }
 
-    private void validateAttacking(Durak game, DurakAction action, Card card) {
+    private void validateAttacking(Durak game, DurakAction action, DurakCard card) {
         switch (action) {
             case PLAY_CARD -> {
                 if (game.getTable().isEmpty()) {
@@ -56,7 +56,7 @@ public class DurakGameValidator {
                     throw new InvalidMoveException("Cannot declare бита on an empty table");
                 }
 
-                boolean allDefended = game.getTable().stream().allMatch(TablePair::isDefended);
+                boolean allDefended = game.getTable().stream().allMatch(DurakTablePair::isDefended);
 
                 if (!allDefended) {
                     throw new InvalidMoveException("Cannot declare бита: there are undefended cards on the table");
@@ -66,10 +66,10 @@ public class DurakGameValidator {
         }
     }
 
-    private void validateDefending(Durak game, DurakAction action, Card card) {
+    private void validateDefending(Durak game, DurakAction action, DurakCard card) {
         switch (action) {
             case PLAY_CARD -> {
-                TablePair undefendedPair = game.getTable().stream()
+                DurakTablePair undefendedPair = game.getTable().stream()
                         .filter(p -> !p.isDefended())
                         .findFirst()
                         .orElseThrow(() -> new InvalidMoveException("No undefended attack card on the table to defend against"));
@@ -85,7 +85,7 @@ public class DurakGameValidator {
         }
     }
 
-    private void validateThrowingMore(Durak game, DurakAction action, Card card) {
+    private void validateThrowingMore(Durak game, DurakAction action, DurakCard card) {
         switch (action) {
             case PLAY_CARD -> {
                 requireRankOnTable(game, card);
@@ -97,7 +97,7 @@ public class DurakGameValidator {
         }
     }
 
-    private void validatePickingUp(Durak game, DurakAction action, Card card) {
+    private void validatePickingUp(Durak game, DurakAction action, DurakCard card) {
         switch (action) {
             case PLAY_CARD -> {
                 requireRankOnTable(game, card);
@@ -109,7 +109,7 @@ public class DurakGameValidator {
         }
     }
 
-    private void requireRankOnTable(Durak game, Card card) {
+    private void requireRankOnTable(Durak game, DurakCard card) {
         boolean rankPresent = game.getTable().stream()
                 .anyMatch(pair ->
                         pair.attackCard().rank() == card.rank()

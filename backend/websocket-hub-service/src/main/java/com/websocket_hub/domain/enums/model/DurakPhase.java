@@ -1,6 +1,6 @@
-package com.game_service.durak.domain.enums;
+package com.websocket_hub.domain.enums.model;
 
-public enum DurakEvent {
+public enum DurakPhase {
 
     ATTACKING,
     DEFENDING,

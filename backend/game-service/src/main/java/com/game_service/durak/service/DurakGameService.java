@@ -4,11 +4,11 @@ import com.game_service.common.exception.NotFoundException;
 import com.game_service.durak.domain.dto.DurakGameRequest;
 import com.game_service.durak.domain.dto.DurakGameResponse;
 import com.game_service.durak.domain.dto.DurakPlayerViewResponse;
-import com.game_service.durak.domain.entity.Card;
 import com.game_service.durak.domain.entity.Durak;
-import com.game_service.durak.domain.entity.TablePair;
+import com.game_service.durak.domain.entity.DurakCard;
+import com.game_service.durak.domain.entity.DurakTablePair;
 import com.game_service.durak.domain.enums.DurakAction;
-import com.game_service.durak.domain.enums.DurakEvent;
+import com.game_service.durak.domain.enums.DurakPhase;
 import com.game_service.durak.domain.enums.DurakStatus;
 import com.game_service.durak.mapper.DurakGameMapper;
 import com.game_service.durak.repository.DurakRepository;
@@ -27,10 +27,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.game_service.config.ResourceMessageConstants.DURAK_GAME_NOT_FOUND;
-import static com.game_service.durak.domain.enums.DurakEvent.ATTACKING;
-import static com.game_service.durak.domain.enums.DurakEvent.DEFENDING;
-import static com.game_service.durak.domain.enums.DurakEvent.PICKING_UP;
-import static com.game_service.durak.domain.enums.DurakEvent.THROWING_MORE;
+import static com.game_service.durak.domain.enums.DurakPhase.ATTACKING;
+import static com.game_service.durak.domain.enums.DurakPhase.DEFENDING;
+import static com.game_service.durak.domain.enums.DurakPhase.PICKING_UP;
+import static com.game_service.durak.domain.enums.DurakPhase.THROWING_MORE;
 
 @Service
 @RequiredArgsConstructor
@@ -71,11 +71,11 @@ public class DurakGameService {
         synchronized (game) {
             durakGameValidator.validate(game, request);
 
-            applyMove(game, request);
-
-            if (DurakEvent.GAME_OVER.equals(game.getEvent())) {
+            if (DurakPhase.GAME_OVER.equals(game.getPhase())) {
                 processResult(game);
             }
+
+            applyMove(game, request);
 
             return buildResponse(game);
         }
@@ -102,7 +102,7 @@ public class DurakGameService {
     }
 
     private DurakPlayerViewResponse buildPlayerView(Durak game, UUID playerId, UUID opponentId) {
-        List<Card> myCards = List.copyOf(game.getHands().get(playerId));
+        List<DurakCard> myCards = List.copyOf(game.getHands().get(playerId));
         Integer opponentCardCount = game.getHands().get(opponentId).size();
         Boolean isMyTurn = playerId.equals(game.getCurrentActorId());
         List<DurakAction> availableActions = getAvailableActions(game, playerId);
@@ -111,17 +111,17 @@ public class DurakGameService {
     }
 
     public void applyMove(Durak game, DurakGameRequest request) {
-        switch (game.getEvent()) {
+        switch (game.getPhase()) {
             case ATTACKING -> applyAttacking(game, request.action(), request.card());
             case DEFENDING -> applyDefending(game, request.action(), request.card());
             case THROWING_MORE -> applyThrowingMore(game, request.action(), request.card());
             case PICKING_UP -> applyPickingUp(game, request.action(), request.card());
-            default -> throw new IllegalStateException("Cannot apply non-playable event: " + game.getEvent());
+            default -> throw new IllegalStateException("Cannot apply non-playable phase: " + game.getPhase());
         }
 
         game.setLastActionAt(Instant.now());
 
-        log.info("Move applied gameId={} newEvent={} boutNumber={}", game.getId(), game.getEvent(), game.getBoutNumber());
+        log.info("Move applied gameId={} newEvent={} boutNumber={}", game.getId(), game.getPhase(), game.getBoutNumber());
     }
 
     private List<DurakAction> getAvailableActions(Durak game, UUID playerId) {
@@ -129,7 +129,7 @@ public class DurakGameService {
             return List.of();
         }
 
-        return switch (game.getEvent()) {
+        return switch (game.getPhase()) {
             case ATTACKING -> availableAttackingActions(game);
             case DEFENDING -> List.of(DurakAction.PLAY_CARD, DurakAction.TAKE_CARDS);
             case THROWING_MORE, PICKING_UP -> List.of(DurakAction.PLAY_CARD, DurakAction.PASS);
@@ -137,11 +137,11 @@ public class DurakGameService {
         };
     }
 
-    private void applyAttacking(Durak game, DurakAction action, Card card) {
+    private void applyAttacking(Durak game, DurakAction action, DurakCard card) {
         switch (action) {
             case PLAY_CARD -> {
                 removeFromHand(game, game.getAttackerId(), card);
-                game.getTable().add(TablePair.attack(card));
+                game.getTable().add(DurakTablePair.attack(card));
                 transition(game, DEFENDING, game.getDefenderId());
             }
             case PASS -> executeBoutEnd(game, false);
@@ -149,12 +149,12 @@ public class DurakGameService {
         }
     }
 
-    private void applyDefending(Durak game, DurakAction action, Card card) {
+    private void applyDefending(Durak game, DurakAction action, DurakCard card) {
         switch (action) {
             case PLAY_CARD -> {
                 removeFromHand(game, game.getDefenderId(), card);
 
-                List<TablePair> table = game.getTable();
+                List<DurakTablePair> table = game.getTable();
 
                 for (int i = 0; i < table.size(); i++) {
                     if (!table.get(i).isDefended()) {
@@ -163,7 +163,7 @@ public class DurakGameService {
                     }
                 }
 
-                boolean allDefended = table.stream().allMatch(TablePair::isDefended);
+                boolean allDefended = table.stream().allMatch(DurakTablePair::isDefended);
 
                 if (allDefended) {
                     transition(game, THROWING_MORE, game.getAttackerId());
@@ -174,11 +174,11 @@ public class DurakGameService {
         }
     }
 
-    private void applyThrowingMore(Durak game, DurakAction action, Card card) {
+    private void applyThrowingMore(Durak game, DurakAction action, DurakCard card) {
         switch (action) {
             case PLAY_CARD -> {
                 removeFromHand(game, game.getAttackerId(), card);
-                game.getTable().add(TablePair.attack(card));
+                game.getTable().add(DurakTablePair.attack(card));
                 transition(game, DEFENDING, game.getDefenderId());
             }
             case PASS -> executeBoutEnd(game, false);
@@ -186,11 +186,11 @@ public class DurakGameService {
         }
     }
 
-    private void applyPickingUp(Durak game, DurakAction action, Card card) {
+    private void applyPickingUp(Durak game, DurakAction action, DurakCard card) {
         switch (action) {
             case PLAY_CARD -> {
                 removeFromHand(game, game.getAttackerId(), card);
-                game.getTable().add(TablePair.attack(card));
+                game.getTable().add(DurakTablePair.attack(card));
             }
             case PASS -> {
                 transferTableCardsToDefender(game);
@@ -219,7 +219,7 @@ public class DurakGameService {
     }
 
     private void transferTableCardsToDefender(Durak game) {
-        List<Card> defenderHand = game.defenderHand();
+        List<DurakCard> defenderHand = game.defenderHand();
 
         game.getTable().forEach(pair -> {
             defenderHand.add(pair.attackCard());
@@ -241,18 +241,18 @@ public class DurakGameService {
     private void finalizeGameOver(Durak game) {
         Optional<UUID> winner = DurakGameUtils.determineWinner(game);
         game.setWinnerId(winner.orElse(null));
-        game.setEvent(DurakEvent.GAME_OVER);
+        game.setPhase(DurakPhase.GAME_OVER);
 
         log.info("Game over gameId={} winner={} boutNumber={}", game.getId(), game.getWinnerId(), game.getBoutNumber());
     }
 
-    private void transition(Durak game, DurakEvent newPhase, UUID nextActor) {
-        game.setEvent(newPhase);
+    private void transition(Durak game, DurakPhase newPhase, UUID nextActor) {
+        game.setPhase(newPhase);
         game.setCurrentActorId(nextActor);
     }
 
-    private void removeFromHand(Durak game, UUID playerId, Card card) {
-        List<Card> hand = game.getHands().get(playerId);
+    private void removeFromHand(Durak game, UUID playerId, DurakCard card) {
+        List<DurakCard> hand = game.getHands().get(playerId);
         boolean removed = hand.remove(card);
 
         if (!removed) {
@@ -264,7 +264,7 @@ public class DurakGameService {
         List<DurakAction> actions = new ArrayList<>();
         actions.add(DurakAction.PLAY_CARD);
 
-        boolean canPass = !game.getTable().isEmpty() && game.getTable().stream().allMatch(TablePair::isDefended);
+        boolean canPass = !game.getTable().isEmpty() && game.getTable().stream().allMatch(DurakTablePair::isDefended);
 
         if (canPass) {
             actions.add(DurakAction.PASS);

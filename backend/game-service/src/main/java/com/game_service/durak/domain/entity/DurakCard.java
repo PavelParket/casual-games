@@ -1,18 +1,18 @@
 package com.game_service.durak.domain.entity;
 
-import com.game_service.durak.domain.enums.CardRank;
-import com.game_service.durak.domain.enums.CardSuit;
+import com.game_service.durak.domain.enums.DurakCardRank;
+import com.game_service.durak.domain.enums.DurakCardSuit;
 import lombok.Builder;
 
 @Builder
-public record Card(
+public record DurakCard(
 
-        CardRank rank,
+        DurakCardRank rank,
 
-        CardSuit suit
+        DurakCardSuit suit
 ) {
 
-    public boolean beats(Card other, CardSuit trumpSuit) {
+    public boolean beats(DurakCard other, DurakCardSuit trumpSuit) {
         if (this.suit == other.suit) {
             return this.rank.strength() > other.rank.strength();
         }

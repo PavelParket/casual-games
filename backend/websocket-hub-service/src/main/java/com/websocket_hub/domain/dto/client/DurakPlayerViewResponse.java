@@ -1,10 +1,10 @@
-package com.game_service.durak.domain.dto;
+package com.websocket_hub.domain.dto.client;
 
-import com.game_service.durak.domain.entity.DurakCard;
-import com.game_service.durak.domain.entity.DurakTablePair;
-import com.game_service.durak.domain.enums.DurakAction;
-import com.game_service.durak.domain.enums.DurakCardSuit;
-import com.game_service.durak.domain.enums.DurakPhase;
+import com.websocket_hub.domain.entity.DurakCard;
+import com.websocket_hub.domain.entity.DurakTablePair;
+import com.websocket_hub.domain.enums.model.DurakAction;
+import com.websocket_hub.domain.enums.model.DurakCardSuit;
+import com.websocket_hub.domain.enums.model.DurakPhase;
 import lombok.Builder;
 
 import java.util.List;

@@ -1,5 +1,7 @@
 package com.websocket_hub.client;
 
+import com.websocket_hub.domain.dto.client.DurakGameInternalRequest;
+import com.websocket_hub.domain.dto.client.DurakGameInternalResponse;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
@@ -161,6 +163,70 @@ public class GameServiceClient {
         } catch (Exception e) {
             log.error("Failed to finish race: {}", e.getMessage());
             throw new RuntimeException("Failed to finish race: " + e.getMessage(), e);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Durak
+    // -------------------------------------------------------------------------
+
+    public DurakGameInternalResponse startDurakGame(DurakGameInternalRequest request) {
+        URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
+                .path("/game/durak/start")
+                .build()
+                .toUri();
+
+        log.info("Calling game-service to start Durak game: roomId={}, players={}", request.roomId(), request.players());
+
+        try {
+            ResponseEntity<DurakGameInternalResponse> response = restTemplate.exchange(
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    DurakGameInternalResponse.class
+            );
+
+            DurakGameInternalResponse body = response.getBody();
+
+            if (body == null) {
+                throw new GameException(ErrorCode.GAME_NOT_STARTED);
+            }
+
+            log.info("Durak game started: gameId={}, roomId={}", body.id(), request.roomId());
+
+            return body;
+        } catch (GameException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
+        }
+    }
+
+    public DurakGameInternalResponse processDurakMove(DurakGameInternalRequest request) {
+        URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
+                .path("/game/durak/move")
+                .build()
+                .toUri();
+
+        log.info("Calling game-service for Durak move: gameId={}, actor={}, action={}, card={}", request.id(), request.currentActorId(), request.action(), request.card());
+
+        try {
+            ResponseEntity<DurakGameInternalResponse> response = restTemplate.exchange(
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    DurakGameInternalResponse.class
+            );
+
+            DurakGameInternalResponse body = response.getBody();
+
+            if (body == null) {
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
+            }
+
+            log.info("Durak move processed: gameId={}, isGameOver={}, winner={}", body.id(), body.isGameOver(), body.winnerId());
+
+            return body;
+        } catch (GameException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
 }

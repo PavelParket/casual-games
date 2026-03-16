@@ -1,6 +1,7 @@
 package com.websocket_hub.helper;
 
 import com.websocket_hub.domain.context.WebSocketContext;
+import com.websocket_hub.domain.dto.message.Message;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.EventType;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -93,5 +96,43 @@ public class WebSocketHelper {
                 .session(session)
                 .connectedAt(WebSocketUtil.getConnectedAt(session))
                 .build();
+    }
+
+    public void sendToSession(UUID playerGuid, Message<? extends EventType> message) {
+        ClientSession client = sessionManager.getByGuid(playerGuid);
+
+        if (client == null) {
+            log.warn("Cannot send message — session not found: playerGuid={}", playerGuid);
+            return;
+        }
+
+        sessionManager.sendToSession(client, message);
+    }
+
+    public void broadcastToSessions(Set<ClientSession> clients, Message<? extends EventType> message) {
+        if (clients == null || clients.isEmpty()) {
+            return;
+        }
+
+        List<Thread> threads = new ArrayList<>();
+
+        for (ClientSession client : clients) {
+            if (client == null) {
+                continue;
+            }
+
+            Thread thread = Thread.ofVirtual().start(() -> sessionManager.sendToSession(client, message));
+
+            threads.add(thread);
+        }
+
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Interrupted during broadcast to sessions");
+            }
+        }
     }
 }

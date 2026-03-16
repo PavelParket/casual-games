@@ -1,9 +1,9 @@
 package com.game_service.durak.utils;
 
-import com.game_service.durak.domain.entity.Card;
 import com.game_service.durak.domain.entity.Durak;
-import com.game_service.durak.domain.enums.CardRank;
-import com.game_service.durak.domain.enums.CardSuit;
+import com.game_service.durak.domain.entity.DurakCard;
+import com.game_service.durak.domain.enums.DurakCardRank;
+import com.game_service.durak.domain.enums.DurakCardSuit;
 import com.game_service.durak.domain.enums.DurakStatus;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,21 +23,21 @@ public class DurakGameUtils {
 
     private static final int INITIAL_HAND_SIZE = 6;
 
-    private static final Comparator<Card> HAND_ORDER = Comparator.comparing(Card::suit).thenComparing(Card::rank);
+    private static final Comparator<DurakCard> HAND_ORDER = Comparator.comparing(DurakCard::suit).thenComparing(DurakCard::rank);
 
     public static Durak initialize(UUID roomId, UUID firstPlayerId, UUID secondPlayerId) {
-        List<Card> deck = buildShuffledDeck();
+        List<DurakCard> deck = buildShuffledDeck();
 
-        List<Card> firstHand = new ArrayList<>(deck.subList(0, INITIAL_HAND_SIZE));
-        List<Card> secondHand = new ArrayList<>(deck.subList(INITIAL_HAND_SIZE, INITIAL_HAND_SIZE * 2));
-        List<Card> drawPile = new ArrayList<>(deck.subList(INITIAL_HAND_SIZE * 2, deck.size()));
+        List<DurakCard> firstHand = new ArrayList<>(deck.subList(0, INITIAL_HAND_SIZE));
+        List<DurakCard> secondHand = new ArrayList<>(deck.subList(INITIAL_HAND_SIZE, INITIAL_HAND_SIZE * 2));
+        List<DurakCard> drawPile = new ArrayList<>(deck.subList(INITIAL_HAND_SIZE * 2, deck.size()));
 
-        Card trumpCard = drawPile.getLast();
+        DurakCard trumpCard = drawPile.getLast();
 
         firstHand.sort(HAND_ORDER);
         secondHand.sort(HAND_ORDER);
 
-        Map<UUID, List<Card>> hands = new HashMap<>();
+        Map<UUID, List<DurakCard>> hands = new HashMap<>();
         hands.put(firstPlayerId, firstHand);
         hands.put(secondPlayerId, secondHand);
 
@@ -90,12 +90,12 @@ public class DurakGameUtils {
                 .findFirst();
     }
 
-    private static List<Card> buildShuffledDeck() {
-        List<Card> deck = new ArrayList<>(DECK_SIZE);
+    private static List<DurakCard> buildShuffledDeck() {
+        List<DurakCard> deck = new ArrayList<>(DECK_SIZE);
 
-        for (CardSuit suit : CardSuit.values()) {
-            for (CardRank rank : CardRank.values()) {
-                deck.add(new Card(rank, suit));
+        for (DurakCardSuit suit : DurakCardSuit.values()) {
+            for (DurakCardRank rank : DurakCardRank.values()) {
+                deck.add(new DurakCard(rank, suit));
             }
         }
 
@@ -105,8 +105,8 @@ public class DurakGameUtils {
     }
 
     private static void replenishHand(Durak match, UUID playerId) {
-        List<Card> hand = match.getHands().get(playerId);
-        List<Card> deck = match.getDeck();
+        List<DurakCard> hand = match.getHands().get(playerId);
+        List<DurakCard> deck = match.getDeck();
 
         while (hand.size() < INITIAL_HAND_SIZE && !deck.isEmpty()) {
             hand.add(deck.removeFirst());
@@ -116,13 +116,13 @@ public class DurakGameUtils {
     }
 
     private static UUID determineFirstAttacker(UUID firstPlayerId,
-                                               List<Card> firstHand,
+                                               List<DurakCard> firstHand,
                                                UUID secondPlayerId,
-                                               List<Card> secondHand,
-                                               CardSuit trumpSuit) {
+                                               List<DurakCard> secondHand,
+                                               DurakCardSuit trumpSuit) {
 
-        Optional<Card> firstPlayerLowest = lowestTrump(firstHand, trumpSuit);
-        Optional<Card> secondPlayerLowest = lowestTrump(secondHand, trumpSuit);
+        Optional<DurakCard> firstPlayerLowest = lowestTrump(firstHand, trumpSuit);
+        Optional<DurakCard> secondPlayerLowest = lowestTrump(secondHand, trumpSuit);
 
         if (firstPlayerLowest.isEmpty() && secondPlayerLowest.isEmpty()) {
             return Math.random() < 0.5 ? firstPlayerId : secondPlayerId;
@@ -141,7 +141,7 @@ public class DurakGameUtils {
         return compare <= 0 ? firstPlayerId : secondPlayerId;
     }
 
-    private static Optional<Card> lowestTrump(List<Card> hand, CardSuit trumpSuit) {
+    private static Optional<DurakCard> lowestTrump(List<DurakCard> hand, DurakCardSuit trumpSuit) {
         return hand.stream()
                 .filter(card -> card.suit() == trumpSuit)
                 .min(Comparator.comparingInt(card -> card.rank().strength()));

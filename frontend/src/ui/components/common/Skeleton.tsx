@@ -3,7 +3,7 @@ import "../styles/skeleton.css";
 import { classNames } from "../../utils/classNames";
 
 type SkeletonProps = {
-    variant?: "text" | "circular" | "rectangular" | "card";
+    variant?: "text" | "circular" | "rectangular" | "durakCard";
     width?: CSSProperties["width"];
     height?: CSSProperties["height"];
     style?: CSSProperties;

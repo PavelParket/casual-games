@@ -1,7 +1,7 @@
 package com.game_service.durak.domain.entity;
 
-import com.game_service.durak.domain.enums.CardSuit;
-import com.game_service.durak.domain.enums.DurakEvent;
+import com.game_service.durak.domain.enums.DurakCardSuit;
+import com.game_service.durak.domain.enums.DurakPhase;
 import com.game_service.durak.domain.enums.DurakStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -64,7 +64,7 @@ public class Durak {
 
     @Transient
     @Builder.Default
-    private DurakEvent event = DurakEvent.ATTACKING;
+    private DurakPhase phase = DurakPhase.ATTACKING;
 
     @Transient
     private UUID currentActorId;
@@ -77,21 +77,21 @@ public class Durak {
 
     @Transient
     @Builder.Default
-    private List<Card> deck = new ArrayList<>();
+    private List<DurakCard> deck = new ArrayList<>();
 
     @Transient
     @Builder.Default
-    private Map<UUID, List<Card>> hands = new HashMap<>();
+    private Map<UUID, List<DurakCard>> hands = new HashMap<>();
 
     @Transient
     @Builder.Default
-    private List<TablePair> table = new ArrayList<>();
+    private List<DurakTablePair> table = new ArrayList<>();
 
     @Transient
-    private Card trumpCard;
+    private DurakCard trumpCard;
 
     @Transient
-    private CardSuit trumpSuit;
+    private DurakCardSuit trumpSuit;
 
     @Transient
     @Builder.Default
@@ -101,15 +101,15 @@ public class Durak {
     @Builder.Default
     private Instant lastActionAt = Instant.now();
 
-    public List<Card> currentActorHand() {
+    public List<DurakCard> currentActorHand() {
         return hands.get(currentActorId);
     }
 
-    public List<Card> attackerHand() {
+    public List<DurakCard> attackerHand() {
         return hands.get(attackerId);
     }
 
-    public List<Card> defenderHand() {
+    public List<DurakCard> defenderHand() {
         return hands.get(defenderId);
     }
 
