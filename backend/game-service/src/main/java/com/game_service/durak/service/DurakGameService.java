@@ -114,9 +114,13 @@ public class DurakGameService {
     public void applyMove(Durak game, DurakGameRequest request) {
         switch (game.getPhase()) {
             case ATTACKING -> applyAttacking(game, request.action(), request.card());
+
             case DEFENDING -> applyDefending(game, request.action(), request.card());
+
             case THROWING_MORE -> applyThrowingMore(game, request.action(), request.card());
+
             case PICKING_UP -> applyPickingUp(game, request.action(), request.card());
+
             default -> throw new IllegalStateException("Cannot apply non-playable phase: " + game.getPhase());
         }
 
@@ -132,8 +136,11 @@ public class DurakGameService {
 
         return switch (game.getPhase()) {
             case ATTACKING -> availableAttackingActions(game);
+
             case DEFENDING -> List.of(DurakAction.PLAY_CARD, DurakAction.TAKE_CARDS);
+
             case THROWING_MORE, PICKING_UP -> List.of(DurakAction.PLAY_CARD, DurakAction.PASS);
+
             default -> List.of();
         };
     }
@@ -145,7 +152,9 @@ public class DurakGameService {
                 game.getTable().add(DurakTablePair.attack(card));
                 transition(game, DEFENDING, game.getDefenderId());
             }
+
             case PASS -> executeBoutEnd(game, false);
+
             default -> throw new IllegalStateException("Unexpected action in ATTACKING: " + action);
         }
     }
@@ -167,10 +176,16 @@ public class DurakGameService {
                 boolean allDefended = table.stream().allMatch(DurakTablePair::isDefended);
 
                 if (allDefended) {
-                    transition(game, THROWING_MORE, game.getAttackerId());
+                    if (game.attackerHand().isEmpty() || DurakGameUtils.isGameOver(game)) {
+                        executeBoutEnd(game, false);
+                    } else {
+                        transition(game, THROWING_MORE, game.getAttackerId());
+                    }
                 }
             }
+
             case TAKE_CARDS -> transition(game, PICKING_UP, game.getAttackerId());
+
             default -> throw new IllegalStateException("Unexpected action in DEFENDING: " + action);
         }
     }
@@ -182,7 +197,9 @@ public class DurakGameService {
                 game.getTable().add(DurakTablePair.attack(card));
                 transition(game, DEFENDING, game.getDefenderId());
             }
+
             case PASS -> executeBoutEnd(game, false);
+
             default -> throw new IllegalStateException("Unexpected action in THROWING_MORE: " + action);
         }
     }
@@ -193,10 +210,12 @@ public class DurakGameService {
                 removeFromHand(game, game.getAttackerId(), card);
                 game.getTable().add(DurakTablePair.attack(card));
             }
+
             case PASS -> {
                 transferTableCardsToDefender(game);
                 executeBoutEnd(game, true);
             }
+
             default -> throw new IllegalStateException("Unexpected action in PICKING_UP: " + action);
         }
     }
