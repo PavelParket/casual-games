@@ -20,6 +20,9 @@ public record DurakGameInternalRequest(
 
         DurakAction action,
 
-        DurakCard card
+        DurakCard card,
+
+        UUID winnerId
+
 ) {
 }

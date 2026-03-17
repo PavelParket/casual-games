@@ -229,4 +229,34 @@ public class GameServiceClient {
             throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
+
+    public DurakGameInternalResponse processDurakEnd(DurakGameInternalRequest request) {
+        URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
+                .path("/game/durak/timeout")
+                .build()
+                .toUri();
+
+        log.info("Calling game-service to finalize Durak game by timeout: gameId={}, winner={}",
+                request.id(), request.winnerId());
+
+        try {
+            ResponseEntity<DurakGameInternalResponse> response = restTemplate.exchange(
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    DurakGameInternalResponse.class
+            );
+
+            DurakGameInternalResponse body = response.getBody();
+
+            if (body == null || !body.isGameOver()) {
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
+            }
+
+            log.info("Durak game finalized: gameId={}", request.id());
+
+            return body;
+        } catch (Exception e) {
+            log.error("Failed to finalize Durak game by timeout: gameId={}", request.id(), e);
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
+        }
+    }
 }

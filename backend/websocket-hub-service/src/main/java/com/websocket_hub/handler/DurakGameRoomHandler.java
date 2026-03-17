@@ -189,6 +189,17 @@ public class DurakGameRoomHandler extends AppWebSocketHandler<DurakGameRoomManag
         log.info("Turn timeout: room={} timedOutPlayer={}", roomId, timedOutPlayerId);
 
         UUID winnerId = roomManager.getOpponentId(roomId, timedOutPlayerId);
+        Long gameId = roomManager.getActiveGameId(roomId);
+
+        if (gameId != null) {
+            try {
+                gameServiceClient.processDurakEnd(durakGameMessageMapper.toEndGameRequest(gameId, winnerId));
+            } catch (Exception e) {
+                log.error("Failed to notify game-service of timeout: gameId={} room={}", gameId, roomId, e);
+            }
+        } else {
+            log.warn("Cannot notify game-service of timeout — no active gameId for room={}", roomId);
+        }
 
         processGameOver(roomId, winnerId);
     }
@@ -201,8 +212,6 @@ public class DurakGameRoomHandler extends AppWebSocketHandler<DurakGameRoomManag
                     roomId,
                     winnerId
             ));
-
-            //todo: ошибка сохранения результатов игры, не отправляется запрос на game-service при timeout
 
             List<PlayerBet> playerBets = roomManager.getPlayerBets(roomId);
 

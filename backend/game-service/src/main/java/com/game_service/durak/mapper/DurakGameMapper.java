@@ -16,7 +16,7 @@ import java.util.UUID;
 @Mapper(componentModel = "spring")
 public interface DurakGameMapper {
 
-    @Mapping(target = "isGameOver", source = "game.phase", qualifiedByName = "eventToIsGameOver")
+    @Mapping(target = "isGameOver", source = "game.phase", qualifiedByName = "phaseToIsGameOver")
     DurakGameResponse toResponse(Durak game, List<DurakPlayerViewResponse> playerViews);
 
     @Mapping(target = "gameId", source = "game.id")
@@ -28,9 +28,9 @@ public interface DurakGameMapper {
                                          Boolean isMyTurn,
                                          List<DurakAction> availableActions);
 
-    @Named("eventToIsGameOver")
-    default Boolean eventToIsGameOver(DurakPhase event) {
-        return DurakPhase.GAME_OVER.equals(event);
+    @Named("phaseToIsGameOver")
+    default Boolean phaseToIsGameOver(DurakPhase phase) {
+        return DurakPhase.GAME_OVER.equals(phase);
     }
 
     @Named("getDeckSize")

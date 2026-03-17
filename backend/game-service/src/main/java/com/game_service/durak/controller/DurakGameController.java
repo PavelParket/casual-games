@@ -26,6 +26,11 @@ public class DurakGameController {
         return durakGameService.processMove(request);
     }
 
+    @PostMapping("/timeout")
+    public DurakGameResponse processTimeout(@RequestBody DurakGameRequest request) {
+        return durakGameService.processTimeout(request);
+    }
+
     /*@GetMapping("/{id}")
     public DurakGameResponse getById(@PathVariable Long id) {
         return durakGameService

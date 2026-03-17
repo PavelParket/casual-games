@@ -91,6 +91,10 @@ public class DurakGameService {
     }
 
     private DurakGameResponse buildResponse(Durak game) {
+        if (DurakPhase.GAME_OVER.equals(game.getPhase())) {
+            return durakGameMapper.toResponse(game, List.of());
+        }
+
         List<UUID> players = game.getPlayers();
         UUID firstPlayerId = players.getFirst();
         UUID secondPlayerId = players.getLast();
@@ -272,5 +276,26 @@ public class DurakGameService {
         }
 
         return actions;
+    }
+
+    @Transactional
+    public DurakGameResponse processTimeout(DurakGameRequest request) {
+        Durak game = activeGames.getOrDefault(request.id(), null);
+
+        if (game == null) {
+            log.warn("Timeout received for unknown or already finished game: gameId={}", request.id());
+
+            throw new NotFoundException(DURAK_GAME_NOT_FOUND);
+        }
+
+        synchronized (game) {
+            game.setWinnerId(request.winnerId());
+            game.setPhase(DurakPhase.GAME_OVER);
+            processResult(game);
+        }
+
+        log.info("Durak game finalized by timeout: gameId={} winner={}", request.id(), request.winnerId());
+
+        return buildResponse(game);
     }
 }

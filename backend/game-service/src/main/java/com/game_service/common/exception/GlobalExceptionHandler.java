@@ -71,6 +71,19 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(NotFoundException e, HttpServletRequest request) {
+        log.warn("Not found on {}: {}", request.getRequestURI(), e.getMessage());
+        return ErrorResponse.builder()
+                .errorCode(ErrorCode.NOT_FOUND)
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(e.getMessage())
+                .timestamp(Instant.now())
+                .path(request.getRequestURI())
+                .build();
+    }
+
     @ExceptionHandler(GameValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidation(GameValidationException e) {
