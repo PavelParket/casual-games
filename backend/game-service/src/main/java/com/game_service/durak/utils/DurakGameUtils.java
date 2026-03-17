@@ -28,11 +28,12 @@ public class DurakGameUtils {
     public static Durak initialize(UUID roomId, UUID firstPlayerId, UUID secondPlayerId) {
         List<DurakCard> deck = buildShuffledDeck();
 
-        List<DurakCard> firstHand = new ArrayList<>(deck.subList(0, INITIAL_HAND_SIZE));
-        List<DurakCard> secondHand = new ArrayList<>(deck.subList(INITIAL_HAND_SIZE, INITIAL_HAND_SIZE * 2));
-        List<DurakCard> drawPile = new ArrayList<>(deck.subList(INITIAL_HAND_SIZE * 2, deck.size()));
+        List<DurakCard> firstHand = new ArrayList<>();
+        List<DurakCard> secondHand = new ArrayList<>();
 
-        DurakCard trumpCard = drawPile.getLast();
+        dealInterleaved(deck, firstHand, secondHand);
+
+        DurakCard trumpCard = deck.getLast();
 
         firstHand.sort(HAND_ORDER);
         secondHand.sort(HAND_ORDER);
@@ -50,7 +51,7 @@ public class DurakGameUtils {
                 .roomId(roomId)
                 .status(DurakStatus.STARTED)
                 .players(List.of(firstPlayerId, secondPlayerId))
-                .deck(drawPile)
+                .deck(deck)
                 .trumpCard(trumpCard)
                 .trumpSuit(trumpCard.suit())
                 .hands(hands)
@@ -88,6 +89,18 @@ public class DurakGameUtils {
 
         return emptyHands.stream()
                 .findFirst();
+    }
+
+    private static void dealInterleaved(List<DurakCard> deck, List<DurakCard> firstHand, List<DurakCard> secondHand) {
+        for (int batch = 1; batch <= 3; batch++) {
+            for (int i = 0; i < batch; i++) {
+                firstHand.add(deck.removeFirst());
+            }
+
+            for (int i = 0; i < batch; i++) {
+                secondHand.add(deck.removeFirst());
+            }
+        }
     }
 
     private static List<DurakCard> buildShuffledDeck() {

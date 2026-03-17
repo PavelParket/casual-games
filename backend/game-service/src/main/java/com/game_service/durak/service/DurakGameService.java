@@ -37,9 +37,6 @@ import static com.game_service.durak.domain.enums.DurakPhase.THROWING_MORE;
 @Slf4j
 public class DurakGameService {
 
-    public static final long DEFAULT_TURN_TIME_MS = 30_000L;
-    public static final long STALE_THRESHOLD_MS = 10 * 60 * 1_000L;
-
     private final ConcurrentHashMap<Long, Durak> activeGames = new ConcurrentHashMap<>();
 
     private final DurakGameValidator durakGameValidator;
