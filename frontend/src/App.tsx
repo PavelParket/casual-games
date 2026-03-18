@@ -20,6 +20,7 @@ import LoadingPage from './pages/LoadingPage'
 import HorseRaceRoom from './pages/rooms/HorseRaceRoom'
 import { useScrollbarVisibility } from './hooks/useScrollbarVisibility'
 import { SystemToastProvider } from './providers/SystemToastContext'
+import DurakRoom from './pages/rooms/DurakRoom'
 
 export default function App() {
    const dispatch = useDispatch<AppDispatch>();
@@ -74,6 +75,7 @@ export default function App() {
                            <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoom />} />
                            <Route path="/room/horse-race/:roomName/:roomId" element={<HorseRaceRoom />} />
                            <Route path="/room/de-coder/:roomName/:roomId" element={<DeCoderRoom />} />
+                           <Route path="/room/durak/:roomName/:roomId" element={<DurakRoom />} />
 
                         </Route>
                      </Route>

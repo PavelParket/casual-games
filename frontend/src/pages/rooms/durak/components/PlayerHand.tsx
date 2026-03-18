@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Box, Typography } from "../../../../ui";
 import { PlayingCard } from "./PlayingCard";
@@ -26,13 +27,21 @@ export function PlayerHand({
     onPlayCard,
 }: PlayerHandProps) {
     const canPlay = isMyTurn && availableActions.includes("PLAY_CARD") && !disabled;
+    const playLock = useRef(false);
 
     const sortedCards = trumpSuit ? sortCards(cards, trumpSuit) : cards;
+
+    const playCardOnce = (card: DurakCard) => {
+        if (playLock.current) return;
+        playLock.current = true;
+        onPlayCard(card);
+        setTimeout(() => { playLock.current = false; }, 300);
+    };
 
     const handleDragEnd = (
         card: DurakCard,
         _event: MouseEvent | TouchEvent | PointerEvent,
-        info: { point: { x: number; y: number } }
+        info: { point: { x: number; y: number }; offset: { x: number; y: number } }
     ) => {
         if (!canPlay) return;
 
@@ -47,7 +56,7 @@ export function PlayerHand({
             y >= rect.top && y <= rect.bottom;
 
         if (droppedOnTable) {
-            onPlayCard(card);
+            playCardOnce(card);
         }
     };
 
@@ -93,14 +102,6 @@ export function PlayerHand({
 
             {/* Card row */}
             <motion.div
-                /* animate={canPlay ? {
-                    boxShadow: [
-                        "0 0 0px rgba(255,215,0,0)",
-                        "0 0 16px rgba(255,215,0,0.6)",
-                        "0 0 0px rgba(255,215,0,0)",
-                    ],
-                } : { boxShadow: "none" }}
-                transition={canPlay ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" } : {}} */
                 style={{
                     display: "flex",
                     flexDirection: "row",
@@ -126,7 +127,7 @@ export function PlayerHand({
                                 layoutId={cardId(card)}
                                 draggable={canPlay}
                                 disabled={!canPlay}
-                                onClick={canPlay ? () => onPlayCard(card) : undefined}
+                                onClick={canPlay ? () => playCardOnce(card) : undefined}
                                 onDragEnd={(event, info) => handleDragEnd(card, event, info)}
                             />
                         </motion.div>

@@ -101,7 +101,7 @@ public class DurakGameValidator {
         switch (action) {
             case PLAY_CARD -> {
                 requireRankOnTable(game, card);
-                requireThrowInLimit(game);
+                requirePickingUpLimit(game);
             }
             case PASS -> {
             }
@@ -130,6 +130,12 @@ public class DurakGameValidator {
                     "Cannot throw in more cards: table has " + game.getTable().size()
                             + " pairs, limit is " + maxAllowed
                             + " (min of 6 and defender hand size " + defenderHandSize + ")");
+        }
+    }
+
+    private void requirePickingUpLimit(Durak game) {
+        if (game.getTable().size() >= 6) {
+            throw new InvalidMoveException("Cannot throw in more cards: table already has 6 pairs, which is the maximum");
         }
     }
 }

@@ -13,7 +13,7 @@ interface PlayingCardProps {
     layoutId?: string;
     style?: React.CSSProperties;
     onClick?: () => void;
-    onDragEnd?: (event: MouseEvent | TouchEvent | PointerEvent, info: { point: { x: number; y: number } }) => void;
+    onDragEnd?: (event: MouseEvent | TouchEvent | PointerEvent, info: { point: { x: number; y: number }; offset: { x: number; y: number } }) => void;
 }
 
 const SIZES = {

@@ -5,6 +5,7 @@ import userReducer from "./slices/UserSlice";
 import bankReducer from "./slices/BankSlice";
 import ticTacToeReducer from "./slices/TicTacToeRoomSlice";
 import horseRaceReducer from "./slices/HorseRaceRoomSlice";
+import durakReducer from "./slices/DurakRoomSlice";
 
 export const store = configureStore({
    reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
       bank: bankReducer,
       ticTacToeRoom: ticTacToeReducer,
       horseRaceRoom: horseRaceReducer,
+      durakRoom: durakReducer,
    },
 });
 
