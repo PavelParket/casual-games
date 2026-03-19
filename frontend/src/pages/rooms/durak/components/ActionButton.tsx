@@ -17,7 +17,7 @@ export function ActionButton({ availableActions, phase, disabled, onPass, onTake
         return <Box style={{ height: "40px" }} />;
     }
 
-    const passLabel = phase === "PICKING_UP" ? "Хватит" : "Бита";
+    const passLabel = phase === "PICKING_UP" ? "Enough" : "Done";
 
     return (
         <Stack direction="row" gap="0.75rem" align="center" justify="center">
@@ -28,7 +28,7 @@ export function ActionButton({ availableActions, phase, disabled, onPass, onTake
                     onClick={onTakeCards}
                     style={{ minWidth: "110px" }}
                 >
-                    Забрать
+                    Take cards
                 </Button>
             )}
             {canPass && (

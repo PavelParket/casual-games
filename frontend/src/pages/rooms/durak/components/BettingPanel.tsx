@@ -6,6 +6,7 @@ interface BettingPanelProps {
     betPlaced: boolean;
     ready: boolean;
     playerBetMap: Record<string, number> | undefined;
+    players: Record<string, string> | undefined;
     isConnected: boolean;
     onBetInputChange: (value: string) => void;
     onPlaceBet: () => void;
@@ -18,6 +19,7 @@ export function BettingPanel({
     betPlaced,
     ready,
     playerBetMap,
+    players,
     isConnected,
     onBetInputChange,
     onPlaceBet,
@@ -37,9 +39,9 @@ export function BettingPanel({
                 <>
                     <Typography variant="h3">Current Bets</Typography>
                     <Stack gap="0.25rem">
-                        {Object.entries(playerBetMap!).map(([username, bet]) => (
-                            <Box key={username} style={{ display: "flex", justifyContent: "space-between" }}>
-                                <Typography variant="body">{username}</Typography>
+                        {Object.entries(playerBetMap!).map(([guid, bet]) => (
+                            <Box key={guid} style={{ display: "flex", justifyContent: "space-between" }}>
+                                <Typography variant="body">{players?.[guid] ?? guid}</Typography>
                                 <Typography variant="body" style={{ color: "var(--color-income-text)", fontWeight: 600 }}>
                                     ${bet}
                                 </Typography>

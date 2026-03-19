@@ -125,7 +125,7 @@ export function DurakBoard({
                 gap: "1rem",
                 paddingTop: "0.5rem",
             }}>
-                <TurnTimer remainingSeconds={remainingSeconds} />
+                <TurnTimer remainingSeconds={remainingSeconds} isMyTurn={isMyTurn} />
                 <DiscardPile discardCount={discardCount} />
             </Box>
 

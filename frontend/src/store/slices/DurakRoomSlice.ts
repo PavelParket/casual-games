@@ -189,10 +189,7 @@ const durakRoomSlice = createSlice({
                 state.playerBets = action.payload;
                 const bets: Record<string, number> = {};
                 action.payload.forEach(({ guid, bet }) => {
-                    const username = state.players?.[guid];
-                    if (username != null) {
-                        bets[username] = bet;
-                    }
+                    bets[guid] = bet;
                 });
                 state.playerBetMap = bets;
             })

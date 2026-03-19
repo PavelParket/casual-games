@@ -59,7 +59,6 @@ export default function DurakRoom() {
     const prevPhaseRef = useRef<DurakPhase | null>(null);
 
     const [awaitingResponse, setAwaitingResponse] = useState(false);
-    const awaitingRef = useRef(false);
 
     const myName = guid && players ? (players[guid] ?? "You") : "You";
     const opponentName = guid && players
@@ -102,6 +101,7 @@ export default function DurakRoom() {
         prevTableRef.current = msg.table ?? [];
         prevPhaseRef.current = msg.phase ?? null;
 
+        setRemainingSeconds(null);
         setIsGame(true);
         setPhase(msg.phase ?? null);
         setMyCards(msg.myCards ?? []);
@@ -113,7 +113,6 @@ export default function DurakRoom() {
         setIsMyTurn(msg.isMyTurn ?? false);
         setAvailableActions(msg.availableActions ?? []);
         setAwaitingResponse(false);
-        awaitingRef.current = false;
     }, []);
 
     const processGameOver = useCallback((winnerGuid: string | undefined) => {
@@ -171,7 +170,6 @@ export default function DurakRoom() {
             return;
         }
 
-        awaitingRef.current = true;
         setAwaitingResponse(true);
         send({
             type: "USER_MESSAGE",
@@ -188,7 +186,6 @@ export default function DurakRoom() {
             return;
         }
 
-        awaitingRef.current = true;
         setAwaitingResponse(true);
         send({
             type: "USER_MESSAGE",
@@ -204,7 +201,6 @@ export default function DurakRoom() {
             return;
         }
 
-        awaitingRef.current = true;
         setAwaitingResponse(true);
         send({
             type: "USER_MESSAGE",
@@ -349,6 +345,7 @@ export default function DurakRoom() {
 
                             {/* Betting panel */}
                             <BettingPanel
+                                players={players}
                                 balance={balance}
                                 betInput={betInput}
                                 betPlaced={betPlaced}

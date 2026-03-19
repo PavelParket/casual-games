@@ -66,6 +66,10 @@ public class DurakGameService {
         }
 
         synchronized (game) {
+            if (!activeGames.containsKey(request.id())) {
+                throw new NotFoundException(DURAK_GAME_NOT_FOUND);
+            }
+
             durakGameValidator.validate(game, request);
 
             if (DurakPhase.GAME_OVER.equals(game.getPhase())) {
@@ -103,8 +107,8 @@ public class DurakGameService {
     }
 
     private DurakPlayerViewResponse buildPlayerView(Durak game, UUID playerId, UUID opponentId) {
-        List<DurakCard> myCards = List.copyOf(game.getHands().get(playerId));
-        Integer opponentCardCount = game.getHands().get(opponentId).size();
+        List<DurakCard> myCards = List.copyOf(game.getHands().getOrDefault(playerId, List.of()));
+        Integer opponentCardCount = game.getHands().getOrDefault(opponentId, List.of()).size();
         Boolean isMyTurn = playerId.equals(game.getCurrentActorId());
         List<DurakAction> availableActions = getAvailableActions(game, playerId);
 
@@ -305,6 +309,10 @@ public class DurakGameService {
         }
 
         synchronized (game) {
+            if (!activeGames.containsKey(request.id())) {
+                throw new NotFoundException(DURAK_GAME_NOT_FOUND);
+            }
+
             game.setWinnerId(request.winnerId());
             game.setPhase(DurakPhase.GAME_OVER);
             processResult(game);

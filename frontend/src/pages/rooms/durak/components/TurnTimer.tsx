@@ -3,6 +3,7 @@ import { Box, Typography } from "../../../../ui";
 
 interface TurnTimerProps {
     remainingSeconds: number | null;
+    isMyTurn: boolean;
 }
 
 function formatTime(seconds: number): string {
@@ -11,7 +12,7 @@ function formatTime(seconds: number): string {
     return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function TurnTimer({ remainingSeconds }: TurnTimerProps) {
+export function TurnTimer({ remainingSeconds, isMyTurn }: TurnTimerProps) {
     const [display, setDisplay] = useState<number | null>(remainingSeconds);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -75,6 +76,13 @@ export function TurnTimer({ remainingSeconds }: TurnTimerProps) {
                 letterSpacing: "0.05em",
             }}>
                 Turn
+            </Typography>
+            <Typography variant="caption" style={{
+                fontSize: "0.7rem",
+                fontWeight: 600,
+                color: isMyTurn ? "#2ecc71" : "#e74c3c",
+            }}>
+                {isMyTurn ? "Your turn" : "Opponent's turn"}
             </Typography>
             <Typography variant="h3" style={{
                 fontVariantNumeric: "tabular-nums",

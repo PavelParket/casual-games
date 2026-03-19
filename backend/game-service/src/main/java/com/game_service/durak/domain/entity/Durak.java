@@ -106,11 +106,11 @@ public class Durak {
     }
 
     public List<DurakCard> attackerHand() {
-        return hands.get(attackerId);
+        return hands.getOrDefault(attackerId, List.of());
     }
 
     public List<DurakCard> defenderHand() {
-        return hands.get(defenderId);
+        return hands.getOrDefault(defenderId, List.of());
     }
 
     public boolean isDeckEmpty() {
