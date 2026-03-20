@@ -122,14 +122,8 @@ public class DurakGameValidator {
     }
 
     private void requireThrowInLimit(Durak game) {
-        int defenderHandSize = game.defenderHand().size();
-        int maxAllowed = Math.min(6, defenderHandSize);
-
-        if (game.getTable().size() >= maxAllowed) {
-            throw new InvalidMoveException(
-                    "Cannot throw in more cards: table has " + game.getTable().size()
-                            + " pairs, limit is " + maxAllowed
-                            + " (min of 6 and defender hand size " + defenderHandSize + ")");
+        if (game.defenderHand().isEmpty()) {
+            throw new InvalidMoveException("Cannot throw in more cards: defender has no cards left");
         }
     }
 

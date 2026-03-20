@@ -143,7 +143,11 @@ public class DurakGameService {
 
             case DEFENDING -> List.of(DurakAction.PLAY_CARD, DurakAction.TAKE_CARDS);
 
-            case THROWING_MORE, PICKING_UP -> List.of(DurakAction.PLAY_CARD, DurakAction.PASS);
+            case THROWING_MORE -> game.defenderHand().isEmpty()
+                    ? List.of(DurakAction.PASS)
+                    : List.of(DurakAction.PLAY_CARD, DurakAction.PASS);
+
+            case PICKING_UP -> List.of(DurakAction.PLAY_CARD, DurakAction.PASS);
 
             default -> List.of();
         };

@@ -157,6 +157,7 @@ export default function DurakRoom() {
         setBetPlaced,
         setReady,
         setRemainingSeconds,
+        setAwaitingResponse,
         setDiscardCount,
         prevTableRef,
         prevPhaseRef,

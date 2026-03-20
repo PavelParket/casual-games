@@ -21,6 +21,7 @@ interface UseDurakMessagesProps {
     setBetPlaced: (value: boolean) => void;
     setReady: (value: boolean) => void;
     setRemainingSeconds: (value: number | null) => void;
+    setAwaitingResponse: (value: boolean) => void;
     setDiscardCount: React.Dispatch<React.SetStateAction<number>>;
     prevTableRef: RefObject<DurakTablePair[]>;
     prevPhaseRef: RefObject<DurakPhase | null>;
@@ -42,6 +43,7 @@ export function useDurakMessages({
     setBetPlaced,
     setReady,
     setRemainingSeconds,
+    setAwaitingResponse,
     setDiscardCount,
     prevTableRef,
     prevPhaseRef,
@@ -150,6 +152,7 @@ export function useDurakMessages({
                 break;
 
             case "ERROR": {
+                setAwaitingResponse(false);
                 const errorMsg = message as unknown as ErrorWSMessage;
                 const code = errorMsg.errorCode ?? "";
                 const text = errorCodeMessages[code] ?? errorCodeMessages.DEFAULT;
@@ -168,7 +171,7 @@ export function useDurakMessages({
     }, [
         dispatch, guid, isConnected, isGame, message, prevPhaseRef, prevTableRef,
         processGameOver, processGameState, processReset, room, roomId,
-        setBetPlaced, setDiscardCount, setReady, setRemainingSeconds,
+        setAwaitingResponse, setBetPlaced, setDiscardCount, setReady, setRemainingSeconds,
         showGameToast, showSystemToast,
     ]);
 }
