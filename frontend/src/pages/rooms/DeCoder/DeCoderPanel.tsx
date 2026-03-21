@@ -1,170 +1,129 @@
 import React, { useMemo, useState } from "react";
-import { Box, Typography, Stack, Button, ComboBox, Textfield } from "../../../ui";
-
-export type StateFilter = "ALL" | "UNUSED" | "USED";
-export type SearchMode = "SEQUENCE" | "ANY_ORDER" | "MASK";
+import { Box, Typography, Stack, Textfield } from "../../../ui";
+import type { DeCoderGameHistory } from "../../../models/WsMessage";
 
 interface DeCoderPanelProps {
-   gridData: Uint8Array;
+  history: DeCoderGameHistory[];
 }
-//todo: Решить куда определить этот компонент,
-//в общую папку с остальными он не лезет,
-//потому что очень специфичный, только для этой игры
-export const DeCoderPanel = React.memo(({ gridData }: DeCoderPanelProps) => {
-   const [stateFilter, setStateFilter] = useState<StateFilter>("ALL");
-   const[searchMode, setSearchMode] = useState<SearchMode>("SEQUENCE");
-   const [searchQuery, setSearchQuery] = useState("");
 
-   const getSearchPlaceholder = () => {
-      if (searchMode === "SEQUENCE") return "1234";
-      if (searchMode === "ANY_ORDER") return "in any order";
-      if (searchMode === "MASK") return "1*2*";
-      return "Search...";
-   };
+export const DeCoderPanel = React.memo(({ history }: DeCoderPanelProps) => {
+  const [searchQuery, setSearchQuery] = useState("");
 
-   const items = useMemo(() => {
-      const arr =[];
-      const query = searchQuery.trim();
+  const items = useMemo(() => {
+    let filtered = history;
+    if (searchQuery) {
+      filtered = history.filter((item) =>
+        String(item.code).padStart(4, "0").includes(searchQuery),
+      );
+    }
+    return [...filtered].reverse();
+  }, [history, searchQuery]);
 
-      let maskRegex: RegExp | null = null;
-      if (searchMode === "MASK" && query) {
-         try {
-            const escaped = query.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-            maskRegex = new RegExp(escaped.replace(/\*/g, '\\d'));
-         } catch (e) {
-            console.error("", e)
-            maskRegex = null;
-         }
-      }
+  return (
+    <Box
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      <Stack gap="10px" style={{ marginBottom: "1rem", flexShrink: 0 }}>
+        <Textfield
+          value={searchQuery}
+          onChange={(val) => setSearchQuery(val.replace(/\D/g, "").slice(0, 4))}
+          placeholder="Search history (e.g. 1234)"
+          style={{ width: "100%" }}
+        />
+      </Stack>
 
-      for (let i = 0; i < 10000; i++) {
-         const byteIdx = Math.floor(i / 8);
-         const bitIdx = i % 8;
-         const isUsed = ((gridData[byteIdx] >> bitIdx) & 1) === 1;
-
-         if (stateFilter === "USED" && !isUsed) continue;
-         if (stateFilter === "UNUSED" && isUsed) continue;
-
-         const codeStr = String(i).padStart(4, '0');
-         let matchesPattern = true;
-
-         if (query) {
-            if (searchMode === "SEQUENCE") {
-               matchesPattern = codeStr.includes(query);
-            } 
-            else if (searchMode === "ANY_ORDER") {
-               const codeChars = codeStr.split('');
-               for (const char of query) {
-                  const idx = codeChars.indexOf(char);
-                  if (idx !== -1) {
-                     codeChars.splice(idx, 1);
-                  } else {
-                     matchesPattern = false;
-                     break;
-                  }
-               }
-            } 
-            else if (searchMode === "MASK") {
-               matchesPattern = maskRegex ? maskRegex.test(codeStr) : false;
-            }
-         }
-
-         if (!matchesPattern) continue;
-
-         arr.push(
-            //todo: Для компонента Box не корректно работает прокрутка: валивается из границ
-            <div
-               key={i}
-               style={{
-                  height: "28px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: isUsed ? "var(--color-primary)" : "var(--color-text)",
-                  textDecoration: isUsed ? "line-through" : "none",
-                  background: isUsed ? "var(--color-bg-glass)" : "transparent",
-                  opacity: isUsed ? 0.4 : 1,
-                  fontFamily: "monospace",
-                  fontSize: "1.1rem",
-                  letterSpacing: "4px",
-                  borderRadius: "4px"
-               }}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          background: "var(--color-bg-soft)",
+          borderRadius: "var(--radius-md)",
+          border: "1px solid var(--color-border)",
+          padding: "10px",
+          boxShadow: "inset 0 2px 4px rgba(0,0,0,0.05)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+        }}
+      >
+        {items.length === 0 ? (
+          <Typography
+            variant="body"
+            style={{ textAlign: "center", opacity: 0.5, marginTop: "2rem" }}
+          >
+            {history.length === 0
+              ? "No moves yet. Be the first!"
+              : "No matches found"}
+          </Typography>
+        ) : (
+          items.map((item, idx) => (
+            <Box
+              key={idx}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "8px 12px",
+                background: "var(--color-bg)",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--color-border)",
+              }}
             >
-               {codeStr}
-            </div>
-         );
-      }
-      return arr;
-   },[gridData, stateFilter, searchMode, searchQuery]);
-
-   return (
-      <Box style={{ 
-         display: "flex", 
-         flexDirection: "column", 
-         height: "100%", 
-         minHeight: 0
-      }}>               
-         
-         <Stack gap="10px" style={{ marginBottom: "1rem", flexShrink: 0 }}>
-            <Box style={{ display: "flex", gap: "5px", padding: "4px", borderRadius: "var(--radius-sm)" }}>
-               {(["ALL", "UNUSED", "USED"] as StateFilter[]).map(state => (
-                  <Button 
-                     key={state}
-                     variant={stateFilter === state ? "solid" : "ghost"}
-                     onClick={() => setStateFilter(state)}
-                     style={{ flex: 1, padding: "4px 8px", fontSize: "0.8rem", minHeight: "28px" }}
+              <Typography
+                variant="body"
+                style={{
+                  fontFamily: "monospace",
+                  fontSize: "1.2rem",
+                  letterSpacing: "2px",
+                  fontWeight: "bold",
+                }}
+              >
+                {String(item.code).padStart(4, "0")}
+              </Typography>
+              <Stack direction="row" gap="1rem">
+                <Box
+                  style={{ display: "flex", alignItems: "center", gap: "4px" }}
+                >
+                  <span title="Exact Match" style={{ fontSize: "1.2rem" }}>
+                    Exact
+                  </span>
+                  <Typography
+                    variant="body"
+                    style={{
+                      color: "var(--color-success, #2ecc71)",
+                      fontWeight: "bold",
+                    }}
                   >
-                     {state === "UNUSED" ? "Free" : state === "USED" ? "Tried" : "All"}
-                  </Button>
-               ))}
-            </Box>
-
-            <Box style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-               <Box style={{ flexShrink: 0, width: "150px" }}>
-                  <ComboBox 
-                     options={[
-                        { value: "SEQUENCE", label: "Sequence" },
-                        { value: "ANY_ORDER", label: "Any Digit" },
-                        { value: "MASK", label: "Mask (*)" }
-                     ]}
-                     value={searchMode}
-                     onValueChange={(val) => setSearchMode(val as SearchMode)}
-                  />
-               </Box>
-               <Box style={{ width: "90px", flexShrink: 0 }}>
-                  <Textfield 
-                    value={searchQuery}
-                    onChange={(val) => setSearchQuery(val.replace(/[^0-9*]/g, '').slice(0, 4))}
-                    placeholder={getSearchPlaceholder()}
-                    style={{ width: "125px", flexShrink: 0}}
-                />
+                    {item.exactMatch}
+                  </Typography>
                 </Box>
+                <Box
+                  style={{ display: "flex", alignItems: "center", gap: "4px" }}
+                >
+                  <span title="Partial Match" style={{ fontSize: "1.2rem" }}>
+                    Partial
+                  </span>
+                  <Typography
+                    variant="body"
+                    style={{
+                      color: "var(--color-warning, #f1c40f)",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {item.partialMatch}
+                  </Typography>
+                </Box>
+              </Stack>
             </Box>
-         </Stack>
-
-         <div style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            background: "var(--color-bg-soft)", 
-            borderRadius: "var(--radius-md)", 
-            border: "1px solid var(--color-border)",
-            padding: "10px",
-            boxShadow: "inset 0 2px 4px rgba(0,0,0,0.05)",
-            
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))", 
-            gap: "4px",
-            alignContent: "start"
-         }}>
-            {items.length === 0 ? (
-               <Typography variant="body" style={{ gridColumn: "1 / -1", textAlign: "center", opacity: 0.5, marginTop: "2rem" }}>
-                  No codes match filters
-               </Typography>
-            ) : (
-               items
-            )}
-         </div>
-      </Box>
-   );
+          ))
+        )}
+      </div>
+    </Box>
+  );
 });

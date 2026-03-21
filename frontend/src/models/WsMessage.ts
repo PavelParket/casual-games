@@ -42,6 +42,13 @@ export interface DeCoderMessage extends WSMessage {
    player?: string;
    code?: number;
    winner?: string;
-   gameState?: string;
+   gameState?: DeCoderGameHistory[];
    isGameStarted?: boolean;
+   jackpot?: number;
+}
+
+export interface DeCoderGameHistory {
+   code: number;
+   exactMatch: number;
+   partialMatch: number;
 }

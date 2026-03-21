@@ -1,7 +1,9 @@
 package com.websocket_hub.handler;
 
 import com.websocket_hub.client.BankServiceClient;
-import com.websocket_hub.client.DeCoderGameServiceClient;
+import com.websocket_hub.client.GameServiceClient;
+import com.websocket_hub.domain.dto.client.DeCoderGameInternalRequest;
+import com.websocket_hub.domain.dto.client.DeCoderGameInternalResponse;
 import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalRequest;
 import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
@@ -24,6 +26,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -32,15 +35,13 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
     private static final BigDecimal MOVE_COST = new BigDecimal("10.00");
 
-    private static final BigDecimal WIN_REWARD = new BigDecimal("100.00");
-
     private final MessageDeserializer messageDeserializer;
 
     private final DeCoderGameMessageMapper deCoderGameMessageMapper;
 
     private final DeCoderGameTransactionMapper deCoderGameTransactionMapper;
 
-    private final DeCoderGameServiceClient deCoderGameServiceClient;
+    private final GameServiceClient gameServiceClient;
 
     private final BankServiceClient bankServiceClient;
 
@@ -52,7 +53,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
             MessageDeserializer messageDeserializer,
             DeCoderGameMessageMapper deCoderGameMessageMapper,
             DeCoderGameTransactionMapper deCoderGameTransactionMapper,
-            DeCoderGameServiceClient deCoderGameServiceClient,
+            GameServiceClient gameServiceClient,
             BankServiceClient bankServiceClient
 
     ) {
@@ -60,7 +61,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
         this.messageDeserializer = messageDeserializer;
         this.deCoderGameMessageMapper = deCoderGameMessageMapper;
         this.deCoderGameTransactionMapper = deCoderGameTransactionMapper;
-        this.deCoderGameServiceClient = deCoderGameServiceClient;
+        this.gameServiceClient = gameServiceClient;
         this.bankServiceClient = bankServiceClient;
     }
 
@@ -110,15 +111,22 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
             log.info("Starting DeCoder game in room {} with player {}", roomId, user.username());
 
-            DeCoderGameMessage startRequest = deCoderGameMessageMapper.toGameStartMessage(
-                    MessageType.SYSTEM,
+            DeCoderGameInternalRequest startRequest = deCoderGameMessageMapper.toStartRequest(
                     DeCoderGameEvent.START,
                     roomId,
                     user.guid());
 
-            DeCoderGameMessage startResponse = deCoderGameServiceClient.startGame(startRequest);
+            DeCoderGameInternalResponse startResponse = gameServiceClient.startDeCoderGame(startRequest)
+                    .orElseThrow(() -> new RuntimeException("Empty response from game-service"));
 
-            roomManager.broadcast(roomId, startResponse);
+            DeCoderGameMessage deCoderGameMessage = deCoderGameMessageMapper.toMessage(
+                    startResponse,
+                    MessageType.SYSTEM,
+                    null,
+                    null
+
+            );
+            roomManager.broadcast(roomId, deCoderGameMessage);
 
             roomManager.updateRoomStatus(roomId, RoomStatus.IN_PROGRESS);
 
@@ -128,72 +136,72 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
     }
 
     private void handleGameMove(UUID roomId, UserInternalResponse user, DeCoderGameMessage message) {
+        PlayerBet movePlayerBet = roomManager.markPlayerBet(user, MOVE_COST);
+
+        DeCoderTransactionInternalRequest deCoderTransactionRequest = deCoderGameTransactionMapper.toInternalRequest(
+                roomId,
+                roomManager.getRoomType(),
+                movePlayerBet,
+                null
+        );
+
         try {
-            PlayerBet movePlayerBet = roomManager.markPlayerBet(user, MOVE_COST);
-
-            DeCoderTransactionInternalRequest deCoderTransactionRequest = deCoderGameTransactionMapper.toInternalRequest(
-                    roomId,
-                    roomManager.getRoomType(),
-                    movePlayerBet,
-                    null
-            );
-
             DeCoderTransactionInternalResponse moveTransactionResponse = bankServiceClient.sendDeCoderGameTransaction(deCoderTransactionRequest);
 
             if (moveTransactionResponse != null) {
-                log.info("Bank service response: status={}, message={}",
-                        moveTransactionResponse.status(),
-                        moveTransactionResponse.message());
-            } else {
-                log.warn("Bank service returned null response for room {}", roomId);
+                log.info("Bank service debited {}: {}", MOVE_COST, moveTransactionResponse.message());
             }
-            DeCoderGameMessage moveRequest = deCoderGameMessageMapper.toGameMoveMessage(
-                    MessageType.SYSTEM,
+        } catch (Exception e) {
+            log.warn("Bank service rejected move for {}. Aborting.", user.username());
+            handleGameException(user.guid(), roomId, new RuntimeException("Insufficient funds or bank unavailable."));
+            return;
+        }
+
+        try {
+            DeCoderGameInternalRequest moveRequest = deCoderGameMessageMapper.toMoveRequest(
                     DeCoderGameEvent.MOVE,
                     roomId,
                     user.guid(),
                     message.code()
             );
 
-            DeCoderGameMessage moveResponse;
-            //todo: закостылил сюда возврат средств, лучше варианта пока не придумал, в базе транзакций полный ужас
-            try {
-                moveResponse = deCoderGameServiceClient.processMove(moveRequest);
-            } catch (Exception e) {
-                log.warn("Game move failed. Refunding {} CGC to user {}", MOVE_COST, user.username());
-                try {
-                    PlayerBet refundPlayerBet = roomManager.markPlayerBet(user, MOVE_COST);
-                    DeCoderTransactionInternalRequest refundRequest = deCoderGameTransactionMapper.toInternalRequest(
-                            roomId,
-                            roomManager.getRoomType(),
-                            refundPlayerBet,
-                            user.guid()
-                    );
-                    bankServiceClient.sendDeCoderGameTransaction(refundRequest);
-                    log.info("Refund successful for user {}", user.username());
-                } catch (Exception refundEx) {
-                    log.error("CRITICAL: Failed to refund user {} after game error!", user.username(), refundEx);
-                }
+            DeCoderGameInternalResponse moveResponse = gameServiceClient.processDeCoderMove(moveRequest)
+                    .orElseThrow(() -> new RuntimeException("Empty response from game-service"));
 
-                throw e;
-            }
+            DeCoderGameMessage broadcastMessage = deCoderGameMessageMapper.toMessage(
+                    moveResponse, MessageType.SYSTEM, null, null
+            );
 
             if (DeCoderGameEvent.WINNER.equals(moveResponse.event())) {
-                handleWin(roomId, user, moveResponse);
+                handleWin(roomId, user, broadcastMessage);
             } else {
-                roomManager.broadcast(roomId, moveResponse);
+                roomManager.broadcast(roomId, broadcastMessage);
+            }
+        } catch (Exception e) {
+            log.warn("Game move failed. Refunding {} CGC to user {}", MOVE_COST, user.username());
+            try {
+                PlayerBet refundPlayerBet = roomManager.markPlayerBet(user, MOVE_COST);
+                DeCoderTransactionInternalRequest refundRequest = deCoderGameTransactionMapper.toInternalRequest(
+                        roomId,
+                        roomManager.getRoomType(),
+                        refundPlayerBet,
+                        user.guid()
+                );
+                bankServiceClient.sendDeCoderGameTransaction(refundRequest);
+                log.info("Refund successful for user {}", user.username());
+            } catch (Exception refundEx) {
+                log.error("CRITICAL: Failed to refund user {} after game error!", user.username(), refundEx);
             }
 
-        } catch (Exception e) {
             handleGameException(user.guid(), roomId, e);
         }
     }
 
     private void handleWin(UUID roomId, UserInternalResponse user, DeCoderGameMessage gameResponse) {
-        try {
-            log.info("Player {} won in room {}!", user.username(), roomId);
+        log.info("Player {} won in room {}!", user.username(), roomId);
 
-            PlayerBet rewardBet = roomManager.markPlayerBet(user, WIN_REWARD);
+        try {
+            PlayerBet rewardBet = roomManager.markPlayerBet(user, gameResponse.jackpot());
 
             DeCoderTransactionInternalRequest creditRequest = deCoderGameTransactionMapper.toInternalRequest(
                     roomId,
@@ -202,23 +210,15 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
                     user.guid()
             );
 
-            log.info("Request: {}", creditRequest);
             DeCoderTransactionInternalResponse transactionResponse = bankServiceClient.sendDeCoderGameTransaction(creditRequest);
 
             if (transactionResponse != null) {
-                log.info("Bank service response: status={}, message={}",
-                        transactionResponse.status(),
-                        transactionResponse.message());
-            } else {
-                log.warn("Bank service returned null response for room {}", roomId);
+                log.info("Bank service credited jackpot: {}", transactionResponse.message());
             }
-
-            roomManager.broadcast(roomId, gameResponse);
-
         } catch (Exception e) {
-            log.error("Failed to process reward transaction for user {}", user.email(), e);
-            roomManager.broadcast(roomId, gameResponse);
+            log.error("CRITICAL: Failed to process reward transaction for user {}", user.email(), e);
         } finally {
+            roomManager.broadcast(roomId, gameResponse);
             roomManager.updateRoomStatus(roomId, RoomStatus.FINISHED);
         }
     }

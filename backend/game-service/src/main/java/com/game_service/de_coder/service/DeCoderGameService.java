@@ -4,6 +4,7 @@ import com.game_service.common.enums.MessageType;
 import com.game_service.common.exception.InvalidMoveException;
 import com.game_service.de_coder.dto.DeCoderGameRequest;
 import com.game_service.de_coder.dto.DeCoderGameResponse;
+import com.game_service.de_coder.dto.DeCoderGameResponse.GameState;
 import com.game_service.de_coder.enums.DeCoderGameEvent;
 import com.game_service.de_coder.mapper.DeCoderGameMapper;
 import com.game_service.de_coder.util.DeCoderGameLogicUtils;
@@ -12,9 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.BitSet;
-import java.util.Map;
-import java.util.UUID;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.game_service.config.ResourceMessageConstants.DECODER_GAME_ALREADY_IN_PROGRESS;
@@ -25,15 +25,17 @@ import static com.game_service.config.ResourceMessageConstants.GAME_STARTED;
 @Slf4j
 public class DeCoderGameService {
 
-    private static final int BITSET_SIZE = 10_000;
-
-    private final Map<UUID, String> secretCodes = new ConcurrentHashMap<>();
-
-    private final Map<UUID, BitSet> roomState = new ConcurrentHashMap<>();
-
     private final DeCoderGameValidator deCoderGameValidator;
 
     private final DeCoderGameMapper deCoderGameMapper;
+
+    private final Map<UUID, String> secretCodes = new ConcurrentHashMap<>();
+
+    private final Map<UUID, Map<Integer, GameState>> roomState = new ConcurrentHashMap<>();
+
+    private final Map<UUID, BigDecimal> jackpots = new ConcurrentHashMap<>();
+
+    private static final BigDecimal JACKPOT_INCREMENT = new BigDecimal("8.00");
 
     public DeCoderGameResponse processStart(DeCoderGameRequest request) {
         deCoderGameValidator.validateStart(request);
@@ -47,12 +49,12 @@ public class DeCoderGameService {
             throw new InvalidMoveException(DECODER_GAME_ALREADY_IN_PROGRESS);
         }
 
-        roomState.put(request.roomId(), new BitSet(BITSET_SIZE));
+        roomState.put(request.roomId(), new LinkedHashMap<>());
+        jackpots.put(request.roomId(), new BigDecimal("100.00"));
 
         log.info("Starting new DE_CODER game in room '{}'. Secret code generated", request.roomId());
 
         return deCoderGameMapper.toStartResponse(
-                MessageType.SYSTEM,
                 DeCoderGameEvent.START,
                 request.roomId(),
                 GAME_STARTED,
@@ -64,33 +66,44 @@ public class DeCoderGameService {
 
         deCoderGameValidator.validateGameExists(request.roomId(), secretCodes);
 
-        BitSet state = roomState.computeIfAbsent(request.roomId(), k -> new BitSet(BITSET_SIZE));
-
-        synchronized (state) {
-            deCoderGameValidator.validateCodeNotUsed(request.code(), state);
-
-            state.set(request.code());
+        Map<Integer, GameState> history = roomState.get(request.roomId());
+        if (history == null) {
+            throw new InvalidMoveException("Game state not found");
         }
 
-        if (DeCoderGameLogicUtils.isCodeCracked(request.code(), secretCodes.get(request.roomId()))) {
+        BigDecimal currentJackpot = jackpots.merge(request.roomId(), JACKPOT_INCREMENT, BigDecimal::add);
 
+        GameState moveResult;
+
+        synchronized (history) {
+            if (history.containsKey(request.code())) {
+                moveResult = history.get(request.code());
+            } else {
+                moveResult = DeCoderGameLogicUtils.calculateResult(request.code(), secretCodes.get(request.roomId()));
+                history.put(request.code(), moveResult);
+            }
+        }
+
+        if (DeCoderGameLogicUtils.isCodeCracked(moveResult)) {
             log.info("Player {} found the code in room {}!", request.player(), request.roomId());
 
             secretCodes.remove(request.roomId());
             roomState.remove(request.roomId());
+            jackpots.remove(request.roomId());
 
-            return deCoderGameMapper.toWinResponse(MessageType.SYSTEM,
+            return deCoderGameMapper.toWinResponse(
                     DeCoderGameEvent.WINNER,
                     request.roomId(),
                     "Player wins!",
+                    currentJackpot,
                     request.player());
         }
 
-        return deCoderGameMapper.toMoveResponse(MessageType.SYSTEM,
+        return deCoderGameMapper.toMoveResponse(
                 DeCoderGameEvent.MOVE,
                 request.roomId(),
                 "Does not match the winning code",
-                request.code(),
+                List.of(moveResult) ,
                 request.player());
     }
 
@@ -99,21 +112,18 @@ public class DeCoderGameService {
 
         boolean isStarted = secretCodes.containsKey(roomId);
 
-        BitSet state = roomState.get(roomId);
-        String base64 = "";
+        Map<Integer, GameState> history = roomState.get(roomId);
+        List<GameState> historyList = new ArrayList<>();
 
-        if (state != null) {
-            synchronized (state) {
-                byte[] bytes = state.toByteArray();
-                if (bytes.length > 0) {
-                    base64 = java.util.Base64.getEncoder().encodeToString(bytes);
-                }
+        if (history != null) {
+            synchronized (history) {
+                historyList.addAll(history.values());
             }
         }
 
         return DeCoderGameResponse.builder()
                 .isGameStarted(isStarted)
-                .gameState(base64)
+                .gameState(historyList)
                 .build();
     }
 }

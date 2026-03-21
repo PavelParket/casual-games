@@ -1,6 +1,7 @@
 package com.websocket_hub.manager;
 
-import com.websocket_hub.client.DeCoderGameServiceClient;
+import com.websocket_hub.client.GameServiceClient;
+import com.websocket_hub.domain.dto.client.DeCoderGameInternalResponse;
 import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,7 +40,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
 
     private final PlayerBetValidator playerBetValidator;
 
-    private final DeCoderGameServiceClient deCoderGameServiceClient;
+    private final GameServiceClient gameServiceClient;
 
     public DeCoderGameRoomManager(
             MessageSerializer serializer,
@@ -49,14 +51,14 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
             RoomValidator roomValidator,
             SessionManager sessionManager,
             RoomRedisRepository roomRedisRepository,
-            DeCoderGameServiceClient deCoderGameServiceClient
+            GameServiceClient gameServiceClient
     ) {
         super(serializer, roomFactory, sessionManager, roomValidator, roomRedisRepository);
         this.messageMapper = deCoderGameMessageMapper;
         this.sessionManager = sessionManager;
         this.playerBetFactory = playerBetFactory;
         this.playerBetValidator = playerBetValidator;
-        this.deCoderGameServiceClient = deCoderGameServiceClient;
+        this.gameServiceClient = gameServiceClient;
     }
 
     @Override
@@ -124,7 +126,8 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
     public void sendGameStateAsync(UserInternalResponse user, UUID roomId) {
         Thread.ofVirtual().start(() -> {
             try {
-                DeCoderGameMessage stateResponse = deCoderGameServiceClient.getGameState(roomId);
+                DeCoderGameInternalResponse stateResponse = gameServiceClient.getDeCoderGameState(roomId)
+                        .orElseThrow(() -> new RuntimeException("Empty state"));
 
                 if (stateResponse == null) return;
 
@@ -139,7 +142,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
                         .event(DeCoderGameEvent.STATE)
                         .roomId(roomId)
                         .toUserId(user.guid())
-                        .gameState(stateResponse.gameState() != null ? stateResponse.gameState() : "")
+                        .gameState(stateResponse.gameState() != null ? stateResponse.gameState() : List.of())
                         .isGameStarted(stateResponse.isGameStarted())
                         .message("Current game state loaded")
                         .build();

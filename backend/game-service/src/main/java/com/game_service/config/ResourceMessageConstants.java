@@ -41,6 +41,7 @@ public class ResourceMessageConstants {
     public static final String DECODER_GAME_ALREADY_IN_PROGRESS = "Game already in progress in this room";
     public static final String DECODER_CODE_OUT_OF_RANGE = "Code must be between 0000 and %d";
     public static final String DECODER_CODE_ALREADY_TRIED = "Code %d already tried!";
+    public static final String DECODER_WRONG_EVENT = "Wrong game event";
 
     // -------------------------------------------------------------------------
     // HorseRace

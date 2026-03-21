@@ -5,6 +5,8 @@ import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.MessageType;
 import lombok.Builder;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Builder
@@ -22,7 +24,9 @@ public record DeCoderGameMessage(
 
         boolean isGameStarted,
 
-        String gameState,
+        List<DeCoderGameState> gameState,
+
+        BigDecimal jackpot,
 
         String message,
 
