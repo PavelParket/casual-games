@@ -71,12 +71,11 @@ public class DurakGameService {
             }
 
             durakGameValidator.validate(game, request);
+            applyMove(game, request);
 
             if (DurakPhase.GAME_OVER.equals(game.getPhase())) {
                 processResult(game);
             }
-
-            applyMove(game, request);
 
             return buildResponse(game);
         }

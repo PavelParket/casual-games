@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { Box, Typography } from "../../../../ui";
 import { PlayingCard } from "./PlayingCard";
 
@@ -49,23 +50,26 @@ export function OpponentHand({ cardCount, opponentName }: OpponentHandProps) {
                 </Typography>
             </Box>
 
-            {/* Face-down card row with overlap */}
+            {/* Face-down card row */}
             <Box style={{
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
             }}>
-                {Array.from({ length: displayCount }).map((_, i) => (
-                    <Box
-                        key={i}
-                        style={{
-                            marginLeft: i === 0 ? 0 : -28,
-                            zIndex: i,
-                        }}
-                    >
-                        <PlayingCard faceDown size="sm" />
-                    </Box>
-                ))}
+                <AnimatePresence mode="popLayout">
+                    {Array.from({ length: displayCount }).map((_, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ x: 120, y: -50, opacity: 0, scale: 0.7 }}
+                            animate={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
+                            style={{ marginLeft: i === 0 ? 0 : -28, zIndex: i }}
+                        >
+                            <PlayingCard faceDown size="sm" />
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
 
                 {displayCount === 0 && (
                     <Typography variant="caption" style={{

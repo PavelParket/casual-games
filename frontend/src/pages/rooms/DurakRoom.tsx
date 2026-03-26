@@ -19,14 +19,15 @@ import { DurakBoard } from "./durak/components/DurakBoard";
 import { BettingPanel } from "./durak/components/BettingPanel";
 import { GameOverOverlay } from "./durak/components/GameOverOverlay";
 
+export type TableExitMode = "bita" | "pickup" | null;
+
 export default function DurakRoom() {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
 
     const guid = useSelector((state: RootState) => state.auth.user?.guid);
     const balance = useSelector((state: RootState) => state.user.user?.balance);
-    const { room, players, readyPlayersCount, totalPlayersCount, playerBetMap } =
-        useSelector((state: RootState) => state.durakRoom);
+    const { room, players, readyPlayersCount, totalPlayersCount, playerBetMap } = useSelector((state: RootState) => state.durakRoom);
 
     const roomId = useParams<{ roomId?: string }>().roomId;
 
@@ -54,6 +55,12 @@ export default function DurakRoom() {
     const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
     const [discardCount, setDiscardCount] = useState(0);
     const [winnerId, setWinnerId] = useState<string | null | undefined>(undefined);
+    const [attackerId, setAttackerId] = useState<string | null>(null);
+    const [tableExitMode, setTableExitMode] = useState<TableExitMode>(null);
+
+    const [isDealAnimation, setIsDealAnimation] = useState(false);
+
+    const wasGameRef = useRef(false);
 
     const prevTableRef = useRef<DurakTablePair[]>([]);
     const prevPhaseRef = useRef<DurakPhase | null>(null);
@@ -64,6 +71,8 @@ export default function DurakRoom() {
     const opponentName = guid && players
         ? (Object.entries(players).find(([g]) => g !== guid)?.[1] ?? "Opponent")
         : "Opponent";
+
+    const isOpponentAttacker = !!attackerId && !!guid && attackerId !== guid;
 
     useEffect(() => {
         if (!roomId || !guid) {
@@ -98,8 +107,24 @@ export default function DurakRoom() {
     );
 
     const processGameState = useCallback((msg: DurakGameMessage) => {
+        const prevTable = prevTableRef.current;
+        const prevPhase = prevPhaseRef.current;
+
         prevTableRef.current = msg.table ?? [];
         prevPhaseRef.current = msg.phase ?? null;
+
+        const newTable = msg.table ?? [];
+
+        if (prevTable.length > 0 && newTable.length === 0) {
+            setTableExitMode(prevPhase === "PICKING_UP" ? "pickup" : "bita");
+        } else {
+            setTableExitMode(null);
+        }
+
+        if (!wasGameRef.current) {
+            wasGameRef.current = true;
+            setIsDealAnimation(true);
+        }
 
         setRemainingSeconds(null);
         setIsGame(true);
@@ -109,9 +134,10 @@ export default function DurakRoom() {
         setDeckCardsLeft(msg.deckCardsLeft ?? 0);
         setTrumpCard(msg.trumpCard ?? null);
         setTrumpSuit(msg.trumpSuit ?? null);
-        setTable(msg.table ?? []);
+        setTable(newTable);
         setIsMyTurn(msg.isMyTurn ?? false);
         setAvailableActions(msg.availableActions ?? []);
+        setAttackerId(msg.attackerId ?? null);
         setAwaitingResponse(false);
     }, []);
 
@@ -137,12 +163,20 @@ export default function DurakRoom() {
         setRemainingSeconds(null);
         setDiscardCount(0);
         setWinnerId(undefined);
+        setAttackerId(null);
+        setTableExitMode(null);
+        setIsDealAnimation(false);
+        wasGameRef.current = false;
         setReady(false);
         setBetPlaced(false);
         setBetInput("");
         prevTableRef.current = [];
         prevPhaseRef.current = null;
     }, [showGameToast]);
+
+    const handleDealComplete = useCallback(() => {
+        setIsDealAnimation(false);
+    }, []);
 
     useDurakMessages({
         message,
@@ -172,14 +206,7 @@ export default function DurakRoom() {
         }
 
         setAwaitingResponse(true);
-        send({
-            type: "USER_MESSAGE",
-            event: "MOVE",
-            fromUserId: guid,
-            roomId: room.id,
-            action: "PLAY_CARD",
-            card
-        });
+        send({ type: "USER_MESSAGE", event: "MOVE", fromUserId: guid, roomId: room.id, action: "PLAY_CARD", card });
     }, [awaitingResponse, guid, isConnected, room, send]);
 
     const handlePass = useCallback(() => {
@@ -188,13 +215,7 @@ export default function DurakRoom() {
         }
 
         setAwaitingResponse(true);
-        send({
-            type: "USER_MESSAGE",
-            event: "MOVE",
-            fromUserId: guid,
-            roomId: room.id,
-            action: "PASS"
-        });
+        send({ type: "USER_MESSAGE", event: "MOVE", fromUserId: guid, roomId: room.id, action: "PASS" });
     }, [awaitingResponse, guid, isConnected, room, send]);
 
     const handleTakeCards = useCallback(() => {
@@ -203,33 +224,32 @@ export default function DurakRoom() {
         }
 
         setAwaitingResponse(true);
-        send({
-            type: "USER_MESSAGE",
-            event: "MOVE",
-            fromUserId: guid,
-            roomId: room.id,
-            action: "TAKE_CARDS"
-        });
+        send({ type: "USER_MESSAGE", event: "MOVE", fromUserId: guid, roomId: room.id, action: "TAKE_CARDS" });
     }, [awaitingResponse, guid, isConnected, room, send]);
 
     const handlePlaceBet = () => {
-        if (!room || !isConnected || !guid || betPlaced) return;
+        if (!room || !isConnected || !guid || betPlaced) {
+            return;
+        }
 
         const amount = parseFloat(betInput);
+
         if (isNaN(amount) || amount <= 0) {
             showGameToast("Please enter a valid bet amount greater than 0", "game-error");
             return;
         }
+
         if (balance !== undefined && amount > balance) {
             showGameToast("Insufficient balance", "game-error");
             return;
         }
-
         send({ type: "USER_MESSAGE", event: "BET", fromUserId: guid, roomId: room.id, bet: amount });
     };
 
     const handleReady = () => {
-        if (!room || !isConnected || ready) return;
+        if (!room || !isConnected || ready) {
+            return;
+        }
 
         if (!betPlaced) {
             showGameToast("You must place a bet before becoming ready!", "game-error");
@@ -263,7 +283,6 @@ export default function DurakRoom() {
             boxShadow: "var(--shadow-lg)",
         }}>
             <Container>
-                {/* Header */}
                 <Box style={{ padding: "2rem 0 1rem" }}>
                     <Typography variant="h2" style={{ textAlign: "center" }}>
                         Durak: {room?.name}
@@ -271,8 +290,6 @@ export default function DurakRoom() {
                 </Box>
 
                 <Card style={{ padding: 0 }}>
-
-                    {/* ── Status bar ── */}
                     <Box style={{
                         padding: "0.75rem 1.5rem",
                         borderBottom: "1px solid var(--color-border)",
@@ -291,7 +308,6 @@ export default function DurakRoom() {
                         </Button>
                     </Box>
 
-                    {/* ── Game board ── */}
                     {isGame && (
                         <DurakBoard
                             myCards={myCards}
@@ -307,14 +323,17 @@ export default function DurakRoom() {
                             discardCount={discardCount}
                             playerName={myName}
                             opponentName={opponentName}
+                            isOpponentAttacker={isOpponentAttacker}
+                            tableExitMode={tableExitMode}
+                            isDealAnimation={isDealAnimation}
+                            onDealComplete={handleDealComplete}
                             onPlayCard={handlePlayCard}
                             onPass={handlePass}
                             onTakeCards={handleTakeCards}
-                            disabled={awaitingResponse}
+                            disabled={awaitingResponse || isDealAnimation}
                         />
                     )}
 
-                    {/* ── Game over ── */}
                     {isGameOver && (
                         <GameOverOverlay
                             winnerId={winnerId}
@@ -324,7 +343,6 @@ export default function DurakRoom() {
                         />
                     )}
 
-                    {/* ── Lobby ── */}
                     {!isGame && !isGameOver && (
                         <Box style={{
                             display: "grid",
@@ -333,18 +351,13 @@ export default function DurakRoom() {
                             padding: "1.5rem",
                             gap: "1.5rem",
                         }}>
-                            {/* Players list */}
                             <Stack gap="1rem" align="center" justify="center" style={{ paddingTop: "1rem" }}>
                                 <Typography variant="h3">Players</Typography>
                                 {Object.values(players ?? {}).map(username => (
                                     <Typography key={username} variant="body">{username}</Typography>
                                 ))}
                             </Stack>
-
-                            {/* Empty middle column — spacing */}
                             <Box />
-
-                            {/* Betting panel */}
                             <BettingPanel
                                 players={players}
                                 balance={balance}
@@ -359,7 +372,6 @@ export default function DurakRoom() {
                             />
                         </Box>
                     )}
-
                 </Card>
             </Container>
 

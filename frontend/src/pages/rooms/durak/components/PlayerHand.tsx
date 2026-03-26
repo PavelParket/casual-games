@@ -32,7 +32,10 @@ export function PlayerHand({
     const sortedCards = trumpSuit ? sortCards(cards, trumpSuit) : cards;
 
     const playCardOnce = (card: DurakCard) => {
-        if (playLock.current) return;
+        if (playLock.current) {
+            return;
+        }
+
         playLock.current = true;
         onPlayCard(card);
         setTimeout(() => { playLock.current = false; }, 300);
@@ -43,10 +46,15 @@ export function PlayerHand({
         _event: MouseEvent | TouchEvent | PointerEvent,
         info: { point: { x: number; y: number }; offset: { x: number; y: number } }
     ) => {
-        if (!canPlay) return;
+        if (!canPlay) {
+            return;
+        }
 
         const tableEl = tableRef.current;
-        if (!tableEl) return;
+
+        if (!tableEl) {
+            return;
+        }
 
         const rect = tableEl.getBoundingClientRect();
         const { x, y } = info.point;
@@ -100,8 +108,24 @@ export function PlayerHand({
                 </Typography>
             </Box>
 
-            {/* Card row */}
+            {/* Card row — A9: pulsing glow when it is my turn */}
             <motion.div
+                animate={isMyTurn ? {
+                    boxShadow: [
+                        "0 0 0px 0px rgba(46,204,113,0)",
+                        "0 0 12px 4px rgba(46,204,113,0.45)",
+                        "0 0 0px 0px rgba(46,204,113,0)",
+                    ],
+                } : {
+                    boxShadow: "0 0 0px 0px rgba(46,204,113,0)",
+                }}
+                transition={isMyTurn ? {
+                    duration: 1.6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                } : {
+                    duration: 0.4,
+                }}
                 style={{
                     display: "flex",
                     flexDirection: "row",
@@ -114,10 +138,10 @@ export function PlayerHand({
                     {sortedCards.map((card, i) => (
                         <motion.div
                             key={cardId(card)}
-                            initial={{ scale: 0.5, opacity: 0, y: -20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.5, opacity: 0, y: 20 }}
-                            transition={{ duration: 0.2 }}
+                            initial={{ x: -180, y: -50, opacity: 0, scale: 0.7 }}
+                            animate={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
                             style={{ marginLeft: i === 0 ? 0 : -20 }}
                         >
                             <PlayingCard
