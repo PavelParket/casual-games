@@ -2,7 +2,7 @@
 
 --changeset Timofei:V0.2.17022026_1218__init_tictactoe_table
 --preconditions onFail:MARK_RAN
---precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'game_tictactoe'
+--precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'game_tic_tac_toe'
 
 CREATE TABLE game_tic_tac_toe (
                                    id BIGSERIAL PRIMARY KEY,
@@ -17,5 +17,5 @@ CREATE TABLE game_tic_tac_toe (
                                    created_at TIMESTAMP NOT NULL
 );
 
-CREATE INDEX idx_tictactoe_player_x ON tictactoe_games(player_x_id);
-CREATE INDEX idx_tictactoe_player_o ON tictactoe_games(player_o_id);
+CREATE INDEX idx_tic_tac_toe_player_x ON game_tic_tac_toe(player_x_id);
+CREATE INDEX idx_tic_tac_toe_player_o ON game_tic_tac_toe(player_o_id);

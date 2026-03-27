@@ -4,6 +4,7 @@ import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
 import lombok.experimental.UtilityClass;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 @UtilityClass
 public class TicTacToeGameUtils {
@@ -18,6 +19,13 @@ public class TicTacToeGameUtils {
 
     public static String nextPlayerSymbol(String current) {
         return "X".equals(current) ? "O" : "X";
+    }
+
+    public static String getCurrentTurnSymbol(String[] board) {
+        long xMoves = Arrays.stream(board).filter(s -> Objects.equals(s, SYMBOL_X)).count();
+        long oMoves = Arrays.stream(board).filter(s -> Objects.equals(s, SYMBOL_O)).count();
+
+        return xMoves == oMoves ? SYMBOL_X : SYMBOL_O;
     }
 
     public static boolean isDraw(String[] board) {

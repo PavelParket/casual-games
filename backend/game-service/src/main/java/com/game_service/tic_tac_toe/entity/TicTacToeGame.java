@@ -6,13 +6,16 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.Instant;
 
 import java.util.Map;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tic_tac_toe_games")
+@Table(name = "game_tic_tac_toe")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,10 +29,10 @@ public class TicTacToeGame {
     @Column(nullable = false, unique = true)
     private UUID roomId;
 
-    @Column(nullable = false)
+    @Column(name = "player_x_id", nullable = false)
     private UUID playerXId;
 
-    @Column(nullable = false)
+    @Column(name = "player_o_id", nullable = false)
     private UUID playerOId;
 
     @Transient

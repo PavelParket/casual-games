@@ -4,13 +4,16 @@ import com.game_service.common.enums.MessageType;
 import com.game_service.common.exception.GameValidationException;
 import com.game_service.tic_tac_toe.dto.TicTacToeGameRequest;
 import com.game_service.tic_tac_toe.dto.TicTacToeGameResponse;
+import com.game_service.tic_tac_toe.entity.TicTacToeGame;
 import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
 import com.game_service.tic_tac_toe.mapper.TicTacToeGameMapper;
+import com.game_service.tic_tac_toe.repository.TicTacToeGameRepository;
 import com.game_service.tic_tac_toe.util.TicTacToeGameUtils;
 import com.game_service.tic_tac_toe.validator.TicTacToeGameValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,10 +23,11 @@ import java.util.Random;
 import java.util.UUID;
 
 import static com.game_service.config.ResourceMessageConstants.GAME_STARTED;
+import static com.game_service.config.ResourceMessageConstants.TTT_GAME_ALREADY_IN_PROGRESS;
 import static com.game_service.config.ResourceMessageConstants.TTT_DRAW;
 import static com.game_service.config.ResourceMessageConstants.TTT_NEXT_PLAYER_MOVE;
 import static com.game_service.config.ResourceMessageConstants.TTT_PLAYER_WINS;
-import static com.game_service.config.ResourceMessageConstants.TTT_WINNER_PLAYER_NOT_FOUND;
+import static com.game_service.config.ResourceMessageConstants.TTT_ROOM_MUST_EXIST;
 import static com.game_service.tic_tac_toe.util.TicTacToeGameUtils.SYMBOL_O;
 import static com.game_service.tic_tac_toe.util.TicTacToeGameUtils.SYMBOL_X;
 
@@ -36,12 +40,20 @@ public class TicTacToeGameService {
 
     private final TicTacToeGameMapper ticTacToeGameMapper;
 
+    private final TicTacToeGameRepository ticTacToeGameRepository;
+
     private final Random random = new Random();
 
+    @Transactional
     public TicTacToeGameResponse processStart(TicTacToeGameRequest request) {
+        System.out.println(request);
         log.info("Received message {}", request);
 
         ticTacToeGameValidator.validateStart(request);
+
+        if (ticTacToeGameRepository.findByRoomId(request.roomId()).isPresent()) {
+            throw new GameValidationException(TTT_GAME_ALREADY_IN_PROGRESS);
+        }
 
         String[] board = new String[9];
 
@@ -49,58 +61,82 @@ public class TicTacToeGameService {
 
         Collections.shuffle(players, random);
 
+        UUID playerXId = players.get(0);
+        UUID playerOId = players.get(1);
+
+        TicTacToeGame game = TicTacToeGame.builder()
+                .roomId(request.roomId())
+                .playerXId(playerXId)
+                .playerOId(playerOId)
+                .players(request.players())
+                .board(board)
+                .event(TicTacToeGameEvent.START)
+                .build();
+
+        ticTacToeGameRepository.save(game);
+
         Map<UUID, String> playersSymbols = Map.of(
-                players.get(0), SYMBOL_X,
-                players.get(1), SYMBOL_O
+                playerXId, SYMBOL_X,
+                playerOId, SYMBOL_O
         );
 
-        log.info("Starting new game in room '{}': {}=X, {}=O", request.roomId(), players.get(0), players.get(1));
+        log.info("Starting new game in room '{}': {}=X, {}=O", request.roomId(), playerXId, playerOId);
 
         return ticTacToeGameMapper.toStartResponse(
                 MessageType.SYSTEM,
                 TicTacToeGameEvent.START,
                 request.roomId(),
                 board,
-                playersSymbols.get(players.get(0)),
-                playersSymbols.get(players.get(1)),
+                playersSymbols.get(playerXId),
+                playersSymbols.get(playerOId),
                 playersSymbols,
                 request.players(),
                 GAME_STARTED
         );
     }
 
-    /* todo: синхронизировать по комнате или скорее игре, то есть добавить состояние и по нему блокировать
-        иначе два запроса могут попасть на обработку одновременно, так как вебсокеты принимают запрос и прокидывают его без блокировки
-        в целом надо добавить объекты для состояний и по ним работать */
+    @Transactional
     public TicTacToeGameResponse processMove(TicTacToeGameRequest request) {
-        ticTacToeGameValidator.validateMove(request);
+        System.out.println(request);
+        TicTacToeGame game = ticTacToeGameRepository.findByRoomId(request.roomId())
+                .orElseThrow(() -> new GameValidationException(TTT_ROOM_MUST_EXIST));
 
-        String[] board = request.board();
+        ticTacToeGameValidator.validateMove(request, game);
+
+        String[] board = game.getBoard();
+
         Integer cell = request.cell();
-        String currentPlayerSymbol = request.currentPlayerSymbol();
 
-        board[cell] = currentPlayerSymbol;
+        String currentSymbol = request.fromUserId().equals(game.getPlayerXId()) ? SYMBOL_X : SYMBOL_O;
+
+        board[cell] = currentSymbol;
+        game.setBoard(board);
 
         TicTacToeGameEvent event = TicTacToeGameUtils.checkWinner(board);
+        game.setEvent(event);
+
         String message;
         String nextPlayerSymbol = null;
         UUID winner = null;
 
         if (TicTacToeGameEvent.WINNER_X.equals(event) || TicTacToeGameEvent.WINNER_O.equals(event)) {
-            String winnerSymbol = TicTacToeGameUtils.getWinnerSymbol(event);
-            winner = request.playersSymbols().entrySet().stream()
-                    .filter(playerId -> playerId.getValue().equals(winnerSymbol))
-                    .map(Map.Entry::getKey)
-                    .findFirst()
-                    .orElseThrow(() -> new GameValidationException(TTT_WINNER_PLAYER_NOT_FOUND));
+            winner = TicTacToeGameEvent.WINNER_X.equals(event) ? game.getPlayerXId() : game.getPlayerOId();
+            game.setWinnerId(winner);
 
-            message = String.format(TTT_PLAYER_WINS, request.players().get(winner));
+            message = String.format(TTT_PLAYER_WINS, game.getPlayers().get(winner));;
         } else if (TicTacToeGameEvent.DRAW.equals(event)) {
             message = TTT_DRAW;
         } else {
-            nextPlayerSymbol = TicTacToeGameUtils.nextPlayerSymbol(currentPlayerSymbol);
+            nextPlayerSymbol = TicTacToeGameUtils.nextPlayerSymbol(currentSymbol);
             message = String.format(TTT_NEXT_PLAYER_MOVE, nextPlayerSymbol);
         }
+
+        ticTacToeGameRepository.save(game);
+
+        Map<UUID, String> playersSymbols = Map.of(
+                game.getPlayerXId(), SYMBOL_X,
+                game.getPlayerOId(), SYMBOL_O
+        );
 
         return ticTacToeGameMapper.toMoveResponse(
                 MessageType.SYSTEM,
@@ -109,10 +145,10 @@ public class TicTacToeGameService {
                 message,
                 board,
                 cell,
-                currentPlayerSymbol,
+                currentSymbol,
                 nextPlayerSymbol,
-                request.playersSymbols(),
-                request.players(),
+                playersSymbols,
+                game.getPlayers(),
                 winner
         );
     }
