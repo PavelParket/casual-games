@@ -111,7 +111,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleGeneric(Exception e) {
-        log.error("Unexpected error", e);
+        log.error("Unexpected error: {}", e.getMessage(), e);
 
         return factory.create(ErrorCode.UNEXPECTED_ERROR, UNEXPECTED_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
     }

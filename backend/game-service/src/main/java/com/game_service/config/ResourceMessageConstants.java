@@ -11,6 +11,7 @@ public class ResourceMessageConstants {
     public static final String COOLDOWN_WAIT_SECONDS = "Please wait %d seconds before trying again.";
 
     public static final String GAME_STARTED = "Game started!";
+    public static final String GAME_TYPE_NOT_FOUND = "Game type not found: %s";
 
     // -------------------------------------------------------------------------
     // TicTacToe
