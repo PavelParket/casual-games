@@ -1,10 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Input, ToastContainer, Typography, useThemedIcon } from "../../ui";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import type { TicTacToeGameMessage } from "../../models/WsMessage";
+import type { ErrorWSMessage, TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage } from "../../utils/SecurityUtils";
 import { findByGuid } from "../../store/slices/UserSlice";
 import { clearError, getRoomById } from "../../store/slices/TicTacToeRoomSlice";

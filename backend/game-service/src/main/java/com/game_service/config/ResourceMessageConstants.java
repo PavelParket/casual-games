@@ -55,7 +55,7 @@ public class ResourceMessageConstants {
     public static final String HORSE_RACE_HORSE_COUNT_CANNOT_BE_NULL = "Horse count cannot be null";
 
     // -------------------------------------------------------------------------
-    // HorseRace
+    // Durak
     // -------------------------------------------------------------------------
 
     public static final String DURAK_GAME_NOT_FOUND = "Game not found";
