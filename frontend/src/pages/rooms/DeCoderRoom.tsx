@@ -1,14 +1,25 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "../../../store/store";
-import { useWebSocket } from "../../../hooks/useWebSocket";
-import { getBalance } from "../../../store/slices/UserSlice";
-import { RoomAPI } from "../../../api/WsHubApi";
+import type { AppDispatch, RootState } from "../../store/store";
+import { useWebSocket } from "../../hooks/useWebSocket";
+import { getBalance } from "../../store/slices/UserSlice";
 import {
   getRoomById,
   getUsernamesInRoom,
-} from "../../../store/slices/DeCoderRoomSlice";
+} from "../../store/slices/DeCoderRoomSlice";
+import { useGameToast } from "../../hooks/useGameToast";
+import { useSystemToastContext } from "../../providers/SystemToastContext";
+import {
+  errorCodeMessages,
+  SYSTEM_ERROR_CODES,
+} from "../../models/constants/ErrorCodeMessages";
 
 import {
   Box,
@@ -16,25 +27,22 @@ import {
   Card,
   Container,
   Typography,
-  Toast,
+  ToastContainer,
   Stack,
   Divider,
   Grid,
   CooldownTimer,
   Modal,
   Icon,
-} from "../../../ui";
-import { useThemedIcon } from "../../../ui";
-import {
-  validateRoomName,
-  validateWSMessage,
-  validateToastMessage,
-} from "../../../utils/SecurityUtils";
+  Input,
+} from "../../ui";
+import { useThemedIcon } from "../../ui";
+import { validateRoomName, validateWSMessage } from "../../utils/SecurityUtils";
 import type {
   DeCoderMessage,
   DeCoderGameHistory,
-} from "../../../models/WsMessage";
-import { DeCoderPanel } from "./DeCoderPanel";
+  ErrorWSMessage,
+} from "../../models/WsMessage";
 
 export default function DeCoderRoom() {
   const dispatch = useDispatch<AppDispatch>();
@@ -49,29 +57,29 @@ export default function DeCoderRoom() {
   }>();
   const roomName = validateRoomName(rawRoomName ?? "");
 
-  const [toast, setToast] = useState<{
-    text: string;
-    type: "success" | "error" | "info";
-  } | null>(null);
-  const [players, setPlayers] = useState<Record<string, string>>({});
-  const playersRef = useRef(players);
+  const { players } = useSelector((state: RootState) => state.deCoderRoom);
+  const playersRef = useRef(players || {});
+
+  const { toasts, showGameToast, dismiss } = useGameToast();
+  const { showSystemToast } = useSystemToastContext();
+  const { getIcon } = useThemedIcon();
 
   useEffect(() => {
-    playersRef.current = players;
+    playersRef.current = players || {};
   }, [players]);
 
   const [gameActive, setGameActive] = useState<boolean>(false);
   const [history, setHistory] = useState<DeCoderGameHistory[]>([]);
   const [jackpot, setJackpot] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [gameOverModal, setGameOverModal] = useState<{
     isOpen: boolean;
     isWin: boolean;
     winnerName?: string;
   } | null>(null);
 
-  const { getIcon } = useThemedIcon();
-
-  const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
+  const [chars, setChars] = useState<string[]>(["", "", "", ""]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [cooldown, setCooldown] = useState(0);
 
@@ -88,20 +96,6 @@ export default function DeCoderRoom() {
     }
   }, [roomName, roomId, navigate, dispatch]);
 
-  const fetchPlayers = useCallback(async () => {
-    if (!roomId) return;
-    try {
-      const res = await RoomAPI.getUsernamesInRoom(roomId, "DE_CODER");
-      setPlayers(res.data);
-    } catch (e) {
-      console.error("Failed to fetch players", e);
-    }
-  }, [roomId]);
-
-  useEffect(() => {
-    fetchPlayers();
-  }, [fetchPlayers]);
-
   useEffect(() => {
     if (cooldown <= 0) return;
     const timerId = setInterval(() => setCooldown((c) => c - 1), 1000);
@@ -112,29 +106,11 @@ export default function DeCoderRoom() {
     if (guid) dispatch(getBalance(guid));
   }, [dispatch, guid]);
 
-  const showToast = (
-    text: string,
-    type: "success" | "error" | "info" = "info",
-  ) => {
-    setToast({ text: validateToastMessage(text), type });
-  };
-
   const requestSync = useCallback(() => {
-    if (isConnected) {
-      send({ type: "SYSTEM", event: "STATE", roomId: roomId! });
+    if (isConnected && roomId) {
+      send({ type: "SYSTEM", event: "STATE", roomId });
     }
   }, [isConnected, send, roomId]);
-
-  useEffect(() => {
-    if (!isConnected) return;
-
-    const syncInterval = setInterval(() => {
-      console.debug("Auto-syncing game state...");
-      requestSync();
-    }, 120000);
-
-    return () => clearInterval(syncInterval);
-  }, [isConnected, requestSync]);
 
   useEffect(() => {
     if (!isConnected || !message) return;
@@ -160,16 +136,6 @@ export default function DeCoderRoom() {
         }
         break;
 
-      case "START":
-        setGameActive(true);
-        setHistory([]);
-        setJackpot(0);
-        setDigits(["", "", "", ""]);
-        setCooldown(0);
-        setGameOverModal(null);
-        showToast("Game started! System generated a new code.", "success");
-        break;
-
       case "MOVE":
         if (sanitized.gameState && sanitized.gameState.length > 0) {
           setHistory((prev) => [...prev, ...sanitized.gameState!]);
@@ -180,9 +146,9 @@ export default function DeCoderRoom() {
 
         if (sanitized.player !== guid) {
           const playerName = playersRef.current[sanitized.player!] || "Someone";
-          showToast(`${playerName} made a move`, "info");
+          showGameToast(`${playerName} made a move`, "game-info");
         } else {
-          showToast("Move accepted", "info");
+          showGameToast("Move accepted", "game-info");
         }
 
         refreshUserBalance();
@@ -210,17 +176,30 @@ export default function DeCoderRoom() {
       }
 
       case "ERROR": {
-        const msg = sanitized.message || "Error occurred";
-        if (msg.includes("not started") || msg.includes("Game not found")) {
-          setGameActive(false);
-          showToast("Game session expired or not started.", "error");
-        } else if (msg.includes("already in progress")) {
-          setGameActive(true);
-          requestSync();
-        } else if (msg.includes("Insufficient funds")) {
-          showToast("Transaction failed: Insufficient funds!", "error");
+        const errorMsg = message as ErrorWSMessage;
+        const code = errorMsg.errorCode ?? "";
+        let text = errorCodeMessages[code];
+
+        if (!text) {
+          const msg = sanitized.message || "Error occurred";
+          if (msg.includes("not started") || msg.includes("Game not found")) {
+            setGameActive(false);
+            text = "Game session expired or not started.";
+          } else if (msg.includes("already in progress")) {
+            setGameActive(true);
+            requestSync();
+            return;
+          } else if (msg.includes("Insufficient funds")) {
+            text = "Transaction failed: Insufficient funds!";
+          } else {
+            text = msg;
+          }
+        }
+
+        if (SYSTEM_ERROR_CODES.has(code)) {
+          showSystemToast(text, "system-error");
         } else {
-          showToast(msg, "error");
+          showGameToast(text, "game-error");
         }
         break;
       }
@@ -239,14 +218,20 @@ export default function DeCoderRoom() {
     dispatch,
     roomId,
     requestSync,
+    showGameToast,
+    showSystemToast,
   ]);
-  const handleDigitChange = (index: number, val: string) => {
-    const digit = val.replace(/\D/g, "").slice(-1);
-    const newDigits = [...digits];
-    newDigits[index] = digit;
-    setDigits(newDigits);
 
-    if (digit !== "" && index < 3) {
+  const handleCharChange = (index: number, val: string) => {
+    const char = val
+      .replace(/[^A-Za-z]/g, "")
+      .toUpperCase()
+      .slice(-1);
+    const newChars = [...chars];
+    newChars[index] = char;
+    setChars(newChars);
+
+    if (char !== "" && index < 3) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -255,31 +240,29 @@ export default function DeCoderRoom() {
     index: number,
     e: React.KeyboardEvent<HTMLInputElement>,
   ) => {
-    if (e.key === "Backspace" && digits[index] === "" && index > 0) {
+    if (e.key === "Backspace" && chars[index] === "" && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
-  const handleStartGame = () => {
-    if (!isConnected) return;
-    send({ type: "SYSTEM", event: "START", roomId: roomId! });
-  };
-
   const handleSendMove = () => {
-    const codeStr = digits.join("");
+    const codeStr = chars.join("");
     if (codeStr.length !== 4) return;
     if (cooldown > 0) return;
 
-    send({
-      type: "SYSTEM",
-      event: "MOVE",
-      roomId: roomId!,
-      code: parseInt(codeStr, 10),
-    });
-    setCooldown(5);
-    setDigits(["", "", "", ""]);
+    send({ type: "SYSTEM", event: "MOVE", roomId: roomId!, code: codeStr });
+    setCooldown(2);
+    setChars(["", "", "", ""]);
     inputRefs.current[0]?.focus();
   };
+
+  const displayedHistory = useMemo(() => {
+    let filtered = history;
+    if (searchQuery) {
+      filtered = history.filter((item) => item.code.includes(searchQuery));
+    }
+    return [...filtered].reverse();
+  }, [history, searchQuery]);
 
   return (
     <Box
@@ -302,7 +285,14 @@ export default function DeCoderRoom() {
           minHeight: 0,
         }}
       >
-        <Box style={{ padding: "2rem 0" }}>
+        <Box
+          style={{
+            padding: "2rem 0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Typography variant="h2" style={{ textAlign: "center" }}>
             {roomName}
           </Typography>
@@ -353,25 +343,26 @@ export default function DeCoderRoom() {
                   gap: "8px",
                 }}
               >
-                {Object.entries(players).map(([id, name]) => (
-                  <Typography
-                    key={id}
-                    variant="body"
-                    style={{
-                      fontWeight: id === guid ? "bold" : "normal",
-                      color:
-                        id === guid
-                          ? "var(--color-primary)"
-                          : "var(--color-text)",
-                      padding: "8px",
-                      background:
-                        id === guid ? "var(--color-bg-soft)" : "transparent",
-                      borderRadius: "var(--radius-sm)",
-                    }}
-                  >
-                    {name} {id === guid && "(You)"}
-                  </Typography>
-                ))}
+                {players &&
+                  Object.entries(players).map(([id, name]) => (
+                    <Typography
+                      key={id}
+                      variant="body"
+                      style={{
+                        fontWeight: id === guid ? "bold" : "normal",
+                        color:
+                          id === guid
+                            ? "var(--color-primary)"
+                            : "var(--color-text)",
+                        padding: "8px",
+                        background:
+                          id === guid ? "var(--color-bg-soft)" : "transparent",
+                        borderRadius: "var(--radius-sm)",
+                      }}
+                    >
+                      {name} {id === guid && "(You)"}
+                    </Typography>
+                  ))}
               </Box>
 
               <Divider style={{ margin: "1rem 0" }} />
@@ -396,31 +387,23 @@ export default function DeCoderRoom() {
               {!gameActive ? (
                 <Box style={{ textAlign: "center" }}>
                   <Typography variant="h2" style={{ marginBottom: "1.5rem" }}>
-                    Game Not Started
+                    Connecting to game...
                   </Typography>
-                  <Button
-                    variant="solid"
-                    onClick={handleStartGame}
-                    style={{ padding: "1rem 3rem", fontSize: "1.2rem" }}
-                  >
-                    Start game
-                  </Button>
                 </Box>
               ) : (
                 <Stack align="center" gap="3rem">
                   <Box style={{ display: "flex", gap: "15px" }}>
-                    {digits.map((digit, index) => (
+                    {chars.map((char, index) => (
                       <input
                         key={index}
                         ref={(el) => {
                           inputRefs.current[index] = el;
                         }}
                         type="text"
-                        inputMode="numeric"
-                        placeholder="0"
-                        value={digit}
+                        placeholder="A"
+                        value={char}
                         onChange={(e) =>
-                          handleDigitChange(index, e.target.value)
+                          handleCharChange(index, e.target.value)
                         }
                         onKeyDown={(e) => handleKeyDown(index, e)}
                         style={{
@@ -436,6 +419,7 @@ export default function DeCoderRoom() {
                           boxShadow: "var(--shadow-sm)",
                           transition: "border-color 0.2s",
                           caretColor: "transparent",
+                          textTransform: "uppercase",
                         }}
                         onFocus={(e) =>
                           (e.target.style.borderColor = "var(--color-primary)")
@@ -450,7 +434,7 @@ export default function DeCoderRoom() {
                   <Button
                     variant="solid"
                     onClick={handleSendMove}
-                    disabled={cooldown > 0 || digits.join("").length !== 4}
+                    disabled={cooldown > 0 || chars.join("").length !== 4}
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -528,8 +512,124 @@ export default function DeCoderRoom() {
                   <Icon src={getIcon("refresh")} alt="refresh" size={18} />
                 </Button>
               </Box>
-              <Box style={{ flex: 1, minHeight: 0 }}>
-                <DeCoderPanel history={history} />
+              <Input
+                value={searchQuery}
+                onChange={(e) =>
+                  setSearchQuery(
+                    e.target.value
+                      .replace(/[^A-Za-z]/g, "")
+                      .toUpperCase()
+                      .slice(0, 4),
+                  )
+                }
+                placeholder="Search history (e.g. ABCD)"
+                style={{ marginBottom: "1rem", width: "100%" }}
+              />
+
+              <Box
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflowY: "auto",
+                  background: "var(--color-bg-soft)",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--color-border)",
+                  padding: "10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  boxShadow: "inset 0 2px 4px rgba(0,0,0,0.05)",
+                }}
+              >
+                {displayedHistory.length === 0 ? (
+                  <Typography
+                    variant="body"
+                    style={{
+                      textAlign: "center",
+                      opacity: 0.5,
+                      marginTop: "2rem",
+                    }}
+                  >
+                    {history.length === 0
+                      ? "No moves yet. Be the first!"
+                      : "No matches found"}
+                  </Typography>
+                ) : (
+                  displayedHistory.map((item, idx) => (
+                    <Box
+                      key={idx}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "8px 12px",
+                        background: "var(--color-bg)",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid var(--color-border)",
+                      }}
+                    >
+                      <Typography
+                        variant="body"
+                        style={{
+                          fontFamily: "monospace",
+                          fontSize: "1.2rem",
+                          letterSpacing: "2px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {item.code}
+                      </Typography>
+                      <Stack direction="row" gap="1rem">
+                        <Box
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          <span
+                            title="Exact Match (Bulls)"
+                            style={{ fontSize: "1.2rem" }}
+                          >
+                            Exact:
+                          </span>
+                          <Typography
+                            variant="body"
+                            style={{
+                              color: "var(--color-success, #2ecc71)",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {item.exactMatch}
+                          </Typography>
+                        </Box>
+                        <Box
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          <span
+                            title="Partial Match (Cows)"
+                            style={{ fontSize: "1.2rem" }}
+                          >
+                            Partial:
+                          </span>
+                          <Typography
+                            variant="body"
+                            style={{
+                              color: "var(--color-warning, #f1c40f)",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {item.partialMatch}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Box>
+                  ))
+                )}
               </Box>
             </Box>
           </Grid>
@@ -539,8 +639,10 @@ export default function DeCoderRoom() {
       {gameOverModal && (
         <Modal
           isOpen={gameOverModal.isOpen}
-          onClose={() => {}}
-          title={gameOverModal.isWin ? "Victory!" : "System Hacked"}
+          onClose={() => {
+            navigate("/rooms");
+          }}
+          title={gameOverModal.isWin ? "Victory!" : "Code Cracked"}
         >
           <Box style={{ textAlign: "center", padding: "1rem 0" }}>
             <Typography
@@ -561,7 +663,7 @@ export default function DeCoderRoom() {
               style={{ marginBottom: "2rem", opacity: 0.8 }}
             >
               {gameOverModal.isWin
-                ? "Congratulations! The reward has been added to your balance."
+                ? `Congratulations! You won the Jackpot of ${jackpot} CGC!`
                 : "Better luck next time. The code has been deciphered."}
             </Typography>
             <Button
@@ -575,7 +677,7 @@ export default function DeCoderRoom() {
         </Modal>
       )}
 
-      {toast && <Toast message={toast.text} onClose={() => setToast(null)} />}
+      <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
     </Box>
   );
 }

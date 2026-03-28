@@ -9,7 +9,7 @@ public record DeCoderGameInternalRequest(
 
         UUID roomId,
 
-        Integer code,
+        String code,
 
         UUID player
 ) {

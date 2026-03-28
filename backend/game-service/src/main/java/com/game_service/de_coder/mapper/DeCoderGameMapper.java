@@ -19,8 +19,7 @@ public interface DeCoderGameMapper {
     @Mapping(target = "jackpot", ignore = true)
     DeCoderGameResponse toStartResponse(DeCoderGameEvent event,
                                         UUID roomId,
-                                        String message,
-                                        UUID player);
+                                        String message);
 
     @Mapping(target = "winner", ignore = true)
     @Mapping(target = "isGameStarted", ignore = true)

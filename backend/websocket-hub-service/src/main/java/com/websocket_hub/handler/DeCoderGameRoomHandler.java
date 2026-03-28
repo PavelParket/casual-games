@@ -26,7 +26,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -81,8 +80,6 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
             log.info("DeCoder action: {}", deCoderGameMessage);
 
             switch (deCoderGameMessage.event()) {
-                case START -> handleStartGame(roomId, user);
-
                 case MOVE -> handleGameMove(roomId, user, deCoderGameMessage);
 
                 case STATE -> handleGetGameState(roomId, user);
@@ -106,38 +103,10 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
     }
 
-    private void handleStartGame(UUID roomId, UserInternalResponse user) {
-        try {
-
-            log.info("Starting DeCoder game in room {} with player {}", roomId, user.username());
-
-            DeCoderGameInternalRequest startRequest = deCoderGameMessageMapper.toStartRequest(
-                    DeCoderGameEvent.START,
-                    roomId,
-                    user.guid());
-
-            DeCoderGameInternalResponse startResponse = gameServiceClient.startDeCoderGame(startRequest)
-                    .orElseThrow(() -> new RuntimeException("Empty response from game-service"));
-
-            DeCoderGameMessage deCoderGameMessage = deCoderGameMessageMapper.toMessage(
-                    startResponse,
-                    MessageType.SYSTEM,
-                    null,
-                    null
-
-            );
-            roomManager.broadcast(roomId, deCoderGameMessage);
-
-            roomManager.updateRoomStatus(roomId, RoomStatus.IN_PROGRESS);
-
-        } catch (Exception e) {
-            log.error("Failed to start game in room {}", roomId, e);
-        }
-    }
-
     private void handleGameMove(UUID roomId, UserInternalResponse user, DeCoderGameMessage message) {
         PlayerBet movePlayerBet = roomManager.markPlayerBet(user, MOVE_COST);
 
+        //TODO: Проблема обновления баланса после каждого хода требует комплексного решения, затронет общие для всех TransactionInternalRequest файлы.
         DeCoderTransactionInternalRequest deCoderTransactionRequest = deCoderGameTransactionMapper.toInternalRequest(
                 roomId,
                 roomManager.getRoomType(),
@@ -224,7 +193,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
     }
 
     private void handleGetGameState(UUID roomId, UserInternalResponse user) {
-        roomManager.sendGameStateAsync(user, roomId);
+        roomManager.sendGameState(user, roomId);
     }
 
     private void handleGameException(UUID userId, UUID roomId, Exception e) {

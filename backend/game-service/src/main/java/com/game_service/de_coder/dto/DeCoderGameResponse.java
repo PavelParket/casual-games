@@ -29,5 +29,5 @@ public record DeCoderGameResponse(
 
         Boolean isGameStarted
 ) {
-    public record GameState(Integer code, Integer exactMatch, Integer partialMatch) {}
+    public record GameState(String code, Integer exactMatch, Integer partialMatch) {}
 }

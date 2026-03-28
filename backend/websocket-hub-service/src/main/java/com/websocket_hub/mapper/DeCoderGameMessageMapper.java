@@ -15,13 +15,12 @@ public interface DeCoderGameMessageMapper extends MessageMapper {
 
     @Mapping(target = "code", ignore = true)
     DeCoderGameInternalRequest toStartRequest(DeCoderGameEvent event,
-                                              UUID roomId,
-                                              UUID player);
+                                              UUID roomId);
 
     DeCoderGameInternalRequest toMoveRequest(DeCoderGameEvent event,
                                              UUID roomId,
                                              UUID player,
-                                             Integer code);
+                                             String code);
 
     @Mapping(target = "code", ignore = true)
     DeCoderGameMessage toMessage(DeCoderGameInternalResponse deCoderGameInternalResponse,

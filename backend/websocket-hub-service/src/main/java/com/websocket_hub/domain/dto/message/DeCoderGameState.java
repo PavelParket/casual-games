@@ -1,7 +1,7 @@
 package com.websocket_hub.domain.dto.message;
 
 public record DeCoderGameState(
-        Integer code,
+        String code,
         Integer exactMatch,
         Integer partialMatch
 ) {

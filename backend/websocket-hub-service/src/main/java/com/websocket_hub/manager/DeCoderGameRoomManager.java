@@ -1,12 +1,13 @@
 package com.websocket_hub.manager;
 
 import com.websocket_hub.client.GameServiceClient;
-import com.websocket_hub.domain.dto.client.DeCoderGameInternalResponse;
+import com.websocket_hub.domain.dto.client.DeCoderGameInternalRequest;
 import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
+import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomType;
@@ -25,14 +26,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.math.BigDecimal;
-import java.util.List;
+
 import java.util.UUID;
 
 @Service
 @Slf4j
 public class DeCoderGameRoomManager extends AbstractRoomManager {
 
-    private final MessageMapper messageMapper;
+    private final DeCoderGameMessageMapper deCoderGameMessageMapper;
 
     private final SessionManager sessionManager;
 
@@ -54,7 +55,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
             GameServiceClient gameServiceClient
     ) {
         super(serializer, roomFactory, sessionManager, roomValidator, roomRedisRepository);
-        this.messageMapper = deCoderGameMessageMapper;
+        this.deCoderGameMessageMapper = deCoderGameMessageMapper;
         this.sessionManager = sessionManager;
         this.playerBetFactory = playerBetFactory;
         this.playerBetValidator = playerBetValidator;
@@ -68,7 +69,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
 
     @Override
     public MessageMapper getMapper() {
-        return this.messageMapper;
+        return this.deCoderGameMessageMapper;
     }
 
     public RoomTypeRedisKey getRedisKey() {
@@ -79,7 +80,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
     protected void onAddSession(UserInternalResponse user, Room room, WebSocketSession session) {
         log.info("Player {} joined DeCoder room {}", user.username(), room.getName());
 
-        broadcast(room.getId(), messageMapper.toResponse(
+        broadcast(room.getId(), deCoderGameMessageMapper.toResponse(
                 MessageType.SYSTEM,
                 DeCoderGameEvent.JOIN,
                 user.guid(),
@@ -88,14 +89,14 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
                 "Player={" + user.username() + "} has joined the room={" + room.getName() + "}"
         ));
 
-        sendGameStateAsync(user, room.getId());
+        sendGameState(user, room.getId());
     }
 
     @Override
     protected void onRemoveSession(UserInternalResponse user,  Room room, WebSocketSession session) {
         log.info("Player {} left DeCoder room {}", user.username(), room.getName());
 
-        broadcast(room.getId(), messageMapper.toResponse(
+        broadcast(room.getId(), deCoderGameMessageMapper.toResponse(
                 MessageType.SYSTEM,
                 DeCoderGameEvent.LEAVE,
                 user.guid(),
@@ -107,7 +108,18 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
 
     @Override
     protected void onCreateRoom(Room room) {
+        try {
+            log.info("Starting De-Coder game for room {}", room.getId());
 
+            DeCoderGameInternalRequest startRequest = deCoderGameMessageMapper.toStartRequest(DeCoderGameEvent.START, room.getId());
+
+            gameServiceClient.startDeCoderGame(startRequest);
+
+            updateRoomStatus(room.getId(), RoomStatus.IN_PROGRESS);
+
+        } catch (Exception e) {
+            log.error("Failed to start De-Coder game for room {}", room.getId(), e);
+        }
     }
 
     @Override
@@ -123,35 +135,24 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
         return newPlayerBet;
     }
 
-    public void sendGameStateAsync(UserInternalResponse user, UUID roomId) {
-        Thread.ofVirtual().start(() -> {
-            try {
-                DeCoderGameInternalResponse stateResponse = gameServiceClient.getDeCoderGameState(roomId)
-                        .orElseThrow(() -> new RuntimeException("Empty state"));
+    public void sendGameState(UserInternalResponse user, UUID roomId) {
+        try {
+            var stateResponse = gameServiceClient.getDeCoderGameState(roomId)
+                    .orElseThrow(() -> new RuntimeException("Empty state from game-service on refresh"));
 
-                if (stateResponse == null) return;
-
-                ClientSession clientSession = getClientSessionByGuid(user.guid());
-                if (clientSession == null || !clientSession.isOpen()) {
-                    log.debug("User {} disconnected before receiving game state", user.username());
-                    return;
-                }
-
-                DeCoderGameMessage stateMessage = DeCoderGameMessage.builder()
-                        .type(MessageType.SYSTEM)
-                        .event(DeCoderGameEvent.STATE)
-                        .roomId(roomId)
-                        .toUserId(user.guid())
-                        .gameState(stateResponse.gameState() != null ? stateResponse.gameState() : List.of())
-                        .isGameStarted(stateResponse.isGameStarted())
-                        .message("Current game state loaded")
-                        .build();
-
-                sessionManager.sendToSession(clientSession, stateMessage);
-
-            } catch (Exception e) {
-                log.error("Failed to fetch/send game state for user {}", user.username(), e);
+            ClientSession clientSession = getClientSessionByGuid(user.guid());
+            if (clientSession == null || !clientSession.isOpen()) {
+                return;
             }
-        });
+
+            DeCoderGameMessage stateMessage = deCoderGameMessageMapper.toMessage(
+                    stateResponse, MessageType.SYSTEM, null, user.guid()
+            );
+
+            sessionManager.sendToSession(clientSession, stateMessage);
+
+        } catch (Exception e) {
+            log.error("Failed to re-send game state for user {}", user.username(), e);
+        }
     }
 }

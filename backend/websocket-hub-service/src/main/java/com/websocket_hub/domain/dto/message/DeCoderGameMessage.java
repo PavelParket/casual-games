@@ -30,7 +30,7 @@ public record DeCoderGameMessage(
 
         String message,
 
-        Integer code,
+        String code,
 
         UUID player,
 

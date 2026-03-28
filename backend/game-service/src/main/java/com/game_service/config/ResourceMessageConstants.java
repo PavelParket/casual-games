@@ -39,7 +39,7 @@ public class ResourceMessageConstants {
     public static final String DECODER_CODE_CANNOT_BE_NULL = "Code cannot be null";
     public static final String DECODER_GAME_NOT_STARTED = "Game not started in this room";
     public static final String DECODER_GAME_ALREADY_IN_PROGRESS = "Game already in progress in this room";
-    public static final String DECODER_CODE_OUT_OF_RANGE = "Code must be between 0000 and %d";
+    public static final String DECODER_WRONG_CODE_FORMAT = "Code must contains only %d uppercase letters of the latin alphabet!";
     public static final String DECODER_CODE_ALREADY_TRIED = "Code %d already tried!";
     public static final String DECODER_WRONG_EVENT = "Wrong game event";
 

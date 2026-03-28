@@ -8,43 +8,46 @@ import java.util.Random;
 @Slf4j
 public class DeCoderGameLogicUtils {
 
-    private static final int CODE_LENGTH = 4;
-    private static final int MAX_VALUE = 10_000;
+    public static final int CODE_LENGTH = 4;
+    private static final int ALPHABET_SIZE = 26;
     private static final Random RANDOM = new Random();
 
     public static String generateSecretCode() {
-        int codeInt = RANDOM.nextInt(MAX_VALUE);
-        log.info("Generated secret code for new game: {}", codeInt);
-        return String.format("%0" + CODE_LENGTH + "d", codeInt);
-
-    }
-
-    public static GameState calculateResult(Integer guessCode, String secretCode) {
-        if (guessCode == null) {
-            return new GameState(null, 0, 0);
+        StringBuilder sb = new StringBuilder(CODE_LENGTH);
+        for (int i = 0; i < CODE_LENGTH; i++) {
+            char randomChar = (char) ('A' + RANDOM.nextInt(ALPHABET_SIZE));
+            sb.append(randomChar);
         }
 
-        String guessString = String.format("%0" + CODE_LENGTH + "d", guessCode);
+        String code = sb.toString();
+        log.info("Generated secret code for new game: {}", code);
+        return code;
+    }
+
+    public static GameState calculateResult(String guessCode, String secretCode) {
+        if (guessCode == null || guessCode.length() != CODE_LENGTH) {
+            return new GameState(null, 0, 0);
+        }
 
         int exactMatch = 0;
         int partialMatch = 0;
 
-        int[] secretCodeCounts = new int[10];
-        int[] guessCodeCounts = new int[10];
+        int[] secretCodeCounts = new int[ALPHABET_SIZE];
+        int[] guessCodeCounts = new int[ALPHABET_SIZE];
 
         for (int i = 0; i < CODE_LENGTH; i++) {
-            char secretCodeDigit = secretCode.charAt(i);
-            char guessCodeDigit = guessString.charAt(i);
+            char secretChar = secretCode.charAt(i);
+            char guessChar = guessCode.charAt(i);
 
-            if (secretCodeDigit == guessCodeDigit) {
+            if (secretChar == guessChar) {
                 exactMatch++;
             } else {
-                secretCodeCounts[secretCodeDigit  - '0']++;
-                guessCodeCounts[guessCodeDigit - '0']++;
+                secretCodeCounts[secretChar - 'A']++;
+                guessCodeCounts[guessChar - 'A']++;
             }
         }
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < ALPHABET_SIZE; i++) {
             partialMatch += Math.min(secretCodeCounts[i], guessCodeCounts[i]);
         }
 

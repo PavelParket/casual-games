@@ -5,5 +5,6 @@ public enum DeCoderGameEvent {
     START,
     MOVE,
     WINNER,
-    LOSER;
+    LOSER,
+    STATE
 }

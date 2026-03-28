@@ -40,7 +40,7 @@ export interface HorseRaceGameMessage extends WSMessage {
 
 export interface DeCoderMessage extends WSMessage {
    player?: string;
-   code?: number;
+   code?: string;
    winner?: string;
    gameState?: DeCoderGameHistory[];
    isGameStarted?: boolean;
@@ -48,7 +48,7 @@ export interface DeCoderMessage extends WSMessage {
 }
 
 export interface DeCoderGameHistory {
-   code: number;
+   code: string;
    exactMatch: number;
    partialMatch: number;
 }

@@ -31,7 +31,7 @@ public class DeCoderGameService {
 
     private final Map<UUID, String> secretCodes = new ConcurrentHashMap<>();
 
-    private final Map<UUID, Map<Integer, GameState>> roomState = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<String, GameState>> roomState = new ConcurrentHashMap<>();
 
     private final Map<UUID, BigDecimal> jackpots = new ConcurrentHashMap<>();
 
@@ -57,8 +57,7 @@ public class DeCoderGameService {
         return deCoderGameMapper.toStartResponse(
                 DeCoderGameEvent.START,
                 request.roomId(),
-                GAME_STARTED,
-                request.player());
+                GAME_STARTED);
     }
 
     public DeCoderGameResponse processMove(DeCoderGameRequest request) {
@@ -66,7 +65,7 @@ public class DeCoderGameService {
 
         deCoderGameValidator.validateGameExists(request.roomId(), secretCodes);
 
-        Map<Integer, GameState> history = roomState.get(request.roomId());
+        Map<String, GameState> history = roomState.get(request.roomId());
         if (history == null) {
             throw new InvalidMoveException("Game state not found");
         }
@@ -112,7 +111,7 @@ public class DeCoderGameService {
 
         boolean isStarted = secretCodes.containsKey(roomId);
 
-        Map<Integer, GameState> history = roomState.get(roomId);
+        Map<String, GameState> history = roomState.get(roomId);
         List<GameState> historyList = new ArrayList<>();
 
         if (history != null) {
@@ -122,6 +121,8 @@ public class DeCoderGameService {
         }
 
         return DeCoderGameResponse.builder()
+                .event(DeCoderGameEvent.STATE)
+                .roomId(roomId)
                 .isGameStarted(isStarted)
                 .gameState(historyList)
                 .build();
