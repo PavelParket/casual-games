@@ -1,6 +1,6 @@
-package com.game_service.de_coder.dto;
+package com.game_service.de_coder.domain.dto;
 
-import com.game_service.de_coder.enums.DeCoderGameEvent;
+import com.game_service.de_coder.domain.enums.DeCoderGameEvent;
 import lombok.Builder;
 
 import java.util.UUID;

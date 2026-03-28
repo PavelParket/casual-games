@@ -38,11 +38,9 @@ import {
 } from "../../ui";
 import { useThemedIcon } from "../../ui";
 import { validateRoomName, validateWSMessage } from "../../utils/SecurityUtils";
-import type {
-  DeCoderMessage,
-  DeCoderGameHistory,
-  ErrorWSMessage,
-} from "../../models/WsMessage";
+import type { DeCoderMessage, ErrorWSMessage } from "../../models/WsMessage";
+
+import type { DeCoderGameHistory } from "../../models/DeCoderGameHistory";
 
 export default function DeCoderRoom() {
   const dispatch = useDispatch<AppDispatch>();

@@ -1,6 +1,6 @@
 package com.game_service.de_coder.util;
 
-import com.game_service.de_coder.dto.DeCoderGameResponse.GameState;
+import com.game_service.de_coder.domain.entity.DeCoderGameState;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Random;
@@ -24,9 +24,9 @@ public class DeCoderGameLogicUtils {
         return code;
     }
 
-    public static GameState calculateResult(String guessCode, String secretCode) {
+    public static DeCoderGameState calculateResult(String guessCode, String secretCode) {
         if (guessCode == null || guessCode.length() != CODE_LENGTH) {
-            return new GameState(null, 0, 0);
+            return new DeCoderGameState(null, 0, 0);
         }
 
         int exactMatch = 0;
@@ -51,10 +51,10 @@ public class DeCoderGameLogicUtils {
             partialMatch += Math.min(secretCodeCounts[i], guessCodeCounts[i]);
         }
 
-        return new GameState(guessCode, exactMatch, partialMatch);
+        return new DeCoderGameState(guessCode, exactMatch, partialMatch);
     }
 
-    public static boolean isCodeCracked(GameState gameState) {
+    public static boolean isCodeCracked(DeCoderGameState gameState) {
         return gameState != null && gameState.exactMatch() != null && gameState.exactMatch() == CODE_LENGTH;
     }
 }

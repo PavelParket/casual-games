@@ -3,8 +3,8 @@ package com.game_service.de_coder.validator;
 import com.game_service.common.exception.CooldownException;
 import com.game_service.common.exception.GameValidationException;
 import com.game_service.common.exception.InvalidMoveException;
-import com.game_service.de_coder.dto.DeCoderGameRequest;
-import com.game_service.de_coder.enums.DeCoderGameEvent;
+import com.game_service.de_coder.domain.dto.DeCoderGameRequest;
+import com.game_service.de_coder.domain.enums.DeCoderGameEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.game_service.config.ResourceMessageConstants.REQUEST_CANNOT_BE_NULL;
 import static com.game_service.config.ResourceMessageConstants.ROOM_CANNOT_BE_EMPTY;
-import static com.game_service.config.ResourceMessageConstants.DECODER_PLAYER_CANNOT_BE_EMPTY;
 import static com.game_service.config.ResourceMessageConstants.DECODER_WRONG_EVENT;
 import static com.game_service.config.ResourceMessageConstants.DECODER_PLAYER_REQUIRED_FOR_MOVE;
 import static com.game_service.config.ResourceMessageConstants.DECODER_CODE_CANNOT_BE_NULL;

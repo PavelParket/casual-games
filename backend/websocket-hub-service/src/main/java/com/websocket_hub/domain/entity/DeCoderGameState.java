@@ -1,4 +1,4 @@
-package com.websocket_hub.domain.dto.message;
+package com.websocket_hub.domain.entity;
 
 public record DeCoderGameState(
         String code,

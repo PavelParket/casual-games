@@ -1,6 +1,6 @@
 package com.websocket_hub.domain.dto.client;
 
-import com.websocket_hub.domain.dto.message.DeCoderGameState;
+import com.websocket_hub.domain.entity.DeCoderGameState;
 import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 
 import java.math.BigDecimal;

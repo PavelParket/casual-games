@@ -1,7 +1,8 @@
-package com.game_service.de_coder.dto;
+package com.game_service.de_coder.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.game_service.de_coder.enums.DeCoderGameEvent;
+import com.game_service.de_coder.domain.entity.DeCoderGameState;
+import com.game_service.de_coder.domain.enums.DeCoderGameEvent;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -25,9 +26,8 @@ public record DeCoderGameResponse(
 
         BigDecimal jackpot,
 
-        List<GameState> gameState,
+        List<DeCoderGameState> gameState,
 
         Boolean isGameStarted
 ) {
-    public record GameState(String code, Integer exactMatch, Integer partialMatch) {}
 }

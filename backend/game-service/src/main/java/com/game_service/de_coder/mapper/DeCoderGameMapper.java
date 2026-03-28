@@ -1,8 +1,8 @@
 package com.game_service.de_coder.mapper;
 
-import com.game_service.de_coder.dto.DeCoderGameResponse;
-import com.game_service.de_coder.dto.DeCoderGameResponse.GameState;
-import com.game_service.de_coder.enums.DeCoderGameEvent;
+import com.game_service.de_coder.domain.dto.DeCoderGameResponse;
+import com.game_service.de_coder.domain.entity.DeCoderGameState;
+import com.game_service.de_coder.domain.enums.DeCoderGameEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -27,7 +27,7 @@ public interface DeCoderGameMapper {
     DeCoderGameResponse toMoveResponse(DeCoderGameEvent event,
                                        UUID roomId,
                                        String message,
-                                       List<GameState> gameState,
+                                       List<DeCoderGameState> gameState,
                                        UUID player);
 
     @Mapping(target = "player", ignore = true)

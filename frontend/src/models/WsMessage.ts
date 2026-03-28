@@ -1,3 +1,4 @@
+import type { DeCoderGameHistory } from "./DeCoderGameHistory";
 import type { HorseRaceHorseKeyframes } from "./HorseRace";
 
 export interface WSMessage {
@@ -47,8 +48,3 @@ export interface DeCoderMessage extends WSMessage {
    jackpot?: number;
 }
 
-export interface DeCoderGameHistory {
-   code: string;
-   exactMatch: number;
-   partialMatch: number;
-}

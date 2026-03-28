@@ -1,11 +1,10 @@
 package com.game_service.de_coder.service;
 
-import com.game_service.common.enums.MessageType;
 import com.game_service.common.exception.InvalidMoveException;
-import com.game_service.de_coder.dto.DeCoderGameRequest;
-import com.game_service.de_coder.dto.DeCoderGameResponse;
-import com.game_service.de_coder.dto.DeCoderGameResponse.GameState;
-import com.game_service.de_coder.enums.DeCoderGameEvent;
+import com.game_service.de_coder.domain.dto.DeCoderGameRequest;
+import com.game_service.de_coder.domain.dto.DeCoderGameResponse;
+import com.game_service.de_coder.domain.entity.DeCoderGameState;
+import com.game_service.de_coder.domain.enums.DeCoderGameEvent;
 import com.game_service.de_coder.mapper.DeCoderGameMapper;
 import com.game_service.de_coder.util.DeCoderGameLogicUtils;
 import com.game_service.de_coder.validator.DeCoderGameValidator;
@@ -31,7 +30,7 @@ public class DeCoderGameService {
 
     private final Map<UUID, String> secretCodes = new ConcurrentHashMap<>();
 
-    private final Map<UUID, Map<String, GameState>> roomState = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<String, DeCoderGameState>> roomState = new ConcurrentHashMap<>();
 
     private final Map<UUID, BigDecimal> jackpots = new ConcurrentHashMap<>();
 
@@ -65,14 +64,14 @@ public class DeCoderGameService {
 
         deCoderGameValidator.validateGameExists(request.roomId(), secretCodes);
 
-        Map<String, GameState> history = roomState.get(request.roomId());
+        Map<String, DeCoderGameState> history = roomState.get(request.roomId());
         if (history == null) {
             throw new InvalidMoveException("Game state not found");
         }
 
         BigDecimal currentJackpot = jackpots.merge(request.roomId(), JACKPOT_INCREMENT, BigDecimal::add);
 
-        GameState moveResult;
+        DeCoderGameState moveResult;
 
         synchronized (history) {
             if (history.containsKey(request.code())) {
@@ -111,8 +110,8 @@ public class DeCoderGameService {
 
         boolean isStarted = secretCodes.containsKey(roomId);
 
-        Map<String, GameState> history = roomState.get(roomId);
-        List<GameState> historyList = new ArrayList<>();
+        Map<String, DeCoderGameState> history = roomState.get(roomId);
+        List<DeCoderGameState> historyList = new ArrayList<>();
 
         if (history != null) {
             synchronized (history) {

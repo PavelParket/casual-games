@@ -1,6 +1,7 @@
 package com.websocket_hub.domain.dto.message;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.websocket_hub.domain.entity.DeCoderGameState;
 import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.MessageType;
 import lombok.Builder;
