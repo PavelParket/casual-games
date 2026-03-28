@@ -36,3 +36,7 @@ export const HorseRaceRoomApi = {
 export const DurakRoomApi = {
     getPlayersBets: (roomId: string) => client.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/durak/player-bets/${roomId}`),
 };
+
+export const DurakRoomApi = {
+   getPlayersBets: (roomId: string) => axios.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/durak/player-bets/${roomId}`),
+};

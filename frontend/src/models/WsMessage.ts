@@ -13,6 +13,7 @@ export interface WSMessage {
 
 export interface ErrorWSMessage extends WSMessage {
    errorCode?: string;
+   errorCategory?: string;
 }
 
 export interface TicTacToeGameMessage extends WSMessage {
