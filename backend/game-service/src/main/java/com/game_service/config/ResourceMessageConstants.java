@@ -4,6 +4,7 @@ public class ResourceMessageConstants {
 
     public static final String REQUEST_CANNOT_BE_NULL = "Request cannot be null";
     public static final String ROOM_CANNOT_BE_EMPTY = "Room cannot be empty";
+    public static final String ROOM_NOT_FOUND = "Room not found";
     public static final String UNEXPECTED_SERVER_ERROR = "Unexpected server error";
     public static final String UNREADABLE_REQUEST_BODY = "Malformed or unreadable request body";
     public static final String VALIDATION_FAILED = "Validation failed";
@@ -26,6 +27,7 @@ public class ResourceMessageConstants {
     public static final String TTT_GAME_ALREADY_FINISHED = "Game is already finished!";
     public static final String TTT_GAME_ALREADY_IN_PROGRESS = "Game already in progress in this room";
     public static final String TTT_WRONG_PLAYER_MOVED = "Wrong player moved!";
+    public static final String TTT_WRONG_PLAYER_SYMBOL = "Player symbol does not match with symbol for this user!";
     public static final String TTT_WINNER_PLAYER_NOT_FOUND = "Winner symbol exists but player not found";
     public static final String TTT_INVALID_CELL_INDEX = "Invalid cell index: %d";
     public static final String TTT_UNKNOWN_PLAYER_SYMBOL = "Unknown player symbol: %s";

@@ -1,4 +1,4 @@
-package com.game_service.tic_tac_toe.enums;
+package com.game_service.tic_tac_toe.domain.enums;
 
 public enum TicTacToeGameEvent {
 

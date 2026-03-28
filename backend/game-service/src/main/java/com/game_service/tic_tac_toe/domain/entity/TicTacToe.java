@@ -1,8 +1,22 @@
-package com.game_service.tic_tac_toe.entity;
+package com.game_service.tic_tac_toe.domain.entity;
 
-import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
-import jakarta.persistence.*;
-import lombok.*;
+import com.game_service.tic_tac_toe.domain.enums.TicTacToeGameStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import jakarta.persistence.Version;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
@@ -21,7 +35,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TicTacToeGame {
+public class TicTacToe {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,10 +43,10 @@ public class TicTacToeGame {
     @Column(nullable = false, unique = true)
     private UUID roomId;
 
-    @Column(name = "player_x_id", nullable = false)
+    @Transient
     private UUID playerXId;
 
-    @Column(name = "player_o_id", nullable = false)
+    @Transient
     private UUID playerOId;
 
     @Transient
@@ -43,10 +57,9 @@ public class TicTacToeGame {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TicTacToeGameEvent event;
+    private TicTacToeGameStatus status;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Transient
     private String[] board;
 
     @JdbcTypeCode(SqlTypes.JSON)

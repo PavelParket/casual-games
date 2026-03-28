@@ -1,14 +1,14 @@
-package com.game_service.tic_tac_toe.dto;
+package com.game_service.tic_tac_toe.domain.dto;
 
 import com.game_service.common.enums.MessageType;
-import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
+import com.game_service.tic_tac_toe.domain.enums.TicTacToeGameEvent;
 import lombok.Builder;
 
 import java.util.Map;
 import java.util.UUID;
 
 @Builder
-public record TicTacToeGameResponse(
+public record TicTacToeGameRequest(
 
         MessageType type,
 

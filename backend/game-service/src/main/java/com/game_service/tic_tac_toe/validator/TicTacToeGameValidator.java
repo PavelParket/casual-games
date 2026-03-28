@@ -2,13 +2,25 @@ package com.game_service.tic_tac_toe.validator;
 
 import com.game_service.common.exception.GameValidationException;
 import com.game_service.common.exception.InvalidMoveException;
-import com.game_service.tic_tac_toe.dto.TicTacToeGameRequest;
-import com.game_service.tic_tac_toe.entity.TicTacToeGame;
-import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
+import com.game_service.tic_tac_toe.domain.dto.TicTacToeGameRequest;
+import com.game_service.tic_tac_toe.domain.entity.TicTacToe;
+import com.game_service.tic_tac_toe.domain.enums.TicTacToeGameStatus;
 import com.game_service.tic_tac_toe.util.TicTacToeGameUtils;
 import org.springframework.stereotype.Component;
 
-import static com.game_service.config.ResourceMessageConstants.*;
+import static com.game_service.config.ResourceMessageConstants.REQUEST_CANNOT_BE_NULL;
+import static com.game_service.config.ResourceMessageConstants.ROOM_NOT_FOUND;
+import static com.game_service.config.ResourceMessageConstants.TTT_TWO_PLAYERS_REQUIRED;
+import static com.game_service.config.ResourceMessageConstants.TTT_PLAYER_ID_CANNOT_BE_NULL;
+import static com.game_service.config.ResourceMessageConstants.TTT_CELL_CANNOT_BE_NULL;
+import static com.game_service.config.ResourceMessageConstants.TTT_GAME_ALREADY_FINISHED;
+import static com.game_service.config.ResourceMessageConstants.TTT_SYMBOL_CANNOT_BE_BLANK;
+import static com.game_service.config.ResourceMessageConstants.TTT_INVALID_CELL_INDEX;
+import static com.game_service.config.ResourceMessageConstants.TTT_CELL_ALREADY_OCCUPIED;
+import static com.game_service.config.ResourceMessageConstants.TTT_WRONG_PLAYER_MOVED;
+import static com.game_service.config.ResourceMessageConstants.TTT_UNKNOWN_PLAYER_ID;
+import static com.game_service.config.ResourceMessageConstants.TTT_UNKNOWN_PLAYER_SYMBOL;
+import static com.game_service.config.ResourceMessageConstants.TTT_WRONG_PLAYER_SYMBOL;
 
 @Component
 public class TicTacToeGameValidator {
@@ -23,17 +35,17 @@ public class TicTacToeGameValidator {
         }
 
         if (request.roomId() == null) {
-            throw new GameValidationException(TTT_ROOM_MUST_EXIST);
+            throw new GameValidationException(ROOM_NOT_FOUND);
         }
     }
 
-    public void validateMove(TicTacToeGameRequest request, TicTacToeGame game) {
+    public void validateMove(TicTacToeGameRequest request, TicTacToe game) {
         if (request == null) {
             throw new GameValidationException(REQUEST_CANNOT_BE_NULL);
         }
 
         if (request.roomId() == null && game == null) {
-            throw new GameValidationException(TTT_ROOM_MUST_EXIST);
+            throw new GameValidationException(ROOM_NOT_FOUND);
         }
 
         if (request.fromUserId() == null) {
@@ -44,7 +56,7 @@ public class TicTacToeGameValidator {
             throw new GameValidationException(TTT_CELL_CANNOT_BE_NULL);
         }
 
-        if (game.getEvent() != TicTacToeGameEvent.START && game.getEvent() != TicTacToeGameEvent.MOVE) {
+        if (game.getStatus() != TicTacToeGameStatus.ACTIVE) {
             throw new InvalidMoveException(TTT_GAME_ALREADY_FINISHED);
         }
 
@@ -62,11 +74,14 @@ public class TicTacToeGameValidator {
             throw new InvalidMoveException(TTT_CELL_ALREADY_OCCUPIED);
         }
 
+        if (!game.getCurrentTurnUserId().equals(request.fromUserId())) {
+            throw new InvalidMoveException(TTT_WRONG_PLAYER_MOVED);
+        }
+
         if (!"X".equals(request.currentPlayerSymbol()) && !"O".equals(request.currentPlayerSymbol())) {
             throw new GameValidationException(String.format(TTT_UNKNOWN_PLAYER_SYMBOL, request.currentPlayerSymbol()));
         }
 
-        String expectedSymbol = TicTacToeGameUtils.getCurrentTurnSymbol(board);
         String currentSymbol;
 
         if (request.fromUserId().equals(game.getPlayerXId())) {
@@ -77,8 +92,8 @@ public class TicTacToeGameValidator {
             throw new InvalidMoveException(TTT_UNKNOWN_PLAYER_ID);
         }
 
-        if (!expectedSymbol.equals(currentSymbol)) {
-            throw new InvalidMoveException(TTT_WRONG_PLAYER_MOVED);
+        if (!currentSymbol.equals(request.currentPlayerSymbol())) {
+            throw new InvalidMoveException(TTT_WRONG_PLAYER_SYMBOL);
         }
     }
 }
