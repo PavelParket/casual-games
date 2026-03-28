@@ -12,7 +12,9 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.9.2",
     "axios": "^1.12.2",
+    "framer-motion": "^12.38.0",
     "jwt-decode": "^4.0.0",
+    "npm": "^11.11.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-redux": "^9.2.0",

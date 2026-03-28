@@ -29,3 +29,7 @@ export const TicTacToeRoomApi = {
 export const HorseRaceRoomApi = {
    getPreset: (roomId: string) => axios.get<HorseRaceGamePreset>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/horse-race/preset/${roomId}`),
 };
+
+export const DurakRoomApi = {
+   getPlayersBets: (roomId: string) => axios.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/durak/player-bets/${roomId}`),
+};

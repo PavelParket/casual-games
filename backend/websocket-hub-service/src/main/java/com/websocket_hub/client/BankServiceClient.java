@@ -2,6 +2,8 @@ package com.websocket_hub.client;
 
 import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalRequest;
 import com.websocket_hub.domain.dto.client.DeCoderTransactionInternalResponse;
+import com.websocket_hub.domain.dto.client.DurakTransactionInternalRequest;
+import com.websocket_hub.domain.dto.client.DurakTransactionInternalResponse;
 import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceTransactionInternalResponse;
 import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalRequest;
@@ -125,6 +127,41 @@ public class BankServiceClient {
             }
 
             log.info("Bank-service processed De-Coder transaction: status={}, message={}", body.status(), body.message());
+            return body;
+
+        } catch (GameException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
+        }
+    }
+
+    public DurakTransactionInternalResponse sendDurakGameResults(DurakTransactionInternalRequest request) {
+        URI uri = UriComponentsBuilder.fromUriString(bankServiceUrl)
+                .path("/bank/save")
+                .build()
+                .toUri();
+
+        log.info("Calling bank-service to process Durak game results: roomId={}, winner={}", request.roomId(), request.winner());
+
+        try {
+            ResponseEntity<DurakTransactionInternalResponse> response = restTemplate.exchange(
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    DurakTransactionInternalResponse.class
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
+            }
+
+            DurakTransactionInternalResponse body = response.getBody();
+
+            if (body == null) {
+                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
+            }
+
+            log.info("Bank-service processed Durak results: status={}, message={}, transactions={}", body.status(), body.message(), body.transactionsCreated());
+
             return body;
 
         } catch (GameException e) {
