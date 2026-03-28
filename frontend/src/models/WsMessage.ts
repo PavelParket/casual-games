@@ -1,4 +1,5 @@
 import type { CardSuit, DurakAction, DurakCard, DurakPhase, DurakTablePair } from "./Durak";
+import type { DeCoderGameHistory } from "./DeCoderGameHistory";
 import type { HorseRaceHorseKeyframes } from "./HorseRace";
 
 export interface WSMessage {
@@ -42,10 +43,11 @@ export interface HorseRaceGameMessage extends WSMessage {
 
 export interface DeCoderMessage extends WSMessage {
    player?: string;
-   code?: number;
+   code?: string;
    winner?: string;
-   gameState?: string;
+   gameState?: DeCoderGameHistory[];
    isGameStarted?: boolean;
+   jackpot?: number;
 }
 
 export interface DurakGameMessage extends WSMessage {

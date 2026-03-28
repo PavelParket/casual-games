@@ -1,10 +1,13 @@
 package com.websocket_hub.domain.dto.message;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.websocket_hub.domain.entity.DeCoderGameState;
 import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.MessageType;
 import lombok.Builder;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Builder
@@ -22,11 +25,13 @@ public record DeCoderGameMessage(
 
         boolean isGameStarted,
 
-        String gameState,
+        List<DeCoderGameState> gameState,
+
+        BigDecimal jackpot,
 
         String message,
 
-        Integer code,
+        String code,
 
         UUID player,
 

@@ -1,7 +1,7 @@
 package com.game_service.de_coder.controller;
 
-import com.game_service.de_coder.dto.DeCoderGameRequest;
-import com.game_service.de_coder.dto.DeCoderGameResponse;
+import com.game_service.de_coder.domain.dto.DeCoderGameRequest;
+import com.game_service.de_coder.domain.dto.DeCoderGameResponse;
 import com.game_service.de_coder.service.DeCoderGameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
