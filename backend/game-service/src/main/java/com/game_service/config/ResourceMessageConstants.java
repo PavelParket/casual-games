@@ -11,6 +11,7 @@ public class ResourceMessageConstants {
     public static final String COOLDOWN_WAIT_SECONDS = "Please wait %d seconds before trying again.";
 
     public static final String GAME_STARTED = "Game started!";
+    public static final String GAME_TYPE_NOT_FOUND = "Game type not found: %s";
 
     // -------------------------------------------------------------------------
     // TicTacToe
@@ -49,8 +50,14 @@ public class ResourceMessageConstants {
 
     public static final String HORSE_RACE_NOT_FOUND = "Horse race not found id=%s";
     public static final String HORSE_RACE_ROOM_ID_CANNOT_BE_NULL = "Room id cannot be null";
-    public static final String HORSE_RACE_WRONG_EVENT = "Wrong game event";
+    public static final String HORSE_RACE_WRONG_EVENT = "Wrong game phase";
     public static final String HORSE_RACE_PARTICIPANTS_CANNOT_BE_EMPTY = "Participants cannot be null or empty";
     public static final String HORSE_RACE_HORSE_COUNT_OUT_OF_RANGE = "Horse count must be between %d and %d, got: %d";
     public static final String HORSE_RACE_HORSE_COUNT_CANNOT_BE_NULL = "Horse count cannot be null";
+
+    // -------------------------------------------------------------------------
+    // Durak
+    // -------------------------------------------------------------------------
+
+    public static final String DURAK_GAME_NOT_FOUND = "Game not found";
 }

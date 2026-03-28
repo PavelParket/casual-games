@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { Box, Button, Card, Container, Icon, Modal, ComboBox, Textfield, Typography, useThemedIcon } from "../../ui";
 import { ROOM_TYPE_HANDLERS, ROOM_TYPE_LABELS, type Room, type RoomRequest, type RoomType } from "../../models/Room";
 import { validateRoomName } from "../../utils/SecurityUtils";
-import { createRoom, getRooms, getTypes } from "../../store/slices/RoomSlice";
+import { clearError, createRoom, getRooms, getTypes } from "../../store/slices/RoomSlice";
+import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
 
 export default function Rooms() {
     const navigate = useNavigate();
@@ -18,15 +19,16 @@ export default function Rooms() {
     const [roomName, setRoomName] = useState<string>("");
     const [roomType, setRoomType] = useState<RoomType>();
 
-    const [roomInfo, setRoomInfo] = useState<Room>();
     const [isRoomInfoModalOpen, setIsRoomInfoModalOpen] = useState<boolean>(false);
+    const [roomInfo, setRoomInfo] = useState<Room>();
 
     const { getIcon, getInverseIcon } = useThemedIcon();
 
     const [hovered, setHovered] = useState(false);
     const [pressed, setPressed] = useState(false);
 
-    const [error, setError] = useState<string>("");
+    const [validationError, setValidationError] = useState<string>("");
+    useSliceErrorToast((state: RootState) => state.rooms.errors, clearError)
 
     useEffect(() => {
         dispatch(getRooms());
@@ -36,7 +38,7 @@ export default function Rooms() {
     const handleRoomNameChange = (value: string): void => {
         const validatedRoomName = validateRoomName(value);
         setRoomName(validatedRoomName);
-        setError("");
+        setValidationError("");
     };
 
     const handleInfo = (room: Room): void => {
@@ -53,32 +55,32 @@ export default function Rooms() {
     };
 
     const handleCreateRoom = async () => {
-        setError("");
+        setValidationError("");
 
         if (!authentication.isAuthenticated) {
-            setError("You must be authenticated!");
+            setValidationError("You must be authenticated!");
             return;
         }
 
         if (!roomName) {
-            setError("Room name must not be empty!")
+            setValidationError("Room name must not be empty!")
             return;
         }
 
         const validatedName = validateRoomName(roomName);
 
         if (!validatedName) {
-            setError("Room name is required and must contain only letters, numbers, spaces, hyphens and underscores!");
+            setValidationError("Room name is required and must contain only letters, numbers, spaces, hyphens and underscores!");
             return;
         }
 
         if (validatedName.length < 3) {
-            setError("Room name must be at least 3 characters long!");
+            setValidationError("Room name must be at least 3 characters long!");
             return;
         }
 
         if (!roomType) {
-            setError("Select a room type!");
+            setValidationError("Select a room type!");
             return;
         }
 
@@ -87,23 +89,22 @@ export default function Rooms() {
             roomType: roomType
         };
 
-        try {
-            const roomResponse = await dispatch(createRoom(roomRequest)).unwrap();
+        const roomResponse = await dispatch(createRoom(roomRequest)).unwrap().catch(() => null);
 
-            setRoomName("");
-            setRoomType(undefined);
-            setError("");
-            setIsCreateRoomModalOpen(false);
-            navigateToRoom(roomResponse);
-        } catch (error) {
-            setError((error as string) || "Failed to create room");
+        if (!roomResponse) {
             return;
         }
+
+        setRoomName("");
+        setRoomType(undefined);
+        setValidationError("");
+        setIsCreateRoomModalOpen(false);
+        navigateToRoom(roomResponse);
     };
 
     const navigateToRoom = (room: Room) => {
         if (!room) {
-            setError("Room not found");
+            setValidationError("Room not found");
             return;
         }
 
@@ -240,7 +241,7 @@ export default function Rooms() {
                 isOpen={isCreateRoomModalOpen}
                 onClose={() => {
                     setIsCreateRoomModalOpen(false);
-                    setError("");
+                    setValidationError("");
                 }}
                 title="Create Room"
             >
@@ -261,9 +262,9 @@ export default function Rooms() {
                         searchable
                     />
 
-                    {error && (
+                    {validationError && (
                         <Typography variant="caption" style={{ color: "red", textAlign: "center" }}>
-                            {error}
+                            {validationError}
                         </Typography>
                     )}
 

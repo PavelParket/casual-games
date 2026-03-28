@@ -71,6 +71,19 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(NotFoundException e, HttpServletRequest request) {
+        log.warn("Not found on {}: {}", request.getRequestURI(), e.getMessage());
+        return ErrorResponse.builder()
+                .errorCode(ErrorCode.NOT_FOUND)
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(e.getMessage())
+                .timestamp(Instant.now())
+                .path(request.getRequestURI())
+                .build();
+    }
+
     @ExceptionHandler(GameValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidation(GameValidationException e) {
@@ -98,7 +111,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleGeneric(Exception e) {
-        log.error("Unexpected error", e);
+        log.error("Unexpected error: {}", e.getMessage(), e);
 
         return factory.create(ErrorCode.UNEXPECTED_ERROR, UNEXPECTED_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
     }
