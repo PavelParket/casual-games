@@ -15,9 +15,6 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
 
   data:
     redis:
@@ -34,14 +31,20 @@ spring:
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
     service-whitelist:
       enabled: true
-      hosts: ["127.0.0.1"]
-      
+      hosts: [ "127.0.0.1" ]
+
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true
 
 server:
   port: 8083
+
+grpc:
+  server:
+    port: 9093
+    security:
+      enabled: false
 
 app:
   security-service:

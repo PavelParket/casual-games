@@ -1,0 +1,59 @@
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot' version '3.5.13'
+    id 'io.spring.dependency-management'
+    id 'maven-publish'
+    id 'com.google.protobuf' version '0.9.6'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+def grpcVersion = '1.80.0'
+def protobufVersion = '4.34.1'
+
+dependencyManagement {
+    dependencies {
+        dependency "com.google.protobuf:protobuf-java:${protobufVersion}"
+    }
+}
+
+dependencies {
+    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    implementation "io.grpc:grpc-core:${grpcVersion}"
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+    }
+    clean {
+        delete protobuf.generatedFilesBaseDir
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}

@@ -1,0 +1,42 @@
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot' version '3.5.13'
+    id 'io.spring.dependency-management'
+    id 'maven-publish'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+def grpcVersion = '1.80.0'
+def protobufVersion = '4.34.1'
+def grpcSpring = '3.1.0.RELEASE'
+
+dependencyManagement {
+    dependencies {
+        dependency "io.grpc:grpc-netty-shaded:${grpcVersion}"
+        dependency "io.grpc:grpc-core:${grpcVersion}"
+        dependency "io.grpc:grpc-protobuf:${grpcVersion}"
+        dependency "io.grpc:grpc-stub:${grpcVersion}"
+        dependency "com.google.protobuf:protobuf-java:${protobufVersion}"
+    }
+}
+
+dependencies {
+    api project(":proto-module")
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    compileOnly "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
+    compileOnly "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"
+}
+
+test {
+    useJUnitPlatform()
+}
