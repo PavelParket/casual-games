@@ -1,7 +1,7 @@
 package com.game_service.tic_tac_toe.controller;
 
-import com.game_service.tic_tac_toe.dto.TicTacToeGameRequest;
-import com.game_service.tic_tac_toe.dto.TicTacToeGameResponse;
+import com.game_service.tic_tac_toe.domain.dto.TicTacToeGameRequest;
+import com.game_service.tic_tac_toe.domain.dto.TicTacToeGameResponse;
 import com.game_service.tic_tac_toe.service.TicTacToeGameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
