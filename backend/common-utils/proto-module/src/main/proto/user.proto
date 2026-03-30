@@ -4,7 +4,7 @@ package user;
 
 import "google/protobuf/timestamp.proto";
 
-option java_package = "com.casualgames.user";
+option java_package = "com.casualgames.grpc.user";
 option java_multiple_files = true;
 
 message CreateUserRequest {
@@ -13,16 +13,17 @@ message CreateUserRequest {
   string email = 3;
 }
 
-message CreateUserResponse {
-  string guid = 1;
-  string username = 2;
-  string email = 3;
-  string balance = 4;
-  string role = 5;
-  string status = 6;
-  google.protobuf.Timestamp created_at = 7;
+message UserResponse {
+  int64 id = 1;
+  string guid = 2;
+  string username = 3;
+  string email = 4;
+  string balance = 5;
+  string role = 6;
+  string status = 7;
+  google.protobuf.Timestamp created_at = 8;
 }
 
-service UserService {
-  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse);
+service User {
+  rpc CreateUser (CreateUserRequest) returns (UserResponse);
 }

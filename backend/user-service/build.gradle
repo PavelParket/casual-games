@@ -50,8 +50,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     //  gRPC
-    compileOnly "net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE"
-    compileOnly "net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE"
+    implementation "net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE"
+    implementation "net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE"
 
     // Postgresql
     runtimeOnly 'org.postgresql:postgresql:42.7.10'
