@@ -52,6 +52,7 @@ public class TicTacToeGameService {
     @Transactional
     public TicTacToeGameResponse processStart(TicTacToeGameRequest request) {
         log.info("Starting new game request for room {}", request.roomId());
+
         ticTacToeGameValidator.validateStart(request);
 
         if (ticTacToeGameRepository.findByRoomId(request.roomId()).isPresent()) {
@@ -60,8 +61,10 @@ public class TicTacToeGameService {
 
         List<UUID> players = new ArrayList<>(request.players().keySet());
         Collections.shuffle(players, random);
+
         UUID playerXId = players.get(0);
         UUID playerOId = players.get(1);
+
         String[] board = new String[9];
 
         TicTacToe newGame = TicTacToe.builder()
@@ -91,8 +94,15 @@ public class TicTacToeGameService {
         Map<UUID, String> playersSymbols = Map.of(playerXId, SYMBOL_X, playerOId, SYMBOL_O);
 
         return ticTacToeGameMapper.toStartResponse(
-                MessageType.SYSTEM, TicTacToeGameEvent.START, request.roomId(),
-                board, SYMBOL_X, SYMBOL_O, playersSymbols, request.players(), GAME_STARTED
+                MessageType.SYSTEM,
+                TicTacToeGameEvent.START,
+                request.roomId(),
+                board,
+                SYMBOL_X,
+                SYMBOL_O,
+                playersSymbols,
+                request.players(),
+                GAME_STARTED
         );
     }
 

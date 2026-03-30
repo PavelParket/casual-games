@@ -66,6 +66,7 @@ public class TicTacToeGameValidator {
         }
 
         int cell = request.cell();
+
         if (!TicTacToeGameUtils.isCellValid(cell)) {
             throw new GameValidationException(String.format(TTT_INVALID_CELL_INDEX, cell));
         }

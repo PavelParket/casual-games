@@ -1,9 +1,11 @@
 package com.game_service.tic_tac_toe.util;
 
 import com.game_service.tic_tac_toe.domain.enums.TicTacToeGameStatus;
+import lombok.experimental.UtilityClass;
 
 import java.util.Arrays;
 
+@UtilityClass
 public class TicTacToeGameUtils {
 
     private static final int SIZE = 3;

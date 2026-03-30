@@ -115,6 +115,7 @@ export default function DeCoderRoom() {
     if (message === processedMessageRef.current) {
       return;
     }
+
     processedMessageRef.current = message;
 
     const sanitized = validateWSMessage(message, [

@@ -19,6 +19,8 @@ public class ResourceMessageConstants {
     // -------------------------------------------------------------------------
 
     public static final String TTT_TWO_PLAYERS_REQUIRED = "Exactly two players required!";
+    public static final String TTT_ROOM_MUST_EXIST = "Room must exist!";
+    public static final String TTT_BOARD_CANNOT_BE_NULL = "Board cannot be null!";
     public static final String TTT_PLAYER_ID_CANNOT_BE_NULL = "Player ID cannot be null!";
     public static final String TTT_CELL_CANNOT_BE_NULL = "Cell index cannot be null!";
     public static final String TTT_SYMBOL_CANNOT_BE_BLANK = "Player symbol cannot be null or blank!";
@@ -26,6 +28,7 @@ public class ResourceMessageConstants {
     public static final String TTT_GAME_ALREADY_FINISHED = "Game is already finished!";
     public static final String TTT_GAME_ALREADY_IN_PROGRESS = "Game already in progress in this room";
     public static final String TTT_WRONG_PLAYER_MOVED = "Wrong player moved!";
+    public static final String TTT_WINNER_PLAYER_NOT_FOUND = "Winner symbol exists but player not found";
     public static final String TTT_WRONG_PLAYER_SYMBOL = "Player symbol does not match with symbol for this user!";
     public static final String TTT_INVALID_CELL_INDEX = "Invalid cell index: %d";
     public static final String TTT_UNKNOWN_PLAYER_SYMBOL = "Unknown player symbol: %s";
