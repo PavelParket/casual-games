@@ -2,6 +2,7 @@ package com.game_service.tic_tac_toe.validator;
 
 import com.game_service.common.exception.GameValidationException;
 import com.game_service.common.exception.InvalidMoveException;
+import com.game_service.common.exception.NotFoundException;
 import com.game_service.tic_tac_toe.domain.dto.TicTacToeGameRequest;
 import com.game_service.tic_tac_toe.domain.entity.TicTacToe;
 import com.game_service.tic_tac_toe.domain.enums.TicTacToeGameStatus;
@@ -35,7 +36,7 @@ public class TicTacToeGameValidator {
         }
 
         if (request.roomId() == null) {
-            throw new GameValidationException(ROOM_NOT_FOUND);
+            throw new NotFoundException(ROOM_NOT_FOUND);
         }
     }
 
@@ -45,7 +46,7 @@ public class TicTacToeGameValidator {
         }
 
         if (request.roomId() == null && game == null) {
-            throw new GameValidationException(ROOM_NOT_FOUND);
+            throw new NotFoundException(ROOM_NOT_FOUND);
         }
 
         if (request.fromUserId() == null) {

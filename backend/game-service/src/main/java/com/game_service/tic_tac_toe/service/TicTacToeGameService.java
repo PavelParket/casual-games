@@ -1,8 +1,8 @@
 package com.game_service.tic_tac_toe.service;
 
 import com.game_service.common.enums.MessageType;
-import com.game_service.common.exception.GameValidationException;
 import com.game_service.common.exception.InvalidMoveException;
+import com.game_service.common.exception.NotFoundException;
 import com.game_service.tic_tac_toe.domain.dto.TicTacToeGameRequest;
 import com.game_service.tic_tac_toe.domain.dto.TicTacToeGameResponse;
 import com.game_service.tic_tac_toe.domain.entity.TicTacToe;
@@ -102,7 +102,7 @@ public class TicTacToeGameService {
         TicTacToe game = activeGames.get(request.roomId());
 
         if (game == null) {
-            throw new GameValidationException(ROOM_NOT_FOUND);
+            throw new NotFoundException(ROOM_NOT_FOUND);
         }
 
         synchronized (game) {
@@ -152,9 +152,8 @@ public class TicTacToeGameService {
                 }
             }
 
-            ticTacToeGameRepository.save(game);
-
             if (status != TicTacToeGameStatus.ACTIVE) {
+                ticTacToeGameRepository.save(game);
                 activeGames.remove(request.roomId());
             }
 
