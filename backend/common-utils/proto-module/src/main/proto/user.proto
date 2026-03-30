@@ -24,6 +24,24 @@ message UserResponse {
   google.protobuf.Timestamp created_at = 8;
 }
 
+message UpdateUserRequest {
+  string guid = 1;
+  string username = 2;
+  string email = 3;
+  string password = 4;
+}
+
+message DeleteUserRequest {
+  string guid = 1;
+}
+
+message DeleteUserResponse {
+}
+
 service User {
   rpc CreateUser (CreateUserRequest) returns (UserResponse);
+
+  rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
+
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
 }
