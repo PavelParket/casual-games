@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset Timofei:V0.1.21022026_2116__update_index_transactions_table
+--changeset Timofei:V0.2.21022026_2116__update_index_transactions_table
 --preconditions onFail:MARK_RAN
 --precondition-sql-check expectedResult:1 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'transactions'
 

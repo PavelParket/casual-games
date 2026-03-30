@@ -13,7 +13,7 @@ import { refresh } from './store/slices/AuthSlice'
 import { ProtectedRoute } from './router/ProtectedRoute'
 import Rooms from './pages/rooms/Rooms'
 import TicTacToeRoom from './pages/rooms/TicTacToeRoom'
-import DeCoderRoom from './pages/rooms/decoder/DeCoderRoom'
+import DeCoderRoom from './pages/rooms/DeCoderRoom'
 import Profile from './pages/Profile'
 import ExperimentalPage from './pages/ExperimentalPage'
 import LoadingPage from './pages/LoadingPage'
@@ -76,6 +76,8 @@ export default function App() {
                            <Route path="/room/horse-race/:roomName/:roomId" element={<HorseRaceRoom />} />
                            <Route path="/room/de-coder/:roomName/:roomId" element={<DeCoderRoom />} />
                            <Route path="/room/durak/:roomName/:roomId" element={<DurakRoom />} />
+                        </Route>
+                     </Route>
 
               {/* Auth and Error Routes*/}
               <Route element={<Layout centered />}>

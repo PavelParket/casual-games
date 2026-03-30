@@ -49,19 +49,6 @@ export const getRoomStatus = createAsyncThunk<RoomStatus, { roomId: string, room
     }
 );
 
-export const getRoomStatus = createAsyncThunk<RoomStatus, { roomId: string, roomType: RoomType }, { rejectValue: string }>(
-    "ticTacToeRoom/getRoomStatus",
-    async ({ roomId, roomType }, { rejectWithValue }) => {
-        try {
-            const response = await RoomAPI.getRoomStatus(roomId, roomType);
-            return response.data;
-        } catch (err: unknown) {
-            const error = err as AxiosError<{ message?: string }>;
-            return rejectWithValue(error.response?.data?.message ?? "Failed to fetch room status");
-        }
-    }
-);
-
 export const getUsernamesInRoom = createAsyncThunk<Record<string, string>, { roomId: string, roomType: RoomType }, { rejectValue: string }>(
     "ticTacToeRoom/getUsernamesInRoom",
     async ({ roomId, roomType }, { rejectWithValue }) => {
@@ -161,13 +148,6 @@ const ticTacToeRoomSlice = createSlice({
             })
             .addCase(getRoomStatus.rejected, (state, action) => {
                 state.errors[TTT_OPERATION_REYS.GET_ROOM_STATUS] = action.payload ?? "Failed to fetch room status";
-            })
-
-            .addCase(getRoomStatus.fulfilled, (state, action) => {
-                state.roomStatus = action.payload;
-            })
-            .addCase(getRoomStatus.rejected, (state, action) => {
-                state.error = action.payload ?? "Failed to fetch room status";
             })
 
             /* === Get Players === */

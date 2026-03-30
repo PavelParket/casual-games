@@ -16,10 +16,7 @@ import {
 } from "../../store/slices/DeCoderRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
-import {
-  errorCodeMessages,
-  SYSTEM_ERROR_CODES,
-} from "../../models/constants/ErrorCodeMessages";
+import { errorCodeMessages } from "../../models/constants/ErrorCodeMessages";
 
 import {
   Box,
@@ -86,6 +83,8 @@ export default function DeCoderRoom() {
     "DE_CODER",
   );
 
+  const processedMessageRef = useRef<DeCoderMessage | null>(null);
+
   useEffect(() => {
     if (!roomName || !roomId) navigate("/rooms");
     else {
@@ -112,6 +111,11 @@ export default function DeCoderRoom() {
 
   useEffect(() => {
     if (!isConnected || !message) return;
+
+    if (message === processedMessageRef.current) {
+      return;
+    }
+    processedMessageRef.current = message;
 
     const sanitized = validateWSMessage(message, [
       "type",
@@ -194,11 +198,7 @@ export default function DeCoderRoom() {
           }
         }
 
-        if (SYSTEM_ERROR_CODES.has(code)) {
-          showSystemToast(text, "system-error");
-        } else {
-          showGameToast(text, "game-error");
-        }
+        showGameToast(text, "game-error");
         break;
       }
 

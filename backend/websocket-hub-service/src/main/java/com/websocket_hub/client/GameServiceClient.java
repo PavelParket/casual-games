@@ -261,6 +261,8 @@ public class GameServiceClient {
         } catch (Exception e) {
             log.error("Failed to finalize Durak game by timeout: gameId={}", request.id(), e);
             throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
+        }
+    }
     // De-Coder
     // -------------------------------------------------------------------------
 
