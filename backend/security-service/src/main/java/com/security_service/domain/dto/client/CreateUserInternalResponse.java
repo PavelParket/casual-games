@@ -1,4 +1,4 @@
-package com.security_service.domain.dto.user_service;
+package com.security_service.domain.dto.client;
 
 import lombok.Builder;
 

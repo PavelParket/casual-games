@@ -3,7 +3,7 @@ package com.security_service.mapper;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.domain.dto.UserResponse;
-import com.security_service.domain.dto.user_service.CreateUserInternalRequest;
+import com.security_service.domain.dto.client.CreateUserInternalRequest;
 import com.security_service.domain.entity.User;
 import com.security_service.service.PasswordService;
 import com.security_starter.enums.Role;

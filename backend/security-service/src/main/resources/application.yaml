@@ -37,6 +37,19 @@ spring:
       enabled: true
       hosts: [ "127.0.0.1" ]
 
+grpc:
+  client:
+    user-service:
+      address: static://localhost:7093
+      negotiation-type: plaintext
+      keep-alive-time: 30s
+      keep-alive-timeout: 5s
+  client-custom:
+    timeout-seconds: 30
+    retry:
+      max-attempts: 3
+      delay-milliseconds: 1000
+
 server:
   port: 8080
 
@@ -54,3 +67,4 @@ logging:
   level:
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
+    com.grpc_utils: DEBUG

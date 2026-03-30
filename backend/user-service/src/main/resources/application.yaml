@@ -42,7 +42,7 @@ server:
 
 grpc:
   server:
-    port: 9093
+    port: 7093
     security:
       enabled: false
 
@@ -54,3 +54,4 @@ logging:
   level:
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
+    com.grpc_utils: DEBUG
