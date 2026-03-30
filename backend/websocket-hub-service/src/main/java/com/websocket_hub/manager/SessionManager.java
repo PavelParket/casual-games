@@ -54,14 +54,13 @@ public class SessionManager {
     }
 
     public void remove(UUID guid) {
-        ClientSession client = sessions.remove(guid);
+        if (isActive(guid)) {
+            ClientSession client = sessions.remove(guid);
 
-        if (client != null) {
             try {
-                if (isActive(guid)) {
-                    client.getSession().close(CloseStatus.NORMAL);
-                    log.info("Closed WebSocket session {} for user {}", client.getSession().getId(), client.getEmail());
-                }
+                client.getSession().close(CloseStatus.NORMAL);
+                log.info("Closed WebSocket session {} for user {}", client.getSession().getId(), client.getEmail());
+
             } catch (IOException e) {
                 log.warn("Error closing WebSocket for user {}: {}", guid, e.getMessage());
             }

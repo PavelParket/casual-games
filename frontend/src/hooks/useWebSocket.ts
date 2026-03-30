@@ -17,7 +17,8 @@ export interface UseWebSocketReturn<T extends WSMessage> {
 
 export function useWebSocket<T extends WSMessage = WSMessage>(
    roomId?: string,
-   roomType?: string
+   roomType?: string,
+   onDisconnect?: () => void,
 ): UseWebSocketReturn<T> {
    const [isConnected, setIsConnected] = useState<boolean>(false);
    const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
@@ -27,6 +28,12 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
    const accessToken = useSelector((state: RootState) => state.auth.user?.accessToken);
 
    const client = useRef<WebSocket | null>(null);
+   const isUnmounting = useRef<boolean>(false);
+   const onDisconnectRef = useRef(onDisconnect);
+
+   useEffect(() => {
+      onDisconnectRef.current = onDisconnect;
+   }, [onDisconnect]);
 
    useEffect(() => {
       if (!roomId || !roomType || !accessToken) {
@@ -45,7 +52,9 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
 
       const wsUrl = `${WEBSOCKET_HUB_SERVICE_URL_WS}/ws/${handlerUrl}?roomId=${roomId}&token=${accessToken}`;
 
-      setConnectionState('connecting');
+      isUnmounting.current = false;
+
+      setConnectionState("connecting");
       setError("");
 
       const socket = new WebSocket(wsUrl);
@@ -56,15 +65,24 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
          setError("");
       };
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
          setIsConnected(false);
          setConnectionState("disconnected");
+         const isNormalClose = event.code === 1000 || event.code === 1001;
+
+         if (!isUnmounting.current && !isNormalClose && onDisconnectRef.current?.()) {
+            onDisconnectRef.current?.();
+         }
       };
 
       socket.onerror = (event) => {
          console.error("WebSocket error:", event);
          setConnectionState("error");
          setError("WebSocket connection error");
+
+         if (!isUnmounting.current && onDisconnectRef.current?.()) {
+            onDisconnectRef.current?.();
+         }
       }
 
       socket.onmessage = (event) => {
@@ -72,14 +90,15 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
             const data: T = JSON.parse(event.data);
             setMessage(data);
          } catch (e) {
-            console.error('Failed to parse message:', e);
-            setError('Invalid message format');
+            console.error("Failed to parse message:", e);
+            setError("Invalid message format");
          }
       };
 
       client.current = socket;
 
       return () => {
+         isUnmounting.current = true;
          if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
             socket.close();
          }

@@ -5,11 +5,15 @@ import com.websocket_hub.client.GameServiceClient;
 import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalRequest;
 import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
+import com.websocket_hub.domain.dto.message.ErrorMessage;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.PlayerBet;
+import com.websocket_hub.domain.enums.ErrorCategory;
+import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomStatus;
+import com.websocket_hub.domain.enums.events.ErrorEvent;
 import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
@@ -147,7 +151,7 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
             roomManager.broadcast(roomId, ticTacToeGameMessageMapper.toResponse(
                     MessageType.SYSTEM,
-                    TicTacToeGameEvent.BET_REJECT,
+                    TicTacToeGameEvent.START_FAILED,
                     null,
                     null,
                     roomId,
@@ -221,6 +225,14 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             }
         } catch (Exception e) {
             log.error("Failed to process game results for room {}", roomId, e);
+            roomManager.broadcast(roomId, ErrorMessage.builder()
+                    .type(MessageType.SYSTEM)
+                    .event(ErrorEvent.ERROR)
+                    .roomId(roomId)
+                    .errorCode(ErrorCode.SERVICE_UNAVAILABLE)
+                    .errorCategory(ErrorCategory.SYSTEM)
+                    .message(ErrorCode.SERVICE_UNAVAILABLE.getMessage())
+                    .build());
         } finally {
             roomManager.removePlayerBets(roomId);
             roomManager.updateRoomStatus(roomId, RoomStatus.FINISHED);

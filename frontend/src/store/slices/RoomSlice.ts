@@ -1,12 +1,19 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { RoomAPI } from "../../api/WsHubApi";
 import type { AxiosError } from "axios";
 import type { Room, RoomRequest, RoomType } from "../../models/Room";
+import { extractErrorResponseMessage } from "../../helpers/ApiErrorHelper";
+
+export const ROOM_OPERATION_KEYS = {
+   GET_ROOMS: "getRooms",
+   GET_TYPES: "getTypes",
+   CREATE_ROOM: "createRoom",
+} as const;
 
 export interface RoomState {
    rooms?: Room[];
    roomTypes?: RoomType[];
-   error?: string;
+   errors: Record<string, string | null>;
 }
 
 // ------------------ Thunks ------------------
@@ -18,8 +25,7 @@ export const getRooms = createAsyncThunk<Room[], void, { rejectValue: string }>(
          const response = await RoomAPI.getRooms();
          return response.data;
       } catch (err: unknown) {
-         const error = err as AxiosError<{ message?: string }>;
-         return rejectWithValue(error.response?.data?.message ?? "Failed to fetch rooms");
+         return rejectWithValue(extractErrorResponseMessage(err, "Failed to fetch rooms"));
       }
    }
 );
@@ -31,8 +37,7 @@ export const getTypes = createAsyncThunk<RoomType[], void, { rejectValue: string
          const response = await RoomAPI.getTypes();
          return response.data;
       } catch (err: unknown) {
-         const error = err as AxiosError<{ message?: string }>;
-         return rejectWithValue(error.response?.data?.message ?? "Failed to fetch room types");
+         return rejectWithValue(extractErrorResponseMessage(err, "Failed to fetch room types"));
       }
    }
 );
@@ -44,8 +49,7 @@ export const createRoom = createAsyncThunk<Room, RoomRequest, { rejectValue: str
          const response = await RoomAPI.createRoom(roomRequest);
          return response.data;
       } catch (err: unknown) {
-         const error = err as AxiosError<{ message?: string }>;
-         return rejectWithValue(error.response?.data?.message ?? "Failed to create room");
+         return rejectWithValue(extractErrorResponseMessage(err, "Failed to create room"));
       }
    }
 );
@@ -55,7 +59,7 @@ export const createRoom = createAsyncThunk<Room, RoomRequest, { rejectValue: str
 const initialState: RoomState = {
    rooms: [],
    roomTypes: [],
-   error: undefined,
+   errors: {},
 };
 
 const roomSlice = createSlice({
@@ -68,38 +72,41 @@ const roomSlice = createSlice({
       clearRoomTypes: (state) => {
          state.roomTypes = [];
       },
-      clearError: (state) => {
-         state.error = undefined;
-      }
+      clearError: (state, action: PayloadAction<string>) => {
+         state.errors[action.payload] = null;
+      },
+      clearAllErrors: (state) => {
+         state.errors = {};
+      },
    },
    extraReducers: (builder) => {
       builder
 
          /* === Get Rooms === */
          .addCase(getRooms.pending, (state) => {
-            state.error = undefined;
+            state.errors[ROOM_OPERATION_KEYS.GET_ROOMS] = null;
          })
          .addCase(getRooms.fulfilled, (state, action) => {
             state.rooms = action.payload;
          })
          .addCase(getRooms.rejected, (state, action) => {
-            state.error = action.payload ?? "Failed to fetch rooms";
+            state.errors[ROOM_OPERATION_KEYS.GET_ROOMS] = action.payload ?? "Failed to fetch rooms";
          })
 
          /* === Get Room Types === */
          .addCase(getTypes.pending, (state) => {
-            state.error = undefined;
+            state.errors[ROOM_OPERATION_KEYS.GET_TYPES] = null;
          })
          .addCase(getTypes.fulfilled, (state, action) => {
             state.roomTypes = action.payload;
          })
          .addCase(getTypes.rejected, (state, action) => {
-            state.error = action.payload ?? "Failed to fetch room types";
+            state.errors[ROOM_OPERATION_KEYS.GET_TYPES] = action.payload ?? "Failed to fetch room types";
          })
 
          /* === Create Room === */
          .addCase(createRoom.pending, (state) => {
-            state.error = undefined;
+            state.errors[ROOM_OPERATION_KEYS.CREATE_ROOM] = null;
          })
          .addCase(createRoom.fulfilled, (state, action) => {
             if (state.rooms) {
@@ -107,11 +114,11 @@ const roomSlice = createSlice({
             }
          })
          .addCase(createRoom.rejected, (state, action) => {
-            state.error = action.payload ?? "Failed to create room";
+            state.errors[ROOM_OPERATION_KEYS.CREATE_ROOM] = action.payload ?? "Failed to create room";
          });
    },
 });
 
-export const { clearRooms, clearRoomTypes, clearError } = roomSlice.actions;
+export const { clearRooms, clearRoomTypes, clearError, clearAllErrors } = roomSlice.actions;
 
 export default roomSlice.reducer;

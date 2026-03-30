@@ -10,6 +10,7 @@ public enum RoomType {
     TIC_TAC_TOE("Tic Tac Toe", "t-t-t", false),
     DE_CODER("De-Coder", "de-coder", true),
     HORSE_RACE("Horse Race", "horse-race", false),
+    DURAK("Durak", "durak", false),
     ROOM_TEST("Room Test", "room", false);
 
     private final String label;
