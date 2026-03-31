@@ -12,6 +12,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -21,9 +23,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Data
-@NoArgsConstructor
 @Table(name = "users")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class User {
 
     @Id
@@ -42,15 +46,18 @@ public class User {
     @Permission(Permissions.EMAIL)
     private String email;
 
+    @Builder.Default
     @Column(precision = 19, scale = 2)
     @Permission(Permissions.BALANCE)
     private BigDecimal balance = BigDecimal.ZERO;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Permission(Permissions.ROLE)
     private Role role = Role.USER;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Permission(Permissions.STATUS)

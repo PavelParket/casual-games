@@ -5,6 +5,10 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+  autoconfigure:
+    exclude:
+      - net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration
+
   datasource:
     url: jdbc:postgresql://${SECURITY_POSTGRES_HOST}:${SECURITY_POSTGRES_PORT}/${SECURITY_POSTGRES_DB}
     username: ${SECURITY_POSTGRES_USERNAME}

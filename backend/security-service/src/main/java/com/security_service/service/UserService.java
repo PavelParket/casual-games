@@ -1,5 +1,6 @@
 package com.security_service.service;
 
+import com.casualgames.grpc.user.CreateUserRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.domain.dto.UserResponse;
@@ -59,13 +60,21 @@ public class UserService implements UserDetailsService {
         User user = mapper.toEntity(request, passwordService);
 
         try {
-            grpcUserClient.create(mapper.toCreateUserRequest(user));
+            grpcUserClient.create(buildCreateUserRequest(user));
         } catch (ServiceUnavailableException e) {
             log.error("UserService is unavailable: {}", e.getMessage());
             throw e;
         }
 
         return mapper.toResponse(repository.save(user));
+    }
+
+    private CreateUserRequest buildCreateUserRequest(User user) {
+        return CreateUserRequest.newBuilder()
+                .setGuid(user.getGuid().toString())
+                .setUsername(user.getUsername())
+                .setEmail(user.getEmail())
+                .build();
     }
 
     @Transactional

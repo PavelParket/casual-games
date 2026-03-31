@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 @Builder
 public record CreateUserInternalResponse(
         UUID guid,
