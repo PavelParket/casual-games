@@ -45,6 +45,18 @@ grpc:
     port: 7093
     security:
       enabled: false
+  client:
+    security-service:
+      address: static://localhost:7080
+      negotiation-type: plaintext
+      enable-keep-alive: true
+      keep-alive-time: 30s
+      keep-alive-timeout: 5s
+    client-custom:
+      timeout-seconds: 30
+      retry:
+        max-attempts: 3
+        delay-milliseconds: 1000
 
 app:
   security-service:
