@@ -149,9 +149,8 @@ public class UserServiceImpl implements UserService {
 
         User saved = userRepository.save(target);
 
-        /* todo: переделать потом, а то ничего не сработает
-            вероятно пора добавлять outbox паттерн */
-        //client.updateRole(actor, saved, role);
+        /* todo: переделать на outbox паттерн */
+        client.updateRole(guid, role);
 
         return userMapper.toDto(saved);
     }

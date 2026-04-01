@@ -10,8 +10,10 @@ import com.security_service.exception.ServiceUnavailableException;
 import com.security_service.exception.UserNotFoundException;
 import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
+import com.security_service.scheduler.PermissionSyncScheduler;
 import com.security_service.service.grpc.client.GrpcUserClient;
 import com.security_service.validator.UserValidator;
+import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,6 +39,8 @@ public class UserService implements UserDetailsService {
     private final PasswordService passwordService;
 
     private final GrpcUserClient grpcUserClient;
+
+    private final PermissionSyncScheduler permissionSyncScheduler;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -103,6 +107,27 @@ public class UserService implements UserDetailsService {
         mapper.updateEntity(user, request, passwordService);
 
         return mapper.toResponse(repository.save(user));
+    }
+
+    @Transactional
+    public UserResponse updateRole(UUID guid, String roleName) {
+        User user = repository.findByGuid(guid)
+                .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid));
+
+        validator.validateRoleExists(roleName);
+        Role newRole = Role.valueOf(roleName);
+
+        if (user.getRole() != newRole) {
+            user.setRole(newRole);
+            User savedUser = repository.save(user);
+
+            permissionSyncScheduler.clearUserPermissions(savedUser.getEmail());
+            log.info("Role changed to {} for user {}. Custom permissions cleared.", newRole, savedUser.getEmail());
+
+            return mapper.toResponse(savedUser);
+        }
+
+        return mapper.toResponse(user);
     }
 
     @Transactional
