@@ -1,6 +1,6 @@
 package com.security_service.service;
 
-import com.security_service.client.UserServiceClient;
+import com.casualgames.grpc.user.CreateUserRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.domain.dto.UserResponse;
@@ -10,6 +10,7 @@ import com.security_service.exception.ServiceUnavailableException;
 import com.security_service.exception.UserNotFoundException;
 import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
+import com.security_service.service.grpc.client.GrpcUserClient;
 import com.security_service.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +36,7 @@ public class UserService implements UserDetailsService {
 
     private final PasswordService passwordService;
 
-    private final UserServiceClient client;
+    private final GrpcUserClient grpcUserClient;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -59,13 +60,21 @@ public class UserService implements UserDetailsService {
         User user = mapper.toEntity(request, passwordService);
 
         try {
-            client.create(mapper.toCreateUserRequest(user));
+            grpcUserClient.create(buildCreateUserRequest(user));
         } catch (ServiceUnavailableException e) {
-            log.error("UserService is unavailable: {}", e.getMessage(), e);
+            log.error("UserService is unavailable: {}", e.getMessage());
             throw e;
         }
 
         return mapper.toResponse(repository.save(user));
+    }
+
+    private CreateUserRequest buildCreateUserRequest(User user) {
+        return CreateUserRequest.newBuilder()
+                .setGuid(user.getGuid().toString())
+                .setUsername(user.getUsername())
+                .setEmail(user.getEmail())
+                .build();
     }
 
     @Transactional

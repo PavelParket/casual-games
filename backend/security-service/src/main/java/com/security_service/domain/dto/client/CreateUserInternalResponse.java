@@ -1,4 +1,4 @@
-package com.security_service.domain.dto.user_service;
+package com.security_service.domain.dto.client;
 
 import lombok.Builder;
 
@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 @Builder
 public record CreateUserInternalResponse(
         UUID guid,

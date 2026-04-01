@@ -1,4 +1,4 @@
-package com.security_service.domain.dto.user_service;
+package com.security_service.domain.dto.client;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -8,6 +8,7 @@ import org.hibernate.validator.constraints.Length;
 
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 @Builder
 public record CreateUserInternalRequest(
         @NotBlank(message = "GUID cannot be empty")

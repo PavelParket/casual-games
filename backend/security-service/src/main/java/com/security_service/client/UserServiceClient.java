@@ -1,7 +1,7 @@
 package com.security_service.client;
 
-import com.security_service.domain.dto.user_service.CreateUserInternalRequest;
-import com.security_service.domain.dto.user_service.CreateUserInternalResponse;
+import com.security_service.domain.dto.client.CreateUserInternalRequest;
+import com.security_service.domain.dto.client.CreateUserInternalResponse;
 import com.security_service.exception.ServiceUnavailableException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +20,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
+@Deprecated(forRemoval = true)
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
