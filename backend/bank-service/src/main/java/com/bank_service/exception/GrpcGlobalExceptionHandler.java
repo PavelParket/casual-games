@@ -1,4 +1,4 @@
-package com.security_service.exception;
+package com.bank_service.exception;
 
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;

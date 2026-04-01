@@ -21,7 +21,7 @@ public class GrpcGlobalExceptionHandler {
     }
 
     @GrpcExceptionHandler(NotFoundException.class)
-    public StatusRuntimeException handleNotFound(ResourceNotFoundException e) {
+    public StatusRuntimeException handleNotFound(NotFoundException e) {
         log.warn("gRPC not found: {}", e.getMessage());
         return Status.NOT_FOUND.withDescription(e.getMessage()).asRuntimeException();
     }
