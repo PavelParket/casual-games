@@ -1,58 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { TOAST_DURATIONS, TOAST_EXIT_DURATION_MS, type ToastItem, type ToastVariant } from "../ui/models/ToastTypes";
-
-const MAX_SYSTEM_TOASTS = 3;
+import { useToast } from "../ui/hooks/useToast";
+import { type ToastVariant } from "../ui/models/ToastTypes";
 
 export function useSystemToast() {
-    const [toasts, setToasts] = useState<ToastItem[]>([]);
-    const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-    const toastsRef = useRef<ToastItem[]>([]);
+    const { toasts, showToast, dismiss } = useToast({ maxToasts: 3 });
 
-    useEffect(() => {
-        toastsRef.current = toasts;
-    });
-
-    const dismiss = useCallback((id: string) => {
-        const durationTimer = timersRef.current.get(id);
-
-        if (durationTimer !== undefined) {
-            clearTimeout(durationTimer);
-            timersRef.current.delete(id);
-        }
-
-        setToasts(prev => prev.map(t => t.id === id ? { ...t, isClosing: true } : t));
-
-        const exitTimer = setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id));
-            timersRef.current.delete(`exit_${id}`);
-        }, TOAST_EXIT_DURATION_MS);
-
-        timersRef.current.set(`exit_${id}`, exitTimer);
-    }, []);
-
-    const showSystemToast = useCallback((message: string, variant: ToastVariant) => {
-        if (toastsRef.current.length >= MAX_SYSTEM_TOASTS) {
-            dismiss(toastsRef.current[0].id);
-        }
-
-        const id = crypto.randomUUID();
-        const duration = TOAST_DURATIONS[variant];
-        const newToast: ToastItem = {
-            id, message, variant, duration, isClosing: false
-        };
-
-        setToasts(prev => [...prev, newToast]);
-
-        const timer = setTimeout(() => dismiss(id), duration);
-        timersRef.current.set(id, timer);
-    }, [dismiss]);
-
-    useEffect(() => {
-        return () => {
-            timersRef.current.forEach(timer => clearTimeout(timer));
-            timersRef.current.clear();
-        };
-    }, []);
+    const showSystemToast = (message: string, variant: ToastVariant) => showToast(message, variant);
 
     return { toasts, showSystemToast, dismiss };
 }

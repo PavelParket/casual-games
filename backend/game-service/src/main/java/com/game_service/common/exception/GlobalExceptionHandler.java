@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -71,6 +72,19 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(NotFoundException e, HttpServletRequest request) {
+        log.warn("Not found on {}: {}", request.getRequestURI(), e.getMessage());
+        return ErrorResponse.builder()
+                .errorCode(ErrorCode.NOT_FOUND)
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(e.getMessage())
+                .timestamp(Instant.now())
+                .path(request.getRequestURI())
+                .build();
+    }
+
     @ExceptionHandler(GameValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidation(GameValidationException e) {
@@ -95,10 +109,17 @@ public class GlobalExceptionHandler {
         return factory.create(ErrorCode.INTERNAL_GAME_ERROR, e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleOptimisticLock(ObjectOptimisticLockingFailureException e) {
+        log.warn("Optimistic locking conflict: {}", e.getMessage());
+        return factory.create(ErrorCode.CONFLICT, e.getMessage(), HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleGeneric(Exception e) {
-        log.error("Unexpected error", e);
+        log.error("Unexpected error: {}", e.getMessage(), e);
 
         return factory.create(ErrorCode.UNEXPECTED_ERROR, UNEXPECTED_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
     }

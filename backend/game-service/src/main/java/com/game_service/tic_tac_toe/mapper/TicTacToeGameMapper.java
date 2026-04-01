@@ -1,8 +1,8 @@
 package com.game_service.tic_tac_toe.mapper;
 
 import com.game_service.common.enums.MessageType;
-import com.game_service.tic_tac_toe.dto.TicTacToeGameResponse;
-import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
+import com.game_service.tic_tac_toe.domain.dto.TicTacToeGameResponse;
+import com.game_service.tic_tac_toe.domain.enums.TicTacToeGameEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

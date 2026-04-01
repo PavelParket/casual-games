@@ -1,6 +1,6 @@
 package com.game_service.tic_tac_toe.util;
 
-import com.game_service.tic_tac_toe.enums.TicTacToeGameEvent;
+import com.game_service.tic_tac_toe.domain.enums.TicTacToeGameStatus;
 import lombok.experimental.UtilityClass;
 
 import java.util.Arrays;
@@ -25,7 +25,7 @@ public class TicTacToeGameUtils {
                 .allMatch(cell -> cell != null && !cell.isBlank());
     }
 
-    public static TicTacToeGameEvent checkWinner(String[] board) {
+    public static TicTacToeGameStatus checkWinner(String[] board) {
         // Rows
         for (int i = 0; i < 9; i += 3) {
             if (board[i] != null && board[i].equals(board[i + 1]) && board[i + 1].equals(board[i + 2])) {
@@ -50,25 +50,25 @@ public class TicTacToeGameUtils {
         }
 
         if (isDraw(board)) {
-            return TicTacToeGameEvent.DRAW;
+            return TicTacToeGameStatus.DRAW;
         }
-        return TicTacToeGameEvent.MOVE;
+        return TicTacToeGameStatus.ACTIVE;
     }
 
-    private static TicTacToeGameEvent setWinner(String winnerSymbol, String[] board) {
+    private static TicTacToeGameStatus setWinner(String winnerSymbol, String[] board) {
         if (SYMBOL_X.equals(winnerSymbol)) {
-            return TicTacToeGameEvent.WINNER_X;
+            return TicTacToeGameStatus.WINNER_X;
         } else if (SYMBOL_O.equals(winnerSymbol)) {
-            return TicTacToeGameEvent.WINNER_O;
+            return TicTacToeGameStatus.WINNER_O;
         } else {
             return null;
         }
     }
 
-    public static String getWinnerSymbol(TicTacToeGameEvent event) {
-        if (TicTacToeGameEvent.WINNER_X.equals(event)) {
+    public static String getWinnerSymbol(TicTacToeGameStatus status) {
+        if (TicTacToeGameStatus.WINNER_X.equals(status)) {
             return SYMBOL_X;
-        } else if (TicTacToeGameEvent.WINNER_O.equals(event)) {
+        } else if (TicTacToeGameStatus.WINNER_O.equals(status)) {
             return SYMBOL_O;
         }
 

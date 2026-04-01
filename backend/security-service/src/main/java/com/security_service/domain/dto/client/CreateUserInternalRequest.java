@@ -8,6 +8,7 @@ import org.hibernate.validator.constraints.Length;
 
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 @Builder
 public record CreateUserInternalRequest(
         @NotBlank(message = "GUID cannot be empty")

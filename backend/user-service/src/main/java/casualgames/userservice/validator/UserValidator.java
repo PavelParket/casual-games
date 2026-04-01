@@ -1,6 +1,5 @@
 package casualgames.userservice.validator;
 
-import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.entity.User;
 import casualgames.userservice.exception.ResourceAlreadyExistsException;
 import casualgames.userservice.repository.UserRepository;
@@ -15,9 +14,9 @@ public class UserValidator {
 
     private final UserRepository userRepository;
 
-    public void validateForCreation(CreateUserRequest request) {
-        if (userRepository.findByEmail(request.email()).isPresent()) {
-            throw new ResourceAlreadyExistsException("User with email '" + request.email() + "' already exists");
+    public void validateForCreation(User user) {
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new ResourceAlreadyExistsException("User with email '" + user.getEmail() + "' already exists");
         }
     }
 

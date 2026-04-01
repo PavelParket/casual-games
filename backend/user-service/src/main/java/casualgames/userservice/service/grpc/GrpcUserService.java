@@ -1,9 +1,12 @@
 package casualgames.userservice.service.grpc;
 
-import casualgames.userservice.dto.UserResponseDto;
+import casualgames.userservice.entity.User;
 import casualgames.userservice.exception.InvalidInputException;
 import casualgames.userservice.exception.ResourceAlreadyExistsException;
+import casualgames.userservice.mapper.UserMapper;
+import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.UserService;
+import casualgames.userservice.validator.UserValidator;
 import com.casualgames.grpc.user.CreateUserRequest;
 import com.casualgames.grpc.user.UserGrpc;
 import com.casualgames.grpc.user.UserResponse;
@@ -23,40 +26,52 @@ public class GrpcUserService extends UserGrpc.UserImplBase {
 
     private final UserService userService;
 
-    // todo: переделать, подумать, чтобы полностью перенести процесс создания в этот класс
+    private final UserRepository userRepository;
+
+    private final UserMapper userMapper;
+
+    private final UserValidator userValidator;
+
     @Override
-    public void createUser(CreateUserRequest createUserRequest, StreamObserver<UserResponse> observer) {
+    public void createUser(CreateUserRequest createUserRequest, StreamObserver<UserResponse> responseObserver) {
         try {
-            casualgames.userservice.dto.CreateUserRequest request = casualgames.userservice.dto.CreateUserRequest.builder()
-                    .guid(UUID.fromString(createUserRequest.getGuid()))
-                    .username(createUserRequest.getUsername())
-                    .email(createUserRequest.getEmail())
-                    .build();
+            User newUser = userRepository.save(buildUser(createUserRequest));
 
-            UserResponseDto responseDto = userService.create(request);
-
-            UserResponse response = UserResponse.newBuilder()
-                    .setId(responseDto.getId())
-                    .setGuid(responseDto.getGuid().toString())
-                    .setUsername(responseDto.getUsername())
-                    .setEmail(responseDto.getEmail())
-                    .setBalance(responseDto.getBalance().toPlainString())
-                    .setRole(responseDto.getRole())
-                    .setStatus(responseDto.getStatus())
-                    .setCreatedAt(GrpcTimestampMapper.toTimestamp(responseDto.getCreatedAt()))
-                    .build();
-
-            observer.onNext(response);
-            observer.onCompleted();
+            responseObserver.onNext(buildUserResponse(newUser));
+            responseObserver.onCompleted();
         } catch (ResourceAlreadyExistsException e) {
             log.warn("gRPC CreateUser: resource already exists — {}", e.getMessage());
-            observer.onError(Status.ALREADY_EXISTS.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(Status.ALREADY_EXISTS.withDescription(e.getMessage()).asRuntimeException());
         } catch (InvalidInputException e) {
             log.warn("gRPC CreateUser: invalid input — {}", e.getMessage());
-            observer.onError(Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
         } catch (Exception e) {
             log.error("gRPC CreateUser: unexpected error", e);
-            observer.onError(Status.INTERNAL.withDescription("Internal server error").asRuntimeException());
+            responseObserver.onError(Status.INTERNAL.withDescription("Internal server error").asRuntimeException());
         }
+    }
+
+    private User buildUser(CreateUserRequest createUserRequest) {
+        User user = User.builder()
+                .guid(UUID.fromString(createUserRequest.getGuid()))
+                .username(createUserRequest.getUsername())
+                .email(createUserRequest.getEmail())
+                .build();
+
+        userValidator.validateForCreation(user);
+
+        return user;
+    }
+
+    private UserResponse buildUserResponse(User user) {
+        return UserResponse.newBuilder()
+                .setGuid(user.getGuid().toString())
+                .setUsername(user.getUsername())
+                .setEmail(user.getEmail())
+                .setBalance(user.getBalance().toPlainString())
+                .setRole(user.getRole().toString())
+                .setStatus(user.getStatus().toString())
+                .setCreatedAt(GrpcTimestampMapper.toTimestamp(user.getCreatedAt()))
+                .build();
     }
 }
