@@ -52,11 +52,12 @@ public class UserServiceImpl implements UserService {
         return userMapper.toListResponse(userRepository.findAll());
     }
 
+    @Deprecated
     @Transactional
     @Override
     public UserResponseDto create(CreateUserRequest request) {
 
-        userValidator.validateForCreation(request);
+        //userValidator.validateForCreation(request);
 
         User user = userMapper.toEntity(request);
 
