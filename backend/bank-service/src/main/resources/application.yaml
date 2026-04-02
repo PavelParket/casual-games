@@ -19,13 +19,6 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: true
-    properties:
-      hibernate:
-        jdbc:
-          batch_size: 15
-        order_inserts: true
-        order_updates: true
-        batch_versioned_data: true
 
   data:
     redis:
