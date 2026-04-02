@@ -1,27 +1,26 @@
 package com.security_service.domain.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.security_service.domain.enums.ErrorCode;
 import lombok.Builder;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ErrorResponse(
-        String timestamp,
+
+        ErrorCode errorCode,
+
+        String message,
 
         int status,
 
-        String error,
-
-        ErrorCode code,
-
-        String message,
+        Instant timestamp,
 
         String path,
 
         Map<String, List<String>> details
+
 ) {
 }

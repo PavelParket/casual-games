@@ -1,6 +1,5 @@
 package com.security_service.factory;
 
-import com.security_service.domain.dto.ErrorResponse;
 import com.security_service.domain.enums.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

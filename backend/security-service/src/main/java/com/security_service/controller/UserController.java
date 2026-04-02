@@ -36,6 +36,7 @@ public class UserController {
         return service.create(request);
     }
 
+    @Deprecated
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/id={id}")
     public UserResponse updateById(@PathVariable Long id, @Valid @RequestBody UpdateRequest request) {
@@ -47,6 +48,7 @@ public class UserController {
         return service.updateByGuid(guid, request);
     }
 
+    @Deprecated
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/id={id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -66,12 +68,14 @@ public class UserController {
         return service.getAll();
     }
 
+    @Deprecated
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/id")
     public UserResponse getById(@RequestParam Long id) {
         return service.getById(id);
     }
 
+    @Deprecated
     @GetMapping("/email")
     public UserResponse getByEmail(@RequestParam String email) {
         return service.getByEmail(email);

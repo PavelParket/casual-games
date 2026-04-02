@@ -1,6 +1,5 @@
 package com.security_service.exception;
 
-import com.security_service.domain.dto.ErrorResponse;
 import com.security_service.domain.enums.ErrorCode;
 import com.security_service.factory.ErrorFactory;
 import jakarta.servlet.http.HttpServletRequest;
