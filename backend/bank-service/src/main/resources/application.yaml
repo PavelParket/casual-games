@@ -50,7 +50,7 @@ server:
 grpc:
   client:
     user-service:
-      address: static://localhost:7094
+      address: static://localhost:7093
       negotiation-type: plaintext
       keep-alive-time: 30s
       keep-alive-timeout: 5s
