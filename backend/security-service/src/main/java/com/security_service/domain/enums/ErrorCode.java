@@ -7,14 +7,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ErrorCode {
 
-    VALIDATION_ERROR("Validation error"),
-    AUTHENTICATION_ERROR("Authentication failed"),
-    INVALID_CREDENTIALS("Invalid credentials"),
-    ACCESS_DENIED("Access denied"),
-    NOT_FOUND("Resource not found"),
-    INTERNAL_ERROR("Unexpected server error"),
-    SERVICE_UNAVAILABLE("Service unavailable"),
-    MISSING_TOKEN("Missing authentication token");
+    MISSING_TOKEN("Missing token"),
+    BAD_REQUEST("Bad Request"),
+    UNAUTHORIZED("Unauthorized"),
+    FORBIDDEN("Forbidden"),
+    NOT_FOUND("Not found"),
+    CONFLICT("Conflict"),
+    INTERNAL_SERVER_ERROR("Unexpected server error"),
+    SERVICE_UNAVAILABLE("Service unavailable. Please try later");
 
     private final String message;
 }

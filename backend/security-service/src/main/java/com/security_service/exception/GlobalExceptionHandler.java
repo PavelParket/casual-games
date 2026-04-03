@@ -1,5 +1,6 @@
 package com.security_service.exception;
 
+import com.security_service.domain.dto.ErrorResponse;
 import com.security_service.domain.enums.ErrorCode;
 import com.security_service.factory.ErrorFactory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.security_service.config.ResourceMessageConstants.VALIDATION_FAILED;
+
 @RestControllerAdvice
 @Slf4j
 @RequiredArgsConstructor
@@ -25,33 +28,33 @@ public class GlobalExceptionHandler {
 
     private final ErrorFactory factory;
 
-    @ExceptionHandler(UserNotFoundException.class)
+    @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleUserNotFound(UserNotFoundException e, HttpServletRequest request) {
-        log.warn("User not found: {}", e.getMessage(), e);
+    public ErrorResponse handleNotFound(NotFoundException e, HttpServletRequest request) {
+        log.warn("Not found on {}: {}", request.getRequestURI(), e.getMessage(), e);
 
-        return factory.create(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, e.getMessage(), request);
+        return factory.create(ErrorCode.NOT_FOUND, e.getMessage(), HttpStatus.NOT_FOUND, null, request);
     }
 
-    @ExceptionHandler(EmailAlreadyExistsException.class)
+    @ExceptionHandler(ConflictException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleEmailExists(EmailAlreadyExistsException e, HttpServletRequest request) {
-        log.warn("Email already exists: {}", e.getMessage(), e);
+    public ErrorResponse handleConflict(ConflictException e, HttpServletRequest request) {
+        log.warn("Conflict on {}: {}", request.getRequestURI(), e.getMessage(), e);
 
-        return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request);
+        return factory.create(ErrorCode.CONFLICT, e.getMessage(), HttpStatus.CONFLICT, null, request);
     }
 
-    @ExceptionHandler(InvalidRoleException.class)
+    @ExceptionHandler(BadRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleInvalidRole(InvalidRoleException e, HttpServletRequest request) {
-        log.warn("Invalid role: {}", e.getMessage(), e);
+    public ErrorResponse handleBadRequest(BadRequestException e, HttpServletRequest request) {
+        log.warn("Bad request on {}: {}", request.getRequestURI(), e.getMessage(), e);
 
-        return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request);
+        return factory.create(ErrorCode.BAD_REQUEST, e.getMessage(), HttpStatus.BAD_REQUEST, null, request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidationErrors(MethodArgumentNotValidException e, HttpServletRequest request) {
+    public ErrorResponse handleMethodArgumentNotValid(MethodArgumentNotValidException e, HttpServletRequest request) {
         Map<String, List<String>> details = e.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -60,56 +63,53 @@ public class GlobalExceptionHandler {
                         Collectors.mapping(FieldError::getDefaultMessage, Collectors.toList())
                 ));
 
-        log.warn("Validation errors: {}", details);
+        String message = details.values().stream()
+                .flatMap(List::stream)
+                .findFirst()
+                .orElse(VALIDATION_FAILED);
 
-        return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, "Validation failed", request, details);
+        log.warn("Validation error on {}: {}", request.getRequestURI(), details);
+
+        return factory.create(ErrorCode.BAD_REQUEST, message, HttpStatus.BAD_REQUEST, details, request);
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
+    @ExceptionHandler({ForbiddenException.class, AccessDeniedException.class})
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ErrorResponse handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
-        log.warn("Access denied: {}", e.getMessage());
+    public ErrorResponse handleForbidden(Exception e, HttpServletRequest request) {
+        log.warn("Forbidden on {}: {}", request.getRequestURI(), e.getMessage());
 
-        return factory.create(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED, e.getMessage(), request);
+        return factory.create(ErrorCode.FORBIDDEN, e.getMessage(), HttpStatus.FORBIDDEN, null, request);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponse handleAuthentication(AuthenticationException e, HttpServletRequest request) {
-        log.warn("Authentication failed: {}", e.getMessage());
+    public ErrorResponse handleUnauthorized(AuthenticationException e, HttpServletRequest request) {
+        log.warn("Authentication failed on {}: {}", request.getRequestURI(), e.getMessage());
 
-        return factory.create(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request);
-    }
-
-    @ExceptionHandler(InvalidCredentialsException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponse handleInvalidCredentials(InvalidCredentialsException e, HttpServletRequest request) {
-        log.warn("Authentication failed due to invalid credentials: {}", e.getMessage());
-
-        return factory.create(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_CREDENTIALS, e.getMessage(), request);
+        return factory.create(ErrorCode.UNAUTHORIZED, e.getMessage(), HttpStatus.UNAUTHORIZED, null, request);
     }
 
     @ExceptionHandler(MissingTokenException.class)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ErrorResponse handleMissingToken(MissingTokenException e, HttpServletRequest request) {
-        log.warn("Missing token: {}", e.getMessage());
+        log.warn("Missing token on {}: {}", request.getRequestURI(), e.getMessage());
 
-        return factory.create(HttpStatus.NO_CONTENT, ErrorCode.MISSING_TOKEN, e.getMessage(), request);
+        return factory.create(ErrorCode.MISSING_TOKEN, e.getMessage(), HttpStatus.NO_CONTENT, null, request);
     }
 
     @ExceptionHandler(ServiceUnavailableException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ErrorResponse handleServiceUnavailable(ServiceUnavailableException e, HttpServletRequest request) {
-        log.error("Service unavailable: {}", e.getMessage(), e);
+        log.error("Service unavailable on {}: {}", request.getRequestURI(), e.getMessage(), e);
 
-        return factory.create(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.SERVICE_UNAVAILABLE, e.getMessage(), request);
+        return factory.create(ErrorCode.SERVICE_UNAVAILABLE, ErrorCode.SERVICE_UNAVAILABLE.getMessage(), HttpStatus.SERVICE_UNAVAILABLE, null, request);
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleGeneric(Exception e, HttpServletRequest request) {
-        log.error("Unexpected error occurred", e);
+        log.error("Unexpected error occurred on {}: {}", request.getRequestURI(), e.getMessage(), e);
 
-        return factory.create(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, "An unexpected error occurred", request);
+        return factory.create(ErrorCode.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_SERVER_ERROR.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null, request);
     }
 }

@@ -77,7 +77,7 @@ public class AuthService {
         return mapper.toResponse(user, accessToken);
     }
 
-    public void manualSync(String string) {
+    public void manualSync() {
         permissionSyncScheduler.manualSync();
     }
 }

@@ -2,10 +2,9 @@ package com.security_service.validator;
 
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UpdateRequest;
-import com.security_service.exception.EmailAlreadyExistsException;
-import com.security_service.exception.InvalidEmailFormatException;
-import com.security_service.exception.InvalidRoleException;
-import com.security_service.exception.UserNotFoundException;
+import com.security_service.exception.BadRequestException;
+import com.security_service.exception.ConflictException;
+import com.security_service.exception.NotFoundException;
 import com.security_service.repository.UserRepository;
 import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
@@ -25,38 +24,38 @@ public class UserValidator implements Validator {
 
     public void validateEmailExists(String email) {
         if (repository.existsByEmail(email)) {
-            throw new EmailAlreadyExistsException("User with email=" + email + " already exists!");
+            throw new ConflictException("User with email=" + email + " already exists!");
         }
     }
 
     public void validateEmailNotExists(String email) {
         if (!repository.existsByEmail(email)) {
-            throw new UserNotFoundException("User with email=" + email + " does not exist!");
+            throw new NotFoundException("User with email=" + email + " does not exist!");
         }
     }
 
     public void validateEmailFormat(String email) {
         if (!EMAIL_PATTERN.matcher(email.trim()).matches()) {
-            throw new InvalidEmailFormatException("Email should be valid: \"mail@example.com\"");
+            throw new BadRequestException("Email should be valid: \"mail@example.com\"");
         }
     }
 
     public void validateRoleExists(String roleName) {
         if (Arrays.stream(Role.values())
                 .noneMatch(role -> role.name().equals(roleName))) {
-            throw new InvalidRoleException("Role " + roleName + " not found!");
+            throw new NotFoundException("Role " + roleName + " not found!");
         }
     }
 
     public void validateIdExists(Long id) {
         if (!repository.existsById(id)) {
-            throw new UserNotFoundException("User with id=" + id + " does not exist!");
+            throw new NotFoundException("User with id=" + id + " does not exist!");
         }
     }
 
     public void validateGuidExists(UUID guid) {
         if (!repository.existsByGuid(guid)) {
-            throw new UserNotFoundException("User with guid=" + guid + " does not exist!");
+            throw new NotFoundException("User with guid=" + guid + " does not exist!");
         }
     }
 

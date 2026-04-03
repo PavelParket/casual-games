@@ -7,8 +7,6 @@ import com.security_service.domain.dto.UserResponse;
 import com.security_service.domain.entity.CustomUserDetails;
 import com.security_service.domain.entity.User;
 import com.security_service.exception.NotFoundException;
-import com.security_service.exception.ServiceUnavailableException;
-import com.security_service.exception.UserNotFoundException;
 import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
 import com.security_service.service.grpc.client.GrpcUserClient;
@@ -63,12 +61,7 @@ public class UserService implements UserDetailsService {
 
         User user = mapper.toEntity(request, passwordService);
 
-        try {
-            grpcUserClient.create(buildCreateUserRequest(user));
-        } catch (ServiceUnavailableException e) {
-            log.error("UserService is unavailable: {}", e.getMessage());
-            throw e;
-        }
+        grpcUserClient.create(buildCreateUserRequest(user));
 
         return mapper.toResponse(repository.save(user));
     }
@@ -85,7 +78,7 @@ public class UserService implements UserDetailsService {
     @Transactional
     public UserResponse updateById(Long id, UpdateRequest request) {
         User user = repository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id=" + id));
+                .orElseThrow(() -> new NotFoundException("User not found with id=" + id));
 
         validator.validateUpdate(request);
 

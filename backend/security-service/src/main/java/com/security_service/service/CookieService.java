@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 
+import static com.security_service.config.ResourceMessageConstants.NOT_FOUND_REFRESH_TOKEN;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -24,25 +26,21 @@ public class CookieService {
 
     public void addRefreshToken(HttpServletResponse response, String token) {
         response.addCookie(factory.create(COOKIE_NAME, token, "/", COOKIE_MAX_AGE));
-
-        log.debug("Set refresh token cookie for response");
     }
 
     public void deleteRefreshToken(HttpServletResponse response) {
         response.addCookie(factory.create(COOKIE_NAME, null, "/", 0));
-
-        log.debug("Deleted refresh token cookie");
     }
 
     public String extractRefreshToken(HttpServletRequest request) {
         if (request.getCookies() == null) {
-            throw new MissingTokenException("Refresh token not found in cookies");
+            throw new MissingTokenException(NOT_FOUND_REFRESH_TOKEN);
         }
 
         return Arrays.stream(request.getCookies())
                 .filter(cookie -> COOKIE_NAME.equals(cookie.getName()))
                 .findFirst()
                 .map(Cookie::getValue)
-                .orElseThrow(() -> new MissingTokenException("Refresh token not found"));
+                .orElseThrow(() -> new MissingTokenException(NOT_FOUND_REFRESH_TOKEN));
     }
 }

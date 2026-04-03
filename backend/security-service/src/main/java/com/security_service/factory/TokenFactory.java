@@ -1,21 +1,24 @@
 package com.security_service.factory;
 
 import com.security_service.jwt.JwtGenerator;
+import com.security_starter.enums.Status;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class RefreshTokenFactory implements Factory<String> {
+public class TokenFactory {
 
     private final JwtGenerator tokenFactory;
 
-    @Override
-    public String create(Object... args) {
-        UUID guid = (UUID) args[0];
+    public String createAccessToken(UUID guid, String email, List<String> roles, Status status) {
+        return tokenFactory.generateAccessToken(guid, email, roles, status);
+    }
 
+    public String createRefreshToken(UUID guid) {
         return tokenFactory.generateRefreshToken(guid);
     }
 }
