@@ -1,6 +1,8 @@
 package com.security_service.repository;
 
 import com.security_service.domain.entity.RolePermission;
+import com.security_service.repository.projection.PermissionProjection;
+import com.security_service.repository.projection.RolePermissionProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -54,4 +56,35 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
             @Param("attribute") String attribute,
             @Param("operation") String operation
     );
+
+    @Query(value = """
+            SELECT r.name AS roleName,
+                    p.attribute AS attribute,
+                    p.operation AS operation,
+                    rp.for_me AS forMe,
+                    rp.for_all AS forAll
+            FROM role_permission rp
+            JOIN roles r ON rp.role_id = r.id
+            JOIN permissions p ON rp.permission_id = p.id
+            ORDER BY r.name, p.attribute, p.operation
+            """,
+            nativeQuery = true)
+    List<RolePermissionProjection> findAllRolePermissionProjection();
+
+    @Query(value = """
+            SELECT p.attribute AS attribute,
+                    p.operation AS operation,
+                    rp.for_me AS for_me,
+                    rp.for_all AS for_all
+            FROM role_permission rp
+            JOIN roles r ON rp.role_id = r.id
+            JOIN permissions p ON rp.permission_id = p.id
+            WHERE r.name = :roleName
+            """,
+            nativeQuery = true)
+    List<PermissionProjection> findPermissionsByRoleNameWithScope(String roleName);
+
+    List<RolePermission> findAllByRoleId(Long roleId);
+
+    List<RolePermission> findAllByPermissionId(Long permissionId);
 }
