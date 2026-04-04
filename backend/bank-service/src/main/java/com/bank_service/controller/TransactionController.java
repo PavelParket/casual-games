@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/transactions")
@@ -39,6 +40,11 @@ public class TransactionController {
     @PostMapping("/summary/search")
     public List<TransactionSummaryResponse> getByUserGuid(@RequestBody @Valid TransactionSummaryFilterRequest request) {
         return summaryService.getByUserGuid(request);
+    }
+
+    @PostMapping("/summary/generate")
+    public void generateSummaryManually(@RequestBody @Valid TransactionSummaryFilterRequest request) {
+        summaryService.generateSummary(request);
     }
 
     @PostMapping("/deposit")
