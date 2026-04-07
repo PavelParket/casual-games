@@ -1,6 +1,5 @@
 package casualgames.userservice.service.impl;
 
-import casualgames.userservice.client.SecurityServiceClient;
 import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
@@ -13,6 +12,7 @@ import casualgames.userservice.exception.ResourceNotFoundException;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.UserService;
+import casualgames.userservice.service.grpc.client.GrpcSecurityClient;
 import casualgames.userservice.validator.UserValidator;
 import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserValidator userValidator;
 
-    private final SecurityServiceClient client;
+    private final GrpcSecurityClient grpcSecurityClient;
 
     @Override
     public UserResponse findById(Long id) {
@@ -91,7 +91,7 @@ public class UserServiceImpl implements UserService {
 
         User saved = userRepository.save(target);
 
-        client.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
+        grpcSecurityClient.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
 
         return userMapper.toDto(saved);
     }
@@ -113,9 +113,9 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("User not found");
         }
 
-        client.delete(guid);
-
         userRepository.deleteByGuid(guid);
+
+        grpcSecurityClient.delete(guid);
     }
 
     @Override
@@ -167,6 +167,7 @@ public class UserServiceImpl implements UserService {
         с отрицательным балансом помечается как success, вместо reject
         Также есть проблема с тем что нормальная транзакция меняет баланс и он фиксируется в базе,
         а отрицательный - нет, возникает несогласованность */
+    @Deprecated
     @Override
     @Transactional
     public Boolean updateBalances(List<TransactionShortInfoInternalRequest> transactions) {

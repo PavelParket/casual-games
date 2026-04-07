@@ -93,6 +93,7 @@ public class UserController {
         return userService.updateRole(guid, role);
     }
 
+    @Deprecated
     @PatchMapping("/update-balance")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Boolean updateBalances(@RequestBody @Valid List<TransactionShortInfoInternalRequest> transactions) {

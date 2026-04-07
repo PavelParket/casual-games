@@ -42,6 +42,10 @@ spring:
       hosts: [ "127.0.0.1" ]
 
 grpc:
+  server:
+    port: 7080
+    security:
+      enabled: false
   client:
     user-service:
       address: static://localhost:7093

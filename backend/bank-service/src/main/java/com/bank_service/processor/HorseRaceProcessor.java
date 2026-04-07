@@ -1,6 +1,5 @@
 package com.bank_service.processor;
 
-import com.bank_service.client.UserServiceClient;
 import com.bank_service.domain.dto.GameTransactionRequest;
 import com.bank_service.domain.dto.HorseRaceTransactionRequest;
 import com.bank_service.domain.dto.ProcessingResult;
@@ -11,6 +10,7 @@ import com.bank_service.factory.HorseRaceTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.service.RoomProcessingService;
 import com.bank_service.service.TransactionService;
+import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class HorseRaceProcessor implements GameResultProcessor {
 
     private final HorseRaceTransactionFactory horseRaceTransactionFactory;
 
-    private final UserServiceClient userServiceClient;
+    private final GrpcUserTransactionClient grpcUserTransactionClient;
 
     private final RoomProcessingService roomProcessingService;
 
@@ -65,7 +65,7 @@ public class HorseRaceProcessor implements GameResultProcessor {
             List<Transaction> saved = transactionService.pending(transactions);
 
             try {
-                userServiceClient.sendUpdates(transactionMapper.toShortInfoList(saved));
+                grpcUserTransactionClient.sendUpdates(saved);
                 transactionService.success(saved);
 
                 log.info("Successfully processed Horse Race game for room={}, winnerHorseIndex={}, transactions={}", horseRaceRequest.roomId(), horseRaceRequest.winnerHorseIndex(), saved.size());

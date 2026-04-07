@@ -1,6 +1,5 @@
 package com.bank_service.service;
 
-import com.bank_service.client.UserServiceClient;
 import com.bank_service.domain.dto.DepositRequest;
 import com.bank_service.domain.dto.PageResponse;
 import com.bank_service.domain.dto.TransactionResponse;
@@ -9,6 +8,7 @@ import com.bank_service.domain.enums.TransactionStatus;
 import com.bank_service.factory.DefaultTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.repository.TransactionRepository;
+import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,7 +33,7 @@ public class TransactionService {
 
     private final TransactionMapper transactionMapper;
 
-    private final UserServiceClient userServiceClient;
+    private final GrpcUserTransactionClient grpcUserTransactionClient;
 
     private final DefaultTransactionFactory defaultTransactionFactory;
 
@@ -109,7 +109,7 @@ public class TransactionService {
         List<Transaction> pendingTransactions = pending(List.of(transaction));
 
         try {
-            userServiceClient.sendUpdates(transactionMapper.toShortInfoList(pendingTransactions));
+            grpcUserTransactionClient.sendUpdates(pendingTransactions);
 
             success(pendingTransactions);
 

@@ -9,7 +9,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,12 +32,7 @@ import java.util.UUID;
 public class ProcessedRoom {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "processed_room_seq")
-    @SequenceGenerator(
-            name = "processed_room_seq",
-            sequenceName = "processed_rooms_id_seq",
-            allocationSize = 15
-    )
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
 
