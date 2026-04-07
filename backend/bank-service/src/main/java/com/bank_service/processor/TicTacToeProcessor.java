@@ -1,6 +1,5 @@
 package com.bank_service.processor;
 
-import com.bank_service.client.UserServiceClient;
 import com.bank_service.domain.dto.GameTransactionRequest;
 import com.bank_service.domain.dto.ProcessingResult;
 import com.bank_service.domain.dto.TicTacToeTransactionRequest;
@@ -12,6 +11,7 @@ import com.bank_service.factory.TicTacToeTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.service.RoomProcessingService;
 import com.bank_service.service.TransactionService;
+import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import com.bank_service.validator.TicTacToeBusinessValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ public class TicTacToeProcessor implements GameResultProcessor {
 
     private final TicTacToeTransactionFactory factory;
 
-    private final UserServiceClient userServiceClient;
+    private final GrpcUserTransactionClient grpcUserTransactionClient;
 
     private final RoomProcessingService roomProcessingService;
 
@@ -78,7 +78,7 @@ public class TicTacToeProcessor implements GameResultProcessor {
             List<Transaction> saved = transactionService.pending(transactions);
 
             try {
-                userServiceClient.sendUpdates(transactionMapper.toShortInfoList(saved));
+                grpcUserTransactionClient.sendUpdates(saved);
                 transactionService.success(saved);
 
                 log.info("Successfully processed Tic-Tac-Toe game for room: {}", ticTacToeTransactionRequest.roomId());

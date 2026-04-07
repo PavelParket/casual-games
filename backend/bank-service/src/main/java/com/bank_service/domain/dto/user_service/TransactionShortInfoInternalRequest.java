@@ -7,6 +7,7 @@ import lombok.Builder;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 @Builder
 public record TransactionShortInfoInternalRequest(
         Long id,

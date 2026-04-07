@@ -16,6 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+@Deprecated(forRemoval = true)
 @Service
 @RequiredArgsConstructor
 @Slf4j

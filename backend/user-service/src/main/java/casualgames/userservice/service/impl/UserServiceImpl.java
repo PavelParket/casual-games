@@ -167,6 +167,7 @@ public class UserServiceImpl implements UserService {
         с отрицательным балансом помечается как success, вместо reject
         Также есть проблема с тем что нормальная транзакция меняет баланс и он фиксируется в базе,
         а отрицательный - нет, возникает несогласованность */
+    @Deprecated
     @Override
     @Transactional
     public Boolean updateBalances(List<TransactionShortInfoInternalRequest> transactions) {
