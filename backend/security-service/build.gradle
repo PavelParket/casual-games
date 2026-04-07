@@ -39,6 +39,7 @@ dependencyManagement {
 
 dependencies {
     implementation 'com.casualgames:security-starter:1.0.0'
+    implementation 'com.casualgames:redis-starter:1.0.0'
     implementation 'com.casualgames:grpc-utils:1.0.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'

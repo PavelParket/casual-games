@@ -113,4 +113,11 @@ public class GlobalExceptionHandler {
 
         return factory.create(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, "An unexpected error occurred", request);
     }
+
+    @ExceptionHandler(NotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(NotFoundException e, HttpServletRequest request) {
+        log.warn("Resource not found: {}", e.getMessage());
+        return factory.create(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, e.getMessage(), request);
+    }
 }

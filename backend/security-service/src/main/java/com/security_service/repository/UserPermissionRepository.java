@@ -1,6 +1,7 @@
 package com.security_service.repository;
 
 import com.security_service.domain.entity.UserPermission;
+import com.security_service.repository.projection.FullUserPermissionProjection;
 import com.security_service.repository.projection.UserPermissionProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -33,4 +34,19 @@ public interface UserPermissionRepository extends JpaRepository<UserPermission, 
     boolean existsByUserGuid(UUID userGuid);
 
     void deleteAllByUserGuid(UUID userGuid);
+
+    @Query(value = """
+            SELECT a.email AS email,
+                    p.attribute AS attribute,
+                    p.operation AS operation,
+                    up.for_me AS forMe,
+                    up.for_all AS forAll,
+                    up.allowed AS allowed
+            FROM user_permission up
+            JOIN auths a ON up.user_guid = a.guid
+            JOIN permissions p ON up.permission_id = p.id
+            ORDER BY a.email
+            """,
+            nativeQuery = true)
+    List<FullUserPermissionProjection> findAllForFullSync();
 }
