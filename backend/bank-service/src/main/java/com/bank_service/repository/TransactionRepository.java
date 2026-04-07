@@ -32,13 +32,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("status") TransactionStatus status
     );
 
-    @Query("""
-            SELECT DISTINCT t.userGuid 
-            FROM Transaction t 
-            WHERE t.status = :status 
-            AND t.createdAt >= :start 
-            AND t.createdAt < :end
-            """)
+    @Query(value = """
+            SELECT DISTINCT t.user_guid 
+            FROM transactions t 
+            WHERE t.status = :#{#status.name()} 
+            AND t.created_at >= :start 
+            AND t.created_at < :end
+            """, nativeQuery = true)
     Page<UUID> findDistinctUsersWithTransactionsInPeriod(
             @Param("status") TransactionStatus status,
             @Param("start") Instant start,
@@ -46,15 +46,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             Pageable pageable
     );
 
-    @Query("""
-            SELECT t 
-            FROM Transaction t 
-            WHERE t.userGuid = :userGuid 
-            AND t.status = :status 
-            AND t.createdAt >= :start 
-            AND t.createdAt < :end 
-            ORDER BY t.createdAt ASC
-            """)
+    @Query(value = """
+            SELECT * 
+            FROM transactions t 
+            WHERE t.user_guid = :userGuid 
+            AND t.status = :#{#status.name()} 
+            AND t.created_at >= :start 
+            AND t.created_at < :end 
+            ORDER BY t.created_at ASC
+            """, nativeQuery = true)
     Page<Transaction> findTransactionsForSummary(
             @Param("userGuid") UUID userGuid,
             @Param("status") TransactionStatus status,

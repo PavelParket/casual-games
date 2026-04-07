@@ -14,4 +14,7 @@ public interface TransactionSummaryRepository extends JpaRepository<TransactionS
     List<TransactionSummary> findByUserGuidAndSummaryMonthBetween(UUID userGuid,
                                                                   LocalDate startDate,
                                                                   LocalDate endDate);
+
+    boolean existsByUserGuidAndSummaryMonth(UUID userGuid,
+                                            LocalDate summaryMonth);
 }

@@ -1,6 +1,5 @@
 package com.bank_service.scheduler;
 
-import com.bank_service.domain.dto.TransactionSummaryFilterRequest;
 import com.bank_service.service.TransactionSummaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,16 +17,13 @@ public class TransactionSummaryScheduler {
 
     private final TransactionSummaryService summaryService;
 
-    @Scheduled(cron = "${app.scheduling.transaction-summary.cron}")
+    @Scheduled(initialDelayString = "${app.scheduling.transaction-summary.initial-delay}",
+               fixedRateString = "${app.scheduling.transaction-summary.fixed-rate}")
     public void runMonthlySummary() {
         LocalDate previousMonth = LocalDate.now(ZoneOffset.UTC).minusMonths(1);
 
         log.info("Scheduler triggered transaction summary generation for {}", previousMonth);
 
-        TransactionSummaryFilterRequest request = TransactionSummaryFilterRequest.builder()
-                .startDate(previousMonth)
-                .build();
-
-        summaryService.generateSummary(request);
+        summaryService.generateSummary(previousMonth);
     }
 }

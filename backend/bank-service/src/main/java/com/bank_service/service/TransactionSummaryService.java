@@ -30,7 +30,7 @@ public class TransactionSummaryService {
 
     private final int ONE_DAY = 1;
     private final int INITIAL_PAGE = 0;
-    private final int DEFAULT_PAGE_SIZE = 100;
+    private final int DEFAULT_PAGE_SIZE = 1;
 
     private final TransactionSummaryRepository summaryRepository;
 
@@ -50,8 +50,11 @@ public class TransactionSummaryService {
         ));
     }
 
-    public void generateSummary(TransactionSummaryFilterRequest request) {
-        LocalDate targetMonth = request.startDate().withDayOfMonth(ONE_DAY);
+    //TODO: добавить в ближейшее время возможность принудительно пересоздавать саммари, чтобы избежать ситуации,
+    // когда руками создали неполное саммари в течение месяца, и осатвшаяся часть месяца туда не попала и не попадет,
+    // потому что саммари считается созданным
+    public void generateSummary(LocalDate startDate) {
+        LocalDate targetMonth = startDate.withDayOfMonth(ONE_DAY);
         LocalDate nextMonth = targetMonth.plusMonths(1);
 
         Instant startQuery = targetMonth.atStartOfDay(ZoneOffset.UTC).toInstant();
@@ -59,31 +62,31 @@ public class TransactionSummaryService {
 
         log.info("Generating summaries for month {} (DB bounds: >= {} and < {})", targetMonth, startQuery, endQuery);
 
-        if (request.userGuid() != null) {
-            processUserSummary(request.userGuid(), targetMonth, startQuery, endQuery);
-        } else {
-            processAllUsers(targetMonth, startQuery, endQuery);
-        }
-
-        log.info("Finished generating transaction summaries for month {}", targetMonth);
-    }
-
-    private void processAllUsers(LocalDate summaryMonth, Instant startQuery, Instant endQuery) {
         int page = INITIAL_PAGE;
         Page<UUID> usersPage;
 
         do {
             usersPage = transactionRepository.findDistinctUsersWithTransactionsInPeriod(
-                    TransactionStatus.SUCCESS, startQuery, endQuery, PageRequest.of(page, DEFAULT_PAGE_SIZE)
+                    TransactionStatus.SUCCESS,
+                    startQuery,
+                    endQuery,
+                    PageRequest.of(page, DEFAULT_PAGE_SIZE)
             );
 
             for (UUID userGuid : usersPage.getContent()) {
-                processUserSummary(userGuid, summaryMonth, startQuery, endQuery);
+                if (summaryRepository.existsByUserGuidAndSummaryMonth(userGuid, targetMonth)) {
+                    log.info("Summary already exists for user {} and month {}. Skipping.", userGuid, targetMonth);
+                    continue;
+                }
+
+                processUserSummary(userGuid, targetMonth, startQuery, endQuery);
             }
 
             page++;
             log.debug("Processed page {}/{} of users", page, usersPage.getTotalPages());
         } while (usersPage.hasNext());
+
+        log.info("Finished generating transaction summaries for month {}", targetMonth);
     }
 
     private void processUserSummary(UUID userGuid, LocalDate summaryMonth, Instant startQuery, Instant endQuery) {

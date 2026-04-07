@@ -53,7 +53,8 @@ app:
 
   scheduling:
     transaction-summary:
-      cron: ${TRANSACTION_SUMMARY_CRON:0 0 1 1 * ?}   # every month default
+      initial-delay: 10000
+      fixed-rate: P30D# every month default
 
 logging:
   level:
