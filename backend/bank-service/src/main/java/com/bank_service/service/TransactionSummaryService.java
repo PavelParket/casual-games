@@ -100,7 +100,11 @@ public class TransactionSummaryService {
 
         do {
             transactionPage = transactionRepository.findTransactionsForSummary(
-                    userGuid, TransactionStatus.SUCCESS, startQuery, endQuery, PageRequest.of(page, DEFAULT_PAGE_SIZE)
+                    userGuid,
+                    TransactionStatus.SUCCESS,
+                    startQuery,
+                    endQuery,
+                    PageRequest.of(page, DEFAULT_PAGE_SIZE)
             );
 
             if (transactionPage.hasContent()) {
@@ -133,9 +137,13 @@ public class TransactionSummaryService {
         saveSummary(userGuid, summaryMonth, balanceBefore, balanceAfter, totalWon, totalLost, netProfit);
     }
 
-    private void saveSummary(UUID userGuid, LocalDate summaryMonth,
-                             BigDecimal balanceBefore, BigDecimal balanceAfter,
-                             BigDecimal totalWon, BigDecimal totalLost, BigDecimal netProfit) {
+    private void saveSummary(UUID userGuid,
+                             LocalDate summaryMonth,
+                             BigDecimal balanceBefore,
+                             BigDecimal balanceAfter,
+                             BigDecimal totalWon,
+                             BigDecimal totalLost,
+                             BigDecimal netProfit) {
 
         TransactionSummary summary = summaryRepository.findByUserGuidAndSummaryMonthBetween(userGuid, summaryMonth, summaryMonth)
                 .stream()
