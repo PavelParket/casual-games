@@ -39,18 +39,21 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/id={id}")
-    public UserResponse updateById(@PathVariable Long id, @Valid @RequestBody UpdateRequest request) {
+    public UserResponse updateById(@PathVariable Long id,
+                                   @Valid @RequestBody UpdateRequest request) {
         return service.updateById(id, request);
     }
 
     @PutMapping("/guid={guid}")
-    public UserResponse updateByGuid(@PathVariable UUID guid, @Valid @RequestBody UpdateRequest request) {
+    public UserResponse updateByGuid(@PathVariable UUID guid,
+                                     @Valid @RequestBody UpdateRequest request) {
         return service.updateByGuid(guid, request);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PatchMapping("/update-role/{guid}")
-    public UserResponse updateRole(@PathVariable UUID guid, @RequestParam String role) {
+    public UserResponse updateRole(@PathVariable UUID guid,
+                                   @RequestParam String role) {
         return service.updateRole(guid, role);
     }
 

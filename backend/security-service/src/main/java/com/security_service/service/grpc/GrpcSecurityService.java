@@ -1,10 +1,11 @@
 package com.security_service.service.grpc;
 
 import com.casualgames.grpc.user.DeleteUserRequest;
-import com.casualgames.grpc.user.DeleteUserResponse;
 import com.casualgames.grpc.user.UpdateUserRequest;
 import com.casualgames.grpc.user.UpdateUserResponse;
+import com.casualgames.grpc.user.UpdateUserRoleRequest;
 import com.casualgames.grpc.user.UserGrpc;
+import com.google.protobuf.Empty;
 import com.grpc_utils.mapper.GrpcTimestampMapper;
 import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.domain.dto.UserResponse;
@@ -62,11 +63,27 @@ public class GrpcSecurityService extends UserGrpc.UserImplBase {
     }
 
     @Override
-    public void deleteUser(DeleteUserRequest request, StreamObserver<DeleteUserResponse> observer) {
+    public void updateUserRole(UpdateUserRoleRequest request, StreamObserver<Empty> observer) {
+        try {
+            userService.updateRole(UUID.fromString(request.getGuid()), request.getRole());
+
+            observer.onNext(Empty.getDefaultInstance());
+            observer.onCompleted();
+        } catch (UserNotFoundException e) {
+            log.warn("gRPC UpdateUserRole: user not found — {}", e.getMessage());
+            observer.onError(Status.NOT_FOUND.withDescription(e.getMessage()).asRuntimeException());
+        } catch (Exception e) {
+            log.error("gRPC UpdateUserRole: unexpected error", e);
+            observer.onError(Status.INTERNAL.withDescription("Internal server error").asRuntimeException());
+        }
+    }
+
+    @Override
+    public void deleteUser(DeleteUserRequest request, StreamObserver<Empty> observer) {
         try {
             userService.deleteByGuid(UUID.fromString(request.getGuid()));
 
-            observer.onNext(DeleteUserResponse.getDefaultInstance());
+            observer.onNext(Empty.getDefaultInstance());
             observer.onCompleted();
         } catch (UserNotFoundException e) {
             log.warn("gRPC DeleteUser: user not found — {}", e.getMessage());

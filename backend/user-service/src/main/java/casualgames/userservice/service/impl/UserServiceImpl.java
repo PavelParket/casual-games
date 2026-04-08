@@ -150,7 +150,7 @@ public class UserServiceImpl implements UserService {
         User saved = userRepository.save(target);
 
         /* todo: переделать на outbox паттерн */
-        client.updateRole(guid, role);
+        grpcSecurityClient.updateRole(guid, role);
 
         return userMapper.toDto(saved);
     }

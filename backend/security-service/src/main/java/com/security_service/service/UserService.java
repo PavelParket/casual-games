@@ -10,7 +10,6 @@ import com.security_service.exception.ServiceUnavailableException;
 import com.security_service.exception.UserNotFoundException;
 import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
-import com.security_service.scheduler.PermissionSyncScheduler;
 import com.security_service.service.grpc.client.GrpcUserClient;
 import com.security_service.validator.UserValidator;
 import com.security_starter.enums.Role;
@@ -39,8 +38,6 @@ public class UserService implements UserDetailsService {
     private final PasswordService passwordService;
 
     private final GrpcUserClient grpcUserClient;
-
-    private final PermissionSyncScheduler permissionSyncScheduler;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -121,8 +118,7 @@ public class UserService implements UserDetailsService {
             user.setRole(newRole);
             User savedUser = repository.save(user);
 
-            permissionSyncScheduler.clearUserPermissions(savedUser.getEmail());
-            log.info("Role changed to {} for user {}. Custom permissions cleared.", newRole, savedUser.getEmail());
+            log.info("Role changed to {} for user {}.", newRole, savedUser.getEmail());
 
             return mapper.toResponse(savedUser);
         }
