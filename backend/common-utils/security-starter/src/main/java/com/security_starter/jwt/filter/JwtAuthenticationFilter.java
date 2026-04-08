@@ -48,7 +48,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
-        boolean isUserAuthenticated = false;
+        // Проверяем whitelist - если запрос от доверенного сервиса, пропускаем без JWT
+        if (serviceWhitelistChecker.isWhitelistedService(request)) {
+            log.info("Request from whitelisted service: host={}, address={}, port={} - skipping JWT validation", request.getRemoteHost(), request.getRemoteAddr(), request.getRemotePort());
+
+            setServiceToServiceAuthentication();
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
             String jwt = extractJwtFromRequest(request);
@@ -56,23 +63,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwt != null && jwtValidator.isValidAndNotExpired(jwt)) {
                 AuthenticationToken authentication = createAuthentication(jwt);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                isUserAuthenticated = true;
             }
         } catch (JwtException e) {
             log.warn("JWT validation failed: {}", e.getMessage());
             // Don't set authentication, let it continue to AuthenticationEntryPoint
         } catch (Exception e) {
             log.error("Error during JWT authentication", e);
-        }
-
-        // Проверяем whitelist - если запрос от доверенного сервиса, пропускаем без JWT
-        if (!isUserAuthenticated && serviceWhitelistChecker.isWhitelistedService(request)) {
-            log.info("Request from whitelisted service: host={}, address={}, port={} - skipping JWT validation",
-                    request.getRemoteHost(),
-                    request.getRemoteAddr(),
-                    request.getRemotePort());
-
-            setServiceToServiceAuthentication();
         }
 
         filterChain.doFilter(request, response);
