@@ -12,6 +12,7 @@ import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
 import com.security_service.service.grpc.client.GrpcUserClient;
 import com.security_service.validator.UserValidator;
+import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -103,6 +104,26 @@ public class UserService implements UserDetailsService {
         mapper.updateEntity(user, request, passwordService);
 
         return mapper.toResponse(repository.save(user));
+    }
+
+    @Transactional
+    public UserResponse updateRole(UUID guid, String roleName) {
+        User user = repository.findByGuid(guid)
+                .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid));
+
+        validator.validateRoleExists(roleName);
+        Role newRole = Role.valueOf(roleName);
+
+        if (user.getRole() != newRole) {
+            user.setRole(newRole);
+            User savedUser = repository.save(user);
+
+            log.info("Role changed to {} for user {}.", newRole, savedUser.getEmail());
+
+            return mapper.toResponse(savedUser);
+        }
+
+        return mapper.toResponse(user);
     }
 
     @Transactional

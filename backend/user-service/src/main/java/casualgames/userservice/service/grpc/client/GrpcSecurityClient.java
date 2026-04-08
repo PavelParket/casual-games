@@ -5,9 +5,11 @@ import casualgames.userservice.dto.security_service.UpdateUserInternalResponse;
 import casualgames.userservice.exception.ServiceUnavailableException;
 import com.casualgames.grpc.user.DeleteUserRequest;
 import com.casualgames.grpc.user.UpdateUserRequest;
+import com.casualgames.grpc.user.UpdateUserRoleRequest;
 import com.casualgames.grpc.user.UpdateUserResponse;
 import com.casualgames.grpc.user.UserGrpc;
 import com.grpc_utils.mapper.GrpcTimestampMapper;
+import com.security_starter.enums.Role;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +49,20 @@ public class GrpcSecurityClient {
         } catch (StatusRuntimeException e) {
             log.error("gRPC UpdateUser failed: status={}, description={}", e.getStatus().getCode(), e.getStatus().getDescription(), e);
             throw mapToServiceException(e, "update");
+        }
+    }
+
+    public void updateRole(UUID guid, Role role) {
+        UpdateUserRoleRequest grpcRequest = UpdateUserRoleRequest.newBuilder()
+                .setGuid(guid.toString())
+                .setRole(role.name())
+                .build();
+
+        try {
+            userBlockingStub.updateUserRole(grpcRequest);
+        } catch (StatusRuntimeException e) {
+            log.error("gRPC UpdateUserRole failed: status={}, description={}", e.getStatus().getCode(), e.getStatus().getDescription());
+            throw mapToServiceException(e, "update role for");
         }
     }
 
