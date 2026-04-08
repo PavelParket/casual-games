@@ -120,4 +120,11 @@ public class GlobalExceptionHandler {
         log.warn("Resource not found: {}", e.getMessage());
         return factory.create(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, e.getMessage(), request);
     }
+
+    @ExceptionHandler(ConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleConflict(ConflictException e, HttpServletRequest request) {
+        log.warn("Resource conflict: {}", e.getMessage());
+        return factory.create(HttpStatus.CONFLICT, ErrorCode.CONFLICT, e.getMessage(), request);
+    }
 }

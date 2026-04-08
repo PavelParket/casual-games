@@ -53,16 +53,16 @@ public class UserPermissionService {
         Permission permission = permissionRepository.findById(userPermissionRequest.permissionId())
                 .orElseThrow(() -> new NotFoundException("Permission not found"));
 
-        userPermissionRepository.findByUserGuidAndPermissionId(userPermissionRequest.userGuid(), userPermissionRequest.permissionId())
+        userPermissionRepository.findByUserGuidAndPermissionId(user.getGuid(), userPermissionRequest.permissionId())
                 .ifPresent(userPermission -> {
                     throw new ConflictException("Permission already exists");
                 });
 
         UserPermission saved = userPermissionRepository.save(userPermissionMapper.toEntity(userPermissionRequest, permission));
 
-        syncPermissionService.syncUserPermissions(userPermissionRequest.userGuid());
+        syncPermissionService.syncUserPermissions(user.getGuid());
 
-        log.info("Created user permission id={} for user={}", saved.getId(), userPermissionRequest.userGuid());
+        log.info("Created user permission id={} for user={}", saved.getId(), user.getGuid());
 
         return userPermissionMapper.toResponse(user, saved);
     }
@@ -93,10 +93,6 @@ public class UserPermissionService {
         UserPermission userPermission = userPermissionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User permission not found"));
 
-        if (userRepository.existsByGuid(userPermission.getUserGuid())) {
-            throw new NotFoundException("User not found");
-        }
-
         userPermissionRepository.delete(userPermission);
 
         syncPermissionService.syncUserPermissions(userPermission.getUserGuid());
@@ -106,7 +102,7 @@ public class UserPermissionService {
 
     @Transactional
     public void deleteAllByUserGuid(UUID userGuid) {
-        if (userRepository.existsByGuid(userGuid)) {
+        if (!userRepository.existsByGuid(userGuid)) {
             throw new NotFoundException("User not found");
         }
 
@@ -115,5 +111,10 @@ public class UserPermissionService {
         syncPermissionService.syncUserPermissions(userGuid);
 
         log.info("Deleted all user permissions for user={}", userGuid);
+    }
+
+    @Transactional
+    public void syncUserPermissionsToRedis() {
+        syncPermissionService.syncAllPermissionsToRedis();
     }
 }

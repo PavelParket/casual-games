@@ -29,8 +29,8 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
     @Query(value = """
             SELECT p.attribute AS attribute,
                     p.operation AS operation,
-                    rp.for_me AS for_me,
-                    rp.for_all AS for_all
+                    rp.for_me AS forMe,
+                    rp.for_all AS forAll
             FROM role_permission rp
             JOIN roles r ON rp.role_id = r.id
             JOIN permissions p ON rp.permission_id = p.id
