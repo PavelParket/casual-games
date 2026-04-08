@@ -24,6 +24,7 @@ import java.net.URI;
 import java.util.Optional;
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

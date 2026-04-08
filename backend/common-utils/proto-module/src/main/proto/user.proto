@@ -3,6 +3,7 @@ syntax = "proto3";
 package user;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 option java_package = "com.casualgames.grpc.user";
 option java_multiple_files = true;
@@ -31,17 +32,22 @@ message UpdateUserRequest {
   string password = 4;
 }
 
-message DeleteUserRequest {
+message UpdateUserResponse {
   string guid = 1;
+  string username = 2;
+  string email = 3;
+  string role = 4;
+  google.protobuf.Timestamp created_at = 5;
 }
 
-message DeleteUserResponse {
+message DeleteUserRequest {
+  string guid = 1;
 }
 
 service User {
   rpc CreateUser (CreateUserRequest) returns (UserResponse);
 
-  rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
+  rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse);
 
-  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty);
 }
