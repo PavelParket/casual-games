@@ -6,7 +6,7 @@ import casualgames.userservice.exception.ServiceUnavailableException;
 import com.casualgames.grpc.user.DeleteUserRequest;
 import com.casualgames.grpc.user.UpdateUserRequest;
 import com.casualgames.grpc.user.UpdateUserResponse;
-import com.casualgames.grpc.user.UserGrpc;
+import com.casualgames.grpc.user.UserServiceGrpc;
 import com.grpc_utils.mapper.GrpcTimestampMapper;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import static com.google.common.base.Strings.nullToEmpty;
 public class GrpcSecurityClient {
 
     @GrpcClient("security-service")
-    private UserGrpc.UserBlockingStub userBlockingStub;
+    private UserServiceGrpc.UserServiceBlockingStub userServiceBlockingStub;
 
     public UpdateUserInternalResponse update(UpdateUserInternalRequest request) {
         UpdateUserRequest grpcRequest = UpdateUserRequest.newBuilder()
@@ -35,7 +35,7 @@ public class GrpcSecurityClient {
                 .build();
 
         try {
-            UpdateUserResponse grpcResponse = userBlockingStub.updateUser(grpcRequest);
+            UpdateUserResponse grpcResponse = userServiceBlockingStub.updateUser(grpcRequest);
 
             return UpdateUserInternalResponse.builder()
                     .guid(UUID.fromString(grpcResponse.getGuid()))
@@ -56,7 +56,7 @@ public class GrpcSecurityClient {
                 .build();
 
         try {
-            userBlockingStub.deleteUser(grpcRequest);
+            userServiceBlockingStub.deleteUser(grpcRequest);
         } catch (StatusRuntimeException e) {
             log.error("gRPC DeleteUser failed: status={}, description={}", e.getStatus().getCode(), e.getStatus().getDescription(), e);
             throw mapToServiceException(e, "delete");

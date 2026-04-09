@@ -4,8 +4,8 @@ import casualgames.userservice.entity.User;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.validator.UserValidator;
 import com.casualgames.grpc.user.CreateUserRequest;
-import com.casualgames.grpc.user.UserGrpc;
 import com.casualgames.grpc.user.UserResponse;
+import com.casualgames.grpc.user.UserServiceGrpc;
 import com.grpc_utils.mapper.GrpcTimestampMapper;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @GrpcService
 @RequiredArgsConstructor
 @Slf4j
-public class GrpcUserService extends UserGrpc.UserImplBase {
+public class GrpcUserService extends UserServiceGrpc.UserServiceImplBase {
 
     private final UserRepository userRepository;
 
