@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package user;
+package user.transaction;
 
 import "google/protobuf/empty.proto";
 
-option java_package = "com.casualgames.grpc.userTransaction";
+option java_package = "com.casualgames.grpc.user.transaction";
 option java_multiple_files = true;
 
 message UserTransaction {

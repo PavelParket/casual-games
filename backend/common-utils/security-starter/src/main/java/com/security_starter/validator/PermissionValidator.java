@@ -4,6 +4,7 @@ import com.security_starter.annotation.Permission;
 import com.security_starter.config.AuthenticationToken;
 import com.security_starter.config.PermissionContext;
 import com.security_starter.enums.Operation;
+import com.security_starter.enums.OperationPostfix;
 import com.security_starter.enums.Permissions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -41,19 +42,27 @@ import static com.security_starter.enums.OperationPostfix.WITHOUT_ME;
 @RequiredArgsConstructor
 public class PermissionValidator {
 
-    private static final String UNDERSCORE = "_";
+    public static final String UNDERSCORE = "_";
 
-    private static final Map<Operation, List<String>> permissionMap = Map.of(
-            CREATE, Arrays.asList(CREATE_FOR_ME.name(), CREATE_FOR_ALL.name(), CREATE_WITHOUT_ME.name()),
-            READ, Arrays.asList(READ_FOR_ME.name(), READ_FOR_ALL.name(), READ_WITHOUT_ME.name()),
-            UPDATE, Arrays.asList(UPDATE_FOR_ME.name(), UPDATE_FOR_ALL.name(), UPDATE_WITHOUT_ME.name()),
-            DELETE, Arrays.asList(DELETE_FOR_ME.name(), DELETE_FOR_ALL.name(), DELETE_WITHOUT_ME.name())
+    private static final Map<Operation, Set<String>> permissionMap = Map.of(
+            CREATE, Set.of(CREATE_FOR_ME.name(), CREATE_FOR_ALL.name(), CREATE_WITHOUT_ME.name()),
+            READ, Set.of(READ_FOR_ME.name(), READ_FOR_ALL.name(), READ_WITHOUT_ME.name()),
+            UPDATE, Set.of(UPDATE_FOR_ME.name(), UPDATE_FOR_ALL.name(), UPDATE_WITHOUT_ME.name()),
+            DELETE, Set.of(DELETE_FOR_ME.name(), DELETE_FOR_ALL.name(), DELETE_WITHOUT_ME.name())
     );
 
-    public List<String> getPermissions(String permission, Operation operation) {
-        return permissionMap.getOrDefault(operation, Collections.emptyList()).stream()
-                .map(postfix -> String.join(UNDERSCORE, permission, postfix))
+    public List<String> getPermissions(Permissions permission, Operation operation) {
+        return permissionMap.getOrDefault(operation, Collections.emptySet()).stream()
+                .map(postfix -> String.join(UNDERSCORE, permission.name(), postfix))
                 .collect(Collectors.toList());
+    }
+
+    public String getPermission(Permissions permission, Operation operation, OperationPostfix operationPostfix) {
+        return permissionMap.getOrDefault(operation, Collections.emptySet()).stream()
+                .filter(postfix -> postfix.equals(operationPostfix.name()))
+                .map(postfix -> String.join(UNDERSCORE, permission.name(), postfix))
+                .findFirst()
+                .orElse(null);
     }
 
     public boolean can(Permissions permission, Operation operation, PermissionContext context, AuthenticationToken token) {
@@ -61,12 +70,12 @@ public class PermissionValidator {
             return false;
         }
 
-        return getPermissions(permission.name(), operation).stream()
+        return getPermissions(permission, operation).stream()
                 .anyMatch(p -> checkAccessForAll(p, context, token));
     }
 
     public boolean checkPermissionByOperation(Set<String> permissions, Permissions permission, Operation operation) {
-        return getPermissions(permission.name(), operation).stream()
+        return getPermissions(permission, operation).stream()
                 .anyMatch(permissions::contains);
     }
 
@@ -100,7 +109,7 @@ public class PermissionValidator {
             Permission permission = sourceField.getAnnotation(Permission.class);
 
             if (permission == null) {
-                copyField(sourceFields, source, targetField, target);
+                copyField(sourceField, source, targetField, target);
                 return;
             }
 
@@ -166,7 +175,7 @@ public class PermissionValidator {
         try {
             sourceField.setAccessible(true);
             targetField.setAccessible(true);
-            targetField.set(source, sourceField.get(source));
+            targetField.set(target, sourceField.get(source));
         } catch (IllegalAccessException e) {
             throw new IllegalStateException("Cannot copy field: " + sourceField.getName(), e);
         }
