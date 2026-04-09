@@ -30,14 +30,14 @@ public class UserController {
 
     private final UserService service;
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse create(@Valid @RequestBody RegisterRequest request) {
         return service.create(request);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/id={id}")
     public UserResponse updateById(@PathVariable Long id,
                                    @Valid @RequestBody UpdateRequest request) {
@@ -57,8 +57,7 @@ public class UserController {
         return service.updateRole(guid, role);
     }
 
-
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/id={id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
@@ -71,13 +70,13 @@ public class UserController {
         service.deleteByGuid(guid);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping
     public List<UserResponse> getAll() {
         return service.getAll();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/id")
     public UserResponse getById(@RequestParam Long id) {
         return service.getById(id);
