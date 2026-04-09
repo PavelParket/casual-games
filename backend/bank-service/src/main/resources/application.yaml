@@ -58,6 +58,11 @@ app:
   user-service:
     url: http://localhost:8083
 
+  scheduling:
+    transaction-summary:
+      initial-delay: 10000
+      fixed-rate: P30D# every month default
+
 logging:
   level:
     org.springframework.web: DEBUG

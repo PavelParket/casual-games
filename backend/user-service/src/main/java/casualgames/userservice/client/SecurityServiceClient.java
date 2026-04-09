@@ -74,24 +74,15 @@ public class SecurityServiceClient {
         }
     }
 
-    public void updateRole(User author, User target, Role role) {
+    public void updateRole(UUID guid, Role role) {
         URI uri = UriComponentsBuilder.fromUriString(securityServiceUrl)
-                .path("/users/update-role")
-                .queryParam("author", author)
-                .queryParam("guid", target.getGuid())
-                .queryParam("role", role)
-                .build()
+                .path("/users/update-role/{guid}")
+                .queryParam("role", role.name())
+                .buildAndExpand(guid)
                 .toUri();
 
         try {
-            ResponseEntity<UpdateUserInternalResponse> response = restTemplate.exchange(
-                    new RequestEntity<>(HttpMethod.PUT, uri),
-                    UpdateUserInternalResponse.class
-            );
-
-            if (Optional.ofNullable(response.getBody()).isEmpty()) {
-                throw new RestClientException("Failed to update user role");
-            }
+            restTemplate.exchange(new RequestEntity<>(HttpMethod.PATCH, uri), Void.class);
         } catch (HttpClientErrorException e) {
             throw new ServiceUnavailableException(e.getResponseBodyAsString());
         } catch (RestClientException e) {

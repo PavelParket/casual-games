@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,14 +39,24 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/id={id}")
-    public UserResponse updateById(@PathVariable Long id, @Valid @RequestBody UpdateRequest request) {
+    public UserResponse updateById(@PathVariable Long id,
+                                   @Valid @RequestBody UpdateRequest request) {
         return service.updateById(id, request);
     }
 
     @PutMapping("/guid={guid}")
-    public UserResponse updateByGuid(@PathVariable UUID guid, @Valid @RequestBody UpdateRequest request) {
+    public UserResponse updateByGuid(@PathVariable UUID guid,
+                                     @Valid @RequestBody UpdateRequest request) {
         return service.updateByGuid(guid, request);
     }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PatchMapping("/update-role/{guid}")
+    public UserResponse updateRole(@PathVariable UUID guid,
+                                   @RequestParam String role) {
+        return service.updateRole(guid, role);
+    }
+
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/id={id}")
