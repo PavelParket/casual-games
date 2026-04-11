@@ -12,6 +12,7 @@ public enum ErrorCode {
     INVALID_CREDENTIALS("Invalid credentials"),
     ACCESS_DENIED("Access denied"),
     NOT_FOUND("Resource not found"),
+    CONFLICT("Resource already exists"),
     INTERNAL_ERROR("Unexpected server error"),
     SERVICE_UNAVAILABLE("Service unavailable"),
     MISSING_TOKEN("Missing authentication token");
