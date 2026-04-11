@@ -5,9 +5,9 @@ import casualgames.userservice.enums.TransactionType;
 import casualgames.userservice.exception.BadRequestException;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.validator.TransactionValidator;
-import com.casualgames.grpc.userTransaction.UpdateBalancesRequest;
-import com.casualgames.grpc.userTransaction.UserTransaction;
-import com.casualgames.grpc.userTransaction.UserTransactionServiceGrpc;
+import com.casualgames.grpc.transaction.UpdateBalancesRequest;
+import com.casualgames.grpc.transaction.UserTransaction;
+import com.casualgames.grpc.transaction.UserTransactionServiceGrpc;
 import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -37,9 +37,9 @@ public class GrpcUserTransactionService extends UserTransactionServiceGrpc.UserT
     @Override
     @Transactional
     public void updateBalances(UpdateBalancesRequest request, StreamObserver<Empty> responseObserver) {
-        transactionValidator.validateUpdateBalancesRequest(request.getUserTransactionsList());
+        transactionValidator.validateUpdateBalancesRequest(request.getTransactionsList());
 
-        List<UUID> guids = request.getUserTransactionsList().stream()
+        List<UUID> guids = request.getTransactionsList().stream()
                 .map(UserTransaction::getUserGuid)
                 .map(UUID::fromString)
                 .distinct()
@@ -58,7 +58,7 @@ public class GrpcUserTransactionService extends UserTransactionServiceGrpc.UserT
                         Function.identity()
                 ));
 
-        request.getUserTransactionsList().forEach(transaction -> {
+        request.getTransactionsList().forEach(transaction -> {
             User user = userMap.get(UUID.fromString(transaction.getUserGuid()));
             BigDecimal newBalance;
 
@@ -79,7 +79,7 @@ public class GrpcUserTransactionService extends UserTransactionServiceGrpc.UserT
 
         userRepository.saveAll(users);
 
-        log.info("Updated {} users with {} transactions", users.size(), request.getUserTransactionsList().size());
+        log.info("Updated {} users with {} transactions", users.size(), request.getTransactionsList().size());
 
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();

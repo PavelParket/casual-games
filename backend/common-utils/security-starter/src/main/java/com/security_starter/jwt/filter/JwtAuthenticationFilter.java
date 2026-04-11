@@ -58,7 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            String jwt = extractJwtFromRequest(request);
+            String jwt = extractJwt(request);
 
             if (jwt != null && jwtValidator.isValidAndNotExpired(jwt)) {
                 AuthenticationToken authentication = createAuthentication(jwt);
@@ -74,7 +74,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private String extractJwtFromRequest(HttpServletRequest request) {
+    // Can be extended to skip certain paths
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+
+        return path.startsWith("/actuator/health") || path.startsWith("/actuator/info");
+    }
+
+    private String extractJwt(HttpServletRequest request) {
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
 
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
@@ -92,40 +100,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 ? claimsExtractor.extractRoles(jwt)
                 : Set.of();
 
-        Map<String, Set<String>> roleAndPermissionsMap = permissionProvider.getPermissions(roles, email);
-        Set<String> allPermissions = permissionProvider.getAllPermissions(roles, email);
+        Set<String> permissions = permissionProvider.loadPermissions(roles, email);
 
-        return AuthenticationToken.authenticated(
-                guid,
-                email,
-                status,
-                roles,
-                allPermissions,
-                roleAndPermissionsMap
-        );
+        return AuthenticationToken.authenticated(guid, email, status, roles, permissions, Map.of());
     }
 
-    /**
-     * Устанавливает специальную аутентификацию для межсервисных запросов из whitelist.
-     */
     private void setServiceToServiceAuthentication() {
-        AuthenticationToken serviceAuth = new AuthenticationToken(
-                null,
-                "service-to-service",
-                null,
-                Set.of(),
-                Map.of(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_SERVICE"))
+        SecurityContextHolder.getContext().setAuthentication(
+                new AuthenticationToken(
+                        null,
+                        "service-to-service",
+                        null,
+                        Set.of(),
+                        Map.of(),
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_SERVICE"))
+                )
         );
-
-        SecurityContextHolder.getContext().setAuthentication(serviceAuth);
-    }
-
-    // Can be extended to skip certain paths
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-
-        return path.startsWith("/actuator/health") || path.startsWith("/actuator/info");
     }
 }

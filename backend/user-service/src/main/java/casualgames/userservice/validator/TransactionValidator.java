@@ -2,7 +2,7 @@ package casualgames.userservice.validator;
 
 import casualgames.userservice.enums.TransactionStatus;
 import casualgames.userservice.exception.BadRequestException;
-import com.casualgames.grpc.userTransaction.UserTransaction;
+import com.casualgames.grpc.transaction.UserTransaction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

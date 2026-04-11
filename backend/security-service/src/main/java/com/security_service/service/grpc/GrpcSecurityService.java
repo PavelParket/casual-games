@@ -4,7 +4,7 @@ import com.casualgames.grpc.user.DeleteUserRequest;
 import com.casualgames.grpc.user.UpdateUserRequest;
 import com.casualgames.grpc.user.UpdateUserResponse;
 import com.casualgames.grpc.user.UpdateUserRoleRequest;
-import com.casualgames.grpc.user.UserGrpc;
+import com.casualgames.grpc.user.UserServiceGrpc;
 import com.google.protobuf.Empty;
 import com.grpc_utils.mapper.GrpcTimestampMapper;
 import com.security_service.domain.dto.UpdateRequest;
@@ -25,7 +25,7 @@ import static com.google.common.base.Strings.emptyToNull;
 @GrpcService
 @RequiredArgsConstructor
 @Slf4j
-public class GrpcSecurityService extends UserGrpc.UserImplBase {
+public class GrpcSecurityService extends UserServiceGrpc.UserServiceImplBase {
 
     private final UserService userService;
 

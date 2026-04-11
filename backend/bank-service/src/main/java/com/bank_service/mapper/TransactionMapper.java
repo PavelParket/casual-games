@@ -2,7 +2,7 @@ package com.bank_service.mapper;
 
 import com.bank_service.domain.dto.TransactionResponse;
 import com.bank_service.domain.entity.Transaction;
-import com.casualgames.grpc.userTransaction.UserTransaction;
+import com.casualgames.grpc.transaction.UserTransaction;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

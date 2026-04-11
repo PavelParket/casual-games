@@ -49,7 +49,7 @@ message DeleteUserRequest {
   string guid = 1;
 }
 
-service User {
+service UserService {
   rpc CreateUser (CreateUserRequest) returns (UserResponse);
 
   rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse);

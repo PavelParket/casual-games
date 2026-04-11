@@ -1,23 +1,12 @@
 package com.security_starter.provider;
 
-import java.util.Map;
+import com.security_starter.config.AuthenticationToken;
+
 import java.util.Set;
 
 public interface PermissionProvider {
 
-    /**
-     * Get all permissions for given roles and email
-     * Returns map: role -> set of permissions
-     */
-    Map<String, Set<String>> getPermissions(Set<String> roles, String email);
+    Set<String> loadPermissions(Set<String> roles, String email);
 
-    /**
-     * Get flattened set of all permissions across all roles
-     */
-    default Set<String> getAllPermissions(Set<String> roles, String email) {
-        return getPermissions(roles, email).values()
-                .stream()
-                .flatMap(Set::stream)
-                .collect(java.util.stream.Collectors.toSet());
-    }
+    AuthenticationToken getToken();
 }

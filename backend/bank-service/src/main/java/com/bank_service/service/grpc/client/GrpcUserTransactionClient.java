@@ -3,8 +3,8 @@ package com.bank_service.service.grpc.client;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.exception.GrpcGlobalExceptionHandler;
 import com.bank_service.mapper.TransactionMapper;
-import com.casualgames.grpc.userTransaction.UpdateBalancesRequest;
-import com.casualgames.grpc.userTransaction.UserTransactionServiceGrpc;
+import com.casualgames.grpc.transaction.UpdateBalancesRequest;
+import com.casualgames.grpc.transaction.UserTransactionServiceGrpc;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class GrpcUserTransactionClient {
     public void sendUpdates(List<Transaction> transactions) {
         try {
             UpdateBalancesRequest request = UpdateBalancesRequest.newBuilder()
-                    .addAllUserTransactions(transactionMapper.toUserTransactionList(transactions))
+                    .addAllTransactions(transactionMapper.toUserTransactionList(transactions))
                     .build();
 
             userTransactionServiceBlockingStub.updateBalances(request);
