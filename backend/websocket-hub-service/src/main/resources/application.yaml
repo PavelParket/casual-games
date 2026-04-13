@@ -37,6 +37,14 @@ scheduler:
     finished-kick-timeout-minutes: 2
     pending-delete-delay-seconds: 2
 
+kafka:
+  enabled: ${KAFKA_ENABLED:true}
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  producer-config:
+    "[acks]": "1"
+  topics:
+    room-lifecycle-events: room-lifecycle-events
+
 logging:
   level:
     org.springframework.web: DEBUG
