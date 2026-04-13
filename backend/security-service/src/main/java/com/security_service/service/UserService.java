@@ -11,6 +11,7 @@ import com.security_service.exception.UserNotFoundException;
 import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
 import com.security_service.service.grpc.client.GrpcUserClient;
+import com.security_service.service.helper.PermissionHelper;
 import com.security_service.validator.UserValidator;
 import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,8 @@ public class UserService implements UserDetailsService {
     private final PasswordService passwordService;
 
     private final GrpcUserClient grpcUserClient;
+
+    private final PermissionHelper permissionHelper;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -78,6 +81,7 @@ public class UserService implements UserDetailsService {
                 .build();
     }
 
+    // todo: delete
     @Transactional
     public UserResponse updateById(Long id, UpdateRequest request) {
         User user = repository.findById(id)
@@ -90,14 +94,11 @@ public class UserService implements UserDetailsService {
         return mapper.toResponse(repository.save(user));
     }
 
+    // todo: перевести на асинхронное обновление через кафку
     @Transactional
     public UserResponse updateByGuid(UUID guid, UpdateRequest request) {
         User user = repository.findByGuid(guid)
-                .orElseGet(() -> {
-                    log.error("User not found with guid={}", guid);
-                    throw new UserNotFoundException("User not found!");
-                });
-
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         validator.validateUpdate(request);
 
@@ -106,26 +107,34 @@ public class UserService implements UserDetailsService {
         return mapper.toResponse(repository.save(user));
     }
 
+    // todo: перевести на асинхронное обновление через кафку
     @Transactional
     public UserResponse updateRole(UUID guid, String roleName) {
+        permissionHelper.checkRoleUpdatePermission();
+
         User user = repository.findByGuid(guid)
                 .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid));
 
         validator.validateRoleExists(roleName);
         Role newRole = Role.valueOf(roleName);
+        User savedUser = null;
 
-        if (user.getRole() != newRole) {
+        if (user.getRole().equals(newRole)) {
             user.setRole(newRole);
-            User savedUser = repository.save(user);
+            savedUser = repository.save(user);
 
             log.info("Role changed to {} for user {}.", newRole, savedUser.getEmail());
 
             return mapper.toResponse(savedUser);
         }
 
-        return mapper.toResponse(user);
+        UserResponse response = mapper.toResponse(savedUser);
+        permissionHelper.applyReadPermissions(response, guid);
+
+        return response;
     }
 
+    // todo: delete
     @Transactional
     public void delete(Long id) {
         validator.validateIdExists(id);
@@ -133,6 +142,7 @@ public class UserService implements UserDetailsService {
         repository.deleteById(id);
     }
 
+    // todo: перевести на асинхронное обновление через кафку
     @Transactional
     public void deleteByGuid(UUID guid) {
         validator.validateGuidExists(guid);
@@ -144,6 +154,7 @@ public class UserService implements UserDetailsService {
         return mapper.toResponseList(repository.findAll());
     }
 
+    // todo: delete
     public UserResponse getById(Long id) {
         return mapper.toResponse(repository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id=" + id)));

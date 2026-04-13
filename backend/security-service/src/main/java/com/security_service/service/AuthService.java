@@ -63,13 +63,13 @@ public class AuthService {
 
     private AuthResponse generateTokens(UserResponse user, HttpServletResponse response) {
         String accessToken = tokenService.generateAccessToken(
-                user.guid(),
-                user.email(),
-                List.of(user.role()),
+                user.getGuid(),
+                user.getEmail(),
+                List.of(user.getRole().toString()),
                 Status.DEFAULT
         );
 
-        String refreshToken = tokenService.generateRefreshToken(user.guid());
+        String refreshToken = tokenService.generateRefreshToken(user.getGuid());
 
         cookieService.addRefreshToken(response, refreshToken);
 

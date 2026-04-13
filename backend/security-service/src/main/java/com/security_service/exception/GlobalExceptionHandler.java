@@ -82,6 +82,13 @@ public class GlobalExceptionHandler {
         return factory.create(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request);
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleForbidden(ForbiddenException e, HttpServletRequest request) {
+        log.warn("Forbidden: {}", e.getMessage());
+        return factory.create(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED, e.getMessage(), request);
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleInvalidCredentials(InvalidCredentialsException e, HttpServletRequest request) {

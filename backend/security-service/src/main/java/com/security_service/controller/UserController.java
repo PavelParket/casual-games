@@ -81,9 +81,4 @@ public class UserController {
     public UserResponse getById(@RequestParam Long id) {
         return service.getById(id);
     }
-
-    @GetMapping("/email")
-    public UserResponse getByEmail(@RequestParam String email) {
-        return service.getByEmail(email);
-    }
 }

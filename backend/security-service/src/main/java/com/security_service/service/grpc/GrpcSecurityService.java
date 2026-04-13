@@ -41,11 +41,11 @@ public class GrpcSecurityService extends UserServiceGrpc.UserServiceImplBase {
             UserResponse updateResponse = userService.updateByGuid(UUID.fromString(request.getGuid()), updateRequest);
 
             UpdateUserResponse response = UpdateUserResponse.newBuilder()
-                    .setGuid(updateResponse.guid().toString())
-                    .setUsername(updateResponse.username())
-                    .setEmail(updateResponse.email())
-                    .setRole(updateResponse.role())
-                    .setCreatedAt(GrpcTimestampMapper.toTimestamp(updateResponse.createdAt()))
+                    .setGuid(updateResponse.getGuid().toString())
+                    .setUsername(updateResponse.getUsername())
+                    .setEmail(updateResponse.getEmail())
+                    .setRole(updateResponse.getRole().toString())
+                    .setCreatedAt(GrpcTimestampMapper.toTimestamp(updateResponse.getCreatedAt()))
                     .build();
 
             observer.onNext(response);

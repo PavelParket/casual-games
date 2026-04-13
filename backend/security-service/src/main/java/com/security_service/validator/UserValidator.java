@@ -83,10 +83,5 @@ public class UserValidator implements Validator {
         if (request.password() != null) {
             validateString(request.password(), "password");
         }
-
-        if (request.role() != null) {
-            validateString(request.role(), "role");
-            validateRoleExists(request.role());
-        }
     }
 }

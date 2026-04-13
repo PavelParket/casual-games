@@ -37,6 +37,7 @@ public class PermissionContextHelper {
     }
 
     public PermissionContext createContextFromAuthentication(UUID targetGuid) {
+        // todo: убрать и прокидывать токен в параметрах метода
         AuthenticationToken auth = getCurrentAuthentication();
 
         if (auth == null) {
