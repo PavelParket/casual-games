@@ -104,7 +104,7 @@ cron:
   scheduling:
     transaction-summary:
       initial-delay: 10000
-      fixed-rate: P30D# every month default
+      fixed-rate: P30D # every month default
 
 logging:
   level:
