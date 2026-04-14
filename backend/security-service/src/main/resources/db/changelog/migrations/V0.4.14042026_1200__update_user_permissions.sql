@@ -5,7 +5,7 @@
 DELETE FROM role_permission
 WHERE permission_id IN (SELECT id FROM permissions
                         WHERE attribute = 'USER'
-                          AND operation IN ('READ', 'UPDATE', 'CREATE'));
+                          AND operation IN ('READ', 'CREATE'));
 
 DELETE FROM permissions
 WHERE attribute = 'USER'
