@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset Pavel:V0.1.01012026_1232__temp_init_test_data
+--changeset Pavel:V0.1.01012026_1232__init_permissions
 
 INSERT INTO roles (name, created_at) VALUES
     ('USER', CURRENT_TIMESTAMP),

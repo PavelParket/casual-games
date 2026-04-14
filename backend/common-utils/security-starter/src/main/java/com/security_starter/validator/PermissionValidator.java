@@ -89,24 +89,21 @@ public class PermissionValidator {
         });
     }
 
-    public void updateObject(Object source, Object target, PermissionContext context, AuthenticationToken token) {
-        Field[] sourceFields = source.getClass().getDeclaredFields();
-        Field[] targetFields = target.getClass().getDeclaredFields();
-
-        Map<String, Field> targetFieldMap = Arrays.stream(targetFields)
+    public void updateObject(Object target, Object source, PermissionContext context, AuthenticationToken token) {
+        Map<String, Field> sourceFieldMap = Arrays.stream(source.getClass().getDeclaredFields())
                 .collect(Collectors.toMap(
                         Field::getName,
                         field -> field
                 ));
 
-        Arrays.stream(sourceFields).forEach(sourceField -> {
-            Field targetField = targetFieldMap.get(sourceField.getName());
+        allFields(target.getClass()).forEach(targetField -> {
+            Field sourceField = sourceFieldMap.get(targetField.getName());
 
-            if (targetField == null) {
+            if (sourceField == null) {
                 return;
             }
 
-            Permission permission = sourceField.getAnnotation(Permission.class);
+            Permission permission = targetField.getAnnotation(Permission.class);
 
             if (permission == null) {
                 copyField(sourceField, source, targetField, target);

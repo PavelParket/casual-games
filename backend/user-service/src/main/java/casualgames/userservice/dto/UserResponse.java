@@ -1,22 +1,41 @@
 package casualgames.userservice.dto;
 
+import com.security_starter.annotation.Permission;
+import com.security_starter.enums.Permissions;
+import com.security_starter.enums.Role;
+import com.security_starter.enums.Status;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-public record UserResponse(
-        UUID guid,
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class UserResponse {
 
-        String username,
+    @Permission(Permissions.GUID)
+    private UUID guid;
 
-        String email,
+    @Permission(Permissions.USERNAME)
+    private String username;
 
-        BigDecimal balance,
+    @Permission(Permissions.EMAIL)
+    private String email;
 
-        String role,
+    @Permission(Permissions.BALANCE)
+    private BigDecimal balance;
 
-        String status,
+    @Permission(Permissions.ROLE)
+    private Role role;
 
-        Instant createdAt
-) {
+    @Permission(Permissions.STATUS)
+    private Status status;
+
+    private Instant createdAt;
 }

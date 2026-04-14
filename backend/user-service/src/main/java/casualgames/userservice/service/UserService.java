@@ -1,10 +1,8 @@
 package casualgames.userservice.service;
 
-import casualgames.userservice.dto.CreateUserRequest;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
-import casualgames.userservice.dto.UserResponseDto;
-import casualgames.userservice.dto.bank_service.TransactionShortInfoInternalRequest;
+import casualgames.userservice.dto.UserSearchFilterRequest;
 import com.security_starter.enums.Role;
 
 import java.math.BigDecimal;
@@ -13,23 +11,15 @@ import java.util.UUID;
 
 public interface UserService extends Service<UserResponse, Long> {
 
-    UserResponseDto create(CreateUserRequest request);
+    UserResponse update(UUID userId, UpdateUserRequest request);
 
-    UserResponse update(Long userId, UpdateUserRequest request);
+    List<UserResponse> search(UserSearchFilterRequest request);
 
-    UserResponseDto updateByGuid(UUID guid, UpdateUserRequest request);
-
-    List<UserResponse> findByUsername(String username);
-
-    UserResponse findByEmail(String email);
-
-    UserResponseDto findByGuid(UUID guid);
+    UserResponse findByGuid(UUID guid);
 
     void deleteByGuid(UUID id);
 
-    Boolean updateBalances(List<TransactionShortInfoInternalRequest> transactions);
-
-    UserResponseDto updateRole(UUID guid, Role role);
+    UserResponse updateRole(UUID guid, Role role);
 
     BigDecimal getBalance(UUID guid);
 }

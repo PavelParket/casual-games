@@ -15,8 +15,6 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    List<User> findByUsername(String username);
-
     Optional<User> findByEmail(String email);
 
     Optional<User> findByGuid(UUID guid);
@@ -26,10 +24,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     void deleteByGuid(UUID guid);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT u
-            FROM User u
+    @Query(value = """
+            SELECT *
+            FROM users
             WHERE guid IN :guids
-            """)
+            """, nativeQuery = true)
     List<User> findAllByGuidWithLock(@Param("guids") Iterable<UUID> guids);
+
+    @Query(value = """
+            SELECT *
+            FROM users
+            WHERE (:username IS NULL OR username ILIKE CONCAT('%', :username, '%'))
+            AND (:status IS NULL OR status = :status)
+            """, nativeQuery = true)
+    List<User> search(String username, String status);
 }
