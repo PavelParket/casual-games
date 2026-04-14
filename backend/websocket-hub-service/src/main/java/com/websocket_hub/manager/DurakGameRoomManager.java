@@ -44,8 +44,6 @@ public class DurakGameRoomManager extends AbstractRoomManager {
 
     private final Map<UUID, List<PlayerBet>> playerBets = new ConcurrentHashMap<>();
 
-    private final Map<UUID, Long> activeGames = new ConcurrentHashMap<>();
-
     private final DurakGameMessageMapper durakGameMessageMapper;
 
     private final ObjectFactory<PlayerBet> playerBetFactory;
@@ -134,7 +132,6 @@ public class DurakGameRoomManager extends AbstractRoomManager {
     protected void onDeleteRoom(UUID roomId) {
         readyPlayers.remove(roomId);
         playerBets.remove(roomId);
-        activeGames.remove(roomId);
     }
 
     @Override
@@ -255,22 +252,6 @@ public class DurakGameRoomManager extends AbstractRoomManager {
 
     public void validateBetsForGameStart(UUID roomId) {
         playerBetValidator.validateBetsForGameStart(getPlayerBets(roomId));
-    }
-
-    public void registerActiveGame(UUID roomId, Long gameId) {
-        activeGames.put(roomId, gameId);
-
-        log.info("Registered active game={} for room={}", gameId, roomId);
-    }
-
-    public Long getActiveGameId(UUID roomId) {
-        return activeGames.get(roomId);
-    }
-
-    public void removeActiveGame(UUID roomId) {
-        activeGames.remove(roomId);
-
-        log.info("Removed active game tracking for room={}", roomId);
     }
 
     public UUID getOpponentId(UUID roomId, UUID playerId) {

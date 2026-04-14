@@ -131,7 +131,6 @@ public class DurakGameRoomHandler extends AppWebSocketHandler<DurakGameRoomManag
 
             DurakGameInternalResponse startResponse = gameServiceClient.startDurakGame(startRequest);
 
-            roomManager.registerActiveGame(roomId, startResponse.id());
             roomManager.updateRoomStatus(roomId, RoomStatus.IN_PROGRESS);
 
             broadcastPlayerViews(roomId, startResponse.playerViews());
@@ -153,15 +152,7 @@ public class DurakGameRoomHandler extends AppWebSocketHandler<DurakGameRoomManag
     }
 
     private void handleMove(DurakGameMessage message, UUID roomId, UserInternalResponse user) {
-        Long gameId = roomManager.getActiveGameId(roomId);
-
-        if (gameId == null) {
-            log.warn("No active game found for room={}, ignoring move from user={}", roomId, user.username());
-            return;
-        }
-
         DurakGameInternalRequest moveRequest = durakGameMessageMapper.toMoveGameRequest(
-                gameId,
                 roomId,
                 user.guid(),
                 message.action(),
@@ -189,16 +180,11 @@ public class DurakGameRoomHandler extends AppWebSocketHandler<DurakGameRoomManag
         log.info("Turn timeout: room={} timedOutPlayer={}", roomId, timedOutPlayerId);
 
         UUID winnerId = roomManager.getOpponentId(roomId, timedOutPlayerId);
-        Long gameId = roomManager.getActiveGameId(roomId);
 
-        if (gameId != null) {
-            try {
-                gameServiceClient.processDurakEnd(durakGameMessageMapper.toEndGameRequest(gameId, winnerId));
-            } catch (Exception e) {
-                log.error("Failed to notify game-service of timeout: gameId={} room={}", gameId, roomId, e);
-            }
-        } else {
-            log.warn("Cannot notify game-service of timeout — no active gameId for room={}", roomId);
+        try {
+            gameServiceClient.processDurakEnd(durakGameMessageMapper.toEndGameRequest(roomId, winnerId));
+        } catch (Exception e) {
+            log.error("Failed to notify game-service of timeout: room={}", roomId, e);
         }
 
         processGameOver(roomId, winnerId);
@@ -229,7 +215,6 @@ public class DurakGameRoomHandler extends AppWebSocketHandler<DurakGameRoomManag
             log.error("Failed to process game over for room={}", roomId, e);
         } finally {
             roomManager.removePlayerBets(roomId);
-            roomManager.removeActiveGame(roomId);
             roomManager.updateRoomStatus(roomId, RoomStatus.FINISHED);
         }
     }

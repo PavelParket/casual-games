@@ -1,6 +1,8 @@
 package com.game_service.horse_race.service;
 
+import com.game_service.common.enums.GameType;
 import com.game_service.common.exception.GameValidationException;
+import com.game_service.common.service.provider.GameCleanupProvider;
 import com.game_service.horse_race.domain.dto.HorseRaceGamePresetResponse;
 import com.game_service.horse_race.domain.dto.HorseRaceGameRequest;
 import com.game_service.horse_race.domain.dto.HorseRaceGameResponse;
@@ -28,7 +30,7 @@ import static com.game_service.horse_race.util.HorseRaceGameUtils.SEGMENTS;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class HorseRaceGameService {
+public class HorseRaceGameService implements GameCleanupProvider {
 
     private final HorseRaceRepository horseRaceRepository;
 
@@ -37,6 +39,23 @@ public class HorseRaceGameService {
     private final HorseRaceValidator horseRaceValidator;
 
     private final HorseRaceFactory horseRaceFactory;
+
+    @Override
+    public GameType gameType() {
+        return GameType.HORSE_RACE;
+    }
+
+    @Override
+    @Transactional
+    public void cleanup(UUID roomId) {
+        horseRaceRepository.findByRoomId(roomId).ifPresent(race -> {
+            if (race.getStatus() == HorseRaceStatus.RUNNING) {
+                race.setStatus(HorseRaceStatus.CANCELLED);
+                horseRaceRepository.save(race);
+                log.info("forceCleanup: HorseRace game cleaned for roomId={}", roomId);
+            }
+        });
+    }
 
     public HorseRaceGamePresetResponse processCreate(HorseRaceGameRequest request) {
         horseRaceValidator.validateCreate(request);

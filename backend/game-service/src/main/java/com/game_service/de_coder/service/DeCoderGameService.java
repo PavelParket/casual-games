@@ -1,6 +1,8 @@
 package com.game_service.de_coder.service;
 
+import com.game_service.common.enums.GameType;
 import com.game_service.common.exception.InvalidMoveException;
+import com.game_service.common.service.provider.GameCleanupProvider;
 import com.game_service.de_coder.domain.dto.DeCoderGameRequest;
 import com.game_service.de_coder.domain.dto.DeCoderGameResponse;
 import com.game_service.de_coder.domain.entity.DeCoderGameState;
@@ -13,7 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.game_service.config.ResourceMessageConstants.DECODER_GAME_ALREADY_IN_PROGRESS;
@@ -22,7 +28,7 @@ import static com.game_service.config.ResourceMessageConstants.GAME_STARTED;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DeCoderGameService {
+public class DeCoderGameService implements GameCleanupProvider {
 
     private final DeCoderGameValidator deCoderGameValidator;
 
@@ -35,6 +41,20 @@ public class DeCoderGameService {
     private final Map<UUID, BigDecimal> jackpots = new ConcurrentHashMap<>();
 
     private static final BigDecimal JACKPOT_INCREMENT = new BigDecimal("8.00");
+
+    @Override
+    public GameType gameType() {
+        return GameType.DE_CODER;
+    }
+
+    @Override
+    public void cleanup(UUID roomId) {
+        secretCodes.remove(roomId);
+        roomState.remove(roomId);
+        jackpots.remove(roomId);
+
+        log.info("forceCleanup: DeCoder game cleaned for roomId={}", roomId);
+    }
 
     public DeCoderGameResponse processStart(DeCoderGameRequest request) {
         deCoderGameValidator.validateStart(request);
@@ -101,7 +121,7 @@ public class DeCoderGameService {
                 DeCoderGameEvent.MOVE,
                 request.roomId(),
                 "Does not match the winning code",
-                List.of(moveResult) ,
+                List.of(moveResult),
                 request.player());
     }
 

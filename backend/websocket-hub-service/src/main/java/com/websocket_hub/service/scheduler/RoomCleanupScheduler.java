@@ -4,6 +4,7 @@ import com.websocket_hub.config.properies.RoomCleanupProperties;
 import com.websocket_hub.domain.entity.RoomMetadata;
 import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.manager.AbstractRoomManager;
+import com.websocket_hub.service.helper.KafkaMessageHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,6 +23,8 @@ public class RoomCleanupScheduler {
     private final RoomCleanupProperties roomCleanupProperties;
 
     private final List<AbstractRoomManager> roomManagers;
+
+    private final KafkaMessageHelper kafkaMessageHelper;
 
     @Scheduled(fixedDelayString = "${scheduler.room-cleanup.scheduler-delay-minutes}",
             initialDelayString = "${scheduler.room-cleanup.scheduler-initial-delay-minutes}",
@@ -79,6 +82,7 @@ public class RoomCleanupScheduler {
                     log.info("Room cleanup: kicking and deleting FINISHED room — roomId={}, type={}", metadata.getId(), metadata.getType());
                     roomManager.kickAll(metadata.getId());
                     roomManager.delete(metadata.getId());
+                    kafkaMessageHelper.sendRoomDeletedEvent(metadata.getId(), metadata.getType(), "CLEANUP_FINISHED");
                 }
             }
         }
@@ -102,6 +106,7 @@ public class RoomCleanupScheduler {
         if (metadata.getParticipantCount() == 0) {
             log.info("Room cleanup: deleting PENDING_DELETE room — roomId={}, type={}", metadata.getId(), metadata.getType());
             roomManager.delete(metadata.getId());
+            kafkaMessageHelper.sendRoomDeletedEvent(metadata.getId(), metadata.getType(), "CLEANUP_EMPTY");
         } else {
             log.info("Room cleanup: rolling back PENDING_DELETE to WAITING (players present) — roomId={}, type={}", metadata.getId(), metadata.getType());
             roomManager.updateRoomStatus(metadata.getId(), RoomStatus.WAITING);
