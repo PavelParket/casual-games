@@ -1,9 +1,7 @@
 package casualgames.userservice.repository;
 
 import casualgames.userservice.entity.User;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -23,11 +21,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     void deleteByGuid(UUID guid);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query(value = """
             SELECT *
             FROM users
             WHERE guid IN :guids
+            FOR UPDATE
             """, nativeQuery = true)
     List<User> findAllByGuidWithLock(@Param("guids") Iterable<UUID> guids);
 
