@@ -39,11 +39,11 @@ public class User {
     private UUID guid;
 
     @Column(nullable = false)
-    @Permission(Permissions.USERNAME)
+    @Permission(value = Permissions.USERNAME, deleteAllowed = false)
     private String username;
 
     @Column(unique = true, nullable = false)
-    @Permission(Permissions.EMAIL)
+    @Permission(value = Permissions.EMAIL, deleteAllowed = false)
     private String email;
 
     @Builder.Default
