@@ -3,23 +3,140 @@ package casualgames.userservice.service;
 import casualgames.userservice.dto.UpdateUserRequest;
 import casualgames.userservice.dto.UserResponse;
 import casualgames.userservice.dto.UserSearchFilterRequest;
+import casualgames.userservice.entity.User;
+import casualgames.userservice.exception.ForbiddenException;
+import casualgames.userservice.exception.ResourceNotFoundException;
+import casualgames.userservice.mapper.UserMapper;
+import casualgames.userservice.repository.UserRepository;
+import casualgames.userservice.service.grpc.client.GrpcSecurityClient;
+import casualgames.userservice.service.helper.PermissionHelper;
+import casualgames.userservice.validator.UserValidator;
+import com.security_starter.config.AuthenticationToken;
+import com.security_starter.config.PermissionContext;
+import com.security_starter.enums.Operation;
+import com.security_starter.enums.Permissions;
 import com.security_starter.enums.Role;
+import com.security_starter.validator.PermissionValidator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-public interface UserService extends Service<UserResponse, Long> {
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class UserService {
 
-    UserResponse update(UUID userId, UpdateUserRequest request);
+    private final UserRepository userRepository;
 
-    List<UserResponse> search(UserSearchFilterRequest request);
+    private final UserMapper userMapper;
 
-    UserResponse findByGuid(UUID guid);
+    private final UserValidator userValidator;
 
-    void deleteByGuid(UUID id);
+    private final GrpcSecurityClient grpcSecurityClient;
 
-    UserResponse updateRole(UUID guid, Role role);
+    private final PermissionHelper permissionHelper;
 
-    BigDecimal getBalance(UUID guid);
+    private final PermissionValidator permissionValidator;
+
+    @Transactional
+    public UserResponse update(UUID guid, UpdateUserRequest request) {
+        PermissionContext context = permissionHelper.getContext(guid);
+        AuthenticationToken token = permissionHelper.getToken();
+
+        if (!permissionValidator.can(Permissions.USER, Operation.UPDATE, context, token)) {
+            throw new ForbiddenException("Access denied: cannot update user with guid: " + guid);
+        }
+
+        User target = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        userValidator.validateEmailForUpdate(request.email(), target);
+
+        permissionValidator.updateObject(target, request, context, token);
+
+        User saved = userRepository.save(target);
+
+        grpcSecurityClient.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
+
+        return buildResponse(saved, context, token);
+    }
+
+    public UserResponse buildResponse(User user, PermissionContext context, AuthenticationToken token) {
+        UserResponse response = userMapper.toResponse(user);
+        permissionValidator.readObject(response, context, token);
+        return response;
+    }
+
+    @Transactional
+    public void deleteByGuid(UUID guid) {
+        if (!permissionValidator.can(Permissions.USER, Operation.DELETE, permissionHelper.getContext(guid), permissionHelper.getToken())) {
+            throw new ForbiddenException("Access denied: cannot delete user with guid: " + guid);
+        }
+
+        if (!userRepository.existsByGuid(guid)) {
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        userRepository.deleteByGuid(guid);
+
+        grpcSecurityClient.delete(guid);
+    }
+
+    public List<UserResponse> findAll() {
+        return userRepository.findAll().stream()
+                .map(user -> buildResponse(
+                        user,
+                        permissionHelper.getContext(user.getGuid()),
+                        permissionHelper.getToken()
+                ))
+                .toList();
+    }
+
+    public List<UserResponse> search(UserSearchFilterRequest request) {
+        String status = request.status() == null ? null : request.status().name();
+        return userRepository.search(request.username(), status).stream()
+                .map(user -> buildResponse(user, permissionHelper.getContext(user.getGuid()), permissionHelper.getToken()))
+                .toList();
+    }
+
+    public UserResponse findByGuid(UUID guid) {
+        User user = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
+
+        return buildResponse(user, permissionHelper.getContext(user.getGuid()), permissionHelper.getToken());
+    }
+
+    @Transactional
+    public UserResponse updateRole(UUID guid, Role role) {
+        if (!permissionValidator.can(Permissions.ROLE, Operation.UPDATE, permissionHelper.getContext(guid), permissionHelper.getToken())) {
+            throw new ForbiddenException("Access denied: cannot update role for user with guid: " + guid);
+        }
+
+        User target = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"));
+
+        target.setRole(role);
+
+        User saved = userRepository.save(target);
+
+        /* todo: переделать на outbox паттерн */
+        grpcSecurityClient.updateRole(guid, role);
+
+        return buildResponse(saved, permissionHelper.getContext(saved.getGuid()), permissionHelper.getToken());
+    }
+
+    public BigDecimal getBalance(UUID guid) {
+        if (!permissionValidator.can(Permissions.BALANCE, Operation.READ, permissionHelper.getContext(guid), permissionHelper.getToken())) {
+            throw new ForbiddenException("Access denied: cannot read balance for user with guid: " + guid);
+        }
+
+        return userRepository.findByGuid(guid)
+                .orElseThrow(() -> new ResourceNotFoundException("User with guid: " + guid + "' not found"))
+                .getBalance();
+    }
 }
