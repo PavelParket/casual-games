@@ -7,8 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -66,20 +64,11 @@ public class GlobalExceptionHandler {
         return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, "Validation failed", request, details);
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
+    @ExceptionHandler(ForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ErrorResponse handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
-        log.warn("Access denied: {}", e.getMessage());
-
-        return factory.create(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED, e.getMessage(), request);
-    }
-
-    @ExceptionHandler(AuthenticationException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponse handleAuthentication(AuthenticationException e, HttpServletRequest request) {
-        log.warn("Authentication failed: {}", e.getMessage());
-
-        return factory.create(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_ERROR, e.getMessage(), request);
+    public ErrorResponse handleForbidden(ForbiddenException e, HttpServletRequest request) {
+        log.warn("Forbidden: {}", e.getMessage());
+        return factory.create(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN, e.getMessage(), request);
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
@@ -111,7 +100,7 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleGeneric(Exception e, HttpServletRequest request) {
         log.error("Unexpected error occurred", e);
 
-        return factory.create(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, "An unexpected error occurred", request);
+        return factory.create(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_SERVER_ERROR, "An unexpected error occurred", request);
     }
 
     @ExceptionHandler(NotFoundException.class)

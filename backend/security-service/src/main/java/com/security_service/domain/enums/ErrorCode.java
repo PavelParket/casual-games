@@ -10,10 +10,10 @@ public enum ErrorCode {
     VALIDATION_ERROR("Validation error"),
     AUTHENTICATION_ERROR("Authentication failed"),
     INVALID_CREDENTIALS("Invalid credentials"),
-    ACCESS_DENIED("Access denied"),
+    FORBIDDEN("Forbidden"),
     NOT_FOUND("Resource not found"),
     CONFLICT("Resource already exists"),
-    INTERNAL_ERROR("Unexpected server error"),
+    INTERNAL_SERVER_ERROR("Unexpected server error"),
     SERVICE_UNAVAILABLE("Service unavailable"),
     MISSING_TOKEN("Missing authentication token");
 
