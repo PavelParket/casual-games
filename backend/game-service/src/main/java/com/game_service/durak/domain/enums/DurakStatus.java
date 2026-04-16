@@ -4,5 +4,6 @@ public enum DurakStatus {
 
     STARTED,
     WINNER,
-    DRAW
+    DRAW,
+    CANCELLED
 }

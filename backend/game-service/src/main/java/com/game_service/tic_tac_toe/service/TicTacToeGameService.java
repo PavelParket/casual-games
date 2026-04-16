@@ -1,8 +1,10 @@
 package com.game_service.tic_tac_toe.service;
 
+import com.game_service.common.enums.GameType;
 import com.game_service.common.enums.MessageType;
 import com.game_service.common.exception.InvalidMoveException;
 import com.game_service.common.exception.NotFoundException;
+import com.game_service.common.service.provider.GameCleanupProvider;
 import com.game_service.tic_tac_toe.domain.dto.TicTacToeGameRequest;
 import com.game_service.tic_tac_toe.domain.dto.TicTacToeGameResponse;
 import com.game_service.tic_tac_toe.domain.entity.TicTacToe;
@@ -26,18 +28,18 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.game_service.config.ResourceMessageConstants.GAME_STARTED;
-import static com.game_service.config.ResourceMessageConstants.TTT_GAME_ALREADY_IN_PROGRESS;
+import static com.game_service.config.ResourceMessageConstants.ROOM_NOT_FOUND;
 import static com.game_service.config.ResourceMessageConstants.TTT_DRAW;
+import static com.game_service.config.ResourceMessageConstants.TTT_GAME_ALREADY_IN_PROGRESS;
 import static com.game_service.config.ResourceMessageConstants.TTT_NEXT_PLAYER_MOVE;
 import static com.game_service.config.ResourceMessageConstants.TTT_PLAYER_WINS;
-import static com.game_service.config.ResourceMessageConstants.ROOM_NOT_FOUND;
 import static com.game_service.tic_tac_toe.util.TicTacToeGameUtils.SYMBOL_O;
 import static com.game_service.tic_tac_toe.util.TicTacToeGameUtils.SYMBOL_X;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TicTacToeGameService {
+public class TicTacToeGameService implements GameCleanupProvider {
 
     private final TicTacToeGameValidator ticTacToeGameValidator;
 
@@ -48,6 +50,28 @@ public class TicTacToeGameService {
     private final Map<UUID, TicTacToe> activeGames = new ConcurrentHashMap<>();
 
     private final Random random = new Random();
+
+    @Override
+    public GameType gameType() {
+        return GameType.TIC_TAC_TOE;
+    }
+
+    @Override
+    public void cleanup(UUID roomId) {
+        TicTacToe game = activeGames.remove(roomId);
+
+        if (game == null) {
+            log.debug("forceCleanup: no active TicTacToe game for roomId={}", roomId);
+            return;
+        }
+        
+        if (game.getStatus() == TicTacToeGameStatus.ACTIVE) {
+            game.setStatus(TicTacToeGameStatus.CANCELLED);
+            ticTacToeGameRepository.save(game);
+        }
+
+        log.info("forceCleanup: TicTacToe game cleaned for roomId={}", roomId);
+    }
 
     @Transactional
     public TicTacToeGameResponse processStart(TicTacToeGameRequest request) {

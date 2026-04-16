@@ -10,6 +10,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public String handleForbidden(ForbiddenException e) {
+        log.warn("Access denied: {}", e.getMessage());
+        return e.getMessage();
+    }
+
     @ExceptionHandler(ResourceAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public String handleAlreadyExists(ResourceAlreadyExistsException e) {

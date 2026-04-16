@@ -3,9 +3,9 @@ import axios from "axios";
 import { USER_SERVICE_URL } from "./ApiDictionary";
 
 export const UserAPI = {
-  findByGuid: (guid: string) => axios.get<User>(`${USER_SERVICE_URL}/users/guid=${guid}`),
+  findByGuid: (guid: string) => axios.get<User>(`${USER_SERVICE_URL}/users/${guid}`),
 
-  updateByGuid: (guid: string, data: UpdateUserRequest) => axios.put<User>(`${USER_SERVICE_URL}/users/guid=${guid}`, data),
+  updateByGuid: (guid: string, data: UpdateUserRequest) => axios.put<User>(`${USER_SERVICE_URL}/users/${guid}`, data),
 
   getBalance: (guid: string) => axios.get<number>(`${USER_SERVICE_URL}/users/balance/${guid}`),
 };

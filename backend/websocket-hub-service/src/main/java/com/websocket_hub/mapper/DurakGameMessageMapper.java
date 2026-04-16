@@ -86,18 +86,18 @@ public interface DurakGameMessageMapper extends MessageMapper {
     @Mapping(target = "winnerId", ignore = true)
     DurakGameInternalRequest toStartGameRequest(UUID roomId, List<UUID> players);
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "players", ignore = true)
     @Mapping(target = "winnerId", ignore = true)
-    DurakGameInternalRequest toMoveGameRequest(Long id,
-                                               UUID roomId,
+    DurakGameInternalRequest toMoveGameRequest(UUID roomId,
                                                UUID currentActorId,
                                                DurakAction action,
                                                DurakCard card);
 
-    @Mapping(target = "roomId", ignore = true)
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "players", ignore = true)
     @Mapping(target = "currentActorId", ignore = true)
     @Mapping(target = "action", ignore = true)
     @Mapping(target = "card", ignore = true)
-    DurakGameInternalRequest toEndGameRequest(Long id, UUID winnerId);
+    DurakGameInternalRequest toEndGameRequest(UUID roomId, UUID winnerId);
 }

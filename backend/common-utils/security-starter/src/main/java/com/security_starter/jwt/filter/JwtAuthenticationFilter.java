@@ -48,27 +48,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
+        String jwt = extractJwt(request);
+
+        if (jwt != null) {
+            try {
+                if (jwtValidator.isValidAndNotExpired(jwt)) {
+                    AuthenticationToken authentication = createAuthentication(jwt);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (JwtException e) {
+                log.warn("JWT validation failed: {}", e.getMessage());
+                // Don't set authentication, let it continue to AuthenticationEntryPoint
+            } catch (Exception e) {
+                log.error("Error during JWT authentication", e);
+            }
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // Проверяем whitelist - если запрос от доверенного сервиса, пропускаем без JWT
         if (serviceWhitelistChecker.isWhitelistedService(request)) {
             log.info("Request from whitelisted service: host={}, address={}, port={} - skipping JWT validation", request.getRemoteHost(), request.getRemoteAddr(), request.getRemotePort());
 
             setServiceToServiceAuthentication();
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        try {
-            String jwt = extractJwt(request);
-
-            if (jwt != null && jwtValidator.isValidAndNotExpired(jwt)) {
-                AuthenticationToken authentication = createAuthentication(jwt);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-        } catch (JwtException e) {
-            log.warn("JWT validation failed: {}", e.getMessage());
-            // Don't set authentication, let it continue to AuthenticationEntryPoint
-        } catch (Exception e) {
-            log.error("Error during JWT authentication", e);
         }
 
         filterChain.doFilter(request, response);
