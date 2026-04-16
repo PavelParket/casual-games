@@ -9,5 +9,8 @@ public enum Permissions {
     ROLE,
     STATUS,
 
-    USER
+    USER,
+
+    TRANSACTION,
+    TRANSACTION_SUMMARY
 }

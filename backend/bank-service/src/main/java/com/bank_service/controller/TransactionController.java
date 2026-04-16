@@ -1,10 +1,11 @@
 package com.bank_service.controller;
 
+import com.bank_service.domain.dto.DepositRequest;
+import com.bank_service.domain.dto.GenerateSummaryRequest;
 import com.bank_service.domain.dto.PageResponse;
 import com.bank_service.domain.dto.TransactionResponse;
-import com.bank_service.domain.dto.TransactionSummaryResponse;
 import com.bank_service.domain.dto.TransactionSummaryFilterRequest;
-import com.bank_service.domain.dto.DepositRequest;
+import com.bank_service.domain.dto.TransactionSummaryResponse;
 import com.bank_service.service.TransactionService;
 import com.bank_service.service.TransactionSummaryService;
 import jakarta.validation.Valid;
@@ -12,7 +13,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,14 +47,14 @@ public class TransactionController {
         return summaryService.getByUserGuid(request);
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/summary/generate")
-    public void generateSummaryManually(@RequestBody @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate targetMonth) {
-        summaryService.generateSummary(targetMonth);
+    public void generateSummaryManually(@RequestBody @Valid GenerateSummaryRequest request) {
+        summaryService.generateSummary(request);
     }
 
     @PostMapping("/deposit")
     public TransactionResponse deposit(@RequestBody @Valid DepositRequest request) {
-        log.info("Received deposit request for user: {} with amount: {}", request.userGuid(), request.amount());
         return transactionService.processDeposit(request);
     }
 }

@@ -3,33 +3,39 @@ package com.bank_service.domain.dto;
 import com.bank_service.domain.enums.RoomType;
 import com.bank_service.domain.enums.TransactionStatus;
 import com.bank_service.domain.enums.TransactionType;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public record TransactionResponse(
-        Long id,
+public class TransactionResponse {
 
-        UUID roomId,
+    private Long id;
 
-        RoomType roomType,
+    private UUID roomId;
 
-        TransactionType type,
+    private RoomType roomType;
 
-        TransactionStatus status,
+    private TransactionType type;
 
-        BigDecimal amount,
+    private TransactionStatus status;
 
-        BigDecimal balanceBefore,
+    private BigDecimal amount;
 
-        BigDecimal balanceAfter,
+    private BigDecimal balanceBefore;
 
-        LocalDate createdAtDate,
+    private BigDecimal balanceAfter;
 
-        LocalTime createdAtTime
-) {
+    private LocalDate createdAtDate;
+
+    private LocalTime createdAtTime;
 }

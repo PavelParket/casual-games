@@ -3,6 +3,7 @@ package com.bank_service.exception;
 import com.bank_service.domain.dto.ErrorResponse;
 import com.bank_service.domain.enums.ErrorCode;
 import com.bank_service.factory.ErrorResponseFactory;
+import com.security_starter.exception.ForbiddenException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -41,7 +42,7 @@ public class GlobalExceptionHandler {
             default -> ErrorCode.RESOURCE_NOT_FOUND;
         };
 
-        return factory.create(HttpStatus.BAD_REQUEST, code, e.getMessage(), request, null);
+        return factory.create(code, e.getMessage(), HttpStatus.BAD_REQUEST, request, null);
     }
 
     @ExceptionHandler(ClientInternalRequestException.class)
@@ -49,7 +50,14 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleServiceRequestException(ClientInternalRequestException e, HttpServletRequest request) {
         log.error("Service Dependency Error: {}", e.getMessage());
 
-        return factory.create(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.SERVICE_DEPENDENCY_ERROR, e.getMessage(), request, null);
+        return factory.create(ErrorCode.SERVICE_DEPENDENCY_ERROR, e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE, request, null);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleForbiddenException(ForbiddenException e, HttpServletRequest request) {
+        log.warn("Forbidden: {}", e.getMessage());
+        return factory.create(ErrorCode.FORBIDDEN, e.getMessage(), HttpStatus.FORBIDDEN, request, null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -67,7 +75,7 @@ public class GlobalExceptionHandler {
 
         log.warn("Validation Error: {}", message);
 
-        return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, message, request, details);
+        return factory.create(ErrorCode.VALIDATION_ERROR, message, HttpStatus.BAD_REQUEST, request, details);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -80,7 +88,7 @@ public class GlobalExceptionHandler {
 
         log.warn("Constraint Violation: {}", message);
 
-        return factory.create(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, message, request, null);
+        return factory.create(ErrorCode.VALIDATION_ERROR, message, HttpStatus.BAD_REQUEST, request, null);
     }
 
     @ExceptionHandler(Exception.class)
@@ -89,9 +97,9 @@ public class GlobalExceptionHandler {
         log.error("Internal Server Error: Unexpected exception occurred.", e);
 
         return factory.create(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                ErrorCode.INTERNAL_SERVER_ERROR.getMessage(),
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                ErrorCode.INTERNAL_ERROR,
-                "An unexpected error occurred. Please try again later.",
                 request,
                 null
         );

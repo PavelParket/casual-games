@@ -5,7 +5,6 @@ import com.bank_service.domain.dto.GameTransactionRequest;
 import com.bank_service.domain.dto.ProcessingResult;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
-import com.bank_service.exception.ClientInternalRequestException;
 import com.bank_service.exception.PlayerNotFoundException;
 import com.bank_service.factory.DurakTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
@@ -79,7 +78,7 @@ public class DurakProcessor implements GameResultProcessor {
                 log.info("Successfully processed Durak game for room: {}", request.roomId());
 
                 return new ProcessingResult.Success(saved);
-            } catch (ClientInternalRequestException e) {
+            } catch (Exception e) {
                 transactionService.rejectSafely(saved);
 
                 log.error("User-service failed, transactions rejected for room: {}", request.roomId(), e);
