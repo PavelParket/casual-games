@@ -8,6 +8,7 @@ public enum Permissions {
     BALANCE,
     ROLE,
     STATUS,
+    PASSWORD,
 
     USER,
 

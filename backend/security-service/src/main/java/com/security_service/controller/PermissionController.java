@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/permissions")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAuthority('ADMIN')")
 @RequiredArgsConstructor
 public class PermissionController {
 

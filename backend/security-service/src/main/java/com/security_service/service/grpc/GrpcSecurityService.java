@@ -38,14 +38,14 @@ public class GrpcSecurityService extends UserServiceGrpc.UserServiceImplBase {
                     .password(emptyToNull(request.getPassword()))
                     .build();
 
-            UserResponse updateResponse = userService.updateByGuid(UUID.fromString(request.getGuid()), updateRequest);
+            UserResponse updateResponse = userService.update(UUID.fromString(request.getGuid()), updateRequest);
 
             UpdateUserResponse response = UpdateUserResponse.newBuilder()
-                    .setGuid(updateResponse.guid().toString())
-                    .setUsername(updateResponse.username())
-                    .setEmail(updateResponse.email())
-                    .setRole(updateResponse.role())
-                    .setCreatedAt(GrpcTimestampMapper.toTimestamp(updateResponse.createdAt()))
+                    .setGuid(updateResponse.getGuid().toString())
+                    .setUsername(updateResponse.getUsername())
+                    .setEmail(updateResponse.getEmail())
+                    .setRole(updateResponse.getRole().toString())
+                    .setCreatedAt(GrpcTimestampMapper.toTimestamp(updateResponse.getCreatedAt()))
                     .build();
 
             observer.onNext(response);
@@ -81,7 +81,7 @@ public class GrpcSecurityService extends UserServiceGrpc.UserServiceImplBase {
     @Override
     public void deleteUser(DeleteUserRequest request, StreamObserver<Empty> observer) {
         try {
-            userService.deleteByGuid(UUID.fromString(request.getGuid()));
+            userService.delete(UUID.fromString(request.getGuid()));
 
             observer.onNext(Empty.getDefaultInstance());
             observer.onCompleted();

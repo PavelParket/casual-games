@@ -27,7 +27,6 @@ public interface UserMapper {
     @Mapping(target = "createdAt", ignore = true)
     User toEntity(RegisterRequest registerRequest, @Context PasswordService passwordService);
 
-    @Mapping(target = "role", expression = "java(user.getRole().toString())")
     UserResponse toResponse(User user);
 
     List<UserResponse> toResponseList(List<User> users);
@@ -38,7 +37,7 @@ public interface UserMapper {
     @Mapping(target = "username", qualifiedByName = "ignoreEmpty")
     @Mapping(target = "email", qualifiedByName = "ignoreEmpty")
     @Mapping(target = "password", expression = "java(setPassword(updateRequest.password(), user.getPassword(), passwordService))")
-    @Mapping(target = "role", qualifiedByName = "ignoreEmpty")
+    @Mapping(target = "role", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     void updateEntity(@MappingTarget User user, UpdateRequest updateRequest, @Context PasswordService passwordService);
 

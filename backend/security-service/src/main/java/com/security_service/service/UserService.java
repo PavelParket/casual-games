@@ -78,26 +78,11 @@ public class UserService implements UserDetailsService {
                 .build();
     }
 
+    // todo: перевести на асинхронное обновление через кафку
     @Transactional
-    public UserResponse updateById(Long id, UpdateRequest request) {
-        User user = repository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id=" + id));
-
-        validator.validateUpdate(request);
-
-        mapper.updateEntity(user, request, passwordService);
-
-        return mapper.toResponse(repository.save(user));
-    }
-
-    @Transactional
-    public UserResponse updateByGuid(UUID guid, UpdateRequest request) {
+    public UserResponse update(UUID guid, UpdateRequest request) {
         User user = repository.findByGuid(guid)
-                .orElseGet(() -> {
-                    log.error("User not found with guid={}", guid);
-                    throw new UserNotFoundException("User not found!");
-                });
-
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         validator.validateUpdate(request);
 
@@ -106,35 +91,25 @@ public class UserService implements UserDetailsService {
         return mapper.toResponse(repository.save(user));
     }
 
+    // todo: перевести на асинхронное обновление через кафку
     @Transactional
-    public UserResponse updateRole(UUID guid, String roleName) {
+    public void updateRole(UUID guid, String roleName) {
         User user = repository.findByGuid(guid)
                 .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid));
 
         validator.validateRoleExists(roleName);
         Role newRole = Role.valueOf(roleName);
 
-        if (user.getRole() != newRole) {
+        if (!user.getRole().equals(newRole)) {
             user.setRole(newRole);
-            User savedUser = repository.save(user);
+            repository.save(user);
 
-            log.info("Role changed to {} for user {}.", newRole, savedUser.getEmail());
-
-            return mapper.toResponse(savedUser);
+            log.info("Role changed to {} for user {}.", newRole, guid);
         }
-
-        return mapper.toResponse(user);
     }
 
     @Transactional
-    public void delete(Long id) {
-        validator.validateIdExists(id);
-
-        repository.deleteById(id);
-    }
-
-    @Transactional
-    public void deleteByGuid(UUID guid) {
+    public void delete(UUID guid) {
         validator.validateGuidExists(guid);
 
         repository.deleteByGuid(guid);
@@ -142,11 +117,6 @@ public class UserService implements UserDetailsService {
 
     public List<UserResponse> getAll() {
         return mapper.toResponseList(repository.findAll());
-    }
-
-    public UserResponse getById(Long id) {
-        return mapper.toResponse(repository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id=" + id)));
     }
 
     public UserResponse getByEmail(String email) {
