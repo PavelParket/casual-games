@@ -5,7 +5,6 @@ import com.bank_service.domain.dto.HorseRaceTransactionRequest;
 import com.bank_service.domain.dto.ProcessingResult;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
-import com.bank_service.exception.ClientInternalRequestException;
 import com.bank_service.factory.HorseRaceTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.service.RoomProcessingService;
@@ -71,7 +70,7 @@ public class HorseRaceProcessor implements GameResultProcessor {
                 log.info("Successfully processed Horse Race game for room={}, winnerHorseIndex={}, transactions={}", horseRaceRequest.roomId(), horseRaceRequest.winnerHorseIndex(), saved.size());
 
                 return new ProcessingResult.Success(saved);
-            } catch (ClientInternalRequestException e) {
+            } catch (Exception e) {
                 transactionService.rejectSafely(saved);
 
                 log.error("User-service failed, transactions rejected for room={}", horseRaceRequest.roomId(), e);

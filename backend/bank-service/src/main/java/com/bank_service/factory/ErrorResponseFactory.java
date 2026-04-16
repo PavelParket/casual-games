@@ -8,8 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -17,19 +15,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ErrorResponseFactory {
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC);
-
-    public ErrorResponse create(HttpStatus status,
-                                ErrorCode code,
+    public ErrorResponse create(ErrorCode code,
                                 String message,
+                                HttpStatus status,
                                 HttpServletRequest request,
                                 Map<String, List<String>> details) {
         return ErrorResponse.builder()
-                .timestamp(FORMATTER.format(Instant.now()))
-                .status(status.value())
-                .error(status.getReasonPhrase())
                 .code(code)
                 .message(message)
+                .status(status.value())
+                .timestamp(Instant.now())
                 .path(request.getRequestURI())
                 .details(details)
                 .build();
