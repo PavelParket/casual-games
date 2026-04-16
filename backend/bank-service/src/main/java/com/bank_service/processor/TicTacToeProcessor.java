@@ -5,7 +5,6 @@ import com.bank_service.domain.dto.ProcessingResult;
 import com.bank_service.domain.dto.TicTacToeTransactionRequest;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
-import com.bank_service.exception.ClientInternalRequestException;
 import com.bank_service.exception.PlayerNotFoundException;
 import com.bank_service.factory.TicTacToeTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
@@ -84,7 +83,7 @@ public class TicTacToeProcessor implements GameResultProcessor {
                 log.info("Successfully processed Tic-Tac-Toe game for room: {}", ticTacToeTransactionRequest.roomId());
 
                 return new ProcessingResult.Success(saved);
-            } catch (ClientInternalRequestException e) {
+            } catch (Exception e) {
                 transactionService.rejectSafely(saved);
 
                 log.error("User-service failed, transactions rejected for room: {}", ticTacToeTransactionRequest.roomId(), e);
