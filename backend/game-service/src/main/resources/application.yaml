@@ -31,7 +31,7 @@ kafka:
     "[group.id]": game-service-room-lifecycle
     "[auto.offset.reset]": earliest
   topics:
-    room-lifecycle-events: room-lifecycle-events
+    room-lifecycle-events: room-lifecycle
 
 logging:
   level:

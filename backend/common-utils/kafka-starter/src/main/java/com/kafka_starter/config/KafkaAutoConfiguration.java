@@ -13,7 +13,8 @@ import org.springframework.context.annotation.Import;
 @Import({
         KafkaProducerConfig.class,
         KafkaConsumerConfig.class,
-        KafkaMessageService.class
+        KafkaMessageService.class,
+        KafkaTransactionalOutboxConfiguration.class
 })
 public class KafkaAutoConfiguration {
 

@@ -58,6 +58,10 @@ grpc:
         max-attempts: 3
         delay-milliseconds: 1000
 
+kafka:
+  transactional-outbox:
+    enabled: true
+
 app:
   security-service:
     url: http://localhost:8080
