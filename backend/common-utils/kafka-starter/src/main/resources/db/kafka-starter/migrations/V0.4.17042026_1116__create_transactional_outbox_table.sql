@@ -3,7 +3,7 @@
 --changeset Pavel:V0.4.17042026_1116__create_transactional_outbox_table
 --preconditions onFail:MARK_RAN
 --precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'transactional_outbox_kafka_messages'
---precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM pg_indexes WHERE table_name = 'transactional_outbox_kafka_messages' AND index_name = 'idx_outbox_unsent'
+--precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'transactional_outbox_kafka_messages' AND indexname = 'idx_outbox_unsent'
 
 CREATE TABLE transactional_outbox_kafka_messages
 (

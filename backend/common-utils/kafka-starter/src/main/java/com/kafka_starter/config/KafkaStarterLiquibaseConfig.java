@@ -1,5 +1,7 @@
 package com.kafka_starter.config;
 
+import liquibase.UpdateSummaryEnum;
+import liquibase.UpdateSummaryOutputEnum;
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +26,8 @@ public class KafkaStarterLiquibaseConfig {
         liquibase.setChangeLog(CHANGELOG_PATH);
         liquibase.setDatabaseChangeLogTable(CHANGELOG_TABLE);
         liquibase.setDatabaseChangeLogLockTable(CHANGELOG_LOCK_TABLE);
+        liquibase.setShowSummary(UpdateSummaryEnum.VERBOSE);
+        liquibase.setShowSummaryOutput(UpdateSummaryOutputEnum.LOG);
         return liquibase;
     }
 }
