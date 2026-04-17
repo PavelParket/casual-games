@@ -1,7 +1,7 @@
 package com.security_service.mapper;
 
+import com.kafka_starter.dto.event.sync.SynchronizedUser;
 import com.security_service.domain.dto.RegisterRequest;
-import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.domain.entity.User;
 import com.security_service.service.PasswordService;
@@ -31,15 +31,12 @@ public interface UserMapper {
 
     List<UserResponse> toResponseList(List<User> users);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "guid", ignore = true)
-    @Mapping(target = "username", qualifiedByName = "ignoreEmpty")
-    @Mapping(target = "email", qualifiedByName = "ignoreEmpty")
-    @Mapping(target = "password", expression = "java(setPassword(updateRequest.password(), user.getPassword(), passwordService))")
-    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "password", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    void updateEntity(@MappingTarget User user, UpdateRequest updateRequest, @Context PasswordService passwordService);
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateEntity(@MappingTarget User user, SynchronizedUser synchronizedUser);
 
     @Named("ignoreEmpty")
     default String ignoreEmpty(String value) {

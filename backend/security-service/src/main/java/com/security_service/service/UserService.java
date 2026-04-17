@@ -1,8 +1,8 @@
 package com.security_service.service;
 
 import com.casualgames.grpc.user.CreateUserRequest;
+import com.kafka_starter.dto.event.sync.SynchronizedUser;
 import com.security_service.domain.dto.RegisterRequest;
-import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.domain.entity.CustomUserDetails;
 import com.security_service.domain.entity.User;
@@ -12,7 +12,6 @@ import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
 import com.security_service.service.grpc.client.GrpcUserClient;
 import com.security_service.validator.UserValidator;
-import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -78,34 +77,16 @@ public class UserService implements UserDetailsService {
                 .build();
     }
 
-    // todo: перевести на асинхронное обновление через кафку
     @Transactional
-    public UserResponse update(UUID guid, UpdateRequest request) {
-        User user = repository.findByGuid(guid)
+    public void synchronizeUpdatedUser(SynchronizedUser synchronizedUser) {
+        User user = repository.findByGuid(synchronizedUser.getGuid())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        validator.validateUpdate(request);
+        validator.validateUpdate(synchronizedUser);
 
-        mapper.updateEntity(user, request, passwordService);
+        mapper.updateEntity(user, synchronizedUser);
 
-        return mapper.toResponse(repository.save(user));
-    }
-
-    // todo: перевести на асинхронное обновление через кафку
-    @Transactional
-    public void updateRole(UUID guid, String roleName) {
-        User user = repository.findByGuid(guid)
-                .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid));
-
-        validator.validateRoleExists(roleName);
-        Role newRole = Role.valueOf(roleName);
-
-        if (!user.getRole().equals(newRole)) {
-            user.setRole(newRole);
-            repository.save(user);
-
-            log.info("Role changed to {} for user {}.", newRole, guid);
-        }
+        repository.save(user);
     }
 
     @Transactional
