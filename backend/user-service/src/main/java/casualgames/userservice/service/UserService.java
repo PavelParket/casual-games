@@ -9,6 +9,7 @@ import casualgames.userservice.exception.ResourceNotFoundException;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.grpc.client.GrpcSecurityClient;
+import casualgames.userservice.service.helper.KafkaMessageHelper;
 import casualgames.userservice.service.helper.PermissionHelper;
 import casualgames.userservice.validator.UserValidator;
 import com.security_starter.config.AuthenticationToken;
@@ -43,6 +44,8 @@ public class UserService {
 
     private final PermissionValidator permissionValidator;
 
+    private final KafkaMessageHelper kafkaMessageHelper;
+
     @Transactional
     public UserResponse update(UUID guid, UpdateUserRequest request) {
         PermissionContext context = permissionHelper.getContext(guid);
@@ -61,7 +64,7 @@ public class UserService {
 
         User saved = userRepository.save(target);
 
-        grpcSecurityClient.update(userMapper.toUpdateUserInternalRequest(saved, request.password()));
+        kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildMessage(saved));
 
         return buildResponse(saved, context, token);
     }
@@ -124,8 +127,7 @@ public class UserService {
 
         User saved = userRepository.save(target);
 
-        /* todo: переделать на outbox паттерн */
-        grpcSecurityClient.updateRole(guid, role);
+        kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildMessage(saved));
 
         return buildResponse(saved, permissionHelper.getContext(saved.getGuid()), permissionHelper.getToken());
     }
