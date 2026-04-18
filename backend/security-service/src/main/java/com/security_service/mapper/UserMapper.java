@@ -4,14 +4,11 @@ import com.kafka_starter.dto.event.sync.SynchronizedUser;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.domain.entity.User;
-import com.security_service.service.PasswordService;
 import com.security_starter.enums.Role;
 import org.mapstruct.BeanMapping;
-import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.List;
@@ -22,10 +19,9 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "guid", expression = "java(UUID.randomUUID())")
-    @Mapping(target = "password", expression = "java(setPassword(registerRequest.password(), null, passwordService))")
     @Mapping(target = "role", expression = "java(Role.USER)")
     @Mapping(target = "createdAt", ignore = true)
-    User toEntity(RegisterRequest registerRequest, @Context PasswordService passwordService);
+    User toEntity(RegisterRequest registerRequest, String password);
 
     UserResponse toResponse(User user);
 
@@ -37,18 +33,4 @@ public interface UserMapper {
     @Mapping(target = "createdAt", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(@MappingTarget User user, SynchronizedUser synchronizedUser);
-
-    @Named("ignoreEmpty")
-    default String ignoreEmpty(String value) {
-        return (value == null || value.isBlank()) ? null : value;
-    }
-
-    @Named("setPassword")
-    default String setPassword(String password, String currentPassword, @Context PasswordService passwordService) {
-        if (password == null || password.isBlank()) {
-            return currentPassword;
-        }
-
-        return passwordService.encode(password);
-    }
 }
