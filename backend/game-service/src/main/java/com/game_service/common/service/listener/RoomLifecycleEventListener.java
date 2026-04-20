@@ -18,7 +18,7 @@ public class RoomLifecycleEventListener {
     private final GameService gameService;
 
     @KafkaListener(
-            topics = "#{kafkaTopics.roomLifecycleEvents}",
+            topics = "#{kafkaTopics.roomLifecycle}",
             groupId = "${kafka.consumer-config.[group.id]}"
     )
     public void onRoomDeleted(String message) {

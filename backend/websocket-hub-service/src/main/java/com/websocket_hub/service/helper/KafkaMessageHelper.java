@@ -29,7 +29,7 @@ public class KafkaMessageHelper {
                 .timestamp(Instant.now().toString())
                 .build();
 
-        kafkaMessageService.send(kafkaTopics.getRoomLifecycleEvents(), roomId.toString(), roomDeleteEvent);
+        kafkaMessageService.send(kafkaTopics.getRoomLifecycle(), roomId.toString(), roomDeleteEvent);
 
         log.info("Room deleted event sent: roomId={}, roomType={}, reason={}", roomId, roomType, reason);
     }

@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class KafkaTopics {
 
-    private String roomLifecycleEvents;
+    private String roomLifecycle;
+    private String user;
 }

@@ -42,6 +42,7 @@ dependencies {
     // Custom starters
     implementation "com.casualgames:security-starter:1.0.0"
     implementation 'com.casualgames:grpc-utils:1.0.0'
+    implementation 'com.casualgames:kafka-starter:1.0.0'
 
     //Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

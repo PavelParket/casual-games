@@ -14,7 +14,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
 
   data:
     redis:
@@ -57,6 +56,15 @@ grpc:
       retry:
         max-attempts: 3
         delay-milliseconds: 1000
+
+kafka:
+  enabled: true
+  consumer-enabled: false
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  topics:
+    user: ${KAFKA_USER_TOPIC:user}
+  transactional-outbox:
+    enabled: true
 
 app:
   security-service:

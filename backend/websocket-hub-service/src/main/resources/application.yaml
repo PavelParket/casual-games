@@ -43,7 +43,7 @@ kafka:
   producer-config:
     "[acks]": "1"
   topics:
-    room-lifecycle-events: room-lifecycle-events
+    room-lifecycle: ${KAFKA_ROOM_LIFECYCLE_TOPIC:room-lifecycle}
 
 logging:
   level:

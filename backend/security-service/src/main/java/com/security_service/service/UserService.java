@@ -1,18 +1,23 @@
 package com.security_service.service;
 
 import com.casualgames.grpc.user.CreateUserRequest;
+import com.kafka_starter.dto.event.sync.SynchronizedUser;
 import com.security_service.domain.dto.RegisterRequest;
-import com.security_service.domain.dto.UpdateRequest;
+import com.security_service.domain.dto.UpdatePasswordRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.domain.entity.CustomUserDetails;
 import com.security_service.domain.entity.User;
+import com.security_service.exception.ForbiddenException;
+import com.security_service.exception.NotFoundException;
 import com.security_service.exception.ServiceUnavailableException;
 import com.security_service.exception.UserNotFoundException;
 import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
 import com.security_service.service.grpc.client.GrpcUserClient;
+import com.security_service.service.helper.PermissionHelper;
 import com.security_service.validator.UserValidator;
-import com.security_starter.enums.Role;
+import com.security_starter.enums.Operation;
+import com.security_starter.enums.Permissions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,26 +34,28 @@ import java.util.UUID;
 @Slf4j
 public class UserService implements UserDetailsService {
 
-    private final UserRepository repository;
+    private final UserRepository userRepository;
 
-    private final UserMapper mapper;
+    private final UserMapper userMapper;
 
-    private final UserValidator validator;
+    private final UserValidator userValidator;
 
     private final PasswordService passwordService;
 
     private final GrpcUserClient grpcUserClient;
 
+    private final PermissionHelper permissionHelper;
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = repository.findByEmail(email)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email=" + email));
 
         return new CustomUserDetails(user);
     }
 
     public UserDetails loadUserByGuid(UUID guid) throws UsernameNotFoundException {
-        User user = repository.findByGuid(guid)
+        User user = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid));
 
         return new CustomUserDetails(user);
@@ -56,9 +63,9 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public UserResponse create(RegisterRequest request) {
-        validator.validateRegister(request);
+        userValidator.validateRegister(request);
 
-        User user = mapper.toEntity(request, passwordService);
+        User user = userMapper.toEntity(request, passwordService.encode(request.password()));
 
         try {
             grpcUserClient.create(buildCreateUserRequest(user));
@@ -67,7 +74,7 @@ public class UserService implements UserDetailsService {
             throw e;
         }
 
-        return mapper.toResponse(repository.save(user));
+        return userMapper.toResponse(userRepository.save(user));
     }
 
     private CreateUserRequest buildCreateUserRequest(User user) {
@@ -78,54 +85,52 @@ public class UserService implements UserDetailsService {
                 .build();
     }
 
-    // todo: перевести на асинхронное обновление через кафку
     @Transactional
-    public UserResponse update(UUID guid, UpdateRequest request) {
-        User user = repository.findByGuid(guid)
+    public void synchronizeUpdatedUser(SynchronizedUser synchronizedUser) {
+        User user = userRepository.findByGuid(synchronizedUser.getGuid())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        validator.validateUpdate(request);
+        userValidator.validateUpdate(synchronizedUser);
 
-        mapper.updateEntity(user, request, passwordService);
+        userMapper.updateEntity(user, synchronizedUser);
 
-        return mapper.toResponse(repository.save(user));
-    }
-
-    // todo: перевести на асинхронное обновление через кафку
-    @Transactional
-    public void updateRole(UUID guid, String roleName) {
-        User user = repository.findByGuid(guid)
-                .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid));
-
-        validator.validateRoleExists(roleName);
-        Role newRole = Role.valueOf(roleName);
-
-        if (!user.getRole().equals(newRole)) {
-            user.setRole(newRole);
-            repository.save(user);
-
-            log.info("Role changed to {} for user {}.", newRole, guid);
-        }
+        userRepository.save(user);
     }
 
     @Transactional
     public void delete(UUID guid) {
-        validator.validateGuidExists(guid);
+        userValidator.validateGuidExists(guid);
 
-        repository.deleteByGuid(guid);
+        userRepository.deleteByGuid(guid);
+    }
+
+    @Transactional
+    public void updatePassword(UUID guid, UpdatePasswordRequest request) {
+        User user = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (!permissionHelper.hasPermission(Permissions.PASSWORD, Operation.UPDATE, user.getGuid())) {
+            throw new ForbiddenException("No permission to change password for this user");
+        }
+
+        user.setPassword(passwordService.encode(request.newPassword()));
+
+        userRepository.save(user);
+
+        log.info("Password changed for user guid={}", guid);
     }
 
     public List<UserResponse> getAll() {
-        return mapper.toResponseList(repository.findAll());
+        return userMapper.toResponseList(userRepository.findAll());
     }
 
     public UserResponse getByEmail(String email) {
-        return mapper.toResponse(repository.findByEmail(email)
+        return userMapper.toResponse(userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email=" + email)));
     }
 
     public UserResponse getByGuid(UUID guid) {
-        return mapper.toResponse(repository.findByGuid(guid)
+        return userMapper.toResponse(userRepository.findByGuid(guid)
                 .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid)));
     }
 }

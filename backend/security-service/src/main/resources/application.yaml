@@ -61,15 +61,19 @@ grpc:
 server:
   port: 8080
 
+kafka:
+  enabled: true
+  consumer-enabled: true
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  consumer-config:
+    "[group.id]": security-service-user-sync
+    "[auto.offset.reset]": earliest
+  topics:
+    user: ${KAFKA_USER_TOPIC:user}
+
 app:
   user-service:
     url: http://localhost:8083
-#  redis:
-#    enabled: ${REDIS_ENABLED:true}
-#    host: ${REDIS_HOST:localhost}
-#    port: ${REDIS_PORT:6379}
-#    database: ${REDIS_DATABASE:0}
-#    password: ${REDIS_PASSWORD:}  # optional
 
 logging:
   level:
