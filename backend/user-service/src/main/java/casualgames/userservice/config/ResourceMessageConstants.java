@@ -2,9 +2,6 @@ package casualgames.userservice.config;
 
 public class ResourceMessageConstants {
 
-    public static final String INTERNAL_SERVER_ERROR = "Internal server error. Please try again";
-
-    public static final String VALIDATION_FAILED = "Validation failed";
     public static final String NOT_FOUND_USER = "User not found with guid: %s";
     public static final String CONFLICT_USER_EMAIL = "User with email %s already exists";
     public static final String DO_NOT_HAVE_PERMISSION_TO_UPDATE_USER = "You do not have permission to update user";

@@ -1,4 +1,4 @@
-package casualgames.userservice.enums;
+package com.common_utils.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

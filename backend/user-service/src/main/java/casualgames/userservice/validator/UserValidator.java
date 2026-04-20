@@ -1,8 +1,8 @@
 package casualgames.userservice.validator;
 
 import casualgames.userservice.entity.User;
-import casualgames.userservice.exception.ConflictException;
 import casualgames.userservice.repository.UserRepository;
+import com.common_utils.exception.ConflictException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

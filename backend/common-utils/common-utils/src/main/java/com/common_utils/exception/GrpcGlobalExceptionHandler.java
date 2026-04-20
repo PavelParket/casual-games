@@ -1,4 +1,4 @@
-package casualgames.userservice.exception;
+package com.common_utils.exception;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -7,12 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.advice.GrpcAdvice;
 import net.devh.boot.grpc.server.advice.GrpcExceptionHandler;
 
-import static casualgames.userservice.config.ResourceMessageConstants.INTERNAL_SERVER_ERROR;
 
 @GrpcAdvice
 @RequiredArgsConstructor
 @Slf4j
 public class GrpcGlobalExceptionHandler {
+
+    private static final String INTERNAL_SERVER_ERROR = "Unexpected server error. Please try again";
 
     @GrpcExceptionHandler(BadRequestException.class)
     public StatusRuntimeException handleBadRequest(BadRequestException e) {

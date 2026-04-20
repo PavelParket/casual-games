@@ -1,4 +1,4 @@
-package casualgames.userservice.exception;
+package com.common_utils.exception;
 
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;

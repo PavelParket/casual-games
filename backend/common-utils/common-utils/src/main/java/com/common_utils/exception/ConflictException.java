@@ -1,4 +1,4 @@
-package casualgames.userservice.exception;
+package com.common_utils.exception;
 
 public class ConflictException extends AbstractException {
 

@@ -2,13 +2,13 @@ package casualgames.userservice.service.grpc;
 
 import casualgames.userservice.entity.User;
 import casualgames.userservice.enums.TransactionType;
-import casualgames.userservice.exception.BadRequestException;
-import casualgames.userservice.exception.NotFoundException;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.validator.TransactionValidator;
 import com.casualgames.grpc.transaction.UpdateBalancesRequest;
 import com.casualgames.grpc.transaction.UserTransaction;
 import com.casualgames.grpc.transaction.UserTransactionServiceGrpc;
+import com.common_utils.exception.BadRequestException;
+import com.common_utils.exception.NotFoundException;
 import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;

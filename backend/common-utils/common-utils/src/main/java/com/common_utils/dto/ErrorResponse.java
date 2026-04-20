@@ -1,6 +1,6 @@
-package casualgames.userservice.dto;
+package com.common_utils.dto;
 
-import casualgames.userservice.enums.ErrorCode;
+import com.common_utils.enums.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Builder;
 import org.springframework.http.HttpStatus;
@@ -11,8 +11,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static casualgames.userservice.config.ResourceMessageConstants.VALIDATION_FAILED;
 
 @Builder
 public record ErrorResponse(
@@ -30,6 +28,8 @@ public record ErrorResponse(
         Map<String, List<String>> details
 
 ) {
+
+    private static final String VALIDATION_FAILED = "Validation failed";
 
     public static ErrorResponse of(ErrorCode errorCode,
                                    HttpStatus status,

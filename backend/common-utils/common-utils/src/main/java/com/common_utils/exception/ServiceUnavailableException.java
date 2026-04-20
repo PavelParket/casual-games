@@ -1,4 +1,4 @@
-package casualgames.userservice.exception;
+package com.common_utils.exception;
 
 public class ServiceUnavailableException extends AbstractException {
 
