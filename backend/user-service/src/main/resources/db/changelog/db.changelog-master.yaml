@@ -1,3 +1,5 @@
 databaseChangeLog:
+  - include:
+      file: db/kafka-starter/db.changelog-master.yaml
   - includeAll:
       path: db/changelog/migrations/
