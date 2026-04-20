@@ -1,28 +1,33 @@
 package com.bank_service.domain.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public record TransactionSummaryResponse(
+public class TransactionSummaryResponse {
 
-        Long id,
+    private Long id;
 
-        UUID userGuid,
+    private UUID userGuid;
 
-        BigDecimal balanceBefore,
+    private BigDecimal balanceBefore;
 
-        BigDecimal balanceAfter,
+    private BigDecimal balanceAfter;
 
-        BigDecimal totalWon,
+    private BigDecimal totalWon;
 
-        BigDecimal totalLost,
+    private BigDecimal totalLost;
 
-        BigDecimal netProfit,
+    private BigDecimal netProfit;
 
-        LocalDate summaryMonth
-) {
+    private LocalDate summaryMonth;
 }

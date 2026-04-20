@@ -1,15 +1,14 @@
 package com.bank_service.processor;
 
-import com.bank_service.client.UserServiceClient;
 import com.bank_service.domain.dto.DeCoderTransactionRequest;
 import com.bank_service.domain.dto.GameTransactionRequest;
 import com.bank_service.domain.dto.ProcessingResult;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
-import com.bank_service.exception.ClientInternalRequestException;
 import com.bank_service.factory.DeCoderTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.service.TransactionService;
+import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import com.bank_service.validator.DeCoderBusinessValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,9 +22,13 @@ import java.util.List;
 public class DeCoderProcessor implements GameResultProcessor {
 
     private final TransactionService transactionService;
+
     private final TransactionMapper transactionMapper;
+
     private final DeCoderTransactionFactory factory;
-    private final UserServiceClient userServiceClient;
+
+    private final GrpcUserTransactionClient grpcUserTransactionClient;
+
     private final DeCoderBusinessValidator businessValidator;
 
     @Override
@@ -52,14 +55,14 @@ public class DeCoderProcessor implements GameResultProcessor {
             List<Transaction> saved = transactionService.pending(transactions);
 
             try {
-                userServiceClient.sendUpdates(transactionMapper.toShortInfoList(saved));
+                grpcUserTransactionClient.sendUpdates(saved);
 
                 transactionService.success(saved);
 
                 log.info("Successfully processed De-Coder transaction for room: {}", deCoderRequest.roomId());
 
                 return new ProcessingResult.Success(saved);
-            } catch (ClientInternalRequestException e) {
+            } catch (Exception e) {
                 transactionService.rejectSafely(saved);
 
                 log.error("User-service failed, transactions rejected for room: {}", deCoderRequest.roomId(), e);

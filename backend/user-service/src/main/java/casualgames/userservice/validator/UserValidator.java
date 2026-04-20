@@ -1,12 +1,15 @@
 package casualgames.userservice.validator;
 
 import casualgames.userservice.entity.User;
+import casualgames.userservice.exception.ConflictException;
 import casualgames.userservice.exception.ResourceAlreadyExistsException;
 import casualgames.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+
+import static casualgames.userservice.config.ResourceMessageConstants.CONFLICT_USER_EMAIL;
 
 @Component
 @RequiredArgsConstructor
@@ -16,7 +19,7 @@ public class UserValidator {
 
     public void validateForCreation(User user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new ResourceAlreadyExistsException("User with email '" + user.getEmail() + "' already exists");
+            throw new ConflictException(String.format(CONFLICT_USER_EMAIL, user.getEmail()));
         }
     }
 
@@ -38,14 +41,10 @@ public class UserValidator {
 
     public void validateEmailForUpdate(String newEmail, User existingUser) {
         if (newEmail != null) {
-            Optional<User> foundUserOptional = userRepository.findByEmail(newEmail);
-
-            foundUserOptional
+            userRepository.findByEmail(newEmail)
                     .filter(foundUser -> !foundUser.getId().equals(existingUser.getId()))
                     .ifPresent(foundUser -> {
-                        throw new ResourceAlreadyExistsException(
-                                "User with email '" + newEmail + "' already exists"
-                        );
+                        throw new ConflictException(String.format(CONFLICT_USER_EMAIL, newEmail));
                     });
         }
     }

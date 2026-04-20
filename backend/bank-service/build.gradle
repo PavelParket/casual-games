@@ -24,13 +24,31 @@ repositories {
     mavenCentral()
 }
 
+def grpcVersion = '1.80.0'
+def protobufVersion = '4.34.1'
+
+dependencyManagement {
+    dependencies {
+        dependency "io.grpc:grpc-netty-shaded:${grpcVersion}"
+        dependency "io.grpc:grpc-core:${grpcVersion}"
+        dependency "io.grpc:grpc-protobuf:${grpcVersion}"
+        dependency "io.grpc:grpc-stub:${grpcVersion}"
+        dependency "com.google.protobuf:protobuf-java:${protobufVersion}"
+    }
+}
+
 dependencies {
     implementation "com.casualgames:security-starter:1.0.0"
+    implementation 'com.casualgames:grpc-utils:1.0.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    //implementation "net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE"
+    implementation "net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE"
 
     implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'

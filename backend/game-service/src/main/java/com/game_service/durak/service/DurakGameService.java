@@ -1,6 +1,8 @@
 package com.game_service.durak.service;
 
+import com.game_service.common.enums.GameType;
 import com.game_service.common.exception.NotFoundException;
+import com.game_service.common.service.provider.GameCleanupProvider;
 import com.game_service.durak.domain.dto.DurakGameRequest;
 import com.game_service.durak.domain.dto.DurakGameResponse;
 import com.game_service.durak.domain.dto.DurakPlayerViewResponse;
@@ -35,9 +37,9 @@ import static com.game_service.durak.domain.enums.DurakPhase.THROWING_MORE;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DurakGameService {
+public class DurakGameService implements GameCleanupProvider {
 
-    private final ConcurrentHashMap<Long, Durak> activeGames = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Durak> activeGames = new ConcurrentHashMap<>();
 
     private final DurakGameValidator durakGameValidator;
 
@@ -45,12 +47,37 @@ public class DurakGameService {
 
     private final DurakRepository durakRepository;
 
+    @Override
+    public GameType gameType() {
+        return GameType.DURAK;
+    }
+
+    @Override
+    @Transactional
+    public void cleanup(UUID roomId) {
+        Durak game = activeGames.remove(roomId);
+
+        if (game == null) {
+            log.debug("forceCleanup: no active Durak game for roomId={}", roomId);
+            return;
+        }
+
+        synchronized (game) {
+            if (game.getStatus() == DurakStatus.STARTED) {
+                game.setStatus(DurakStatus.CANCELLED);
+                durakRepository.save(game);
+            }
+        }
+
+        log.info("forceCleanup: Durak game cleaned for roomId={}", roomId);
+    }
+
     @Transactional
     public DurakGameResponse processStart(DurakGameRequest request) {
         Durak game = DurakGameUtils.initialize(request.roomId(), request.players().getFirst(), request.players().getLast());
 
         durakRepository.save(game);
-        activeGames.putIfAbsent(game.getId(), game);
+        activeGames.putIfAbsent(game.getRoomId(), game);
 
         log.info("Durak game started gameId={} roomId={} players={}", game.getId(), game.getRoomId(), game.getPlayers());
 
@@ -59,14 +86,14 @@ public class DurakGameService {
 
     @Transactional
     public DurakGameResponse processMove(DurakGameRequest request) {
-        Durak game = activeGames.getOrDefault(request.id(), null);
+        Durak game = activeGames.getOrDefault(request.roomId(), null);
 
         if (game == null) {
             throw new NotFoundException(DURAK_GAME_NOT_FOUND);
         }
 
         synchronized (game) {
-            if (!activeGames.containsKey(request.id())) {
+            if (!activeGames.containsKey(request.roomId())) {
                 throw new NotFoundException(DURAK_GAME_NOT_FOUND);
             }
 
@@ -85,7 +112,7 @@ public class DurakGameService {
     public void processResult(Durak game) {
         game.setStatus(game.getWinnerId() != null ? DurakStatus.WINNER : DurakStatus.DRAW);
         durakRepository.save(game);
-        activeGames.remove(game.getId());
+        activeGames.remove(game.getRoomId());
 
         log.info("Durak game finalized gameId={} status={} winner={}", game.getId(), game.getStatus(), game.getWinnerId());
     }
@@ -303,16 +330,16 @@ public class DurakGameService {
 
     @Transactional
     public DurakGameResponse processTimeout(DurakGameRequest request) {
-        Durak game = activeGames.getOrDefault(request.id(), null);
+        Durak game = activeGames.getOrDefault(request.roomId(), null);
 
         if (game == null) {
-            log.warn("Timeout received for unknown or already finished game: gameId={}", request.id());
+            log.warn("Timeout received for unknown or already finished game: roomId={}", request.roomId());
 
             throw new NotFoundException(DURAK_GAME_NOT_FOUND);
         }
 
         synchronized (game) {
-            if (!activeGames.containsKey(request.id())) {
+            if (!activeGames.containsKey(request.roomId())) {
                 throw new NotFoundException(DURAK_GAME_NOT_FOUND);
             }
 
@@ -321,7 +348,7 @@ public class DurakGameService {
             processResult(game);
         }
 
-        log.info("Durak game finalized by timeout: gameId={} winner={}", request.id(), request.winnerId());
+        log.info("Durak game finalized by timeout: roomId={} winner={}", request.roomId(), request.winnerId());
 
         return buildResponse(game);
     }

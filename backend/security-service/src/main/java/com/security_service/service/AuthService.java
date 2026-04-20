@@ -5,7 +5,6 @@ import com.security_service.domain.dto.LoginRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.mapper.AuthMapper;
-import com.security_service.scheduler.PermissionSyncScheduler;
 import com.security_starter.enums.Status;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,7 +29,7 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
 
-    private final PermissionSyncScheduler permissionSyncScheduler;
+    private final SyncPermissionService syncPermissionService;
 
     public AuthResponse register(RegisterRequest request, HttpServletResponse response) {
         UserResponse user = userService.create(request);
@@ -64,20 +63,16 @@ public class AuthService {
 
     private AuthResponse generateTokens(UserResponse user, HttpServletResponse response) {
         String accessToken = tokenService.generateAccessToken(
-                user.guid(),
-                user.email(),
-                List.of(user.role()),
+                user.getGuid(),
+                user.getEmail(),
+                List.of(user.getRole().toString()),
                 Status.DEFAULT
         );
 
-        String refreshToken = tokenService.generateRefreshToken(user.guid());
+        String refreshToken = tokenService.generateRefreshToken(user.getGuid());
 
         cookieService.addRefreshToken(response, refreshToken);
 
         return mapper.toResponse(user, accessToken);
-    }
-
-    public void manualSync() {
-        permissionSyncScheduler.manualSync();
     }
 }

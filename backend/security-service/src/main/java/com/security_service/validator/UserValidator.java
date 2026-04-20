@@ -1,16 +1,18 @@
 package com.security_service.validator;
 
+import com.kafka_starter.dto.event.sync.SynchronizedUser;
 import com.security_service.domain.dto.RegisterRequest;
+import com.security_service.exception.EmailAlreadyExistsException;
+import com.security_service.exception.InvalidEmailFormatException;
+import com.security_service.exception.UserNotFoundException;
 import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.exception.BadRequestException;
 import com.security_service.exception.ConflictException;
 import com.security_service.exception.NotFoundException;
 import com.security_service.repository.UserRepository;
-import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -40,19 +42,6 @@ public class UserValidator implements Validator {
         }
     }
 
-    public void validateRoleExists(String roleName) {
-        if (Arrays.stream(Role.values())
-                .noneMatch(role -> role.name().equals(roleName))) {
-            throw new NotFoundException("Role " + roleName + " not found!");
-        }
-    }
-
-    public void validateIdExists(Long id) {
-        if (!repository.existsById(id)) {
-            throw new NotFoundException("User with id=" + id + " does not exist!");
-        }
-    }
-
     public void validateGuidExists(UUID guid) {
         if (!repository.existsByGuid(guid)) {
             throw new NotFoundException("User with guid=" + guid + " does not exist!");
@@ -69,23 +58,14 @@ public class UserValidator implements Validator {
         validateString(request.password(), "password");
     }
 
-    public void validateUpdate(UpdateRequest request) {
-        if (request.username() != null) {
-            validateString(request.username(), "username");
+    public void validateUpdate(SynchronizedUser synchronizedUser) {
+        if (synchronizedUser.getUsername() != null) {
+            validateString(synchronizedUser.getUsername(), "username");
         }
 
-        if (request.email() != null) {
-            validateString(request.email(), "email");
-            validateEmailFormat(request.email());
-        }
-
-        if (request.password() != null) {
-            validateString(request.password(), "password");
-        }
-
-        if (request.role() != null) {
-            validateString(request.role(), "role");
-            validateRoleExists(request.role());
+        if (synchronizedUser.getEmail() != null) {
+            validateString(synchronizedUser.getEmail(), "email");
+            validateEmailFormat(synchronizedUser.getEmail());
         }
     }
 }

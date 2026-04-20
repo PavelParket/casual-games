@@ -11,5 +11,9 @@ import java.util.UUID;
 @Repository
 public interface TransactionSummaryRepository extends JpaRepository<TransactionSummary, Long> {
 
-    List<TransactionSummary> findByUserGuidAndSummaryMonthBetween(UUID userGuid, LocalDate startDate, LocalDate endDate);
+    List<TransactionSummary> findByUserGuidAndSummaryMonthBetween(UUID userGuid,
+                                                                  LocalDate startDate,
+                                                                  LocalDate endDate);
+
+    boolean existsByUserGuidAndSummaryMonth(UUID userGuid, LocalDate summaryMonth);
 }

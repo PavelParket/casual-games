@@ -7,5 +7,11 @@ public enum Permissions {
     EMAIL,
     BALANCE,
     ROLE,
-    STATUS
+    STATUS,
+    PASSWORD,
+
+    USER,
+
+    TRANSACTION,
+    TRANSACTION_SUMMARY
 }

@@ -19,13 +19,6 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: true
-    properties:
-      hibernate:
-        jdbc:
-          batch_size: 15
-        order_inserts: true
-        order_updates: true
-        batch_versioned_data: true
 
   data:
     redis:
@@ -47,9 +40,28 @@ spring:
 server:
   port: 8084
 
+grpc:
+  client:
+    user-service:
+      address: static://localhost:7093
+      negotiation-type: plaintext
+      keep-alive-time: 30s
+      keep-alive-timeout: 5s
+  client-custom:
+    timeout-seconds: 30
+    retry:
+      max-attempts: 3
+      delay-milliseconds: 1000
+
+
 app:
   user-service:
     url: http://localhost:8083
+
+  scheduling:
+    transaction-summary:
+      initial-delay: 10000
+      fixed-rate: P30D # every month default
 
 logging:
   level:

@@ -1,0 +1,23 @@
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot' version '3.5.13'
+    id 'io.spring.dependency-management'
+    id 'maven-publish'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+}

@@ -1,6 +1,5 @@
 package com.bank_service.service;
 
-import com.bank_service.client.UserServiceClient;
 import com.bank_service.domain.dto.DepositRequest;
 import com.bank_service.domain.dto.PageResponse;
 import com.bank_service.domain.dto.TransactionResponse;
@@ -9,6 +8,12 @@ import com.bank_service.domain.enums.TransactionStatus;
 import com.bank_service.factory.DefaultTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.repository.TransactionRepository;
+import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
+import com.bank_service.service.helper.PermissionHelper;
+import com.security_starter.enums.Operation;
+import com.security_starter.enums.Permissions;
+import com.security_starter.exception.ForbiddenException;
+import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,9 +38,13 @@ public class TransactionService {
 
     private final TransactionMapper transactionMapper;
 
-    private final UserServiceClient userServiceClient;
+    private final GrpcUserTransactionClient grpcUserTransactionClient;
 
     private final DefaultTransactionFactory defaultTransactionFactory;
+
+    private final PermissionHelper permissionHelper;
+
+    private final PermissionValidator permissionValidator;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void success(List<Transaction> transactions) {
@@ -87,20 +96,33 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public PageResponse<TransactionResponse> getByUserGuid(UUID userGuid, int page, int size) {
+        if (!permissionValidator.can(Permissions.TRANSACTION, Operation.READ, permissionHelper.getContext(userGuid), permissionHelper.getToken())) {
+            throw new ForbiddenException("Access denied: cannot read transactions for user: " + userGuid);
+        }
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Transaction> transactions = transactionRepository.findByUserGuidAndStatus(userGuid, TransactionStatus.SUCCESS, pageable);
 
-        log.info("Found {} transactions for user: {} (page {}/{})",
-                transactions.getNumberOfElements(), userGuid, page + 1, transactions.getTotalPages());
+        log.info("Found {} transactions for user: {} (page {}/{})", transactions.getNumberOfElements(), userGuid, page + 1, transactions.getTotalPages());
 
         return PageResponse.of(transactions.map(transactionMapper::toResponse));
     }
 
     @Transactional
     public TransactionResponse processDeposit(DepositRequest request) {
-        BigDecimal balanceBefore = transactionRepository
-                .findFirstByUserGuidAndStatusOrderByCreatedAtDesc(request.userGuid(), TransactionStatus.SUCCESS)
+        if (!permissionValidator.can(
+                Permissions.BALANCE,
+                Operation.UPDATE,
+                permissionHelper.getContext(request.userGuid()),
+                permissionHelper.getToken()
+        )) {
+            throw new ForbiddenException("Access denied: cannot deposit for user: " + request.userGuid());
+        }
+
+        log.info("Received deposit request for user: {} with amount: {}", request.userGuid(), request.amount());
+
+        BigDecimal balanceBefore = transactionRepository.findFirstByUserGuidAndStatusOrderByCreatedAtDesc(request.userGuid(), TransactionStatus.SUCCESS.name())
                 .map(Transaction::getBalanceAfter)
                 .orElse(BigDecimal.ZERO);
 
@@ -109,7 +131,7 @@ public class TransactionService {
         List<Transaction> pendingTransactions = pending(List.of(transaction));
 
         try {
-            userServiceClient.sendUpdates(transactionMapper.toShortInfoList(pendingTransactions));
+            grpcUserTransactionClient.sendUpdates(pendingTransactions);
 
             success(pendingTransactions);
 

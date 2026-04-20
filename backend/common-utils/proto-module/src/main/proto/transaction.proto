@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package transaction;
+
+import "google/protobuf/empty.proto";
+
+option java_package = "com.casualgames.grpc.transaction";
+option java_multiple_files = true;
+
+message UserTransaction {
+  int64 id = 1;
+  string userGuid = 2;
+  string amount = 3;
+  string type = 4;
+  string status = 5;
+}
+
+message UpdateBalancesRequest {
+  repeated UserTransaction transactions = 1;
+}
+
+service UserTransactionService {
+  rpc updateBalances (UpdateBalancesRequest) returns (google.protobuf.Empty);
+}

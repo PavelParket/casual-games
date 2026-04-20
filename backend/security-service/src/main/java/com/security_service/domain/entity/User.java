@@ -1,5 +1,7 @@
 package com.security_service.domain.entity;
 
+import com.security_starter.annotation.Permission;
+import com.security_starter.enums.Permissions;
 import com.security_starter.enums.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,18 +35,22 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Permission(Permissions.GUID)
     @Column
     private UUID guid;
 
+    @Permission(Permissions.USERNAME)
     @Column(nullable = false, length = 50)
     private String username;
 
+    @Permission(Permissions.EMAIL)
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
     @Column(nullable = false, length = 60)
     private String password;
 
+    @Permission(value = Permissions.ROLE, deleteAllowed = false)
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;

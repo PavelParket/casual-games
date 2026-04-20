@@ -48,33 +48,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
+        String jwt = extractJwt(request);
+
+        if (jwt != null) {
+            try {
+                if (jwtValidator.isValidAndNotExpired(jwt)) {
+                    AuthenticationToken authentication = createAuthentication(jwt);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (JwtException e) {
+                log.warn("JWT validation failed: {}", e.getMessage());
+                // Don't set authentication, let it continue to AuthenticationEntryPoint
+            } catch (Exception e) {
+                log.error("Error during JWT authentication", e);
+            }
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // Проверяем whitelist - если запрос от доверенного сервиса, пропускаем без JWT
         if (serviceWhitelistChecker.isWhitelistedService(request)) {
             log.info("Request from whitelisted service: host={}, address={}, port={} - skipping JWT validation", request.getRemoteHost(), request.getRemoteAddr(), request.getRemotePort());
 
             setServiceToServiceAuthentication();
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        try {
-            String jwt = extractJwtFromRequest(request);
-
-            if (jwt != null && jwtValidator.isValidAndNotExpired(jwt)) {
-                AuthenticationToken authentication = createAuthentication(jwt);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-        } catch (JwtException e) {
-            log.warn("JWT validation failed: {}", e.getMessage());
-            // Don't set authentication, let it continue to AuthenticationEntryPoint
-        } catch (Exception e) {
-            log.error("Error during JWT authentication", e);
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private String extractJwtFromRequest(HttpServletRequest request) {
+    // Can be extended to skip certain paths
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+
+        return path.startsWith("/actuator/health") || path.startsWith("/actuator/info");
+    }
+
+    private String extractJwt(HttpServletRequest request) {
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
 
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
@@ -92,40 +103,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 ? claimsExtractor.extractRoles(jwt)
                 : Set.of();
 
-        Map<String, Set<String>> roleAndPermissionsMap = permissionProvider.getPermissions(roles, email);
-        Set<String> allPermissions = permissionProvider.getAllPermissions(roles, email);
+        Set<String> permissions = permissionProvider.loadPermissions(roles, email);
 
-        return AuthenticationToken.authenticated(
-                guid,
-                email,
-                status,
-                roles,
-                allPermissions,
-                roleAndPermissionsMap
-        );
+        return AuthenticationToken.authenticated(guid, email, status, roles, permissions, Map.of());
     }
 
-    /**
-     * Устанавливает специальную аутентификацию для межсервисных запросов из whitelist.
-     */
     private void setServiceToServiceAuthentication() {
-        AuthenticationToken serviceAuth = new AuthenticationToken(
-                null,
-                "service-to-service",
-                null,
-                Set.of(),
-                Map.of(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_SERVICE"))
+        SecurityContextHolder.getContext().setAuthentication(
+                new AuthenticationToken(
+                        null,
+                        "service-to-service",
+                        null,
+                        Set.of(),
+                        Map.of(),
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_SERVICE"))
+                )
         );
-
-        SecurityContextHolder.getContext().setAuthentication(serviceAuth);
-    }
-
-    // Can be extended to skip certain paths
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-
-        return path.startsWith("/actuator/health") || path.startsWith("/actuator/info");
     }
 }

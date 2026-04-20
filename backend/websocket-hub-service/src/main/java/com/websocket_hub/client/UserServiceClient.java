@@ -29,7 +29,7 @@ public class UserServiceClient {
 
     public UserInternalResponse getUserByGuid(UUID guid, String token) {
         URI uri = UriComponentsBuilder.fromUriString(userServiceUrl)
-                .path("/users/guid={guid}")
+                .path("/users/{guid}")
                 .buildAndExpand(guid)
                 .toUri();
 

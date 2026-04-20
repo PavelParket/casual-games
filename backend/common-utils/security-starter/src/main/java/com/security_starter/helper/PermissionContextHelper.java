@@ -2,22 +2,31 @@ package com.security_starter.helper;
 
 import com.security_starter.config.AuthenticationToken;
 import com.security_starter.config.PermissionContext;
+import com.security_starter.enums.Operation;
+import com.security_starter.enums.Permissions;
 import com.security_starter.enums.Role;
 import com.security_starter.enums.Status;
 import com.security_starter.factory.PermissionContextFactory;
-import lombok.experimental.UtilityClass;
+import com.security_starter.validator.PermissionValidator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-@UtilityClass
+import static com.security_starter.enums.OperationPostfix.FOR_ALL;
+import static com.security_starter.validator.PermissionValidator.UNDERSCORE;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
 public class PermissionContextHelper {
 
-    /**
-     * Get current authentication from SecurityContext
-     */
-    public static AuthenticationToken getCurrentAuthentication() {
+    private final PermissionValidator permissionValidator;
+
+    public AuthenticationToken getCurrentAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication instanceof AuthenticationToken) {
@@ -27,10 +36,8 @@ public class PermissionContextHelper {
         return null;
     }
 
-    /**
-     * Create PermissionContext from current authentication
-     */
-    public static PermissionContext createContextFromAuthentication(UUID targetGuid) {
+    public PermissionContext createContextFromAuthentication(UUID targetGuid) {
+        // todo: убрать и прокидывать токен в параметрах метода
         AuthenticationToken auth = getCurrentAuthentication();
 
         if (auth == null) {
@@ -40,7 +47,14 @@ public class PermissionContextHelper {
         // Extract primary role (first role from set)
         Role role = auth.getRoles().stream()
                 .findFirst()
-                .map(Role::valueOf)
+                .map(r -> {
+                    try {
+                        return Role.valueOf(r);
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Unknown role in token: {}", r);
+                        return null;
+                    }
+                })
                 .orElse(null);
 
         Status status = auth.getStatus();
@@ -50,23 +64,7 @@ public class PermissionContextHelper {
         return PermissionContextFactory.create(role, status, isOwner, actorGuid, targetGuid);
     }
 
-    /**
-     * Create PermissionContext with explicit parameters
-     */
-    public static PermissionContext createContext(
-            Role role,
-            Status status,
-            boolean isOwner,
-            UUID actorGuid,
-            UUID targetGuid
-    ) {
-        return PermissionContextFactory.create(role, status, isOwner, actorGuid, targetGuid);
-    }
-
-    /**
-     * Check if current user is owner of the resource
-     */
-    public static boolean isOwner(UUID resourceOwnerGuid) {
+    public boolean isOwner(UUID resourceOwnerGuid) {
         AuthenticationToken auth = getCurrentAuthentication();
 
         if (auth == null || resourceOwnerGuid == null) {
@@ -76,35 +74,46 @@ public class PermissionContextHelper {
         return auth.getGuid().equals(resourceOwnerGuid);
     }
 
-    /**
-     * Get current user GUID
-     */
-    public static UUID getCurrentUserGuid() {
+    public UUID getCurrentUserGuid() {
         AuthenticationToken auth = getCurrentAuthentication();
         return auth != null ? auth.getGuid() : null;
     }
 
-    /**
-     * Get current user email
-     */
-    public static String getCurrentUserEmail() {
+    public String getCurrentUserEmail() {
         AuthenticationToken auth = getCurrentAuthentication();
         return auth != null ? auth.getEmail() : null;
     }
 
-    /**
-     * Check if current user has permission
-     */
-    public static boolean hasPermission(String permission) {
+    public boolean hasPermission(Permissions permission, Operation operation) {
         AuthenticationToken auth = getCurrentAuthentication();
-        return auth != null && auth.hasPermission(permission);
+
+        if (auth == null) {
+            return false;
+        }
+
+        return permissionValidator.getPermissions(permission, operation).stream()
+                .anyMatch(auth::hasPermission);
     }
 
-    /**
-     * Check if current user has role
-     */
-    public static boolean hasRole(Role role) {
+    public boolean hasPermission(Permissions permission, Operation operation, UUID targetUserGuid) {
         AuthenticationToken auth = getCurrentAuthentication();
-        return auth != null && auth.hasRole(role);
+
+        if (auth == null) {
+            return false;
+        }
+
+        PermissionContext context = createContextFromAuthentication(targetUserGuid);
+
+        return permissionValidator.can(permission, operation, context, auth);
+    }
+
+    public boolean hasPermissionForAll(Permissions permissions, Operation operation) {
+        AuthenticationToken auth = getCurrentAuthentication();
+
+        if (auth == null) {
+            return false;
+        }
+
+        return auth.hasPermission(String.join(UNDERSCORE, permissions.name(), operation.name(), FOR_ALL.name()));
     }
 }
