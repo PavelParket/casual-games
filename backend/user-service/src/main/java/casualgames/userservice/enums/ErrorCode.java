@@ -12,6 +12,7 @@ public enum ErrorCode {
     FORBIDDEN("Forbidden"),
     NOT_FOUND("Not Found"),
     CONFLICT("Conflict"),
+    SERVICE_UNAVAILABLE("Service is unavailable now. Please try later"),
     INTERNAL_SERVER_ERROR("An unexpected error occurred. Please try again");
 
     private final String message;

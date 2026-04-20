@@ -20,6 +20,12 @@ public class GrpcGlobalExceptionHandler {
         return Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException();
     }
 
+    @GrpcExceptionHandler(ForbiddenException.class)
+    public StatusRuntimeException handleForbidden(ForbiddenException e) {
+        log.warn("gRPC forbidden: {}", e.getMessage());
+        return Status.PERMISSION_DENIED.withDescription(e.getMessage()).asRuntimeException();
+    }
+
     @GrpcExceptionHandler(NotFoundException.class)
     public StatusRuntimeException handleNotFound(NotFoundException e) {
         log.warn("gRPC not found: {}", e.getMessage());
@@ -32,23 +38,15 @@ public class GrpcGlobalExceptionHandler {
         return Status.ALREADY_EXISTS.withDescription(e.getMessage()).asRuntimeException();
     }
 
+    @GrpcExceptionHandler(ServiceUnavailableException.class)
+    public StatusRuntimeException handleServiceUnavailable(ServiceUnavailableException e) {
+        log.error("gRPC service unavailable: {}", e.getMessage());
+        return Status.UNAVAILABLE.withDescription(e.getMessage()).asRuntimeException();
+    }
+
     @GrpcExceptionHandler(Exception.class)
     public StatusRuntimeException handleGeneral(Exception e) {
         log.error("gRPC unexpected error", e);
         return Status.INTERNAL.withDescription(INTERNAL_SERVER_ERROR).asRuntimeException();
-    }
-
-    public static ServiceUnavailableException mapToServiceException(StatusRuntimeException e) {
-        String description = e.getStatus().getDescription() != null
-                ? e.getStatus().getDescription()
-                : "Unknown gRPC error";
-
-        return switch (e.getStatus().getCode()) {
-            case ALREADY_EXISTS, INVALID_ARGUMENT -> new ServiceUnavailableException(description);
-
-            case UNAVAILABLE -> new ServiceUnavailableException("User service is unavailable");
-
-            default -> new ServiceUnavailableException("Failed to create user: " + description);
-        };
     }
 }

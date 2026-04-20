@@ -3,6 +3,7 @@ package casualgames.userservice.service.grpc;
 import casualgames.userservice.entity.User;
 import casualgames.userservice.enums.TransactionType;
 import casualgames.userservice.exception.BadRequestException;
+import casualgames.userservice.exception.NotFoundException;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.validator.TransactionValidator;
 import com.casualgames.grpc.transaction.UpdateBalancesRequest;
@@ -49,7 +50,7 @@ public class GrpcUserTransactionService extends UserTransactionServiceGrpc.UserT
 
         if (users.size() != guids.size()) {
             log.error("Not all users found. Expected: {}, Found: {}", guids.size(), users.size());
-            throw new BadRequestException(ONE_OR_ANY_USERS_ARE_MISSING);
+            throw new NotFoundException(ONE_OR_ANY_USERS_ARE_MISSING);
         }
 
         Map<UUID, User> userMap = users.stream()

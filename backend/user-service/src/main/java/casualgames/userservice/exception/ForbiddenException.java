@@ -1,6 +1,6 @@
 package casualgames.userservice.exception;
 
-public class ForbiddenException extends RuntimeException {
+public class ForbiddenException extends AbstractException {
 
     public ForbiddenException(String message) {
         super(message);
