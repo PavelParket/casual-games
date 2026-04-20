@@ -71,20 +71,12 @@ public class GlobalExceptionHandler {
         return factory.create(ErrorCode.BAD_REQUEST, message, HttpStatus.BAD_REQUEST, details, request);
     }
 
-    @ExceptionHandler({ForbiddenException.class, AccessDeniedException.class})
+    @ExceptionHandler(ForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleForbidden(Exception e, HttpServletRequest request) {
         log.warn("Forbidden on {}: {}", request.getRequestURI(), e.getMessage());
 
         return factory.create(ErrorCode.FORBIDDEN, e.getMessage(), HttpStatus.FORBIDDEN, null, request);
-    }
-
-    @ExceptionHandler(AuthenticationException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponse handleUnauthorized(AuthenticationException e, HttpServletRequest request) {
-        log.warn("Authentication failed on {}: {}", request.getRequestURI(), e.getMessage());
-
-        return factory.create(ErrorCode.UNAUTHORIZED, e.getMessage(), HttpStatus.UNAUTHORIZED, null, request);
     }
 
     @ExceptionHandler(MissingTokenException.class)

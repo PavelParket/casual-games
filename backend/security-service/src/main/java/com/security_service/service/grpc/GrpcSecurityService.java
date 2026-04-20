@@ -3,7 +3,7 @@ package com.security_service.service.grpc;
 import com.casualgames.grpc.user.DeleteUserRequest;
 import com.casualgames.grpc.user.UserServiceGrpc;
 import com.google.protobuf.Empty;
-import com.security_service.exception.UserNotFoundException;
+import com.security_service.exception.NotFoundException;
 import com.security_service.service.UserService;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -27,7 +27,7 @@ public class GrpcSecurityService extends UserServiceGrpc.UserServiceImplBase {
 
             observer.onNext(Empty.getDefaultInstance());
             observer.onCompleted();
-        } catch (UserNotFoundException e) {
+        } catch (NotFoundException e) {
             log.warn("gRPC DeleteUser: user not found — {}", e.getMessage());
             observer.onError(Status.NOT_FOUND.withDescription(e.getMessage()).asRuntimeException());
         } catch (Exception e) {

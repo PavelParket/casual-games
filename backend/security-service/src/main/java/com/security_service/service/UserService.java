@@ -9,9 +9,6 @@ import com.security_service.domain.entity.CustomUserDetails;
 import com.security_service.domain.entity.User;
 import com.security_service.exception.ForbiddenException;
 import com.security_service.exception.NotFoundException;
-import com.security_service.exception.ServiceUnavailableException;
-import com.security_service.exception.UserNotFoundException;
-import com.security_service.exception.NotFoundException;
 import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
 import com.security_service.service.grpc.client.GrpcUserClient;
@@ -87,7 +84,7 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void synchronizeUpdatedUser(SynchronizedUser synchronizedUser) {
         User user = userRepository.findByGuid(synchronizedUser.getGuid())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         userValidator.validateUpdate(synchronizedUser);
 
@@ -125,11 +122,11 @@ public class UserService implements UserDetailsService {
 
     public UserResponse getByEmail(String email) {
         return userMapper.toResponse(userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("User not found with email=" + email)));
+                .orElseThrow(() -> new NotFoundException("User not found with email=" + email)));
     }
 
     public UserResponse getByGuid(UUID guid) {
         return userMapper.toResponse(userRepository.findByGuid(guid)
-                .orElseThrow(() -> new UserNotFoundException("User not found with guid=" + guid)));
+                .orElseThrow(() -> new NotFoundException("User not found with guid=" + guid)));
     }
 }

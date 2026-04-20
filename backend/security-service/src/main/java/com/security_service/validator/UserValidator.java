@@ -2,10 +2,6 @@ package com.security_service.validator;
 
 import com.kafka_starter.dto.event.sync.SynchronizedUser;
 import com.security_service.domain.dto.RegisterRequest;
-import com.security_service.exception.EmailAlreadyExistsException;
-import com.security_service.exception.InvalidEmailFormatException;
-import com.security_service.exception.UserNotFoundException;
-import com.security_service.domain.dto.UpdateRequest;
 import com.security_service.exception.BadRequestException;
 import com.security_service.exception.ConflictException;
 import com.security_service.exception.NotFoundException;
