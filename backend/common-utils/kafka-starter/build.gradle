@@ -19,5 +19,7 @@ dependencies {
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 
+    runtimeOnly 'org.postgresql:postgresql:42.7.10'
+
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 }
