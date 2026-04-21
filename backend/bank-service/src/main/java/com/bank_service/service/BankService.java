@@ -3,7 +3,6 @@ package com.bank_service.service;
 import com.bank_service.domain.dto.GameTransactionRequest;
 import com.bank_service.domain.dto.GameTransactionResponse;
 import com.bank_service.domain.enums.RoomType;
-import com.bank_service.mapper.ProcessingResultMapper;
 import com.bank_service.processor.GameResultProcessor;
 import com.common_utils.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,7 @@ public class BankService {
 
     private final Map<RoomType, GameResultProcessor> processors;
 
-    public BankService(List<GameResultProcessor> processors, ProcessingResultMapper processingResultMapper) {
+    public BankService(List<GameResultProcessor> processors) {
         this.processors = processors.stream()
                 .collect(Collectors.toMap(
                         GameResultProcessor::getRoomType,

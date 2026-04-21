@@ -10,16 +10,14 @@ import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.repository.TransactionRepository;
 import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import com.bank_service.service.helper.PermissionHelper;
+import com.common_utils.exception.ForbiddenException;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
-import com.security_starter.exception.ForbiddenException;
 import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +26,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+
+import static com.bank_service.config.ResourceMessageConstants.FORBIDDEN_DEPOSIT;
+import static com.bank_service.config.ResourceMessageConstants.FORBIDDEN_READ_TRANSACTIONS;
 
 @Service
 @RequiredArgsConstructor
@@ -95,16 +96,14 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<TransactionResponse> getByUserGuid(UUID userGuid, int page, int size) {
+    public PageResponse<TransactionResponse> getByUserGuid(UUID userGuid, Pageable pageable) {
         if (!permissionValidator.can(Permissions.TRANSACTION, Operation.READ, permissionHelper.getContext(userGuid), permissionHelper.getToken())) {
-            throw new ForbiddenException("Access denied: cannot read transactions for user: " + userGuid);
+            throw new ForbiddenException(String.format(FORBIDDEN_READ_TRANSACTIONS, userGuid));
         }
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Transaction> transactions = transactionRepository.findByUserGuidAndStatus(userGuid, TransactionStatus.SUCCESS, pageable);
 
-        log.info("Found {} transactions for user: {} (page {}/{})", transactions.getNumberOfElements(), userGuid, page + 1, transactions.getTotalPages());
+        log.info("Found {} transactions for user: {} (page {}/{})", transactions.getNumberOfElements(), userGuid, pageable.getPageNumber() + 1, transactions.getTotalPages());
 
         return PageResponse.of(transactions.map(transactionMapper::toResponse));
     }
@@ -117,7 +116,7 @@ public class TransactionService {
                 permissionHelper.getContext(request.userGuid()),
                 permissionHelper.getToken()
         )) {
-            throw new ForbiddenException("Access denied: cannot deposit for user: " + request.userGuid());
+            throw new ForbiddenException(String.format(FORBIDDEN_DEPOSIT, request.userGuid()));
         }
 
         log.info("Received deposit request for user: {} with amount: {}", request.userGuid(), request.amount());

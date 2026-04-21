@@ -5,7 +5,9 @@ import com.bank_service.domain.dto.GameTransactionResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+import java.time.Instant;
+
+@Mapper(componentModel = "spring", imports = Instant.class)
 public interface GameTransactionMapper {
 
     @Mapping(target = "roomId", expression = "java(request.roomId())")

@@ -32,7 +32,7 @@ public class DeCoderTransactionFactory implements GameTransactionFactory<DeCoder
             type = TransactionType.SUBTRACTION;
             balanceAfter = playerBet.getBalanceBefore().subtract(playerBet.getBet());
         }
-        System.out.println("\nplayerBet" + playerBet + "\ntype" + type + "\nbalanceAfter: " + balanceAfter + "winner: " + request.winner());
+
         Transaction transaction = Transaction.builder()
                 .userGuid(playerBet.getGuid())
                 .roomId(request.roomId())
