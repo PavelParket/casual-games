@@ -6,9 +6,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.advice.GrpcAdvice;
 import net.devh.boot.grpc.server.advice.GrpcExceptionHandler;
-
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 
 @GrpcAdvice
+@ConditionalOnClass(GrpcAdvice.class)
 @RequiredArgsConstructor
 @Slf4j
 public class GrpcGlobalExceptionHandler {
