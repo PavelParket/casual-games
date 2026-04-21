@@ -1,6 +1,6 @@
 package com.security_service.service;
 
-import com.security_service.exception.MissingTokenException;
+import com.common_utils.exception.NotFoundException;
 import com.security_service.factory.CookieFactory;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,13 +34,13 @@ public class CookieService {
 
     public String extractRefreshToken(HttpServletRequest request) {
         if (request.getCookies() == null) {
-            throw new MissingTokenException(NOT_FOUND_REFRESH_TOKEN);
+            throw new NotFoundException(NOT_FOUND_REFRESH_TOKEN);
         }
 
         return Arrays.stream(request.getCookies())
                 .filter(cookie -> COOKIE_NAME.equals(cookie.getName()))
                 .findFirst()
                 .map(Cookie::getValue)
-                .orElseThrow(() -> new MissingTokenException(NOT_FOUND_REFRESH_TOKEN));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_REFRESH_TOKEN));
     }
 }

@@ -1,14 +1,14 @@
 package com.security_service.service;
 
 import com.casualgames.grpc.user.CreateUserRequest;
+import com.common_utils.exception.ForbiddenException;
+import com.common_utils.exception.NotFoundException;
 import com.kafka_starter.dto.event.sync.SynchronizedUser;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UpdatePasswordRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.domain.entity.CustomUserDetails;
 import com.security_service.domain.entity.User;
-import com.security_service.exception.ForbiddenException;
-import com.security_service.exception.NotFoundException;
 import com.security_service.mapper.UserMapper;
 import com.security_service.repository.UserRepository;
 import com.security_service.service.grpc.client.GrpcUserClient;
@@ -27,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+import static com.security_service.config.ResourceMessageConstants.FORBIDDEN_PASSWORD_UPDATE;
+import static com.security_service.config.ResourceMessageConstants.NOT_FOUND_USER;
 import static com.security_service.config.ResourceMessageConstants.NOT_FOUND_USER_WITH_EMAIL;
 import static com.security_service.config.ResourceMessageConstants.NOT_FOUND_USER_WITH_GUID;
 
@@ -84,7 +86,7 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void synchronizeUpdatedUser(SynchronizedUser synchronizedUser) {
         User user = userRepository.findByGuid(synchronizedUser.getGuid())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         userValidator.validateUpdate(synchronizedUser);
 
@@ -103,10 +105,10 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void updatePassword(UUID guid, UpdatePasswordRequest request) {
         User user = userRepository.findByGuid(guid)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         if (!permissionHelper.hasPermission(Permissions.PASSWORD, Operation.UPDATE, user.getGuid())) {
-            throw new ForbiddenException("No permission to change password for this user");
+            throw new ForbiddenException(FORBIDDEN_PASSWORD_UPDATE);
         }
 
         user.setPassword(passwordService.encode(request.newPassword()));
@@ -122,11 +124,13 @@ public class UserService implements UserDetailsService {
 
     public UserResponse getByEmail(String email) {
         return userMapper.toResponse(userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found with email=" + email)));
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER_WITH_EMAIL, email)))
+        );
     }
 
     public UserResponse getByGuid(UUID guid) {
         return userMapper.toResponse(userRepository.findByGuid(guid)
-                .orElseThrow(() -> new NotFoundException("User not found with guid=" + guid)));
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER_WITH_GUID, guid)))
+        );
     }
 }

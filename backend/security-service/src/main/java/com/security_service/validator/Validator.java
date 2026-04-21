@@ -1,6 +1,6 @@
 package com.security_service.validator;
 
-import com.security_service.exception.BadRequestException;
+import com.common_utils.exception.BadRequestException;
 
 public interface Validator {
 

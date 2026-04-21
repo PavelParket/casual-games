@@ -1,7 +1,7 @@
 package com.security_service.service;
 
+import com.common_utils.exception.NotFoundException;
 import com.security_service.domain.entity.User;
-import com.security_service.exception.NotFoundException;
 import com.security_service.repository.RolePermissionRepository;
 import com.security_service.repository.UserPermissionRedisRepository;
 import com.security_service.repository.UserPermissionRepository;

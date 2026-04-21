@@ -1,7 +1,7 @@
 package com.security_service.service;
 
+import com.common_utils.exception.NotFoundException;
 import com.security_service.domain.dto.admin.RoleResponse;
-import com.security_service.exception.NotFoundException;
 import com.security_service.mapper.RoleMapper;
 import com.security_service.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static com.security_service.config.ResourceMessageConstants.NOT_FOUND_ROLE;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +30,6 @@ public class RoleService {
     public RoleResponse getById(Long id) {
         return roleRepository.findById(id)
                 .map(roleMapper::toResponse)
-                .orElseThrow(() -> new NotFoundException("Role not found: " + id));
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_ROLE, id)));
     }
 }

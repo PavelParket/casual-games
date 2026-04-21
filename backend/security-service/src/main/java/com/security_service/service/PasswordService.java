@@ -1,6 +1,6 @@
 package com.security_service.service;
 
-import com.security_service.exception.BadRequestException;
+import com.common_utils.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

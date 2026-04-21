@@ -1,13 +1,13 @@
 package com.security_service.service;
 
+import com.common_utils.exception.ConflictException;
+import com.common_utils.exception.NotFoundException;
 import com.security_service.domain.dto.admin.UserPermissionCreateRequest;
 import com.security_service.domain.dto.admin.UserPermissionResponse;
 import com.security_service.domain.dto.admin.UserPermissionUpdateRequest;
 import com.security_service.domain.entity.Permission;
 import com.security_service.domain.entity.User;
 import com.security_service.domain.entity.UserPermission;
-import com.security_service.exception.ConflictException;
-import com.security_service.exception.NotFoundException;
 import com.security_service.mapper.UserPermissionMapper;
 import com.security_service.repository.PermissionRepository;
 import com.security_service.repository.UserPermissionRepository;
@@ -19,6 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+
+import static com.security_service.config.ResourceMessageConstants.CONFLICT_USER_PERMISSION;
+import static com.security_service.config.ResourceMessageConstants.NOT_FOUND_PERMISSION;
+import static com.security_service.config.ResourceMessageConstants.NOT_FOUND_USER;
+import static com.security_service.config.ResourceMessageConstants.NOT_FOUND_USER_PERMISSION;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +43,7 @@ public class UserPermissionService {
     @Transactional(readOnly = true)
     public List<UserPermissionResponse> getByUserGuid(UUID userGuid) {
         User user = userRepository.findByGuid(userGuid)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         return userPermissionRepository.findAllWithPermissionByUserGuid(userGuid).stream()
                 .map(userPermission -> userPermissionMapper.toResponse(user, userPermission))
@@ -48,14 +53,14 @@ public class UserPermissionService {
     @Transactional
     public UserPermissionResponse create(UserPermissionCreateRequest userPermissionRequest) {
         User user = userRepository.findByGuid(userPermissionRequest.userGuid())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         Permission permission = permissionRepository.findById(userPermissionRequest.permissionId())
-                .orElseThrow(() -> new NotFoundException("Permission not found"));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_PERMISSION));
 
         userPermissionRepository.findByUserGuidAndPermissionId(user.getGuid(), userPermissionRequest.permissionId())
                 .ifPresent(userPermission -> {
-                    throw new ConflictException("Permission already exists");
+                    throw new ConflictException(CONFLICT_USER_PERMISSION);
                 });
 
         UserPermission saved = userPermissionRepository.save(userPermissionMapper.toEntity(userPermissionRequest, permission));
@@ -70,10 +75,10 @@ public class UserPermissionService {
     @Transactional
     public UserPermissionResponse update(Long id, UserPermissionUpdateRequest userPermissionUpdateRequest) {
         UserPermission userPermission = userPermissionRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User permission not found"));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER_PERMISSION));
 
         User user = userRepository.findByGuid(userPermission.getUserGuid())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         userPermission.setForMe(userPermissionUpdateRequest.forMe());
         userPermission.setForAll(userPermissionUpdateRequest.forAll());
@@ -91,7 +96,7 @@ public class UserPermissionService {
     @Transactional
     public void delete(Long id) {
         UserPermission userPermission = userPermissionRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User permission not found"));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER_PERMISSION));
 
         userPermissionRepository.delete(userPermission);
 
@@ -103,7 +108,7 @@ public class UserPermissionService {
     @Transactional
     public void deleteAllByUserGuid(UUID userGuid) {
         if (!userRepository.existsByGuid(userGuid)) {
-            throw new NotFoundException("User not found");
+            throw new NotFoundException(NOT_FOUND_USER);
         }
 
         userPermissionRepository.deleteAllByUserGuid(userGuid);
