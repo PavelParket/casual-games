@@ -1,20 +1,25 @@
 package com.bank_service.processor;
 
 import com.bank_service.domain.dto.GameTransactionRequest;
+import com.bank_service.domain.dto.GameTransactionResponse;
 import com.bank_service.domain.dto.HorseRaceTransactionRequest;
-import com.bank_service.domain.dto.ProcessingResult;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
 import com.bank_service.factory.HorseRaceTransactionFactory;
-import com.bank_service.mapper.TransactionMapper;
+import com.bank_service.mapper.GameTransactionMapper;
 import com.bank_service.service.RoomProcessingService;
 import com.bank_service.service.TransactionService;
 import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
+import com.common_utils.exception.BadRequestException;
+import com.common_utils.exception.ConflictException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+
+import static com.bank_service.config.ResourceMessageConstants.BAD_REQUEST_TYPE;
+import static com.bank_service.config.ResourceMessageConstants.ROOM_ALREADY_PROCESSED;
 
 @Component
 @RequiredArgsConstructor
@@ -23,7 +28,7 @@ public class HorseRaceProcessor implements GameResultProcessor {
 
     private final TransactionService transactionService;
 
-    private final TransactionMapper transactionMapper;
+    private final GameTransactionMapper gameTransactionMapper;
 
     private final HorseRaceTransactionFactory horseRaceTransactionFactory;
 
@@ -42,44 +47,39 @@ public class HorseRaceProcessor implements GameResultProcessor {
     }
 
     @Override
-    public ProcessingResult process(GameTransactionRequest request) {
-        if (!(request instanceof HorseRaceTransactionRequest horseRaceRequest)) {
-            return new ProcessingResult.Invalid("Invalid request type for Horse Race");
+    public GameTransactionResponse process(GameTransactionRequest gameTransactionRequest) {
+        if (!(gameTransactionRequest instanceof HorseRaceTransactionRequest request)) {
+            throw new BadRequestException(String.format(BAD_REQUEST_TYPE, "Horse Race"));
         }
 
         boolean marked = roomProcessingService.markRoomAsProcessed(
-                horseRaceRequest.roomId(),
-                horseRaceRequest.roomType(),
-                horseRaceRequest.playerBets().size()
+                request.roomId(),
+                request.roomType(),
+                request.playerBets().size()
         );
 
         if (!marked) {
-            log.info("Room {} already processed, skipping", horseRaceRequest.roomId());
-            return new ProcessingResult.AlreadyProcessed("Already processed");
+            log.info("Room {} already processed, skipping", request.roomId());
+            throw new ConflictException(String.format(ROOM_ALREADY_PROCESSED, request.roomId()));
         }
 
+        List<Transaction> transactions = horseRaceTransactionFactory.createTransactions(request);
+
+        List<Transaction> saved = transactionService.pending(transactions);
+
         try {
-            List<Transaction> transactions = horseRaceTransactionFactory.createTransactions(horseRaceRequest);
+            grpcUserTransactionClient.sendUpdates(saved);
+            transactionService.success(saved);
 
-            List<Transaction> saved = transactionService.pending(transactions);
+            log.info("Successfully processed Horse Race game for room={}, winnerHorseIndex={}, transactions={}", request.roomId(), request.winnerHorseIndex(), saved.size());
 
-            try {
-                grpcUserTransactionClient.sendUpdates(saved);
-                transactionService.success(saved);
-
-                log.info("Successfully processed Horse Race game for room={}, winnerHorseIndex={}, transactions={}", horseRaceRequest.roomId(), horseRaceRequest.winnerHorseIndex(), saved.size());
-
-                return new ProcessingResult.Success(saved);
-            } catch (Exception e) {
-                transactionService.rejectSafely(saved);
-
-                log.error("User-service failed, transactions rejected for room={}", horseRaceRequest.roomId(), e);
-
-                throw e;
-            }
+            return gameTransactionMapper.toResponse(request, saved.size());
         } catch (Exception e) {
-            log.error("Failed to process Horse Race game for room={}: {}", horseRaceRequest.roomId(), e.getMessage());
-            return new ProcessingResult.Invalid(e.getMessage());
+            transactionService.rejectSafely(saved);
+
+            log.error("User-service failed, transactions rejected for room={}", request.roomId(), e);
+
+            throw e;
         }
     }
 }

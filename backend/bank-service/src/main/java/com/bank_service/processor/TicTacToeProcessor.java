@@ -1,22 +1,26 @@
 package com.bank_service.processor;
 
 import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.ProcessingResult;
+import com.bank_service.domain.dto.GameTransactionResponse;
 import com.bank_service.domain.dto.TicTacToeTransactionRequest;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
-import com.bank_service.exception.PlayerNotFoundException;
 import com.bank_service.factory.TicTacToeTransactionFactory;
-import com.bank_service.mapper.TransactionMapper;
+import com.bank_service.mapper.GameTransactionMapper;
 import com.bank_service.service.RoomProcessingService;
 import com.bank_service.service.TransactionService;
 import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import com.bank_service.validator.TicTacToeBusinessValidator;
+import com.common_utils.exception.BadRequestException;
+import com.common_utils.exception.ConflictException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+
+import static com.bank_service.config.ResourceMessageConstants.BAD_REQUEST_TYPE;
+import static com.bank_service.config.ResourceMessageConstants.ROOM_ALREADY_PROCESSED;
 
 @Component
 @RequiredArgsConstructor
@@ -25,7 +29,7 @@ public class TicTacToeProcessor implements GameResultProcessor {
 
     private final TransactionService transactionService;
 
-    private final TransactionMapper transactionMapper;
+    private final GameTransactionMapper gameTransactionMapper;
 
     private final TicTacToeTransactionFactory factory;
 
@@ -46,54 +50,47 @@ public class TicTacToeProcessor implements GameResultProcessor {
     }
 
     @Override
-    public ProcessingResult process(GameTransactionRequest request) {
-        if (!(request instanceof TicTacToeTransactionRequest ticTacToeTransactionRequest)) {
-            return new ProcessingResult.Invalid("Invalid request type for Tic-Tac-Toe");
+    public GameTransactionResponse process(GameTransactionRequest gameTransactionRequest) {
+        if (!(gameTransactionRequest instanceof TicTacToeTransactionRequest request)) {
+            throw new BadRequestException(String.format(BAD_REQUEST_TYPE, "Tic-Tac-Toe"));
         }
 
-        if (ticTacToeTransactionRequest.isDraw()) {
-            log.info("Draw detected for room: {}", ticTacToeTransactionRequest.roomId());
+        if (request.isDraw()) {
+            log.info("Draw detected for room: {}", request.roomId());
 
-            return new ProcessingResult.Draw("Game ended in a draw");
+            return gameTransactionMapper.toResponse(request, ZERO_TRANSACTIONS);
         }
 
-        businessValidator.validate(ticTacToeTransactionRequest);
+        businessValidator.validate(request);
 
         boolean marked = roomProcessingService.markRoomAsProcessed(
-                ticTacToeTransactionRequest.roomId(),
-                ticTacToeTransactionRequest.roomType(),
+                request.roomId(),
+                request.roomType(),
                 2
         );
 
         if (!marked) {
-            log.info("Room {} already processed, skipping", ticTacToeTransactionRequest.roomId());
-
-            return new ProcessingResult.AlreadyProcessed("Already processed");
+            log.info("Room {} already processed, skipping", request.roomId());
+            throw new ConflictException(String.format(ROOM_ALREADY_PROCESSED, request.roomId()));
         }
 
+        List<Transaction> transactions = factory.createTransactions(request);
+
+        List<Transaction> saved = transactionService.pending(transactions);
+
         try {
-            List<Transaction> transactions = factory.createTransactions(ticTacToeTransactionRequest);
+            grpcUserTransactionClient.sendUpdates(saved);
+            transactionService.success(saved);
 
-            List<Transaction> saved = transactionService.pending(transactions);
+            log.info("Successfully processed Tic-Tac-Toe game for room: {}", request.roomId());
 
-            try {
-                grpcUserTransactionClient.sendUpdates(saved);
-                transactionService.success(saved);
+            return gameTransactionMapper.toResponse(request, saved.size());
+        } catch (Exception e) {
+            transactionService.rejectSafely(saved);
 
-                log.info("Successfully processed Tic-Tac-Toe game for room: {}", ticTacToeTransactionRequest.roomId());
+            log.error("User-service failed, transactions rejected for room: {}", request.roomId(), e);
 
-                return new ProcessingResult.Success(saved);
-            } catch (Exception e) {
-                transactionService.rejectSafely(saved);
-
-                log.error("User-service failed, transactions rejected for room: {}", ticTacToeTransactionRequest.roomId(), e);
-
-                throw e;
-            }
-        } catch (PlayerNotFoundException e) {
-            log.error("Player not found in Tic-Tac-Toe game: {}", e.getMessage());
-
-            return new ProcessingResult.Invalid(e.getMessage());
+            throw e;
         }
     }
 }

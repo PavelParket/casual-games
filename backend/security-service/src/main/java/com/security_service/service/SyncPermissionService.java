@@ -99,10 +99,9 @@ public class SyncPermissionService {
 
         Map<String, List<FullUserPermissionProjection>> userPermissionsMap = new HashMap<>();
 
-        userPermissions.forEach(userPermission -> {
-            userPermissionsMap.computeIfAbsent(userPermission.getEmail(), permissions -> new ArrayList<>())
-                    .add(userPermission);
-        });
+        userPermissions.forEach(userPermission ->
+                userPermissionsMap.computeIfAbsent(userPermission.getEmail(), permissions -> new ArrayList<>())
+                .add(userPermission));
 
         userPermissionsMap.forEach((email, userPermissionList) -> {
             Set<String> allowed = new HashSet<>();

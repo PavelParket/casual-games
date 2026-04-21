@@ -1,13 +1,16 @@
 package com.bank_service.processor;
 
 import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.ProcessingResult;
+import com.bank_service.domain.dto.GameTransactionResponse;
 import com.bank_service.domain.dto.TestRoomTransactionRequest;
 import com.bank_service.domain.enums.RoomType;
+import com.common_utils.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.time.Instant;
+
+import static com.bank_service.config.ResourceMessageConstants.BAD_REQUEST_TYPE;
 
 @Component
 @Slf4j
@@ -24,12 +27,18 @@ public class TestRoomProcessor implements GameResultProcessor {
     }
 
     @Override
-    public ProcessingResult process(GameTransactionRequest request) {
-        if (!(request instanceof TestRoomTransactionRequest testRequest)) {
-            return new ProcessingResult.Invalid("Invalid request type for TestRoom");
+    public GameTransactionResponse process(GameTransactionRequest gameTransactionRequest) {
+        if (!(gameTransactionRequest instanceof TestRoomTransactionRequest request)) {
+            throw new BadRequestException(String.format(BAD_REQUEST_TYPE, "TestRoom"));
         }
 
-        log.info("Test room processed successfully for room: {}", testRequest.roomId());
-        return new ProcessingResult.Success(List.of());
+        log.info("Test room processed successfully for room: {}", request.roomId());
+
+        return GameTransactionResponse.builder()
+                .roomId(request.roomId())
+                .roomType(request.roomType())
+                .transactionCount(0)
+                .processedAt(Instant.now())
+                .build();
     }
 }

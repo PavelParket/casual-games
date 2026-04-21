@@ -2,7 +2,6 @@ package com.bank_service.validator;
 
 import com.bank_service.domain.dto.TicTacToeTransactionRequest;
 import com.bank_service.domain.entity.PlayerBet;
-import com.bank_service.exception.BusinessValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

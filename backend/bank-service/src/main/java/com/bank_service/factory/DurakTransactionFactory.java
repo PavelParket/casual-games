@@ -7,7 +7,6 @@ import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
 import com.bank_service.domain.enums.TransactionStatus;
 import com.bank_service.domain.enums.TransactionType;
-import com.bank_service.exception.PlayerNotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
