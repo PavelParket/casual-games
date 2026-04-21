@@ -7,7 +7,6 @@ import com.bank_service.processor.GameResultProcessor;
 import com.common_utils.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,6 @@ import static com.bank_service.config.ResourceMessageConstants.UNSUPPORTED_ROOM_
 
 @Service
 @Slf4j
-@Transactional
 public class BankService {
 
     private final Map<RoomType, GameResultProcessor> processors;
@@ -30,7 +28,7 @@ public class BankService {
                         Function.identity()
                 ));
 
-        log.info("Initialized BankService with {} processors: {}", processors.size(), this.processors.keySet().getClass().getCanonicalName());
+        log.info("Initialized BankService with {} processors: {}", processors.size(), this.processors.keySet());
     }
 
     public GameTransactionResponse processResults(GameTransactionRequest request) {
