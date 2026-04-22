@@ -1,4 +1,4 @@
-package casualgames.userservice.exception;
+package com.common_utils.exception;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -6,18 +6,26 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.advice.GrpcAdvice;
 import net.devh.boot.grpc.server.advice.GrpcExceptionHandler;
-
-import static casualgames.userservice.config.ResourceMessageConstants.INTERNAL_SERVER_ERROR;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 
 @GrpcAdvice
+@ConditionalOnClass(GrpcAdvice.class)
 @RequiredArgsConstructor
 @Slf4j
 public class GrpcGlobalExceptionHandler {
+
+    private static final String INTERNAL_SERVER_ERROR = "Unexpected server error. Please try again";
 
     @GrpcExceptionHandler(BadRequestException.class)
     public StatusRuntimeException handleBadRequest(BadRequestException e) {
         log.warn("gRPC bad request: {}", e.getMessage());
         return Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException();
+    }
+
+    @GrpcExceptionHandler(ForbiddenException.class)
+    public StatusRuntimeException handleForbidden(ForbiddenException e) {
+        log.warn("gRPC forbidden: {}", e.getMessage());
+        return Status.PERMISSION_DENIED.withDescription(e.getMessage()).asRuntimeException();
     }
 
     @GrpcExceptionHandler(NotFoundException.class)
@@ -32,23 +40,15 @@ public class GrpcGlobalExceptionHandler {
         return Status.ALREADY_EXISTS.withDescription(e.getMessage()).asRuntimeException();
     }
 
+    @GrpcExceptionHandler(ServiceUnavailableException.class)
+    public StatusRuntimeException handleServiceUnavailable(ServiceUnavailableException e) {
+        log.error("gRPC service unavailable: {}", e.getMessage());
+        return Status.UNAVAILABLE.withDescription(e.getMessage()).asRuntimeException();
+    }
+
     @GrpcExceptionHandler(Exception.class)
     public StatusRuntimeException handleGeneral(Exception e) {
         log.error("gRPC unexpected error", e);
         return Status.INTERNAL.withDescription(INTERNAL_SERVER_ERROR).asRuntimeException();
-    }
-
-    public static ServiceUnavailableException mapToServiceException(StatusRuntimeException e) {
-        String description = e.getStatus().getDescription() != null
-                ? e.getStatus().getDescription()
-                : "Unknown gRPC error";
-
-        return switch (e.getStatus().getCode()) {
-            case ALREADY_EXISTS, INVALID_ARGUMENT -> new ServiceUnavailableException(description);
-
-            case UNAVAILABLE -> new ServiceUnavailableException("User service is unavailable");
-
-            default -> new ServiceUnavailableException("Failed to create user: " + description);
-        };
     }
 }
