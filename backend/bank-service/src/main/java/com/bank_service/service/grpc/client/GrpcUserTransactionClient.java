@@ -1,10 +1,10 @@
 package com.bank_service.service.grpc.client;
 
 import com.bank_service.domain.entity.Transaction;
-import com.bank_service.exception.GrpcGlobalExceptionHandler;
 import com.bank_service.mapper.TransactionMapper;
 import com.casualgames.grpc.transaction.UpdateBalancesRequest;
 import com.casualgames.grpc.transaction.UserTransactionServiceGrpc;
+import com.common_utils.exception.GrpcStatusExceptionMapper;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +23,8 @@ public class GrpcUserTransactionClient {
 
     private final TransactionMapper transactionMapper;
 
+    private final GrpcStatusExceptionMapper grpcStatusExceptionMapper;
+
     public void sendUpdates(List<Transaction> transactions) {
         try {
             UpdateBalancesRequest request = UpdateBalancesRequest.newBuilder()
@@ -32,7 +34,7 @@ public class GrpcUserTransactionClient {
             userTransactionServiceBlockingStub.updateBalances(request);
         } catch (StatusRuntimeException e) {
             log.error("gRPC call to user-service failed: status={}, description={}", e.getStatus().getCode(), e.getStatus().getDescription(), e);
-            throw GrpcGlobalExceptionHandler.mapToServiceException(e);
+            throw grpcStatusExceptionMapper.toException(e);
         }
     }
 }

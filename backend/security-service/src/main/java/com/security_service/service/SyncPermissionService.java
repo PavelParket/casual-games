@@ -1,7 +1,7 @@
 package com.security_service.service;
 
+import com.common_utils.exception.NotFoundException;
 import com.security_service.domain.entity.User;
-import com.security_service.exception.NotFoundException;
 import com.security_service.repository.RolePermissionRepository;
 import com.security_service.repository.UserPermissionRedisRepository;
 import com.security_service.repository.UserPermissionRepository;
@@ -99,10 +99,9 @@ public class SyncPermissionService {
 
         Map<String, List<FullUserPermissionProjection>> userPermissionsMap = new HashMap<>();
 
-        userPermissions.forEach(userPermission -> {
-            userPermissionsMap.computeIfAbsent(userPermission.getEmail(), permissions -> new ArrayList<>())
-                    .add(userPermission);
-        });
+        userPermissions.forEach(userPermission ->
+                userPermissionsMap.computeIfAbsent(userPermission.getEmail(), permissions -> new ArrayList<>())
+                .add(userPermission));
 
         userPermissionsMap.forEach((email, userPermissionList) -> {
             Set<String> allowed = new HashSet<>();

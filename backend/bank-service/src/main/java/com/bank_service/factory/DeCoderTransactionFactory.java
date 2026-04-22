@@ -1,6 +1,6 @@
 package com.bank_service.factory;
 
-import com.bank_service.domain.dto.DeCoderTransactionRequest;
+import com.bank_service.domain.dto.game.DeCoderTransactionRequest;
 import com.bank_service.domain.entity.PlayerBet;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
@@ -32,7 +32,7 @@ public class DeCoderTransactionFactory implements GameTransactionFactory<DeCoder
             type = TransactionType.SUBTRACTION;
             balanceAfter = playerBet.getBalanceBefore().subtract(playerBet.getBet());
         }
-        System.out.println("\nplayerBet" + playerBet + "\ntype" + type + "\nbalanceAfter: " + balanceAfter + "winner: " + request.winner());
+
         Transaction transaction = Transaction.builder()
                 .userGuid(playerBet.getGuid())
                 .roomId(request.roomId())

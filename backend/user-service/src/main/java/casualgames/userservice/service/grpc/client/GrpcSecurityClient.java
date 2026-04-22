@@ -1,8 +1,8 @@
 package casualgames.userservice.service.grpc.client;
 
-import casualgames.userservice.exception.ServiceUnavailableException;
 import com.casualgames.grpc.user.DeleteUserRequest;
 import com.casualgames.grpc.user.UserServiceGrpc;
+import com.common_utils.exception.GrpcStatusExceptionMapper;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +19,8 @@ public class GrpcSecurityClient {
     @GrpcClient("security-service")
     private UserServiceGrpc.UserServiceBlockingStub userServiceBlockingStub;
 
+    private final GrpcStatusExceptionMapper grpcStatusExceptionMapper;
+
     public void delete(UUID guid) {
         DeleteUserRequest grpcRequest = DeleteUserRequest.newBuilder()
                 .setGuid(guid.toString())
@@ -28,19 +30,7 @@ public class GrpcSecurityClient {
             userServiceBlockingStub.deleteUser(grpcRequest);
         } catch (StatusRuntimeException e) {
             log.error("gRPC DeleteUser failed: status={}, description={}", e.getStatus().getCode(), e.getStatus().getDescription(), e);
-            throw mapToServiceException(e, "delete");
+            throw grpcStatusExceptionMapper.toException(e);
         }
-    }
-
-    private ServiceUnavailableException mapToServiceException(StatusRuntimeException e, String operation) {
-        String description = e.getStatus().getDescription() != null
-                ? e.getStatus().getDescription()
-                : "Unknown gRPC error";
-
-        return switch (e.getStatus().getCode()) {
-            case NOT_FOUND, ALREADY_EXISTS -> new ServiceUnavailableException(description);
-            case UNAVAILABLE -> new ServiceUnavailableException("Security service is unavailable");
-            default -> new ServiceUnavailableException("Failed to " + operation + " user: " + description);
-        };
     }
 }

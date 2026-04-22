@@ -1,9 +1,9 @@
 package com.security_service.service;
 
+import com.common_utils.exception.NotFoundException;
 import com.security_service.domain.dto.admin.RolePermissionEntry;
 import com.security_service.domain.dto.admin.RolePermissionResponse;
 import com.security_service.domain.entity.Role;
-import com.security_service.exception.NotFoundException;
 import com.security_service.mapper.RolePermissionMapper;
 import com.security_service.repository.RolePermissionRepository;
 import com.security_service.repository.RoleRepository;
@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.security_service.config.ResourceMessageConstants.NOT_FOUND_ROLE;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -31,7 +33,7 @@ public class RolePermissionService {
 
     public RolePermissionResponse getRoleWithPermissions(Long roleId) {
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NotFoundException("Role not found: " + roleId));
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_ROLE, roleId)));
 
         List<RolePermissionEntry> rolePermissions = rolePermissionMapper.toEntries(rolePermissionRepository.findPermissionsByRole(role.getName()));
 

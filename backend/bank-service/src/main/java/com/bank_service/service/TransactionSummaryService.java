@@ -29,6 +29,8 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
+import static com.bank_service.config.ResourceMessageConstants.FORBIDDEN_READ_SUMMARY;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -56,7 +58,7 @@ public class TransactionSummaryService {
                 permissionHelper.getContext(request.userGuid()),
                 permissionHelper.getToken()
         )) {
-            throw new ForbiddenException("Access denied: cannot read summary for user: " + request.userGuid());
+            throw new ForbiddenException(String.format(FORBIDDEN_READ_SUMMARY, request.userGuid()));
         }
 
         LocalDate startDate = request.startDate().withDayOfMonth(ONE_DAY);
@@ -69,9 +71,9 @@ public class TransactionSummaryService {
         ));
     }
 
-    //TODO: добавить в ближейшее время возможность принудительно пересоздавать саммари, чтобы избежать ситуации,
-    // когда руками создали неполное саммари в течение месяца, и осатвшаяся часть месяца туда не попала и не попадет,
-    // потому что саммари считается созданным
+    /*TODO: добавить в ближейшее время возможность принудительно пересоздавать саммари, чтобы избежать ситуации,
+       когда руками создали неполное саммари в течение месяца, и осатвшаяся часть месяца туда не попала и не попадет,
+       потому что саммари считается созданным */
     public void generateSummary(GenerateSummaryRequest request) {
         LocalDate targetMonth = request.targetMonth().withDayOfMonth(ONE_DAY);
         LocalDate nextMonth = targetMonth.plusMonths(1);

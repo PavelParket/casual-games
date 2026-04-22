@@ -1,29 +1,32 @@
 package com.bank_service.processor;
 
-import com.bank_service.domain.dto.DeCoderTransactionRequest;
-import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.ProcessingResult;
+import com.bank_service.domain.dto.game.DeCoderTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionResponse;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
 import com.bank_service.factory.DeCoderTransactionFactory;
-import com.bank_service.mapper.TransactionMapper;
-import com.bank_service.service.TransactionService;
+import com.bank_service.mapper.GameTransactionMapper;
+import com.bank_service.service.TransactionLifecycleService;
 import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import com.bank_service.validator.DeCoderBusinessValidator;
+import com.common_utils.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static com.bank_service.config.ResourceMessageConstants.BAD_REQUEST_TYPE;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DeCoderProcessor implements GameResultProcessor {
+public class DeCoderProcessor implements GameTransactionProcessor {
 
-    private final TransactionService transactionService;
+    private final TransactionLifecycleService transactionLifecycleService;
 
-    private final TransactionMapper transactionMapper;
+    private final GameTransactionMapper gameTransactionMapper;
 
     private final DeCoderTransactionFactory factory;
 
@@ -42,37 +45,31 @@ public class DeCoderProcessor implements GameResultProcessor {
     }
 
     @Override
-    public ProcessingResult process(GameTransactionRequest request) {
-        if (!(request instanceof DeCoderTransactionRequest deCoderRequest)) {
-            return new ProcessingResult.Invalid("Invalid request type for De-Coder");
+    public GameTransactionResponse process(GameTransactionRequest gameTransactionRequest) {
+        if (!(gameTransactionRequest instanceof DeCoderTransactionRequest request)) {
+            throw new BadRequestException(String.format(BAD_REQUEST_TYPE, "De-Coder"));
         }
 
-        businessValidator.validate(deCoderRequest);
+        businessValidator.validate(request);
+
+        List<Transaction> transactions = factory.createTransactions(request);
+
+        List<Transaction> saved = transactionLifecycleService.pending(transactions);
 
         try {
-            List<Transaction> transactions = factory.createTransactions(deCoderRequest);
+            grpcUserTransactionClient.sendUpdates(saved);
 
-            List<Transaction> saved = transactionService.pending(transactions);
+            transactionLifecycleService.success(saved);
 
-            try {
-                grpcUserTransactionClient.sendUpdates(saved);
+            log.info("Successfully processed De-Coder transaction for room: {}", request.roomId());
 
-                transactionService.success(saved);
-
-                log.info("Successfully processed De-Coder transaction for room: {}", deCoderRequest.roomId());
-
-                return new ProcessingResult.Success(saved);
-            } catch (Exception e) {
-                transactionService.rejectSafely(saved);
-
-                log.error("User-service failed, transactions rejected for room: {}", deCoderRequest.roomId(), e);
-
-                throw e;
-            }
+            return gameTransactionMapper.toResponse(request, saved.size());
         } catch (Exception e) {
-            log.error("Error processing De-Coder transaction: {}", e.getMessage());
+            transactionLifecycleService.rejectSafely(saved);
 
-            return new ProcessingResult.Invalid(e.getMessage());
+            log.error("User-service failed, transactions rejected for room: {}", request.roomId(), e);
+
+            throw e;
         }
     }
 }

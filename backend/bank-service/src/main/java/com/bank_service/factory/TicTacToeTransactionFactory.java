@@ -1,18 +1,21 @@
 package com.bank_service.factory;
 
-import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.TicTacToeTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionRequest;
+import com.bank_service.domain.dto.game.TicTacToeTransactionRequest;
 import com.bank_service.domain.entity.PlayerBet;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
 import com.bank_service.domain.enums.TransactionStatus;
 import com.bank_service.domain.enums.TransactionType;
-import com.bank_service.exception.PlayerNotFoundException;
+import com.common_utils.exception.NotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+
+import static com.bank_service.config.ResourceMessageConstants.NOT_FOUND_LOSER;
+import static com.bank_service.config.ResourceMessageConstants.NOT_FOUND_WINNER;
 
 @Component
 public class TicTacToeTransactionFactory implements GameTransactionFactory<TicTacToeTransactionRequest> {
@@ -29,12 +32,12 @@ public class TicTacToeTransactionFactory implements GameTransactionFactory<TicTa
         PlayerBet winner = request.playerBets().stream()
                 .filter(playerBet -> playerBet.getGuid().equals(winnerGuid))
                 .findFirst()
-                .orElseThrow(() -> new PlayerNotFoundException("Winner not found!"));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_WINNER));
 
         PlayerBet loser = request.playerBets().stream()
                 .filter(playerBet -> !playerBet.getGuid().equals(winnerGuid))
                 .findFirst()
-                .orElseThrow(() -> new PlayerNotFoundException("Loser not found!"));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_LOSER));
 
         BigDecimal reward = loser.getBet();
 

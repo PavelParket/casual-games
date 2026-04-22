@@ -1,31 +1,35 @@
 package com.bank_service.processor;
 
-import com.bank_service.domain.dto.DurakTransactionRequest;
-import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.ProcessingResult;
+import com.bank_service.domain.dto.game.DurakTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionResponse;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
-import com.bank_service.exception.PlayerNotFoundException;
 import com.bank_service.factory.DurakTransactionFactory;
-import com.bank_service.mapper.TransactionMapper;
+import com.bank_service.mapper.GameTransactionMapper;
 import com.bank_service.service.RoomProcessingService;
-import com.bank_service.service.TransactionService;
+import com.bank_service.service.TransactionLifecycleService;
 import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import com.bank_service.validator.DurakBusinessValidator;
+import com.common_utils.exception.BadRequestException;
+import com.common_utils.exception.ConflictException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static com.bank_service.config.ResourceMessageConstants.BAD_REQUEST_TYPE;
+import static com.bank_service.config.ResourceMessageConstants.ROOM_ALREADY_PROCESSED;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DurakProcessor implements GameResultProcessor {
+public class DurakProcessor implements GameTransactionProcessor {
 
-    private final TransactionService transactionService;
+    private final TransactionLifecycleService transactionLifecycleService;
 
-    private final TransactionMapper transactionMapper;
+    private final GameTransactionMapper gameTransactionMapper;
 
     private final DurakTransactionFactory transactionFactory;
 
@@ -46,15 +50,15 @@ public class DurakProcessor implements GameResultProcessor {
     }
 
     @Override
-    public ProcessingResult process(GameTransactionRequest gameTransactionRequest) {
+    public GameTransactionResponse process(GameTransactionRequest gameTransactionRequest) {
         if (!(gameTransactionRequest instanceof DurakTransactionRequest request)) {
-            return new ProcessingResult.Invalid("Invalid request type for Durak");
+            throw new BadRequestException(String.format(BAD_REQUEST_TYPE, "Durak"));
         }
 
         if (request.isDraw()) {
             log.info("Draw detected for room: {}", request.roomId());
 
-            return new ProcessingResult.Draw("Game ended in a draw");
+            return gameTransactionMapper.toResponse(request, ZERO_TRANSACTIONS);
         }
 
         businessValidator.validate(request);
@@ -63,32 +67,25 @@ public class DurakProcessor implements GameResultProcessor {
 
         if (!marked) {
             log.info("Room {} already processed, skipping", request.roomId());
-
-            return new ProcessingResult.AlreadyProcessed("Already processed");
+            throw new ConflictException(String.format(ROOM_ALREADY_PROCESSED, request.roomId()));
         }
 
+        List<Transaction> transactions = transactionFactory.createTransactions(request);
+        List<Transaction> saved = transactionLifecycleService.pending(transactions);
+
         try {
-            List<Transaction> transactions = transactionFactory.createTransactions(request);
-            List<Transaction> saved = transactionService.pending(transactions);
+            grpcUserTransactionClient.sendUpdates(saved);
+            transactionLifecycleService.success(saved);
 
-            try {
-                grpcUserTransactionClient.sendUpdates(saved);
-                transactionService.success(saved);
+            log.info("Successfully processed Durak game for room: {}", request.roomId());
 
-                log.info("Successfully processed Durak game for room: {}", request.roomId());
+            return gameTransactionMapper.toResponse(request, saved.size());
+        } catch (Exception e) {
+            transactionLifecycleService.rejectSafely(saved);
 
-                return new ProcessingResult.Success(saved);
-            } catch (Exception e) {
-                transactionService.rejectSafely(saved);
+            log.error("User-service failed, transactions rejected for room: {}", request.roomId(), e);
 
-                log.error("User-service failed, transactions rejected for room: {}", request.roomId(), e);
-
-                throw e;
-            }
-        } catch (PlayerNotFoundException e) {
-            log.error("Player not found in Durak game: {}", e.getMessage());
-
-            return new ProcessingResult.Invalid(e.getMessage());
+            throw e;
         }
     }
 }

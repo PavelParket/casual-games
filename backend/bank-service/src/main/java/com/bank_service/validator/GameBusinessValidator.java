@@ -1,6 +1,6 @@
 package com.bank_service.validator;
 
-import com.bank_service.domain.dto.GameTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionRequest;
 
 import java.math.BigDecimal;
 

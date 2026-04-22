@@ -1,13 +1,19 @@
 package com.bank_service.validator;
 
-import com.bank_service.domain.dto.DurakTransactionRequest;
+import com.bank_service.domain.dto.game.DurakTransactionRequest;
 import com.bank_service.domain.entity.PlayerBet;
-import com.bank_service.exception.BusinessValidationException;
+import com.common_utils.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
+
+import static com.bank_service.config.ResourceMessageConstants.BALANCE_OVERFLOW;
+import static com.bank_service.config.ResourceMessageConstants.INSUFFICIENT_BALANCE;
+import static com.bank_service.config.ResourceMessageConstants.INVALID_PLAYERS_COUNT;
+import static com.bank_service.config.ResourceMessageConstants.NOT_FOUND_WINNER;
+import static com.bank_service.config.ResourceMessageConstants.UNEQUAL_BETS;
 
 @Component
 @Slf4j
@@ -29,7 +35,7 @@ public class DurakBusinessValidator implements GameBusinessValidator<DurakTransa
 
     private void validateEqualBets(List<PlayerBet> bets) {
         if (bets.size() != 2) {
-            throw new BusinessValidationException("Durak requires exactly 2 players");
+            throw new BadRequestException(String.format(INVALID_PLAYERS_COUNT, "Durak"));
         }
 
         BigDecimal bet1 = bets.get(0).getBet();
@@ -37,7 +43,7 @@ public class DurakBusinessValidator implements GameBusinessValidator<DurakTransa
 
         if (bet1.compareTo(bet2) != 0) {
             log.warn("Unequal bets detected: {} vs {}", bet1, bet2);
-            throw new BusinessValidationException(String.format("Bets must be equal. Player 1: %s, Player 2: %s", bet1, bet2));
+            throw new BadRequestException(String.format(UNEQUAL_BETS, bet1, bet2));
         }
     }
 
@@ -45,12 +51,8 @@ public class DurakBusinessValidator implements GameBusinessValidator<DurakTransa
         bets.forEach(bet -> {
             if (bet.getBalanceBefore().compareTo(bet.getBet()) < 0) {
                 log.warn("Insufficient balance for player {}: balance={}, bet={}", bet.getGuid(), bet.getBalanceBefore(), bet.getBet());
-                throw new BusinessValidationException(String.format(
-                        "Insufficient balance. Player %s: balance=%s, bet=%s",
-                        bet.getGuid(),
-                        bet.getBalanceBefore(),
-                        bet.getBet()
-                ));
+
+                throw new BadRequestException(String.format(INSUFFICIENT_BALANCE, bet.getGuid(), bet.getBalanceBefore(), bet.getBet()));
             }
         });
     }
@@ -61,7 +63,8 @@ public class DurakBusinessValidator implements GameBusinessValidator<DurakTransa
 
         if (!winnerExists) {
             log.warn("Winner {} not found in player bets", winner);
-            throw new BusinessValidationException(String.format("Winner %s not found in player list", winner));
+
+            throw new BadRequestException(NOT_FOUND_WINNER);
         }
     }
 
@@ -75,13 +78,8 @@ public class DurakBusinessValidator implements GameBusinessValidator<DurakTransa
 
             if (maxPossibleBalance.compareTo(MAX_BALANCE) > 0) {
                 log.warn("Potential overflow for player {}: max possible balance would be {}", bet.getGuid(), maxPossibleBalance);
-                throw new BusinessValidationException(String.format(
-                        "Balance would exceed maximum limit. Player %s: current=%s, max_possible=%s, limit=%s",
-                        bet.getGuid(),
-                        bet.getBalanceBefore(),
-                        maxPossibleBalance,
-                        MAX_BALANCE
-                ));
+
+                throw new BadRequestException(String.format(BALANCE_OVERFLOW, bet.getGuid(), bet.getBalanceBefore(), maxPossibleBalance, MAX_BALANCE));
             }
         }
     }
