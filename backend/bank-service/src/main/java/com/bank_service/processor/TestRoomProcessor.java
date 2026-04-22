@@ -1,8 +1,8 @@
 package com.bank_service.processor;
 
-import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.GameTransactionResponse;
-import com.bank_service.domain.dto.TestRoomTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionResponse;
+import com.bank_service.domain.dto.game.TestRoomTransactionRequest;
 import com.bank_service.domain.enums.RoomType;
 import com.common_utils.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import static com.bank_service.config.ResourceMessageConstants.BAD_REQUEST_TYPE;
 
 @Component
 @Slf4j
-public class TestRoomProcessor implements GameResultProcessor {
+public class TestRoomProcessor implements GameTransactionProcessor {
 
     @Override
     public boolean supports(RoomType roomType) {

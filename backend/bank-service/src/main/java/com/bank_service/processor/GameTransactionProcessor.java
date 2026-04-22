@@ -1,10 +1,10 @@
 package com.bank_service.processor;
 
-import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.GameTransactionResponse;
+import com.bank_service.domain.dto.game.GameTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionResponse;
 import com.bank_service.domain.enums.RoomType;
 
-public interface GameResultProcessor {
+public interface GameTransactionProcessor {
 
     int ZERO_TRANSACTIONS = 0;
 

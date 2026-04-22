@@ -1,4 +1,4 @@
-package com.bank_service.domain.dto;
+package com.bank_service.domain.dto.game;
 
 import com.bank_service.domain.entity.PlayerBet;
 import com.bank_service.domain.enums.RoomType;
@@ -10,6 +10,7 @@ import java.util.UUID;
 
 @Builder
 public record DeCoderTransactionRequest(
+
         @NotNull(message = "Room ID cannot be null")
         UUID roomId,
 
@@ -18,6 +19,7 @@ public record DeCoderTransactionRequest(
         PlayerBet playerBet,
 
         UUID winner
+
 ) implements GameTransactionRequest {
 
     @Override

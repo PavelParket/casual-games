@@ -1,7 +1,7 @@
 package com.bank_service.controller;
 
-import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.GameTransactionResponse;
+import com.bank_service.domain.dto.game.GameTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionResponse;
 import com.bank_service.service.BankService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

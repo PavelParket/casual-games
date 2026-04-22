@@ -1,6 +1,6 @@
 package com.bank_service.factory;
 
-import com.bank_service.domain.dto.HorseRaceTransactionRequest;
+import com.bank_service.domain.dto.game.HorseRaceTransactionRequest;
 import com.bank_service.domain.entity.HorseRacePlayerBet;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;

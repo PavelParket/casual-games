@@ -1,6 +1,6 @@
 package com.bank_service.factory;
 
-import com.bank_service.domain.dto.DeCoderTransactionRequest;
+import com.bank_service.domain.dto.game.DeCoderTransactionRequest;
 import com.bank_service.domain.entity.PlayerBet;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;

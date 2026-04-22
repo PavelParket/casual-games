@@ -1,7 +1,7 @@
 package com.bank_service.mapper;
 
-import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.GameTransactionResponse;
+import com.bank_service.domain.dto.game.GameTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

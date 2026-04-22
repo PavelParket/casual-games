@@ -1,8 +1,8 @@
 package com.bank_service.processor;
 
-import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.GameTransactionResponse;
-import com.bank_service.domain.dto.TicTacToeTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionResponse;
+import com.bank_service.domain.dto.game.TicTacToeTransactionRequest;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
 import com.bank_service.factory.TicTacToeTransactionFactory;
@@ -25,7 +25,7 @@ import static com.bank_service.config.ResourceMessageConstants.ROOM_ALREADY_PROC
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class TicTacToeProcessor implements GameResultProcessor {
+public class TicTacToeProcessor implements GameTransactionProcessor {
 
     private final TransactionLifecycleService transactionLifecycleService;
 

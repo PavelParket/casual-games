@@ -1,8 +1,8 @@
 package com.bank_service.processor;
 
-import com.bank_service.domain.dto.DeCoderTransactionRequest;
-import com.bank_service.domain.dto.GameTransactionRequest;
-import com.bank_service.domain.dto.GameTransactionResponse;
+import com.bank_service.domain.dto.game.DeCoderTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionRequest;
+import com.bank_service.domain.dto.game.GameTransactionResponse;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
 import com.bank_service.factory.DeCoderTransactionFactory;
@@ -22,7 +22,7 @@ import static com.bank_service.config.ResourceMessageConstants.BAD_REQUEST_TYPE;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DeCoderProcessor implements GameResultProcessor {
+public class DeCoderProcessor implements GameTransactionProcessor {
 
     private final TransactionLifecycleService transactionLifecycleService;
 

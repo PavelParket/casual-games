@@ -1,6 +1,6 @@
 package com.bank_service.validator;
 
-import com.bank_service.domain.dto.DeCoderTransactionRequest;
+import com.bank_service.domain.dto.game.DeCoderTransactionRequest;
 import com.bank_service.domain.entity.PlayerBet;
 import com.common_utils.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;

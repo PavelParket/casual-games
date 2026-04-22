@@ -1,4 +1,4 @@
-package com.bank_service.domain.dto;
+package com.bank_service.domain.dto.game;
 
 import com.bank_service.domain.enums.RoomType;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
