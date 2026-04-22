@@ -8,7 +8,7 @@ import com.bank_service.domain.enums.RoomType;
 import com.bank_service.factory.TicTacToeTransactionFactory;
 import com.bank_service.mapper.GameTransactionMapper;
 import com.bank_service.service.RoomProcessingService;
-import com.bank_service.service.TransactionService;
+import com.bank_service.service.TransactionLifecycleService;
 import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import com.bank_service.validator.TicTacToeBusinessValidator;
 import com.common_utils.exception.BadRequestException;
@@ -27,7 +27,7 @@ import static com.bank_service.config.ResourceMessageConstants.ROOM_ALREADY_PROC
 @Slf4j
 public class TicTacToeProcessor implements GameResultProcessor {
 
-    private final TransactionService transactionService;
+    private final TransactionLifecycleService transactionLifecycleService;
 
     private final GameTransactionMapper gameTransactionMapper;
 
@@ -76,17 +76,17 @@ public class TicTacToeProcessor implements GameResultProcessor {
 
         List<Transaction> transactions = factory.createTransactions(request);
 
-        List<Transaction> saved = transactionService.pending(transactions);
+        List<Transaction> saved = transactionLifecycleService.pending(transactions);
 
         try {
             grpcUserTransactionClient.sendUpdates(saved);
-            transactionService.success(saved);
+            transactionLifecycleService.success(saved);
 
             log.info("Successfully processed Tic-Tac-Toe game for room: {}", request.roomId());
 
             return gameTransactionMapper.toResponse(request, saved.size());
         } catch (Exception e) {
-            transactionService.rejectSafely(saved);
+            transactionLifecycleService.rejectSafely(saved);
 
             log.error("User-service failed, transactions rejected for room: {}", request.roomId(), e);
 

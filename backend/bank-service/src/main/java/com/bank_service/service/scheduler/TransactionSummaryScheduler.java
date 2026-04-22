@@ -1,4 +1,4 @@
-package com.bank_service.scheduler;
+package com.bank_service.service.scheduler;
 
 import com.bank_service.domain.dto.GenerateSummaryRequest;
 import com.bank_service.service.TransactionSummaryService;

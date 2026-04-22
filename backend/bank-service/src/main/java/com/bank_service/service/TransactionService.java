@@ -19,12 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import static com.bank_service.config.ResourceMessageConstants.FORBIDDEN_DEPOSIT;
@@ -34,6 +32,8 @@ import static com.bank_service.config.ResourceMessageConstants.FORBIDDEN_READ_TR
 @RequiredArgsConstructor
 @Slf4j
 public class TransactionService {
+
+    private final TransactionLifecycleService transactionLifecycleService;
 
     private final TransactionRepository transactionRepository;
 
@@ -46,54 +46,6 @@ public class TransactionService {
     private final PermissionHelper permissionHelper;
 
     private final PermissionValidator permissionValidator;
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void success(List<Transaction> transactions) {
-        transactions.forEach(transaction -> transaction.setStatus(TransactionStatus.SUCCESS));
-        transactionRepository.saveAll(transactions);
-
-        log.info("Transactions marked as SUCCESS: {}", transactions.size());
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void reject(List<Transaction> transactions) {
-        transactions.forEach(transaction -> transaction.setStatus(TransactionStatus.REJECTED));
-        transactionRepository.saveAll(transactions);
-
-        log.info("Transactions marked as REJECTED: {}", transactions.size());
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void rejectSafely(List<Transaction> transactions) {
-        try {
-            reject(transactions);
-        } catch (Exception e) {
-            log.error("Failed to reject transactions, attempting recovery", e);
-
-            List<Long> ids = transactions.stream()
-                    .map(Transaction::getId)
-                    .filter(Objects::nonNull)
-                    .toList();
-
-            if (!ids.isEmpty()) {
-                List<Transaction> fresh = transactionRepository.findAllById(ids);
-                fresh.forEach(transaction -> transaction.setStatus(TransactionStatus.REJECTED));
-                transactionRepository.saveAll(fresh);
-
-                log.info("Successfully rejected {} transactions on retry", fresh.size());
-            }
-        }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public List<Transaction> pending(List<Transaction> transactions) {
-        transactions.forEach(transaction -> transaction.setStatus(TransactionStatus.PENDING));
-        List<Transaction> saved = transactionRepository.saveAll(transactions);
-
-        log.info("Transactions marked as PENDING: {}", transactions.size());
-
-        return saved;
-    }
 
     @Transactional(readOnly = true)
     public PageResponse<TransactionResponse> getByUserGuid(UUID userGuid, Pageable pageable) {
@@ -127,18 +79,20 @@ public class TransactionService {
 
         Transaction transaction = defaultTransactionFactory.createTransaction(request, balanceBefore);
 
-        List<Transaction> pendingTransactions = pending(List.of(transaction));
+        List<Transaction> pendingTransactions = transactionLifecycleService.pending(List.of(transaction));
 
         try {
             grpcUserTransactionClient.sendUpdates(pendingTransactions);
 
-            success(pendingTransactions);
+            transactionLifecycleService.success(pendingTransactions);
 
             return transactionMapper.toResponse(pendingTransactions.getFirst());
 
         } catch (Exception e) {
             log.error("Deposit failed for user: {}. Moving to REJECTED.", request.userGuid());
-            this.rejectSafely(pendingTransactions);
+
+            transactionLifecycleService.rejectSafely(pendingTransactions);
+
             throw e;
         }
     }

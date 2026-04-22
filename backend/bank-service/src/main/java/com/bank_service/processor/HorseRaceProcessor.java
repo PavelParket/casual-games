@@ -8,7 +8,7 @@ import com.bank_service.domain.enums.RoomType;
 import com.bank_service.factory.HorseRaceTransactionFactory;
 import com.bank_service.mapper.GameTransactionMapper;
 import com.bank_service.service.RoomProcessingService;
-import com.bank_service.service.TransactionService;
+import com.bank_service.service.TransactionLifecycleService;
 import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import com.common_utils.exception.BadRequestException;
 import com.common_utils.exception.ConflictException;
@@ -26,7 +26,7 @@ import static com.bank_service.config.ResourceMessageConstants.ROOM_ALREADY_PROC
 @Slf4j
 public class HorseRaceProcessor implements GameResultProcessor {
 
-    private final TransactionService transactionService;
+    private final TransactionLifecycleService transactionLifecycleService;
 
     private final GameTransactionMapper gameTransactionMapper;
 
@@ -65,17 +65,17 @@ public class HorseRaceProcessor implements GameResultProcessor {
 
         List<Transaction> transactions = horseRaceTransactionFactory.createTransactions(request);
 
-        List<Transaction> saved = transactionService.pending(transactions);
+        List<Transaction> saved = transactionLifecycleService.pending(transactions);
 
         try {
             grpcUserTransactionClient.sendUpdates(saved);
-            transactionService.success(saved);
+            transactionLifecycleService.success(saved);
 
             log.info("Successfully processed Horse Race game for room={}, winnerHorseIndex={}, transactions={}", request.roomId(), request.winnerHorseIndex(), saved.size());
 
             return gameTransactionMapper.toResponse(request, saved.size());
         } catch (Exception e) {
-            transactionService.rejectSafely(saved);
+            transactionLifecycleService.rejectSafely(saved);
 
             log.error("User-service failed, transactions rejected for room={}", request.roomId(), e);
 
