@@ -20,6 +20,6 @@ public class ServiceExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleExpiredCredentials(CredentialsExpiredException e, HttpServletRequest request) {
         log.warn("Credentials expired: {}", e.getMessage());
-        return ErrorResponse.of(ErrorCode.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, e.getMessage(), null, request);
+        return ErrorResponse.of(ErrorCode.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, e.getMessage(), null, request.getRequestURI());
     }
 }

@@ -28,7 +28,10 @@ dependencyManagement {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework:spring-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    compileOnly 'org.springframework.boot:spring-boot-starter-web'
 
     compileOnly "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
     compileOnly "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"
