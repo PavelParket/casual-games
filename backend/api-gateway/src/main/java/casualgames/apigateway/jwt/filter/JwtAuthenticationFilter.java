@@ -1,4 +1,4 @@
-package casualgames.apigateway.filter;
+package casualgames.apigateway.jwt.filter;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

@@ -1,11 +1,11 @@
 package com.security_starter.helper;
 
+import com.common_utils.enums.Role;
+import com.common_utils.enums.Status;
 import com.security_starter.config.AuthenticationToken;
 import com.security_starter.config.PermissionContext;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
-import com.security_starter.enums.Role;
-import com.security_starter.enums.Status;
 import com.security_starter.factory.PermissionContextFactory;
 import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;

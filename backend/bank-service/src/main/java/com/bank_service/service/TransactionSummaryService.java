@@ -13,7 +13,6 @@ import com.bank_service.repository.TransactionSummaryRepository;
 import com.bank_service.service.helper.PermissionHelper;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
-import com.security_starter.exception.ForbiddenException;
 import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

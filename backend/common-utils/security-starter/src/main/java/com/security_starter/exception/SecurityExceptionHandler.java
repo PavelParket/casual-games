@@ -1,7 +1,7 @@
-package com.security_starter.exception.handler;
+package com.security_starter.exception;
 
-import com.security_starter.exception.ForbiddenException;
-import com.security_starter.exception.JwtException;
+import com.common_utils.exception.ForbiddenException;
+import com.common_utils.exception.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,7 +1,7 @@
 package com.security_starter.config;
 
-import com.security_starter.exception.handler.JwtAccessDeniedHandler;
-import com.security_starter.exception.handler.JwtAuthenticationEntryPoint;
+import com.security_starter.exception.JwtAccessDeniedHandler;
+import com.security_starter.exception.JwtAuthenticationEntryPoint;
 import com.security_starter.jwt.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

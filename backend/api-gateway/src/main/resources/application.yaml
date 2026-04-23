@@ -5,6 +5,16 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+  data:
+    redis:
+      enabled: ${REDIS_ENABLED:true}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      password: ${REDIS_PASSWORD:}
+      timeout: 500ms
+      connect-timeout: 1s
+
   cloud:
     gateway:
       routes:
@@ -36,10 +46,21 @@ spring:
           filters:
             - StripPrefix=1
 
+        - id: bank-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/bank-service/**
+          filters:
+            - StripPrefix=1
+
   security:
     jwt:
       secret: ${JWT_SECRET}
-
+      algorithm: ${JWT_ALGORITHM:HS256}
+      public-paths:
+        - /security-service/auth/**
+        - /actuator/health
+        - /actuator/info
 
 server:
-  port: 8088
+  port: 8888

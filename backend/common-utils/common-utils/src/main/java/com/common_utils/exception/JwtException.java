@@ -1,4 +1,4 @@
-package com.security_starter.exception;
+package com.common_utils.exception;
 
 public class JwtException extends RuntimeException {
 

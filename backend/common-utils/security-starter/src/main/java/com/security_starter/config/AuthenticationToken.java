@@ -1,7 +1,7 @@
 package com.security_starter.config;
 
-import com.security_starter.enums.Role;
-import com.security_starter.enums.Status;
+import com.common_utils.enums.Role;
+import com.common_utils.enums.Status;
 import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
