@@ -11,6 +11,7 @@ import com.bank_service.mapper.TransactionSummaryMapper;
 import com.bank_service.repository.TransactionRepository;
 import com.bank_service.repository.TransactionSummaryRepository;
 import com.bank_service.service.helper.PermissionHelper;
+import com.common_utils.exception.ForbiddenException;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
 import com.security_starter.validator.PermissionValidator;
