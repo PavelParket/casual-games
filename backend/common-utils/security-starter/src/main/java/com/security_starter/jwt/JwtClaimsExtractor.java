@@ -1,7 +1,7 @@
 package com.security_starter.jwt;
 
-import com.common_utils.enums.Role;
-import com.common_utils.enums.Status;
+import com.security_starter.enums.Role;
+import com.security_starter.enums.Status;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

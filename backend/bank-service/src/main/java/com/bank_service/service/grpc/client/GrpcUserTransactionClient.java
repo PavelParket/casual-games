@@ -4,7 +4,7 @@ import com.bank_service.domain.entity.Transaction;
 import com.bank_service.mapper.TransactionMapper;
 import com.casualgames.grpc.transaction.UpdateBalancesRequest;
 import com.casualgames.grpc.transaction.UserTransactionServiceGrpc;
-import com.common_utils.exception.GrpcStatusExceptionMapper;
+import com.grpc_utils.mapper.GrpcStatusExceptionMapper;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

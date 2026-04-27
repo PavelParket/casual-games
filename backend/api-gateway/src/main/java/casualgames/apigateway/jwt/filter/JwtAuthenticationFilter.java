@@ -5,7 +5,6 @@ import casualgames.apigateway.jwt.JwtProperties;
 import casualgames.apigateway.jwt.JwtValidator;
 import com.common_utils.dto.ErrorResponse;
 import com.common_utils.enums.ErrorCode;
-import com.common_utils.enums.Role;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
@@ -36,9 +35,9 @@ import static casualgames.apigateway.config.ResourceMessageConstants.BAD_REQUEST
 public class JwtAuthenticationFilter implements WebFilter, Ordered {
 
     private static final String BEARER_PREFIX = "Bearer ";
-    static final String HEADER_USER_GUID = "X-User-Guid";
-    static final String HEADER_USER_EMAIL = "X-User-Email";
-    static final String HEADER_USER_ROLE = "X-User-Role";
+    public static final String HEADER_USER_GUID = "X-User-Guid";
+    public static final String HEADER_USER_EMAIL = "X-User-Email";
+    public static final String HEADER_USER_ROLE = "X-User-Role";
 
     private final ObjectMapper objectMapper;
     private final JwtValidator jwtValidator;
@@ -60,6 +59,7 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
     }
 
     @Override
+    @NonNull
     public Mono<Void> filter(ServerWebExchange exchange, @NonNull WebFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
@@ -82,19 +82,21 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
         try {
             UUID guid = jwtClaimsExtractor.extractGuid(token);
             String email = jwtClaimsExtractor.extractEmail(token);
-            Role role = jwtClaimsExtractor.extractRole(token);
-            String roleName = role != null ? role.name() : "";
+            List<String> roles = jwtClaimsExtractor.extractRole(token);
+            List<SimpleGrantedAuthority> authorities = roles.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .toList();
 
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                     guid,
                     null,
-                    roleName.isBlank() ? List.of() : List.of(new SimpleGrantedAuthority(roleName))
+                    authorities
             );
 
             ServerHttpRequest request = exchange.getRequest().mutate()
                     .header(HEADER_USER_GUID, guid.toString())
                     .header(HEADER_USER_EMAIL, email != null ? email : "")
-                    .header(HEADER_USER_ROLE, roleName)
+                    .header(HEADER_USER_ROLE, roles.isEmpty() ? "" : roles.getFirst())
                     .build();
 
             return chain.filter(exchange.mutate().request(request).build())

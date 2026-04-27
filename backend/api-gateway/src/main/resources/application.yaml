@@ -17,41 +17,51 @@ spring:
 
   cloud:
     gateway:
-      routes:
-        - id: user-service
-          uri: http://localhost:8083
-          predicates:
-            - Path=/user-service/**
-          filters:
-            - StripPrefix=1
+      server:
+        webflux:
+          default-filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter:
+                  replenishRate: ${RATE_LIMIT_REPLENISH_RATE:10}
+                  burstCapacity: ${RATE_LIMIT_BURST_CAPACITY:20}
+                  requestedTokens: 1
+                key-resolver: "#{@keyResolver}"
+          routes:
+            - id: user-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/user-service/**
+              filters:
+                - StripPrefix=1
 
-        - id: security-service
-          uri: http://localhost:8080
-          predicates:
-            - Path=/security-service/**
-          filters:
-            - StripPrefix=1
+            - id: security-service
+              uri: http://localhost:8080
+              predicates:
+                - Path=/security-service/**
+              filters:
+                - StripPrefix=1
 
-        - id: game-service
-          uri: http://localhost:8082
-          predicates:
-            - Path=/game-service/**
-          filters:
-            - StripPrefix=1
+            - id: game-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/game-service/**
+              filters:
+                - StripPrefix=1
 
-        - id: websocket-service
-          uri: http://localhost:8081
-          predicates:
-            - Path=/websocket-service/**
-          filters:
-            - StripPrefix=1
+            - id: websocket-service
+              uri: http://localhost:8081
+              predicates:
+                - Path=/websocket-service/**
+              filters:
+                - StripPrefix=1
 
-        - id: bank-service
-          uri: http://localhost:8084
-          predicates:
-            - Path=/bank-service/**
-          filters:
-            - StripPrefix=1
+            - id: bank-service
+              uri: http://localhost:8084
+              predicates:
+                - Path=/bank-service/**
+              filters:
+                - StripPrefix=1
 
   security:
     jwt:
@@ -64,3 +74,8 @@ spring:
 
 server:
   port: 8888
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.cloud.gateway: DEBUG

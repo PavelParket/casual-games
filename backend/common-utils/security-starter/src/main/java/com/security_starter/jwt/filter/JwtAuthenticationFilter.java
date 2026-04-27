@@ -1,8 +1,8 @@
 package com.security_starter.jwt.filter;
 
-import com.common_utils.enums.Status;
 import com.common_utils.exception.JwtException;
 import com.security_starter.config.AuthenticationToken;
+import com.security_starter.enums.Status;
 import com.security_starter.jwt.JwtClaimsExtractor;
 import com.security_starter.provider.PermissionProvider;
 import com.security_starter.validator.JwtValidator;

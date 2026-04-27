@@ -19,7 +19,11 @@ repositories {
     mavenCentral()
 }
 
-def springCloudGateway = '4.2.7'
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2025.0.2"
+    }
+}
 
 dependencies {
     implementation 'com.casualgames:common-utils:1.0.0'
@@ -27,8 +31,8 @@ dependencies {
     //Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation "org.springframework.cloud:spring-cloud-starter-gateway:${springCloudGateway}"
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
 
     //JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.13.0'

@@ -1,4 +1,4 @@
-package com.common_utils.enums;
+package com.security_starter.enums;
 
 public enum Status {
 

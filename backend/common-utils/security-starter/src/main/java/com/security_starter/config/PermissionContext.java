@@ -1,7 +1,7 @@
 package com.security_starter.config;
 
-import com.common_utils.enums.Role;
-import com.common_utils.enums.Status;
+import com.security_starter.enums.Role;
+import com.security_starter.enums.Status;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

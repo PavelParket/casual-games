@@ -1,11 +1,10 @@
 package casualgames.apigateway.jwt;
 
-import com.common_utils.enums.Role;
-import com.common_utils.enums.Status;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -22,29 +21,19 @@ public class JwtClaimsExtractor {
         return jwtDecoder.decode(token).get("email", String.class);
     }
 
-    public Role extractRole(String token) {
+    public List<String> extractRole(String token) {
         Claims claims = jwtDecoder.decode(token);
-        String roleStr = claims.get("role", String.class);
+        Object roles = claims.get("roles");
 
-        try {
-            return roleStr != null ? Role.valueOf(roleStr) : null;
-        } catch (IllegalArgumentException e) {
-            log.warn("Unknown role in token: {}", roleStr);
-
-            return null;
+        if (roles instanceof List<?> list) {
+            return list.stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .toList();
         }
-    }
 
-    public Status extractStatus(String token) {
-        Claims claims = jwtDecoder.decode(token);
-        String statusStr = claims.get("status", String.class);
+        log.warn("No roles claim found in token");
 
-        try {
-            return statusStr != null ? Status.valueOf(statusStr) : null;
-        } catch (IllegalArgumentException e) {
-            log.warn("Unknown status in token: {}", statusStr);
-
-            return null;
-        }
+        return List.of();
     }
 }

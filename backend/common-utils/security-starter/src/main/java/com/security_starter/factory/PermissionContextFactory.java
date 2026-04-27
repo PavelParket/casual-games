@@ -1,8 +1,8 @@
 package com.security_starter.factory;
 
-import com.common_utils.enums.Role;
-import com.common_utils.enums.Status;
 import com.security_starter.config.PermissionContext;
+import com.security_starter.enums.Role;
+import com.security_starter.enums.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
