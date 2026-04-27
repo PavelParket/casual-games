@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="400px" height="400px">
+  <defs>
+    <radialGradient id="volumeGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="30%" stop-color="#c72424"/>
+      <stop offset="70%" stop-color="#c72424"/> 
+      <stop offset="100%" stop-color="#6e0d0d"/> 
+    </radialGradient>
+  </defs>
+
+  <path d="M 0 60 L 60 0 L 100 0 L 0 100 Z" fill="url(#volumeGradient)" />
+
+  <text x="30" y="60" font-family="Poppins, sans-serif" font-size="24" font-weight="bold" fill="white" transform="rotate(-45 35 65)">NEW</text>
+</svg>
