@@ -19,6 +19,13 @@ export interface TransactionResponse {
     createdAtTime: string;
 }
 
+export interface TopWinnersResponse {
+    id: number;
+    username: string;
+    amount: number;
+    roomType: string;
+}
+
 export interface PageResponse<T> {
     content: T[];
     page: number;
