@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useWebSocket } from "../../hooks/useWebSocket";
+import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
 import { Box, Button, Card, Container, Icon, Input, ToastContainer, Typography, useThemedIcon } from "../../ui";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
@@ -69,16 +69,31 @@ export default function TicTacToeRoom() {
          .finally(() => setIsLoading(false));
    }, [dispatch, guid, navigate, roomId]);
 
+   const handleDisplaced = useCallback(() => {
+      showSystemToast("Your session was opened in another window", "system-error");
+      navigate("/rooms");
+   }, [navigate, showSystemToast]);
+
    const handleDisconnect = useCallback(() => {
       showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
       setTimeout(() => navigate("/rooms"), 5000);
    }, [navigate, showSystemToast]);
 
-   const { isConnected, message, send } = useWebSocket<TicTacToeGameMessage>(
+   const { isConnected, message, send, reconnectAttempt } = useWebSocket<TicTacToeGameMessage>(
       roomId,
       room?.type,
       handleDisconnect,
+      handleDisplaced,
    );
+
+   useEffect(() => {
+      if (reconnectAttempt > 0) {
+         showSystemToast(
+            `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
+            "system-error"
+         );
+      }
+   }, [reconnectAttempt, showSystemToast]);
 
    const processReset = useCallback(() => {
       showGameToast("Your opponent left the room. Waiting for a new player...", "game-info");

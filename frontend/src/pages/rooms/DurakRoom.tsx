@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { clearError, getRoomById } from "../../store/slices/DurakRoomSlice";
 import type { CardSuit, DurakAction, DurakCard, DurakPhase, DurakTablePair } from "../../models/Durak";
 import { findByGuid } from "../../store/slices/UserSlice";
-import { useWebSocket } from "../../hooks/useWebSocket";
+import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
 import type { DurakGameMessage } from "../../models/WsMessage";
 import { useDurakMessages } from "../../hooks/useDurakMessages";
 import LoadingPage from "../LoadingPage";
@@ -95,16 +95,31 @@ export default function DurakRoom() {
             .finally(() => setIsLoading(false));
     }, [dispatch, guid, navigate, roomId]);
 
-    const handleDisconnect = useCallback(() => {
-        showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
-        setTimeout(() => navigate("/rooms"), 5000);
+    const handleDisplaced = useCallback(() => {
+        showSystemToast("Your session was opened in another window", "system-error");
+        navigate("/rooms");
     }, [navigate, showSystemToast]);
 
-    const { isConnected, message, send } = useWebSocket<DurakGameMessage>(
+    const handleDisconnect = useCallback(() => {
+        showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
+        setTimeout(() => navigate("/rooms"), 3000);
+    }, [navigate, showSystemToast]);
+
+    const { isConnected, message, send, reconnectAttempt } = useWebSocket<DurakGameMessage>(
         roomId,
         room?.type,
         handleDisconnect,
+        handleDisplaced,
     );
+
+    useEffect(() => {
+        if (reconnectAttempt > 0) {
+            showSystemToast(
+                `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
+                "system-error"
+            );
+        }
+    }, [reconnectAttempt, showSystemToast]);
 
     const processGameState = useCallback((msg: DurakGameMessage) => {
         const prevTable = prevTableRef.current;
