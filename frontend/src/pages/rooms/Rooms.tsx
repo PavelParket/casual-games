@@ -5,11 +5,13 @@ import { useEffect, useState, useMemo } from "react";
 import { Box, Button, Card, Container, Icon, Modal, ComboBox, Stack, FormField, Textfield, Typography, useThemedIcon, Grid, CheckBox, Divider } from "../../ui";
 import { ROOM_TYPE_HANDLERS, ROOM_TYPE_LABELS, type Room, type RoomType } from "../../models/Room";
 import { validateRoomName } from "../../utils/SecurityUtils";
-import { clearError, createRoom, getRooms, getTypes } from "../../store/slices/RoomSlice";
+import { clearError, createRoom, getRooms } from "../../store/slices/RoomSlice";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
 
-type SortOption = 'freshness' | 'alphabet';
+type SortOption = 'newest' | 'alphabet';
 type SortDirection = 'asc' | 'desc';
+
+const AVAILABLE_ROOM_TYPES = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
 
 function CreateRoomCard({ onClick }: { onClick: () => void }) {
     const [hovered, setHovered] = useState(false);
@@ -50,14 +52,14 @@ export default function Rooms() {
     const dispatch = useDispatch<AppDispatch>();
 
     const authentication = useSelector((state: RootState) => state.auth);
-    const { rooms, roomTypes } = useSelector((state: RootState) => state.rooms);
+    const { rooms } = useSelector((state: RootState) => state.rooms);
 
     const [isCreateRoomModalOpen, setIsCreateRoomModalOpen] = useState<boolean>(false);
     const [roomName, setRoomName] = useState<string>("");
     const [roomType, setRoomType] = useState<RoomType>();
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [sortOption, setSortOption] = useState<SortOption>('freshness');
+    const [sortOption, setSortOption] = useState<SortOption>('newest');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
     const [selectedTypes, setSelectedTypes] = useState<RoomType[]>([]);
     const [isTypesExpanded, setIsTypesExpanded] = useState<boolean>(true);
@@ -65,14 +67,10 @@ export default function Rooms() {
     const { getIcon, getInverseIcon } = useThemedIcon();
     const [validationError, setValidationError] = useState<string>("");
 
-    const validRoomTypes = useMemo(() =>
-        (roomTypes ?? []).filter(t => t in ROOM_TYPE_LABELS),
-        [roomTypes]);
     useSliceErrorToast((state: RootState) => state.rooms.errors, clearError);
 
     useEffect(() => {
         dispatch(getRooms());
-        dispatch(getTypes());
     }, [dispatch]);
 
     useEffect(() => {
@@ -88,7 +86,7 @@ export default function Rooms() {
     }, [location.pathname, location.state, navigate]);
 
     const groupedRooms = useMemo(() => {
-        if (!rooms || !validRoomTypes) return [];
+        if (!rooms) return [];
 
         let result = rooms.map((room, index) => ({ room, index }));
 
@@ -97,7 +95,7 @@ export default function Rooms() {
             result = result.filter(r => r.room.name.toLowerCase().includes(q));
         }
 
-        const activeTypes = selectedTypes.length > 0 ? [...selectedTypes] : [...validRoomTypes];
+        const activeTypes = selectedTypes.length > 0 ? [...selectedTypes] : [...AVAILABLE_ROOM_TYPES];
         result = result.filter(r => activeTypes.includes(r.room.type));
 
         const groups: Record<string, typeof result> = {};
@@ -131,7 +129,7 @@ export default function Rooms() {
                     rooms: groupRooms.map(r => r.room)
                 };
             });
-    }, [rooms, validRoomTypes, searchQuery, selectedTypes, sortOption, sortDirection]);
+    }, [rooms, searchQuery, selectedTypes, sortOption, sortDirection]);
 
     const handleSortClick = (option: SortOption) => {
         if (sortOption === option) {
@@ -272,8 +270,8 @@ export default function Rooms() {
                                 }}
                             >
                                 <Button
-                                    variant={sortOption === 'freshness' ? 'solid' : 'ghost'}
-                                    onClick={() => handleSortClick('freshness')}
+                                    variant={sortOption === 'newest' ? 'solid' : 'ghost'}
+                                    onClick={() => handleSortClick('newest')}
                                     style={{ flex: 1, padding: "0.5rem 0.2rem", boxShadow: 'none', minWidth: 0 }}
                                 >
                                     <Stack direction="row" align="center" justify="center" gap="4px" style={{ width: "100%" }}>
@@ -281,7 +279,7 @@ export default function Rooms() {
                                             variant="body"
                                             style={{
                                                 fontSize: "0.85rem",
-                                                fontWeight: sortOption === 'freshness' ? 600 : 500,
+                                                fontWeight: sortOption === 'newest' ? 600 : 500,
                                                 color: 'inherit',
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis'
@@ -294,8 +292,8 @@ export default function Rooms() {
                                             alt="sort dir"
                                             size={16}
                                             style={{
-                                                transform: sortOption === 'freshness' && sortDirection === 'asc' ? 'rotate(180deg)' : 'none',
-                                                opacity: sortOption === 'freshness' ? 0.8 : 0,
+                                                transform: sortOption === 'newest' && sortDirection === 'asc' ? 'rotate(180deg)' : 'none',
+                                                opacity: sortOption === 'newest' ? 0.8 : 0,
                                                 transition: 'transform 0.2s ease'
                                             }}
                                         />
@@ -357,7 +355,7 @@ export default function Rooms() {
 
                             {isTypesExpanded && (
                                 <Stack gap="0.5rem" style={{ padding: "0.25rem 0.5rem" }}>
-                                    {(validRoomTypes ?? []).map(t => (
+                                    {AVAILABLE_ROOM_TYPES.map(t => (
                                         <Stack key={t} direction="row" justify="space-between" align="center">
                                             <Typography variant="body" style={{ fontSize: "0.85rem" }}>{ROOM_TYPE_LABELS[t]}</Typography>
                                             <CheckBox
@@ -437,7 +435,7 @@ export default function Rooms() {
                 <Box style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <Textfield value={roomName} onChange={handleRoomNameChange} placeholder="Room name" />
                     <ComboBox
-                        options={(validRoomTypes ?? []).map((type) => ({
+                        options={AVAILABLE_ROOM_TYPES.map((type) => ({
                             value: type,
                             label: ROOM_TYPE_LABELS[type],
                         }))}
