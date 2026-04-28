@@ -1,0 +1,111 @@
+.checkbox-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.checkbox-wrapper.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.checkbox-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.checkbox-box {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    backdrop-filter: blur(var(--glass-blur));
+}
+
+.checkbox-input:focus-visible ~ .checkbox-box {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 30%, transparent) !important;
+}
+
+/* =========================== */
+/* ========== SOLID ========== */
+/* =========================== */
+.checkbox-solid {
+    border: 2px solid var(--color-border);
+    background: var(--glass-surface);
+}
+
+.checkbox-wrapper:hover:not(.disabled) .checkbox-solid {
+    border-color: var(--color-primary);
+}
+
+.checkbox-solid.checked {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* ============================= */
+/* ========== OUTLINE ========== */
+/* ============================= */
+.checkbox-outline {
+    border: 1.5px solid var(--color-border);
+    background: var(--glass-surface);
+}
+
+.checkbox-wrapper:hover:not(.disabled) .checkbox-outline {
+    border-color: var(--color-primary);
+}
+
+.checkbox-outline.checked {
+    background: transparent;
+    border-color: var(--color-primary);
+}
+
+/* =========================== */
+/* ========== GHOST ========== */
+/* =========================== */
+.checkbox-ghost {
+    border: 2px solid transparent;
+    background: var(--glass-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.checkbox-wrapper:hover:not(.disabled) .checkbox-ghost {
+    background: var(--btn-ghost-hover-bg);
+}
+
+.checkbox-wrapper:active:not(.disabled) .checkbox-ghost {
+    background: var(--btn-ghost-active-bg);
+}
+
+.checkbox-icon {
+    pointer-events: none;
+    animation: check-pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes check-pop {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.checkbox-label-text {
+    color: var(--color-text);
+    font-family: var(--font-family);
+    font-size: 0.95rem;
+}

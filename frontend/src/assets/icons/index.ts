@@ -18,6 +18,7 @@ import doubleLeftArrowLight from './double_left_arrow_light.svg';
 import rightArrowLight from './right_arrow_light.svg';
 import doubleRightArrowLight from './double_right_arrow_light.svg';
 import newLight from './new_light.svg'
+import searchLight from './search_light.svg'
 
 // Dark theme icons
 import userDark from './user_dark.svg';
@@ -38,6 +39,7 @@ import leftArrowDark from './left_arrow_dark.svg';
 import doubleLeftArrowDark from './double_left_arrow_dark.svg';
 import rightArrowDark from './right_arrow_dark.svg';
 import doubleRightArrowDark from './double_right_arrow_dark.svg';
+import searchDark from './search_dark.svg'
 
 export const Icons = {
     light: {
@@ -60,6 +62,7 @@ export const Icons = {
         rightArrow: rightArrowLight,
         doubleRightArrow: doubleRightArrowLight,
         new: newLight,
+        search: searchLight,
     },
     dark: {
         user: userDark,
@@ -81,5 +84,6 @@ export const Icons = {
         rightArrow: rightArrowDark,
         doubleRightArrow: doubleRightArrowDark,
         new: newLight,
+        search: searchDark,
     },
 } as const;
