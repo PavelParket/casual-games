@@ -17,7 +17,6 @@ export function TurnTimer({ remainingSeconds, isMyTurn }: TurnTimerProps) {
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
-        // Always clear previous interval first
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -28,21 +27,24 @@ export function TurnTimer({ remainingSeconds, isMyTurn }: TurnTimerProps) {
             return;
         }
 
-        // Reset display to the new server value immediately
         setDisplay(remainingSeconds);
 
         if (remainingSeconds <= 0) return;
 
+        const endTime = Date.now() + remainingSeconds * 1000;
+
         intervalRef.current = setInterval(() => {
-            setDisplay(prev => {
-                if (prev === null || prev <= 1) {
-                    clearInterval(intervalRef.current!);
-                    intervalRef.current = null;
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
+            const remaining = Math.ceil((endTime - Date.now()) / 1000);
+
+            if (remaining <= 0) {
+                clearInterval(intervalRef.current!);
+                intervalRef.current = null;
+                setDisplay(0);
+                return;
+            }
+
+            setDisplay(remaining);
+        }, 200);
 
         return () => {
             if (intervalRef.current) {

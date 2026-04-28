@@ -6,10 +6,11 @@ import type { HorseRaceHorseKeyframes } from "../../models/HorseRace";
 import { validateToastMessage } from "../../utils/SecurityUtils";
 import { getPreset, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/HorseRaceRoomSlice";
 import { findByGuid } from "../../store/slices/UserSlice";
-import { useWebSocket } from "../../hooks/useWebSocket";
+import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
 import type { HorseRaceGameMessage } from "../../models/WsMessage";
 import { Box, Button, Card, Container, Input, Toast, Typography } from "../../ui";
 import HorseSprite from "../../assets/sprites/HorseSprite";
+import { useSystemToastContext } from "../../providers/SystemToastContext";
 
 const RACE_DURATION_MS = 12_000;
 
@@ -56,6 +57,8 @@ export default function HorseRaceRoom() {
         setToast({ text: validateToastMessage(text) });
     }, []);
 
+    const { showSystemToast } = useSystemToastContext();
+
     const [phase, setPhase] = useState<RacePhase>("LOBBY");
     const [ready, setReady] = useState(false);
     const [winnerIndex, setWinnerIndex] = useState<number | undefined>();
@@ -83,10 +86,31 @@ export default function HorseRaceRoom() {
         dispatch(findByGuid(guid));
     }, [dispatch, guid, navigate, roomId]);
 
-    const { isConnected, message, send } = useWebSocket<HorseRaceGameMessage>(
+    const handleDisplaced = useCallback(() => {
+        showSystemToast("Your session was opened in another window", "system-error");
+        navigate("/rooms");
+    }, [navigate, showSystemToast]);
+
+    const handleDisconnect = useCallback(() => {
+        showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
+        setTimeout(() => navigate("/rooms"), 3000);
+    }, [navigate, showSystemToast]);
+
+    const { isConnected, message, send, reconnectAttempt } = useWebSocket<HorseRaceGameMessage>(
         roomId,
-        room?.type
+        room?.type,
+        handleDisconnect,
+        handleDisplaced,
     );
+
+    useEffect(() => {
+        if (reconnectAttempt > 0) {
+            showSystemToast(
+                `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
+                "system-error"
+            );
+        }
+    }, [reconnectAttempt, showSystemToast]);
 
     useEffect(() => {
         if (!isConnected || !roomId || !room) {
@@ -107,15 +131,20 @@ export default function HorseRaceRoom() {
     const startCountdown = useCallback((initialSeconds: number) => {
         clearCountdown();
         setSecondsLeft(initialSeconds);
+
+        const endTime = Date.now() + initialSeconds * 1000;
+
         countdownIntervalRef.current = setInterval(() => {
-            setSecondsLeft((prev) => {
-                if (prev === null || prev <= 1) {
-                    clearCountdown();
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
+            const remaining = Math.ceil((endTime - Date.now()) / 1000);
+
+            if (remaining <= 0) {
+                clearCountdown();
+                setSecondsLeft(0);
+                return;
+            }
+
+            setSecondsLeft(remaining);
+        }, 200);
     }, [clearCountdown]);
 
     useEffect(() => {
@@ -837,3 +866,7 @@ export default function HorseRaceRoom() {
         </Box>
     );
 }
+function showSystemToast(arg0: string, arg1: string) {
+    throw new Error("Function not implemented.");
+}
+

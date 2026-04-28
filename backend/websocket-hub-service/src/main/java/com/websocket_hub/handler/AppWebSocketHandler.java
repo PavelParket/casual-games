@@ -56,7 +56,7 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
             UUID roomId = WebSocketUtil.getRoomId(session);
 
             roomManager.removeSession(roomId, user, session);
-            sessionManager.remove(user.guid());
+            sessionManager.removeIfCurrent(user.guid(), session);
 
             onLeave(roomId, user);
 

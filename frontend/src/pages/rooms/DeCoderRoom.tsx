@@ -1,42 +1,17 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useMemo,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState, useMemo, } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import { useWebSocket } from "../../hooks/useWebSocket";
+import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
 import { getBalance } from "../../store/slices/UserSlice";
-import {
-  getRoomById,
-  getUsernamesInRoom,
-} from "../../store/slices/DeCoderRoomSlice";
+import { getRoomById, getUsernamesInRoom, } from "../../store/slices/DeCoderRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { errorCodeMessages } from "../../models/constants/ErrorCodeMessages";
-
-import {
-  Box,
-  Button,
-  Card,
-  Container,
-  Typography,
-  ToastContainer,
-  Stack,
-  Divider,
-  Grid,
-  CooldownTimer,
-  Modal,
-  Icon,
-  Input,
-} from "../../ui";
+import { Box, Button, Card, Container, Typography, ToastContainer, Stack, Divider, Grid, CooldownTimer, Modal, Icon, Input, } from "../../ui";
 import { useThemedIcon } from "../../ui";
 import { validateRoomName, validateWSMessage } from "../../utils/SecurityUtils";
 import type { DeCoderMessage, ErrorWSMessage } from "../../models/WsMessage";
-
 import type { DeCoderGameHistory } from "../../models/DeCoderGameHistory";
 
 export default function DeCoderRoom() {
@@ -78,10 +53,31 @@ export default function DeCoderRoom() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [cooldown, setCooldown] = useState(0);
 
-  const { isConnected, message, send } = useWebSocket<DeCoderMessage>(
+  const handleDisplaced = useCallback(() => {
+    showSystemToast("Your session was opened in another window", "system-error");
+    navigate("/rooms");
+  }, [navigate, showSystemToast]);
+
+  const handleDisconnect = useCallback(() => {
+    showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
+    setTimeout(() => navigate("/rooms"), 3000);
+  }, [navigate, showSystemToast]);
+
+  const { isConnected, message, send, reconnectAttempt } = useWebSocket<DeCoderMessage>(
     roomId,
     "DE_CODER",
+    handleDisconnect,
+    handleDisplaced,
   );
+
+  useEffect(() => {
+    if (reconnectAttempt > 0) {
+      showSystemToast(
+        `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
+        "system-error"
+      );
+    }
+  }, [reconnectAttempt, showSystemToast]);
 
   const processedMessageRef = useRef<DeCoderMessage | null>(null);
 

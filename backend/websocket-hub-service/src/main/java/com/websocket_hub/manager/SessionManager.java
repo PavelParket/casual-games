@@ -36,19 +36,23 @@ public class SessionManager {
             return;
         }
 
-        sessions.compute(guid, (key, client) -> {
-            if (client != null && isActive(guid)) {
-                try {
-                    log.info("User {} already connected — closing old session {}", user.email(), client.getSession().getId());
+        ClientSession[] displaced = new ClientSession[1];
 
-                    client.getSession().close(CloseStatus.POLICY_VIOLATION);
-                } catch (IOException e) {
-                    log.warn("Failed to close previous session for user {}: {}", user.email(), e.getMessage());
-                }
-            }
+        sessions.compute(guid, (key, existing) -> {
+            displaced[0] = existing;
 
             return factory.create(guid, user, session, connectedAt);
         });
+
+        if (displaced[0] != null && displaced[0].getSession().isOpen()) {
+            try {
+                log.info("User {} already connected — closing old session {}", user.email(), displaced[0].getSession().getId());
+
+                displaced[0].getSession().close(CloseStatus.POLICY_VIOLATION);
+            } catch (IOException e) {
+                log.warn("Failed to close previous session for user {}: {}", user.email(), e.getMessage());
+            }
+        }
 
         log.info("User \"{}\" registered session \"{}\"", user.email(), session.getId());
     }
@@ -67,6 +71,20 @@ public class SessionManager {
 
             log.info("Removed session {} for user {}", client.getSession().getId(), client.getEmail());
         }
+    }
+
+    public void removeIfCurrent(UUID guid, WebSocketSession session) {
+        sessions.computeIfPresent(guid, (key, current) -> {
+            if (current.getSession().getId().equals(session.getId())) {
+                log.info("Removing current session {} for user {}", session.getId(), guid);
+
+                return null;
+            }
+
+            log.info("Session {} was already displaced for user {} — skipping remove", session.getId(), guid);
+
+            return current;
+        });
     }
 
     public void sendToSession(ClientSession client, Message<? extends EventType> message) {
