@@ -4,6 +4,7 @@ import casualgames.apigateway.jwt.JwtClaimsExtractor;
 import casualgames.apigateway.jwt.JwtProperties;
 import casualgames.apigateway.jwt.JwtValidator;
 import casualgames.apigateway.jwt.filter.JwtAuthenticationFilter;
+import casualgames.apigateway.repository.BlockedTokenRedisRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -24,10 +25,17 @@ public class SecurityConfig {
     private final JwtClaimsExtractor jwtClaimsExtractor;
     private final JwtProperties jwtProperties;
     private final ObjectMapper objectMapper;
+    private final BlockedTokenRedisRepository blockedTokenRepository;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(objectMapper, jwtProperties, jwtValidator, jwtClaimsExtractor);
+        return new JwtAuthenticationFilter(
+                objectMapper,
+                jwtProperties,
+                jwtValidator,
+                jwtClaimsExtractor,
+                blockedTokenRepository
+        );
     }
 
     @Bean

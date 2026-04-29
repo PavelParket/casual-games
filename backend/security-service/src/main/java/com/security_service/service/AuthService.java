@@ -5,19 +5,26 @@ import com.security_service.domain.dto.LoginRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.mapper.AuthMapper;
+import com.security_service.repository.BlockedTokenRedisRepository;
 import com.security_starter.enums.Status;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
+
+    private final static String BEARER_PREFIX = "Bearer ";
 
     private final UserService userService;
 
@@ -29,7 +36,7 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
 
-    private final SyncPermissionService syncPermissionService;
+    private final BlockedTokenRedisRepository blockedTokenRedisRepository;
 
     public AuthResponse register(RegisterRequest request, HttpServletResponse response) {
         UserResponse user = userService.create(request);
@@ -53,8 +60,24 @@ public class AuthService {
         return generateTokens(user, response);
     }
 
-    public void logout(HttpServletResponse response) {
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
         cookieService.deleteRefreshToken(response);
+
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+            return;
+        }
+
+        String accessToken = authHeader.substring(BEARER_PREFIX.length());
+
+        try {
+            String email = tokenService.extractEmail(accessToken);
+            Duration ttl = tokenService.extractExpiration(accessToken);
+            blockedTokenRedisRepository.block(email, accessToken, ttl);
+        } catch (Exception e) {
+            log.warn("Failed to block token on logout: {}", e.getMessage());
+        }
     }
 
     private void authenticate(String email, String password) {

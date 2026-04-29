@@ -19,6 +19,9 @@ spring:
     gateway:
       server:
         webflux:
+          httpclient:
+            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT:3000}
+            response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:30s}
           default-filters:
             - name: RequestRateLimiter
               args:
@@ -74,6 +77,7 @@ spring:
 
 server:
   port: 8888
+  max-http-header-size: 16384
 
 logging:
   level:

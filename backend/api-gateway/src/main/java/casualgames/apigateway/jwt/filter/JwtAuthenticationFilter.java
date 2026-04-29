@@ -3,6 +3,7 @@ package casualgames.apigateway.jwt.filter;
 import casualgames.apigateway.jwt.JwtClaimsExtractor;
 import casualgames.apigateway.jwt.JwtProperties;
 import casualgames.apigateway.jwt.JwtValidator;
+import casualgames.apigateway.repository.BlockedTokenRedisRepository;
 import com.common_utils.dto.ErrorResponse;
 import com.common_utils.enums.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,11 +44,13 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
     private final JwtValidator jwtValidator;
     private final JwtClaimsExtractor jwtClaimsExtractor;
     private final List<PathPattern> pathPatterns;
+    private final BlockedTokenRedisRepository blockedTokenRepository;
 
     public JwtAuthenticationFilter(ObjectMapper objectMapper,
                                    JwtProperties jwtProperties,
                                    JwtValidator jwtValidator,
-                                   JwtClaimsExtractor jwtClaimsExtractor) {
+                                   JwtClaimsExtractor jwtClaimsExtractor,
+                                   BlockedTokenRedisRepository blockedTokenRepository) {
         this.objectMapper = objectMapper;
         this.jwtValidator = jwtValidator;
         this.jwtClaimsExtractor = jwtClaimsExtractor;
@@ -56,6 +59,7 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
                 : jwtProperties.publicPaths().stream()
                 .map(PathPatternParser.defaultInstance::parse)
                 .toList();
+        this.blockedTokenRepository = blockedTokenRepository;
     }
 
     @Override
@@ -83,24 +87,33 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
             UUID guid = jwtClaimsExtractor.extractGuid(token);
             String email = jwtClaimsExtractor.extractEmail(token);
             List<String> roles = jwtClaimsExtractor.extractRole(token);
-            List<SimpleGrantedAuthority> authorities = roles.stream()
-                    .map(SimpleGrantedAuthority::new)
-                    .toList();
+            return blockedTokenRepository.isBlocked(email, token)
+                    .flatMap(blockedToken -> {
+                        if (blockedToken) {
+                            log.warn("Blocked token used for email={}, path={}", email, path);
 
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    guid,
-                    null,
-                    authorities
-            );
+                            return unauthorized(exchange, path, ErrorCode.UNAUTHORIZED.getMessage());
+                        }
 
-            ServerHttpRequest request = exchange.getRequest().mutate()
-                    .header(HEADER_USER_GUID, guid.toString())
-                    .header(HEADER_USER_EMAIL, email != null ? email : "")
-                    .header(HEADER_USER_ROLE, roles.isEmpty() ? "" : roles.getFirst())
-                    .build();
+                        List<SimpleGrantedAuthority> authorities = roles.stream()
+                                .map(SimpleGrantedAuthority::new)
+                                .toList();
 
-            return chain.filter(exchange.mutate().request(request).build())
-                    .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
+                        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                                guid,
+                                null,
+                                authorities
+                        );
+
+                        ServerHttpRequest request = exchange.getRequest().mutate()
+                                .header(HEADER_USER_GUID, guid.toString())
+                                .header(HEADER_USER_EMAIL, email != null ? email : "")
+                                .header(HEADER_USER_ROLE, roles.isEmpty() ? "" : roles.getFirst())
+                                .build();
+
+                        return chain.filter(exchange.mutate().request(request).build())
+                                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
+                    });
         } catch (Exception e) {
             log.warn("JWT claims extraction failed for path={}: {}", path, e.getMessage());
 
