@@ -1,7 +1,6 @@
 package com.websocket_hub.interceptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.websocket_hub.client.UserServiceClient;
 import com.websocket_hub.domain.dto.ErrorResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.RoomMetadata;
@@ -13,6 +12,7 @@ import com.websocket_hub.exception.BadRequestException;
 import com.websocket_hub.exception.ForbiddenException;
 import com.websocket_hub.exception.NotFoundException;
 import com.websocket_hub.provider.IdentityProvider;
+import com.websocket_hub.service.grpc.GrpcUserClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -41,7 +41,7 @@ import static com.websocket_hub.config.ResourceMessageConstants.SERVICE_UNAVAILA
 public class AppHandshakeInterceptor implements HandshakeInterceptor {
 
     private final IdentityProvider identityProvider;
-    private final UserServiceClient client;
+    private final GrpcUserClient grpcUserClient;
     private final RoomRedisRepository roomRedisRepository;
     private final ObjectMapper objectMapper;
 
@@ -50,10 +50,10 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
         String ip = request.getRemoteAddress().getHostString();
 
         try {
-            String token = identityProvider.resolveToken(request);
+            identityProvider.resolveToken(request);
             UUID guid = identityProvider.resolveGuid(request);
             UUID roomId = identityProvider.resolveRoomId(request);
-            UserInternalResponse user = client.getUserByGuid(guid, token);
+            UserInternalResponse user = grpcUserClient.getByGuid(guid);
 
             validateRoomStatus(roomId);
 
@@ -125,7 +125,7 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
                 .message(message)
                 .timestamp(Instant.now())
                 .build();
-        
+
         try {
             byte[] body = objectMapper.writeValueAsBytes(errorResponse);
             response.getBody().write(body);
