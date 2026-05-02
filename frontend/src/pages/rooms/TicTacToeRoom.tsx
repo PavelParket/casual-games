@@ -1,10 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
-import { Box, Button, Card, Container, Icon, Input, ToastContainer, Typography, useThemedIcon } from "../../ui";
+import { Avatar, Box, Button, Card, Container, Icon, Input, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import type { ErrorWSMessage, TicTacToeGameMessage } from "../../models/WsMessage";
+import type { TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage } from "../../utils/SecurityUtils";
 import { findByGuid } from "../../store/slices/UserSlice";
 import { clearError, getRoomById } from "../../store/slices/TicTacToeRoomSlice";
@@ -15,6 +15,7 @@ import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
 import type { ErrorResponse } from "../../helpers/ApiErrorHelper";
 import LoadingPage from "../LoadingPage";
 import InvalidRoomPage from "./InvalidRoomPage";
+import { MiniProfile } from "../../components/MiniProfile";
 
 export default function TicTacToeRoom() {
    const { getInverseIcon } = useThemedIcon();
@@ -61,12 +62,12 @@ export default function TicTacToeRoom() {
          dispatch(getRoomById({ roomId })),
          dispatch(findByGuid(guid)),
       ])
-         .then(([roomResult]) => {
-            if (getRoomById.rejected.match(roomResult)) {
-               setRoomError(roomResult.payload ?? { message: "Failed to fetch room" });
-            }
-         })
-         .finally(() => setIsLoading(false));
+          .then(([roomResult]) => {
+             if (getRoomById.rejected.match(roomResult)) {
+                setRoomError(roomResult.payload ?? { message: "Failed to fetch room" });
+             }
+          })
+          .finally(() => setIsLoading(false));
    }, [dispatch, guid, navigate, roomId]);
 
    const handleDisplaced = useCallback(() => {
@@ -80,17 +81,17 @@ export default function TicTacToeRoom() {
    }, [navigate, showSystemToast]);
 
    const { isConnected, message, send, reconnectAttempt } = useWebSocket<TicTacToeGameMessage>(
-      roomId,
-      room?.type,
-      handleDisconnect,
-      handleDisplaced,
+       roomId,
+       room?.type,
+       handleDisconnect,
+       handleDisplaced,
    );
 
    useEffect(() => {
       if (reconnectAttempt > 0) {
          showSystemToast(
-            `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
-            "system-error"
+             `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
+             "system-error"
          );
       }
    }, [reconnectAttempt, showSystemToast]);
@@ -258,267 +259,323 @@ export default function TicTacToeRoom() {
 
    if (isLoading) {
       return (
-         <LoadingPage />
+          <LoadingPage />
       );
    }
 
    if (roomError) {
       return (
-         <InvalidRoomPage message={roomError.message} />
+          <InvalidRoomPage message={roomError.message} />
       );
    }
 
    return (
-      <Box style={{
-         minHeight: "calc(100vh - 60px - 50px)",
-         margin: "0 10rem",
-         padding: "0 1rem",
-         background: "var(--color-bg-glass)",
-         backdropFilter: "blur(2px)",
-         borderRadius: "var(--radius-md)",
-         boxShadow: "var(--shadow-lg)"
-      }}>
-         <Container>
-            <Box style={{ padding: "2rem 0" }}>
-               <Typography variant="h2" style={{ textAlign: "center" }}>
-                  Tic-Tac-Toe: {room?.name}
-               </Typography>
-            </Box>
+       <Box style={{
+          minHeight: "calc(100vh - 60px - 50px)",
+          margin: "0 10rem",
+          padding: "0 1rem",
+          background: "var(--color-bg-glass)",
+          backdropFilter: "blur(2px)",
+          borderRadius: "var(--radius-md)",
+          boxShadow: "var(--shadow-lg)"
+       }}>
+          <Container>
+             <Box style={{ padding: "2rem 0" }}>
+                <Typography variant="h2" style={{ textAlign: "center" }}>
+                   Tic-Tac-Toe: {room?.name}
+                </Typography>
+             </Box>
 
-            <Card style={{
-               padding: "0",
-               display: "flex",
-               flexDirection: "column",
-               alignItems: "center"
-            }}>
-               <Typography variant="h3" style={{ margin: "2rem 0" }}>
-                  {winner
-                     ? winner === "Draw"
-                        ? "Draw!"
-                        : `Winner: ${winner}`
-                     : isGame
-                        ? `Turn: ${currentPlayerSymbol}`
-                        : `Ready players: ${readyPlayersCount} / ${totalPlayersCount}`
-                  }
-               </Typography>
+             <Card style={{
+                padding: "0",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center"
+             }}>
+                <Typography variant="h3" style={{ margin: "2rem 0" }}>
+                   {winner
+                       ? winner === "Draw"
+                           ? "Draw!"
+                           : `Winner: ${winner}`
+                       : isGame
+                           ? `Turn: ${currentPlayerSymbol}`
+                           : `Ready players: ${readyPlayersCount} / ${totalPlayersCount}`
+                   }
+                </Typography>
 
-               <Box style={{
-                  width: "100%",
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  alignItems: "center",
-                  justifyContent: "center",
-               }}>
+                <Box style={{
+                   width: "100%",
+                   display: "grid",
+                   gridTemplateColumns: "repeat(3, 1fr)",
+                   alignItems: "center",
+                   justifyContent: "center",
+                }}>
 
-                  {/* ===== PLAYERS ===== */}
-                  <Box style={{
-                     display: "flex",
-                     flexDirection: "column",
-                     alignItems: "center",
-                     justifyContent: "center",
-                     rowGap: "1.5rem",
-                  }}>
-                     {isGame ? (
-                        Object.entries(playersWithSymbols).map(([username, symbol]) => (
-                           <Typography key={username} variant="h2">
-                              {username}: {symbol}
-                           </Typography>
-                        ))
-                     ) : (
-                        Object.values(players || {}).map((username) => (
-                           <Typography key={username} variant="h2">
-                              {username}
-                           </Typography>
-                        ))
-                     )}
-                  </Box>
+                   {/* ===== PLAYERS ===== */}
+                   <Box style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      rowGap: "1.5rem",
+                   }}>
+                      {isGame ? (
+                          Object.entries(playersWithSymbols).map(([username, symbol]) => (
+                              <MiniProfile key={guid} guid={guid} username={username}>
+                                 <Stack
+                                     direction="row"
+                                     align="center"
+                                     gap="0.75rem"
+                                     style={{
+                                        cursor: "pointer",
+                                        width: "200px",
+                                        padding: "0.35rem",
+                                        paddingRight: "1rem",
+                                        background: "var(--color-bg-glass)",
+                                        border: "1px solid var(--color-border)",
+                                        borderRadius: "var(--radius-md)",
+                                        boxShadow: "var(--shadow-sm)",
+                                        transition: "all 0.2s ease",
+                                        userSelect: "none"
+                                     }}
+                                     onMouseEnter={(e) => {
+                                        e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                                     }}
+                                     onMouseLeave={(e) => {
+                                        e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+                                     }}
+                                 >
+                                    <Avatar fallback={username} size={40} />
 
-                  {/* ===== BOARD ===== */}
-                  <Box style={{
-                     display: "flex",
-                     alignItems: "center",
-                     justifyContent: "center",
-                  }}>
-                     <Box style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 80px)",
-                        gridTemplateRows: "repeat(3, 80px)",
-                        justifyContent: "center",
-                        borderRadius: "var(--radius-lg)",
-                        overflow: "hidden",
-                        boxShadow: "var(--shadow-lg)",
-                     }}>
-                        {board.map((cell, index) => {
-                           const style: React.CSSProperties = {
-                              width: "80px",
-                              height: "80px",
-                              fontSize: "32px",
-                              fontWeight: "bold",
-                              borderRadius: "0",
-                              borderRight: "none",
-                              borderBottom: "none",
-                              boxShadow: "0 0 0 var(--color-bg)",
-                           };
+                                    <Typography key={username} variant="body" style={{ fontWeight: "bold" }}>
+                                       {username}: {symbol}
+                                    </Typography>
+                                 </Stack>
+                              </MiniProfile>
+                          ))
+                      ) : (
+                          Object.values(players || {}).map((username) => (
+                              <MiniProfile key={guid} guid={guid} username={username}>
+                                 <Stack
+                                     direction="row"
+                                     align="center"
+                                     gap="0.75rem"
+                                     style={{
+                                        cursor: "pointer",
+                                        minWidth: "200px",
+                                        padding: "0.35rem",
+                                        paddingRight: "1rem",
+                                        background: "var(--color-bg-glass)",
+                                        border: "1px solid var(--color-border)",
+                                        borderRadius: "var(--radius-md)",
+                                        boxShadow: "var(--shadow-sm)",
+                                        transition: "all 0.2s ease",
+                                        userSelect: "none"
+                                     }}
+                                     onMouseEnter={(e) => {
+                                        e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                                     }}
+                                     onMouseLeave={(e) => {
+                                        e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+                                     }}
+                                 >
+                                    <Avatar fallback={username} size={40} />
 
-                           if (index % 3 !== 2)
-                              style.borderRight = "2px solid var(--color-text)";
-                           if (index < 6)
-                              style.borderBottom = "2px solid var(--color-text)";
-
-                           return (
-                              <Button
-                                 key={index}
-                                 variant="ghost"
-                                 style={style}
-                                 onClick={() => handleMove(index)}
-                                 disabled={!!cell || !!winner || !isGame}
-                              >
-                                 {cell}
-                              </Button>
-                           );
-                        })}
-                     </Box>
-                  </Box>
-
-                  {/* ===== BETS ===== */}
-                  <Box style={{
-                     display: "flex",
-                     flexDirection: "column",
-                     alignItems: "flex-start",
-                     gap: "1rem",
-                     marginRight: "1.5rem",
-                     padding: "1rem",
-                     background: "var(--color-bg-secondary)",
-                     borderRadius: "var(--radius-md)",
-                     boxShadow: "var(--shadow-md)",
-                  }}>
-                     {playerBetMap && Object.keys(playerBetMap).length > 0 && (
-                        <>
-                           <Typography variant="h3">Current Bets</Typography>
-                           <Box style={{
-                              width: "100%",
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "0.5rem",
-                              padding: "0.75rem",
-                              background: "var(--color-bg)",
-                              borderRadius: "var(--radius-sm)",
-                              border: "1px solid var(--color-border)",
-                           }}>
-                              {Object.entries(playerBetMap).map(([username, bet]) => (
-                                 <Box key={username} style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center"
-                                 }}>
-                                    <Typography variant="body" style={{ fontWeight: 500 }}>
+                                    <Typography variant="body" style={{ fontWeight: "bold" }}>
                                        {username}
                                     </Typography>
-                                    <Typography variant="body" style={{ color: "var(--color-success)" }}>
-                                       ${bet}
-                                    </Typography>
-                                 </Box>
-                              ))}
-                           </Box>
+                                 </Stack>
+                              </MiniProfile>
+                          ))
+                      )}
+                   </Box>
 
-                           <Box style={{
-                              width: "100%",
-                              height: "1px",
-                              background: "var(--color-border)",
-                              margin: "0.5rem 0"
-                           }} />
-                        </>
-                     )}
+                   {/* ===== BOARD ===== */}
+                   <Box style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                   }}>
+                      <Box style={{
+                         display: "grid",
+                         gridTemplateColumns: "repeat(3, 80px)",
+                         gridTemplateRows: "repeat(3, 80px)",
+                         justifyContent: "center",
+                         borderRadius: "var(--radius-lg)",
+                         overflow: "hidden",
+                         boxShadow: "var(--shadow-lg)",
+                      }}>
+                         {board.map((cell, index) => {
+                            const style: React.CSSProperties = {
+                               width: "80px",
+                               height: "80px",
+                               fontSize: "32px",
+                               fontWeight: "bold",
+                               borderRadius: "0",
+                               borderRight: "none",
+                               borderBottom: "none",
+                               boxShadow: "0 0 0 var(--color-bg)",
+                            };
 
-                     <Typography variant="h3">Place Your Bet</Typography>
+                            if (index % 3 !== 2)
+                               style.borderRight = "2px solid var(--color-text)";
+                            if (index < 6)
+                               style.borderBottom = "2px solid var(--color-text)";
 
-                     {balance !== undefined && (
-                        <Typography variant="body" style={{ color: "var(--color-text-secondary)" }}>
-                           Balance: ${balance.toFixed(2)}
-                        </Typography>
-                     )}
+                            return (
+                                <Button
+                                    key={index}
+                                    variant="ghost"
+                                    style={style}
+                                    onClick={() => handleMove(index)}
+                                    disabled={!!cell || !!winner || !isGame}
+                                >
+                                   {cell}
+                                </Button>
+                            );
+                         })}
+                      </Box>
+                   </Box>
 
-                     <Box style={{ width: "100%" }}>
-                        <Input
-                           type="number"
-                           value={betInput}
-                           onChange={(e) => setBetInput(e.target.value)}
-                           placeholder="Enter bet amount"
-                           disabled={betPlaced || isGame}
-                           style={{
-                              width: "100%",
-                              padding: "0.75rem",
-                              borderRadius: "var(--radius-sm)",
-                              border: "1px solid var(--color-border)",
-                              background: betPlaced || isGame ? "var(--color-bg-disabled)" : "var(--color-bg)",
-                              color: "var(--color-text)",
-                              fontSize: "1rem",
-                              opacity: betPlaced || isGame ? 0.6 : 1,
-                           }}
-                        />
-                     </Box>
+                   {/* ===== BETS ===== */}
+                   <Box style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      gap: "1rem",
+                      marginRight: "1.5rem",
+                      padding: "1rem",
+                      background: "var(--color-bg-secondary)",
+                      borderRadius: "var(--radius-md)",
+                      boxShadow: "var(--shadow-md)",
+                   }}>
+                      {playerBetMap && Object.keys(playerBetMap).length > 0 && (
+                          <>
+                             <Typography variant="h3">Current Bets</Typography>
+                             <Box style={{
+                                width: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.5rem",
+                                padding: "0.75rem",
+                                background: "var(--color-bg)",
+                                borderRadius: "var(--radius-sm)",
+                                border: "1px solid var(--color-border)",
+                             }}>
+                                {Object.entries(playerBetMap).map(([username, bet]) => (
+                                    <Box key={username} style={{
+                                       display: "flex",
+                                       justifyContent: "space-between",
+                                       alignItems: "center"
+                                    }}>
+                                       <Typography variant="body" style={{ fontWeight: 500 }}>
+                                          {username}
+                                       </Typography>
+                                       <Typography variant="body" style={{ color: "var(--color-success)" }}>
+                                          ${bet}
+                                       </Typography>
+                                    </Box>
+                                ))}
+                             </Box>
 
-                     <Button
-                        onClick={handlePlaceBet}
-                        disabled={betPlaced || isGame}
-                        style={{
-                           width: "100%",
-                           opacity: (betPlaced || isGame) ? 0.5 : 1,
-                        }}
-                     >
-                        Place Bet
-                     </Button>
+                             <Box style={{
+                                width: "100%",
+                                height: "1px",
+                                background: "var(--color-border)",
+                                margin: "0.5rem 0"
+                             }} />
+                          </>
+                      )}
 
-                     <Typography
-                        variant="caption"
-                        style={{
-                           color: "var(--color-text-secondary)",
-                           fontSize: "0.875rem",
-                           lineHeight: "1.4"
-                        }}
-                     >
-                        {betPlaced
-                           ? "Your bet has been accepted. You can now get ready!"
-                           : "You must place a bet before becoming ready"
-                        }
-                     </Typography>
-                  </Box>
-               </Box>
+                      <Typography variant="h3">Place Your Bet</Typography>
 
-               <Box style={{
-                  width: "100%",
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  alignItems: "center",
-                  justifyItems: "center",
-               }}>
-                  <Button variant="outline" onClick={handleLeave}>Leave</Button>
+                      {balance !== undefined && (
+                          <Typography variant="body" style={{ color: "var(--color-text-secondary)" }}>
+                             Balance: ${balance.toFixed(2)}
+                          </Typography>
+                      )}
 
-                  <Button
-                     onClick={handleReady}
-                     disabled={ready || !betPlaced}
-                     style={{
-                        margin: "2rem",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        opacity: (!betPlaced || ready) ? 0.5 : 1,
-                     }}
-                  >
-                     {ready ? (
-                        <>
-                           <Typography variant="body" inverse style={{ fontSize: "20px", fontWeight: 500 }}>Ready</Typography>
-                           <Icon src={getInverseIcon("check")} alt="check" size={20} />
-                        </>
-                     ) : (
-                        <Typography variant="body" inverse style={{ fontSize: "20px", fontWeight: 500 }}>Get Ready</Typography>
-                     )}
-                  </Button>
-               </Box>
-            </Card>
-         </Container>
+                      <Box style={{ width: "100%" }}>
+                         <Input
+                             type="number"
+                             value={betInput}
+                             onChange={(e) => setBetInput(e.target.value)}
+                             placeholder="Enter bet amount"
+                             disabled={betPlaced || isGame}
+                             style={{
+                                width: "100%",
+                                padding: "0.75rem",
+                                borderRadius: "var(--radius-sm)",
+                                border: "1px solid var(--color-border)",
+                                background: betPlaced || isGame ? "var(--color-bg-disabled)" : "var(--color-bg)",
+                                color: "var(--color-text)",
+                                fontSize: "1rem",
+                                opacity: betPlaced || isGame ? 0.6 : 1,
+                             }}
+                         />
+                      </Box>
 
-         <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
-      </Box>
+                      <Button
+                          onClick={handlePlaceBet}
+                          disabled={betPlaced || isGame}
+                          style={{
+                             width: "100%",
+                             opacity: (betPlaced || isGame) ? 0.5 : 1,
+                          }}
+                      >
+                         Place Bet
+                      </Button>
+
+                      <Typography
+                          variant="caption"
+                          style={{
+                             color: "var(--color-text-secondary)",
+                             fontSize: "0.875rem",
+                             lineHeight: "1.4"
+                          }}
+                      >
+                         {betPlaced
+                             ? "Your bet has been accepted. You can now get ready!"
+                             : "You must place a bet before becoming ready"
+                         }
+                      </Typography>
+                   </Box>
+                </Box>
+
+                <Box style={{
+                   width: "100%",
+                   display: "grid",
+                   gridTemplateColumns: "repeat(3, 1fr)",
+                   alignItems: "center",
+                   justifyItems: "center",
+                }}>
+                   <Button variant="outline" onClick={handleLeave}>Leave</Button>
+
+                   <Button
+                       onClick={handleReady}
+                       disabled={ready || !betPlaced}
+                       style={{
+                          margin: "2rem",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          opacity: (!betPlaced || ready) ? 0.5 : 1,
+                       }}
+                   >
+                      {ready ? (
+                          <>
+                             <Typography variant="body" inverse style={{ fontSize: "20px", fontWeight: 500 }}>Ready</Typography>
+                             <Icon src={getInverseIcon("check")} alt="check" size={20} />
+                          </>
+                      ) : (
+                          <Typography variant="body" inverse style={{ fontSize: "20px", fontWeight: 500 }}>Get Ready</Typography>
+                      )}
+                   </Button>
+                </Box>
+             </Card>
+          </Container>
+
+          <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
+       </Box>
    );
 }

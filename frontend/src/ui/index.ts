@@ -21,6 +21,7 @@ export { Toast } from "./components/common/Toast";
 export { Menu, MenuList, MenuItem } from "./components/navigation/Menu";
 export { Switch } from "./components/common/Switch";
 export { Divider } from "./components/common/Divider";
+export { Avatar } from "./components/common/Avatar";
 export { CooldownTimer } from "./components/common/CooldownTimer";
 export { ToastContainer } from "./components/common/ToastContainer";
 

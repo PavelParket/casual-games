@@ -4,7 +4,7 @@ import type { AppDispatch, RootState } from "../store/store";
 import { findByGuid, update } from "../store/slices/UserSlice";
 import { deposit, getByUserGuid } from "../store/slices/BankSlice";
 import type { Icons } from "../assets/icons";
-import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Img, Input, Toast, FormField } from "../ui";
+import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, Toast, FormField, Avatar } from "../ui";
 import { useThemedIcon } from "../ui";
 import { validateUsername } from "../utils/SecurityUtils";
 import { Skeleton } from "../ui/components/common/Skeleton";
@@ -194,28 +194,13 @@ export default function Profile() {
                                     <Skeleton variant="circular" height={150} width={150} />
                                 ) : (
                                     <>
-                                        <Box style={{
-                                            width: "150px",
-                                            height: "150px",
-                                            borderRadius: "50%",
-                                            background: "var(--color-bg)",
-                                            display: "flex", alignItems: "center", justifyContent: "center",
-                                            fontSize: "3rem", fontWeight: "bold",
-                                            color: "var(--color-text)",
-                                            boxShadow: "var(--shadow-md)",
-                                            overflow: "hidden",
-                                            position: "relative",
-                                        }}>
-                                            {avatarPreview || user?.avatarUrl ? (
-                                                <Img
-                                                    src={avatarPreview || user?.avatarUrl || ""}
-                                                    alt="Avatar"
-                                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                                />
-                                            ) : (
-                                                username.substring(0, 1).toUpperCase()
-                                            )}
-                                        </Box>
+                                        <Avatar
+                                            src={avatarPreview || user?.avatarUrl}
+                                            fallback={username}
+                                            size={150}
+                                            isLoading={loadingAvatar}
+                                        />
+
 
                                         <label htmlFor="avatar-upload">
                                             <Box
@@ -646,12 +631,12 @@ export default function Profile() {
                                                                     Before:
                                                                 </Typography>
                                                                 <Typography variant="caption"
-                                                                    style={{
-                                                                        opacity: 0.8,
-                                                                        fontWeight: "500",
-                                                                        fontFamily: "monospace",
-                                                                        fontSize: "0.7rem"
-                                                                    }}
+                                                                            style={{
+                                                                                opacity: 0.8,
+                                                                                fontWeight: "500",
+                                                                                fontFamily: "monospace",
+                                                                                fontSize: "0.7rem"
+                                                                            }}
                                                                 >
                                                                     {transaction.balanceBefore}
                                                                 </Typography>
