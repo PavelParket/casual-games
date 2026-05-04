@@ -1,6 +1,6 @@
 plugins {
     id 'java-library'
-    id 'org.springframework.boot' version '3.5.13'
+    id 'org.springframework.boot' version '3.5.14'
     id 'io.spring.dependency-management'
     id 'maven-publish'
 }
@@ -13,25 +13,33 @@ jar {
     enabled = true
 }
 
-def grpcVersion = '1.80.0'
+def grpcVersion = '1.81.0'
 def protobufVersion = '4.34.1'
 def grpcSpring = '3.1.0.RELEASE'
 
 dependencyManagement {
     dependencies {
-        dependency "io.grpc:grpc-netty-shaded:${grpcVersion}"
-        dependency "io.grpc:grpc-core:${grpcVersion}"
-        dependency "io.grpc:grpc-protobuf:${grpcVersion}"
         dependency "io.grpc:grpc-stub:${grpcVersion}"
+        dependency "io.grpc:grpc-protobuf:${grpcVersion}"
+        dependency "io.grpc:grpc-netty-shaded:${grpcVersion}"
+        dependency "io.grpc:grpc-api:${grpcVersion}"
+        dependency "io.grpc:grpc-netty:${grpcVersion}"
+        dependency "io.grpc:grpc-core:${grpcVersion}"
+        dependency "io.grpc:grpc-protobuf-lite:${grpcVersion}"
+        dependency "io.grpc:grpc-context:${grpcVersion}"
+        dependency "io.grpc:grpc-services:${grpcVersion}"
+        dependency "io.grpc:grpc-inprocess:${grpcVersion}"
+        dependency "io.grpc:grpc-util:${grpcVersion}"
         dependency "com.google.protobuf:protobuf-java:${protobufVersion}"
+        dependency "com.google.protobuf:protobuf-java-util:${protobufVersion}"
     }
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    compileOnly "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
-    compileOnly "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"
+    implementation "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
+    implementation "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 }

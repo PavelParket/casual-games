@@ -1,10 +1,8 @@
 package com.bank_service.validator;
 
-import com.bank_service.domain.dto.game.GameTransactionRequest;
-
 import java.math.BigDecimal;
 
-public interface GameBusinessValidator<T extends GameTransactionRequest> {
+public interface GameBusinessValidator<T> {
 
     BigDecimal MAX_BALANCE = new BigDecimal("999999999.99");
 

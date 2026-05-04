@@ -41,6 +41,10 @@ server:
   port: 8084
 
 grpc:
+  server:
+    port: 7094
+    security:
+      enabled: false
   client:
     user-service:
       address: static://localhost:7093

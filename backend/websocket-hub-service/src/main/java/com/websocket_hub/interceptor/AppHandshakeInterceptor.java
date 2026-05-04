@@ -12,7 +12,7 @@ import com.websocket_hub.exception.BadRequestException;
 import com.websocket_hub.exception.ForbiddenException;
 import com.websocket_hub.exception.NotFoundException;
 import com.websocket_hub.provider.IdentityProvider;
-import com.websocket_hub.service.grpc.GrpcUserClient;
+import com.websocket_hub.service.grpc.client.GrpcUserClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

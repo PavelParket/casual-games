@@ -1,4 +1,4 @@
-package com.websocket_hub.service.grpc;
+package com.websocket_hub.service.grpc.client;
 
 import com.casualgames.grpc.user.GetByGuidRequest;
 import com.casualgames.grpc.user.UserResponse;
