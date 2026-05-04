@@ -1,16 +1,16 @@
-package com.security_starter.jwt;
+package casualgames.apigateway.jwt;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.util.List;
 
 @ConfigurationProperties(prefix = "spring.security.jwt")
 public record JwtProperties(
 
         String secret,
 
-        Long accessExpiration,
+        String algorithm,
 
-        Long refreshExpiration,
-
-        String algorithm
+        List<String> publicPaths
 ) {
 }

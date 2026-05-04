@@ -1,11 +1,12 @@
 package com.security_starter.config;
 
 import com.redis_starter.repository.RedisHashRepository;
-import com.security_starter.exception.handler.JwtAccessDeniedHandler;
-import com.security_starter.exception.handler.JwtAuthenticationEntryPoint;
-import com.security_starter.exception.handler.SecurityExceptionHandler;
+import com.security_starter.exception.JwtAccessDeniedHandler;
+import com.security_starter.exception.JwtAuthenticationEntryPoint;
+import com.security_starter.exception.SecurityExceptionHandler;
 import com.security_starter.factory.PermissionContextFactory;
 import com.security_starter.helper.PermissionContextHelper;
+import com.security_starter.jwt.HmacJwtKeyProvider;
 import com.security_starter.jwt.JwtClaimsExtractor;
 import com.security_starter.jwt.JwtDecoder;
 import com.security_starter.jwt.JwtProperties;
@@ -32,6 +33,7 @@ import org.springframework.context.annotation.Import;
         JwtAccessDeniedHandler.class, JwtAuthenticationEntryPoint.class, SecurityExceptionHandler.class,
         JwtAuthenticationFilter.class, JwtDecoder.class,
         JwtClaimsExtractor.class, JwtValidator.class,
+        HmacJwtKeyProvider.class,
         ServiceWhitelistChecker.class
 })
 public class SecurityAutoConfiguration {

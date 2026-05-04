@@ -13,25 +13,11 @@ jar {
     enabled = true
 }
 
-def grpcVersion = '1.80.0'
-def protobufVersion = '4.34.1'
-def grpcSpring = '3.1.0.RELEASE'
-
-dependencyManagement {
-    dependencies {
-        dependency "io.grpc:grpc-netty-shaded:${grpcVersion}"
-        dependency "io.grpc:grpc-core:${grpcVersion}"
-        dependency "io.grpc:grpc-protobuf:${grpcVersion}"
-        dependency "io.grpc:grpc-stub:${grpcVersion}"
-        dependency "com.google.protobuf:protobuf-java:${protobufVersion}"
-    }
-}
-
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework:spring-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    compileOnly "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
-    compileOnly "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"
+    compileOnly 'org.springframework.boot:spring-boot-starter-web'
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 }

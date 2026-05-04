@@ -5,41 +5,81 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+  data:
+    redis:
+      enabled: ${REDIS_ENABLED:true}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      password: ${REDIS_PASSWORD:}
+      timeout: 500ms
+      connect-timeout: 1s
+
   cloud:
     gateway:
-      routes:
-        - id: user-service
-          uri: http://localhost:8083
-          predicates:
-            - Path=/user-service/**
-          filters:
-            - StripPrefix=1
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT:3000}
+            response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:30s}
+          default-filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter:
+                  replenishRate: ${RATE_LIMIT_REPLENISH_RATE:10}
+                  burstCapacity: ${RATE_LIMIT_BURST_CAPACITY:20}
+                  requestedTokens: 1
+                key-resolver: "#{@keyResolver}"
+          routes:
+            - id: user-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/user-service/**
+              filters:
+                - StripPrefix=1
 
-        - id: security-service
-          uri: http://localhost:8080
-          predicates:
-            - Path=/security-service/**
-          filters:
-            - StripPrefix=1
+            - id: security-service
+              uri: http://localhost:8080
+              predicates:
+                - Path=/security-service/**
+              filters:
+                - StripPrefix=1
 
-        - id: game-service
-          uri: http://localhost:8082
-          predicates:
-            - Path=/game-service/**
-          filters:
-            - StripPrefix=1
+            - id: game-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/game-service/**
+              filters:
+                - StripPrefix=1
 
-        - id: websocket-service
-          uri: http://localhost:8081
-          predicates:
-            - Path=/websocket-service/**
-          filters:
-            - StripPrefix=1
+            - id: websocket-service
+              uri: http://localhost:8081
+              predicates:
+                - Path=/websocket-service/**
+              filters:
+                - StripPrefix=1
+
+            - id: bank-service
+              uri: http://localhost:8084
+              predicates:
+                - Path=/bank-service/**
+              filters:
+                - StripPrefix=1
 
   security:
     jwt:
       secret: ${JWT_SECRET}
-
+      algorithm: ${JWT_ALGORITHM:HS256}
+      public-paths:
+        - /security-service/auth/**
+        - /actuator/health
+        - /actuator/info
 
 server:
-  port: 8088
+  port: 8888
+  max-http-header-size: 16384
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.cloud.gateway: DEBUG

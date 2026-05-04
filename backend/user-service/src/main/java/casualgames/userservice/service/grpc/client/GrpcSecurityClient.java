@@ -2,7 +2,7 @@ package casualgames.userservice.service.grpc.client;
 
 import com.casualgames.grpc.user.DeleteUserRequest;
 import com.casualgames.grpc.user.UserServiceGrpc;
-import com.common_utils.exception.GrpcStatusExceptionMapper;
+import com.grpc_utils.mapper.GrpcStatusExceptionMapper;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

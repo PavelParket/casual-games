@@ -29,6 +29,7 @@ dependencyManagement {
 
 dependencies {
     api project(":proto-module")
+    implementation project(":common-utils")
 
     implementation 'org.springframework.boot:spring-boot-starter'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
