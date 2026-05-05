@@ -2,15 +2,15 @@ package com.websocket_hub.manager;
 
 import com.websocket_hub.client.GameServiceClient;
 import com.websocket_hub.domain.dto.client.DeCoderGameInternalRequest;
-import com.websocket_hub.domain.entity.PlayerBet;
-import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
+import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
 import com.websocket_hub.domain.entity.ClientSession;
+import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.entity.Room;
-import com.websocket_hub.domain.enums.RoomStatus;
-import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.MessageType;
+import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.RoomType;
+import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
 import com.websocket_hub.factory.ObjectFactory;
@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.math.BigDecimal;
-
 import java.util.UUID;
 
 @Service
@@ -93,7 +92,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
     }
 
     @Override
-    protected void onRemoveSession(UserInternalResponse user,  Room room, WebSocketSession session) {
+    protected void onRemoveSession(UserInternalResponse user, Room room, WebSocketSession session) {
         log.info("Player {} left DeCoder room {}", user.username(), room.getName());
 
         broadcast(room.getId(), deCoderGameMessageMapper.toResponse(
@@ -127,7 +126,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
 
     }
 
-    public PlayerBet  markPlayerBet(UserInternalResponse user, BigDecimal bet) {
+    public PlayerBet markPlayerBet(UserInternalResponse user, BigDecimal bet) {
         PlayerBet newPlayerBet = playerBetFactory.create(user.guid(), bet, user.balance());
 
         playerBetValidator.validateBet(newPlayerBet);

@@ -39,6 +39,11 @@ grpc:
       negotiation-type: plaintext
       keep-alive-time: 30s
       keep-alive-timeout: 5s
+    bank-service:
+      address: static://localhost:7094
+      negotiation-type: plaintext
+      keep-alive-time: 30s
+      keep-alive-timeout: 5s
   client-custom:
     timeout-seconds: 30
     retry:
@@ -48,10 +53,6 @@ grpc:
 app:
   game-service:
     url: http://localhost:8082
-  user-service:
-    url: http://localhost:8083
-  bank-service:
-    url: http://localhost:8084
 
 scheduler:
   room-cleanup:

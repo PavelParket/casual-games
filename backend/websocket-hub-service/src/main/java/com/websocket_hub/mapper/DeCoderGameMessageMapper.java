@@ -3,8 +3,8 @@ package com.websocket_hub.mapper;
 import com.websocket_hub.domain.dto.client.DeCoderGameInternalRequest;
 import com.websocket_hub.domain.dto.client.DeCoderGameInternalResponse;
 import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
-import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.domain.enums.MessageType;
+import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -13,6 +13,7 @@ import java.util.UUID;
 @Mapper(componentModel = "spring")
 public interface DeCoderGameMessageMapper extends MessageMapper {
 
+    @Mapping(target = "player", ignore = true)
     @Mapping(target = "code", ignore = true)
     DeCoderGameInternalRequest toStartRequest(DeCoderGameEvent event,
                                               UUID roomId);

@@ -1,9 +1,8 @@
 package com.websocket_hub.handler;
 
-import com.websocket_hub.client.BankServiceClient;
+import com.casualgames.grpc.transaction.GameTransactionResponse;
+import com.casualgames.grpc.transaction.TicTacToeTransactionRequest;
 import com.websocket_hub.client.GameServiceClient;
-import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalRequest;
-import com.websocket_hub.domain.dto.client.TicTacToeTransactionInternalResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.ErrorMessage;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
@@ -17,9 +16,10 @@ import com.websocket_hub.domain.enums.events.ErrorEvent;
 import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
+import com.websocket_hub.mapper.GameTransactionMapper;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
-import com.websocket_hub.mapper.TicTacToeTransactionMapper;
 import com.websocket_hub.serializer.MessageDeserializer;
+import com.websocket_hub.service.grpc.client.GrpcGameTransactionClient;
 import com.websocket_hub.util.WebSocketUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
@@ -40,11 +40,11 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
 
     private final TicTacToeGameMessageMapper ticTacToeGameMessageMapper;
 
-    private final TicTacToeTransactionMapper ticTacToeTransactionMapper;
+    private final GameTransactionMapper gameTransactionMapper;
 
     private final GameServiceClient gameServiceClient;
 
-    private final BankServiceClient bankServiceClient;
+    private final GrpcGameTransactionClient grpcGameTransactionClient;
 
     public TicTacToeGameRoomHandler(
             SessionManager sessionManager,
@@ -52,16 +52,16 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
             TicTacToeGameMessageMapper ticTacToeGameMessageMapper,
-            TicTacToeTransactionMapper ticTacToeTransactionMapper,
+            GameTransactionMapper gameTransactionMapper,
             GameServiceClient gameServiceClient,
-            BankServiceClient bankServiceClient
+            GrpcGameTransactionClient grpcGameTransactionClient
     ) {
         super(sessionManager, roomManager, errorHandler);
         this.messageDeserializer = messageDeserializer;
         this.ticTacToeGameMessageMapper = ticTacToeGameMessageMapper;
-        this.ticTacToeTransactionMapper = ticTacToeTransactionMapper;
+        this.gameTransactionMapper = gameTransactionMapper;
         this.gameServiceClient = gameServiceClient;
-        this.bankServiceClient = bankServiceClient;
+        this.grpcGameTransactionClient = grpcGameTransactionClient;
     }
 
 
@@ -212,16 +212,16 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             if (!TicTacToeGameEvent.DRAW.equals(moveGameResponse.event())) {
                 List<PlayerBet> bets = roomManager.getPlayerBets(roomId);
 
-                TicTacToeTransactionInternalRequest transactionRequest = ticTacToeTransactionMapper.toInternalRequest(
+                TicTacToeTransactionRequest transactionRequest = gameTransactionMapper.toTicTacToeRequest(
                         roomId,
                         roomManager.getRoomType(),
                         bets,
                         moveGameResponse.winner()
                 );
 
-                TicTacToeTransactionInternalResponse transactionResponse = bankServiceClient.sendTicTacToeGameResults(transactionRequest);
+                GameTransactionResponse transactionResponse = grpcGameTransactionClient.saveTicTacToeGameResults(transactionRequest);
 
-                log.info("Bank service response: status={}, message={}, transactions={}", transactionResponse.status(), transactionResponse.message(), transactionResponse.transactionsCreated());
+                log.info("Bank service response: transactions={}", transactionResponse.getTransactionCount());
             }
         } catch (Exception e) {
             log.error("Failed to process game results for room {}", roomId, e);
