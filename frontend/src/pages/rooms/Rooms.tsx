@@ -5,8 +5,9 @@ import { useEffect, useState, useMemo } from "react";
 import { Box, Button, Card, Container, Icon, Modal, ComboBox, Stack, FormField, Textfield, Typography, useThemedIcon, Grid, CheckBox, Divider } from "../../ui";
 import { ROOM_TYPE_HANDLERS, ROOM_TYPE_LABELS, type Room, type RoomType } from "../../models/Room";
 import { validateRoomName } from "../../utils/SecurityUtils";
-import { clearError, createRoom, getRooms } from "../../store/slices/RoomSlice";
+import { clearError, createRoom, getRoomsByTypes } from "../../store/slices/RoomSlice";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
+import { useSystemToastContext } from "../../providers/SystemToastContext";
 
 type SortOption = 'newest' | 'alphabet';
 type SortDirection = 'asc' | 'desc';
@@ -61,29 +62,68 @@ export default function Rooms() {
     const [searchQuery, setSearchQuery] = useState("");
     const [sortOption, setSortOption] = useState<SortOption>('newest');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
     const [selectedTypes, setSelectedTypes] = useState<RoomType[]>([]);
+    const [appliedTypes, setAppliedTypes] = useState<RoomType[]>([]);
+
     const [isTypesExpanded, setIsTypesExpanded] = useState<boolean>(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const { getIcon, getInverseIcon } = useThemedIcon();
+    const { showSystemToast } = useSystemToastContext();
+
     const [validationError, setValidationError] = useState<string>("");
 
     useSliceErrorToast((state: RootState) => state.rooms.errors, clearError);
 
     useEffect(() => {
-        dispatch(getRooms());
-    }, [dispatch]);
+        dispatch(getRoomsByTypes(appliedTypes));
+
+        const intervalId = setInterval(() => {
+            if (!document.hidden) {
+                dispatch(getRoomsByTypes(appliedTypes));
+            }
+        }, 120000);
+
+        return () => clearInterval(intervalId);
+    }, [dispatch, appliedTypes]);
 
     useEffect(() => {
         const state = location.state as { preselectRoomType?: RoomType } | null;
 
         if (state?.preselectRoomType) {
             setSelectedTypes([state.preselectRoomType]);
-
+            setAppliedTypes([state.preselectRoomType]);
             setIsTypesExpanded(true);
 
             navigate(location.pathname, { replace: true, state: {} });
         }
     }, [location.pathname, location.state, navigate]);
+
+    const handleResetFilters = () => {
+        setSearchQuery("");
+        setSelectedTypes([]);
+        setAppliedTypes([]);
+        setSortOption('newest');
+        setSortDirection('asc');
+    };
+
+    const hasUnappliedFilters = useMemo(() => {
+        if (selectedTypes.length !== appliedTypes.length) return true;
+        return selectedTypes.some(t => !appliedTypes.includes(t));
+    }, [selectedTypes, appliedTypes]);
+
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await dispatch(getRoomsByTypes(appliedTypes)).unwrap().catch(() => { });
+        showSystemToast("Rooms list updated successfully", "system-info");
+        setIsRefreshing(false);
+    };
+
+    const handleApplyFilters = () => {
+        setAppliedTypes(selectedTypes);
+    };
 
     const groupedRooms = useMemo(() => {
         if (!rooms) return [];
@@ -95,7 +135,7 @@ export default function Rooms() {
             result = result.filter(r => r.room.name.toLowerCase().includes(q));
         }
 
-        const activeTypes = selectedTypes.length > 0 ? [...selectedTypes] : [...AVAILABLE_ROOM_TYPES];
+        const activeTypes = appliedTypes.length > 0 ? [...appliedTypes] : [...AVAILABLE_ROOM_TYPES];
         result = result.filter(r => activeTypes.includes(r.room.type));
 
         const groups: Record<string, typeof result> = {};
@@ -129,7 +169,7 @@ export default function Rooms() {
                     rooms: groupRooms.map(r => r.room)
                 };
             });
-    }, [rooms, searchQuery, selectedTypes, sortOption, sortDirection]);
+    }, [rooms, searchQuery, appliedTypes, sortOption, sortDirection]);
 
     const handleSortClick = (option: SortOption) => {
         if (sortOption === option) {
@@ -205,7 +245,8 @@ export default function Rooms() {
             background: "var(--color-bg-glass)",
             backdropFilter: "blur(2px)",
             borderRadius: "var(--radius-md)",
-            boxShadow: "var(--shadow-lg)"
+            boxShadow: "var(--shadow-lg)",
+            overflow: "hidden"
         }}>
             <Container>
 
@@ -238,7 +279,7 @@ export default function Rooms() {
                     <Stack
                         gap="1.5rem"
                         style={{
-                            height: "100%",
+                            height: "auto",
                             overflowY: "auto",
                             paddingRight: "0.5rem",
                             borderRadius: "var(--radius-md)",
@@ -247,15 +288,32 @@ export default function Rooms() {
                             padding: "1.25rem 1.5rem",
                         }}
                     >
-                        <FormField
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search by name"
-                            rounded
-                            endAdornmentSrc={getIcon("search")}
-                            endAdornmentAlt="search"
-                            style={{ flexShrink: 0 }}
-                        />
+                        <Stack direction="row" gap="0.5rem" align="stretch" style={{ flexShrink: 0 }}>
+                            <FormField
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search by name"
+                                rounded
+                                endAdornmentSrc={getIcon("search")}
+                                endAdornmentAlt="search"
+                                style={{ flex: 1, minWidth: 0 }}
+                            />
+
+                            <Button
+                                variant="ghost"
+                                onClick={handleRefresh}
+                                disabled={isRefreshing}
+                                style={{
+                                    padding: "0.4rem",
+                                }}
+                            >
+                                <Icon
+                                    src={getIcon("refresh")}
+                                    alt="refresh"
+                                    size={20}
+                                />
+                            </Button>
+                        </Stack>
 
                         <Box>
                             <Stack
@@ -339,10 +397,20 @@ export default function Rooms() {
                             <Button
                                 variant="ghost"
                                 onClick={() => setIsTypesExpanded(!isTypesExpanded)}
-                                style={{ padding: "0.5rem", boxShadow: "none" }}
+                                style={{ padding: "0.5rem" }}
                             >
-                                <Stack direction="row" justify="space-between" align="center" style={{ width: "100%" }}>
-                                    <Typography variant="body" style={{ fontWeight: 600, fontSize: "0.95rem", color: "inherit" }}>
+                                <Stack
+                                    direction="row"
+                                    justify="space-between"
+                                    align="center"
+                                    style={{ width: "100%" }}>
+                                    <Typography
+                                        variant="body"
+                                        style={{
+                                            fontWeight: 600,
+                                            fontSize: "0.95rem",
+                                            color: "inherit"
+                                        }}>
                                         Game Types
                                     </Typography>
                                     <Icon
@@ -365,23 +433,47 @@ export default function Rooms() {
                                             />
                                         </Stack>
                                     ))}
+
+                                    <Button
+                                        variant="solid"
+                                        disabled={!hasUnappliedFilters || isRefreshing}
+                                        onClick={handleApplyFilters}
+                                        style={{
+                                            marginTop: "0.5rem",
+                                            padding: "0.4rem",
+                                            fontSize: "0.85rem"
+                                        }}
+                                    >
+                                        Apply Filters
+                                    </Button>
                                 </Stack>
                             )}
                         </Stack>
                     </Stack>
 
-                    <Box style={{
-                        height: "100%",
-                        overflowY: "auto",
-                        paddingRight: "0.5rem",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "2.5rem",
-                        padding: "1.25rem 1.5rem",
-                    }}>
-                        {!rooms || rooms.length === 0 ? (
-                            <Box style={{ textAlign: "center", padding: "3rem" }}>
-                                <Typography variant="body" style={{ opacity: 0.7 }}>No rooms available. Be the first to create one!</Typography>
+                    <Box
+                        className="custom-scrollbar"
+                        style={{
+                            height: "100%",
+                            overflowY: "auto",
+                            paddingRight: "0.5rem",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "2.5rem",
+                            padding: "1.25rem 1.5rem",
+                            background: "var(--color-bg-glass)",
+                            borderRadius: "var(--radius-md)",
+                            border: "1px solid var(--color-border)",
+                            boxShadow: "var(--shadow-sm)",
+                        }}>
+                        {(searchQuery.trim().length > 0 || appliedTypes.length > 0) && groupedRooms.every(g => g.rooms.length === 0) ? (
+                            <Box style={{ textAlign: "center", padding: "4rem 2rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+                                <Typography variant="h3" style={{ opacity: 0.8 }}>
+                                    No rooms found matching your filters.
+                                </Typography>
+                                <Button variant="outline" onClick={handleResetFilters}>
+                                    Reset Filters
+                                </Button>
                             </Box>
                         ) : (
                             groupedRooms.map(group => (

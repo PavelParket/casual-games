@@ -48,6 +48,43 @@ html.dark ::-webkit-scrollbar-thumb {
    transition: background 0.3s ease;
 }
 
+.custom-scrollbar {
+    overflow-y: auto !important;
+    scrollbar-gutter: stable;
+    scrollbar-color: rgba(128, 128, 128, 0.4) transparent;
+    scrollbar-width: thin;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(128, 128, 128, 0.25);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.3s;
+}
+
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(128, 128, 128, 0.5);
+}
+
+html.dark .custom-scrollbar:hover::-webkit-scrollbar-thumb,
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
 html.is-scrolling ::-webkit-scrollbar-thumb {
    background: rgba(0, 0, 0, 0.25);
    background-clip: content-box;

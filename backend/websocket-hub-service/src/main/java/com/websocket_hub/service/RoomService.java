@@ -54,6 +54,15 @@ public class RoomService {
                 .toList();
     }
 
+    public List<RoomResponse> getRoomsByTypes(List<RoomType> types) {
+        return types.stream()
+                .map(this::getManager)
+                .filter(manager -> manager.getRedisKey() != null)
+                .flatMap(manager -> manager.getRoomsList().stream())
+                .map(roomMapper::toResponse)
+                .toList();
+    }
+
     public Map<UUID, String> getUsernamesInRoom(UUID roomId, RoomType roomType) {
         return getManager(roomType).getPlayersInRoom(roomId).stream()
                 .collect(Collectors.toMap(

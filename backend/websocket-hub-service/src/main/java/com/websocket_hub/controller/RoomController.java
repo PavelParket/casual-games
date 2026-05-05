@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -33,6 +34,11 @@ public class RoomController {
     @GetMapping("/type/{roomType}")
     public List<RoomResponse> getRoomsByType(@PathVariable RoomType roomType) {
         return roomService.getRoomsByType(roomType);
+    }
+
+    @GetMapping
+    public List<RoomResponse> getRoomsByTypes(@RequestParam List<RoomType> types) {
+        return roomService.getRoomsByTypes(types);
     }
 
     @GetMapping("/players/{roomId}/{roomType}")

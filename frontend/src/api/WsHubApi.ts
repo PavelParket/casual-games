@@ -4,32 +4,37 @@ import type { PlayerBet, Room, RoomRequest, RoomStatus, RoomType } from "../mode
 import type { HorseRaceGamePreset } from "../models/HorseRace";
 
 export const RoomAPI = {
-   getRooms: () => axios.get<Room[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/all`),
+    getRooms: () => axios.get<Room[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/all`),
 
-   getTypes: () => axios.get<RoomType[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/types`),
+    getRoomsByTypes: (types: RoomType[]) =>
+        axios.get<Room[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms`, {
+            params: { types: types.join(',') }
+        }),
 
-   getUsernamesInRoom: (roomId: string, roomType: RoomType) =>
-      axios.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/players/${roomId}/${roomType}`),
+    getTypes: () => axios.get<RoomType[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/types`),
 
-   getReadyPlayers: (roomId: string, roomType: RoomType) =>
-      axios.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/ready-count/${roomId}/${roomType}`),
+    getUsernamesInRoom: (roomId: string, roomType: RoomType) =>
+        axios.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/players/${roomId}/${roomType}`),
 
-   createRoom: (room: RoomRequest) => axios.post<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms`, room),
+    getReadyPlayers: (roomId: string, roomType: RoomType) =>
+        axios.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/ready-count/${roomId}/${roomType}`),
 
-   getRoomById: (roomId: string) => axios.get<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/${roomId}`),
+    createRoom: (room: RoomRequest) => axios.post<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms`, room),
 
-   getRoomStatus: (roomId: string, roomType: RoomType) =>
-      axios.get<RoomStatus>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/status/${roomId}/${roomType}`),
+    getRoomById: (roomId: string) => axios.get<Room>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/${roomId}`),
+
+    getRoomStatus: (roomId: string, roomType: RoomType) =>
+        axios.get<RoomStatus>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/status/${roomId}/${roomType}`),
 };
 
 export const TicTacToeRoomApi = {
-   getPlayersBets: (roomId: string) => axios.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/t-t-t/player-bets/${roomId}`),
+    getPlayersBets: (roomId: string) => axios.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/t-t-t/player-bets/${roomId}`),
 };
 
 export const HorseRaceRoomApi = {
-   getPreset: (roomId: string) => axios.get<HorseRaceGamePreset>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/horse-race/preset/${roomId}`),
+    getPreset: (roomId: string) => axios.get<HorseRaceGamePreset>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/horse-race/preset/${roomId}`),
 };
 
 export const DurakRoomApi = {
-   getPlayersBets: (roomId: string) => axios.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/durak/player-bets/${roomId}`),
+    getPlayersBets: (roomId: string) => axios.get<PlayerBet[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/durak/player-bets/${roomId}`),
 };
