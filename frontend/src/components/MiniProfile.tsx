@@ -18,7 +18,7 @@ const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
 };
 
-export function MiniProfile({ guid, username, avatarUrl, children }: MiniProfileProps) {
+export function MiniProfile({ guid, username, children }: MiniProfileProps) {
     const dispatch = useDispatch<AppDispatch>();
     const { getIcon } = useThemedIcon();
 
@@ -81,10 +81,6 @@ export function MiniProfile({ guid, username, avatarUrl, children }: MiniProfile
         };
     }, [isOpen]);
 
-    const finalAvatar = profile?.avatarUrl || avatarUrl;
-    const status = profile?.status || "default";
-    const statusIconName = getStatusIconName(status);
-    const statusIconSrc = getIcon(statusIconName) || getIcon("defaultStatus");
     const showSkeleton = isLoading && !profile;
 
     const menuContent = isOpen ? createPortal(
@@ -108,7 +104,7 @@ export function MiniProfile({ guid, username, avatarUrl, children }: MiniProfile
                 alignItems: "center",
                 gap: "1rem"
             }}>
-                <Avatar src={finalAvatar} fallback={username} size={40} />
+                <Avatar src={profile.avatarUrl} fallback={username} size={40} />
                 <Typography
                     variant="body"
                     style={{
@@ -143,7 +139,7 @@ export function MiniProfile({ guid, username, avatarUrl, children }: MiniProfile
                     {showSkeleton ? (
                         <Skeleton variant="circular" width="24px" height="24px" />
                     ) : (
-                        <Icon src={statusIconSrc} alt={status} size={24} />
+                        <Icon src={getIcon(getStatusIconName(profile.status))} alt={profile.status} size={24} />
                     )}
                 </Box>
 
@@ -151,14 +147,8 @@ export function MiniProfile({ guid, username, avatarUrl, children }: MiniProfile
                     {showSkeleton ? (
                         <Skeleton variant="text" width="60px" height="18px" />
                     ) : (
-                        <Typography
-                            variant="caption"
-                            style={{
-                                textTransform: "capitalize",
-                                fontWeight: 500,
-                                fontSize: "0.9rem"
-                            }}>
-                            {status}
+                        <Typography variant="caption" style={{ textTransform: "capitalize", fontWeight: 500, fontSize: "0.9rem" }}>
+                            {profile.status}
                         </Typography>
                     )}
                 </Box>

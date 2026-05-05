@@ -403,7 +403,7 @@ export default function DurakRoom() {
                                     </MiniProfile>
                                 ))}
                             </Stack>
-                            <Box />
+                            <Box/>
                             <BettingPanel
                                 players={players}
                                 balance={balance}

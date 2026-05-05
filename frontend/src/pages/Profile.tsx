@@ -631,12 +631,12 @@ export default function Profile() {
                                                                     Before:
                                                                 </Typography>
                                                                 <Typography variant="caption"
-                                                                            style={{
-                                                                                opacity: 0.8,
-                                                                                fontWeight: "500",
-                                                                                fontFamily: "monospace",
-                                                                                fontSize: "0.7rem"
-                                                                            }}
+                                                                    style={{
+                                                                        opacity: 0.8,
+                                                                        fontWeight: "500",
+                                                                        fontFamily: "monospace",
+                                                                        fontSize: "0.7rem"
+                                                                    }}
                                                                 >
                                                                     {transaction.balanceBefore}
                                                                 </Typography>
