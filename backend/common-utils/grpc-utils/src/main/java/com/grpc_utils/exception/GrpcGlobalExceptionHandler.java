@@ -1,5 +1,10 @@
-package com.common_utils.exception;
+package com.grpc_utils.exception;
 
+import com.common_utils.exception.BadRequestException;
+import com.common_utils.exception.ConflictException;
+import com.common_utils.exception.ForbiddenException;
+import com.common_utils.exception.NotFoundException;
+import com.common_utils.exception.ServiceUnavailableException;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;

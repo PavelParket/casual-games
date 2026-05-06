@@ -1,13 +1,11 @@
-package com.security_starter.jwt;
+package casualgames.apigateway.jwt;
 
+import com.common_utils.exception.JwtException;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
-@Component
 @Slf4j
 public class JwtDecoder {
 
@@ -25,15 +23,6 @@ public class JwtDecoder {
         } catch (Exception e) {
             log.error("Failed to decode JWT token: {}", e.getMessage());
             throw new JwtException("Invalid JWT token", e);
-        }
-    }
-
-    public boolean isValid(String token) {
-        try {
-            decode(token);
-            return true;
-        } catch (Exception e) {
-            return false;
         }
     }
 }
