@@ -14,10 +14,11 @@ import { useDurakMessages } from "../../hooks/useDurakMessages";
 import LoadingPage from "../LoadingPage";
 import InvalidRoomPage from "./InvalidRoomPage";
 import type { ErrorResponse } from "../../helpers/ApiErrorHelper";
-import { Box, Button, Card, Container, Stack, ToastContainer, Typography } from "../../ui";
+import { Avatar, Box, Button, Card, Container, Stack, ToastContainer, Typography } from "../../ui";
 import { DurakBoard } from "./durak/components/DurakBoard";
 import { BettingPanel } from "./durak/components/BettingPanel";
 import { GameOverOverlay } from "./durak/components/GameOverOverlay";
+import { MiniProfile } from "../../components/MiniProfile";
 
 export type TableExitMode = "bita" | "pickup" | null;
 
@@ -369,10 +370,40 @@ export default function DurakRoom() {
                             <Stack gap="1rem" align="center" justify="center" style={{ paddingTop: "1rem" }}>
                                 <Typography variant="h3">Players</Typography>
                                 {Object.values(players ?? {}).map(username => (
-                                    <Typography key={username} variant="body">{username}</Typography>
+                                    <MiniProfile key={guid} guid={guid} username={username}>
+                                        <Stack
+                                            direction="row"
+                                            align="center"
+                                            gap="0.75rem"
+                                            style={{
+                                                cursor: "pointer",
+                                                width: "200px",
+                                                padding: "0.35rem",
+                                                paddingRight: "1rem",
+                                                background: "var(--color-bg-glass)",
+                                                border: "1px solid var(--color-border)",
+                                                borderRadius: "var(--radius-md)",
+                                                boxShadow: "var(--shadow-sm)",
+                                                transition: "all 0.2s ease",
+                                                userSelect: "none"
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+                                            }}
+                                        >
+                                            <Avatar fallback={username} size={40} />
+
+                                            <Typography variant="body" style={{ fontWeight: "bold" }}>
+                                                {username}
+                                            </Typography>
+                                        </Stack>
+                                    </MiniProfile>
                                 ))}
                             </Stack>
-                            <Box />
+                            <Box/>
                             <BettingPanel
                                 players={players}
                                 balance={balance}
@@ -391,6 +422,6 @@ export default function DurakRoom() {
             </Container>
 
             <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
-        </Box>
+        </Box >
     );
 }

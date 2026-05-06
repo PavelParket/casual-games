@@ -11,7 +11,7 @@ export const BankAPI = {
         }),
 
     getTopWinners: (limit: number = 10) =>
-        axios.get<TopWinnersResponse[]>(`${BANK_SERVICE_URL}/transactions/top-winners`, {
+        axios.get<TopWinnersResponse[]>(`${BANK_SERVICE_URL}/transactions/top-winners/`, {
             params: { limit }
         }),
 };
