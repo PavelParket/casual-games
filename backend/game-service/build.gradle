@@ -25,6 +25,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.casualgames:common-utils:1.0.0'
     implementation "com.casualgames:kafka-starter:1.0.0"
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
