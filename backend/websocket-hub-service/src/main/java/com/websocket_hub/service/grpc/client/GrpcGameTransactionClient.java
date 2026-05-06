@@ -6,7 +6,7 @@ import com.casualgames.grpc.transaction.GameTransactionResponse;
 import com.casualgames.grpc.transaction.GameTransactionServiceGrpc;
 import com.casualgames.grpc.transaction.HorseRaceTransactionRequest;
 import com.casualgames.grpc.transaction.TicTacToeTransactionRequest;
-import com.common_utils.exception.GrpcStatusExceptionMapper;
+import com.grpc_utils.mapper.GrpcStatusExceptionMapper;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

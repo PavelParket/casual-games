@@ -3,7 +3,7 @@ package com.websocket_hub.service.grpc.client;
 import com.casualgames.grpc.user.GetByGuidRequest;
 import com.casualgames.grpc.user.UserResponse;
 import com.casualgames.grpc.user.UserServiceGrpc;
-import com.common_utils.exception.GrpcStatusExceptionMapper;
+import com.grpc_utils.mapper.GrpcStatusExceptionMapper;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
