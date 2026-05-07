@@ -1,15 +1,13 @@
 import axios from "axios";
 import { WEBSOCKET_HUB_SERVICE_URL } from "./ApiDictionary";
-import type { PlayerBet, Room, RoomRequest, RoomStatus, RoomType } from "../models/Room";
+import type { PlayerBet, Room, RoomFilterRequest, RoomRequest, RoomResponseMap, RoomStatus, RoomType } from "../models/Room";
 import type { HorseRaceGamePreset } from "../models/HorseRace";
 
 export const RoomAPI = {
     getRooms: () => axios.get<Room[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/all`),
 
-    getRoomsByTypes: (types: RoomType[]) =>
-        axios.get<Room[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms`, {
-            params: { types: types.join(',') }
-        }),
+    searchRooms: (request: RoomFilterRequest) => 
+      axios.post<RoomResponseMap>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/search`, request),
 
     getTypes: () => axios.get<RoomType[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/types`),
 

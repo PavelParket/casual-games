@@ -12,7 +12,7 @@ export interface Room {
 export interface RoomRequest {
     roomName: string;
     roomType: RoomType;
-};
+}
 
 export const ROOM_TYPE_HANDLERS: Record<string, string> = {
     "TIC_TAC_TOE": "t-t-t",
@@ -29,6 +29,20 @@ export const ROOM_TYPE_LABELS: Record<string, string> = {
 } as const;
 
 export type RoomType = keyof typeof ROOM_TYPE_HANDLERS;
+
+export type RoomSortField = "NAME" | "CREATED_AT";
+export type SortDirection = "ASC" | "DESC";
+
+export interface RoomFilterRequest {
+    name?: string;
+    types?: RoomType[];
+    sortField: RoomSortField;
+    sortDirection: SortDirection;
+}
+
+export interface RoomResponseMap {
+    rooms: Record<RoomType, Room[]>;
+}
 
 export interface RoomStatus {
     status: string;

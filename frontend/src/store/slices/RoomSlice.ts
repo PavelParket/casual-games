@@ -1,17 +1,18 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { RoomAPI } from "../../api/WsHubApi";
-import type { Room, RoomRequest, RoomType } from "../../models/Room";
+import type { Room, RoomFilterRequest, RoomRequest, RoomType } from "../../models/Room";
 import { extractErrorResponseMessage } from "../../helpers/ApiErrorHelper";
 
 export const ROOM_OPERATION_KEYS = {
     GET_ROOMS: "getRooms",
-    GET_ROOMS_BY_TYPES: "getRoomsByTypes",
+    SEARCH_ROOMS: "searchRooms",
     GET_TYPES: "getTypes",
     CREATE_ROOM: "createRoom",
 } as const;
 
 export interface RoomState {
     rooms?: Room[];
+    groupedRooms?: Record<RoomType, Room[]>;
     roomTypes?: RoomType[];
     errors: Record<string, string | null>;
 }
@@ -30,18 +31,14 @@ export const getRooms = createAsyncThunk<Room[], void, { rejectValue: string }>(
     }
 );
 
-export const getRoomsByTypes = createAsyncThunk<Room[], RoomType[], { rejectValue: string }>(
-    "rooms/getRoomsByTypes",
-    async (types, { rejectWithValue }) => {
+export const searchRooms = createAsyncThunk<Record<RoomType, Room[]>, RoomFilterRequest, { rejectValue: string }>(
+    "rooms/searchRooms",
+    async (request, { rejectWithValue }) => {
         try {
-            if (types.length === 0) {
-                const response = await RoomAPI.getRooms();
-                return response.data;
-            }
-            const response = await RoomAPI.getRoomsByTypes(types);
-            return response.data;
+            const response = await RoomAPI.searchRooms(request);
+            return response.data.rooms;
         } catch (err: unknown) {
-            return rejectWithValue(extractErrorResponseMessage(err, "Failed to fetch filtered rooms"));
+            return rejectWithValue(extractErrorResponseMessage(err, "Failed to search rooms"));
         }
     }
 );
@@ -74,9 +71,11 @@ export const createRoom = createAsyncThunk<Room, RoomRequest, { rejectValue: str
 
 const initialState: RoomState = {
     rooms: [],
+    groupedRooms: undefined,
     roomTypes: [],
     errors: {},
 };
+
 
 const roomSlice = createSlice({
     name: "rooms",
@@ -84,6 +83,7 @@ const roomSlice = createSlice({
     reducers: {
         clearRooms: (state) => {
             state.rooms = [];
+            state.groupedRooms = undefined;
         },
         clearRoomTypes: (state) => {
             state.roomTypes = [];
@@ -109,15 +109,15 @@ const roomSlice = createSlice({
                 state.errors[ROOM_OPERATION_KEYS.GET_ROOMS] = action.payload ?? "Failed to fetch rooms";
             })
 
-            /* === Get Rooms By Types === */
-            .addCase(getRoomsByTypes.pending, (state) => {
-                state.errors[ROOM_OPERATION_KEYS.GET_ROOMS_BY_TYPES] = null;
+            /* === Search Rooms === */
+            .addCase(searchRooms.pending, (state) => {
+                state.errors[ROOM_OPERATION_KEYS.SEARCH_ROOMS] = null;
             })
-            .addCase(getRoomsByTypes.fulfilled, (state, action) => {
-                state.rooms = action.payload;
+            .addCase(searchRooms.fulfilled, (state, action) => {
+                state.groupedRooms = action.payload;
             })
-            .addCase(getRoomsByTypes.rejected, (state, action) => {
-                state.errors[ROOM_OPERATION_KEYS.GET_ROOMS_BY_TYPES] = action.payload ?? "Failed to fetch filtered rooms";
+            .addCase(searchRooms.rejected, (state, action) => {
+                state.errors[ROOM_OPERATION_KEYS.SEARCH_ROOMS] = action.payload ?? "Failed to search rooms";
             })
 
             /* === Get Room Types === */
