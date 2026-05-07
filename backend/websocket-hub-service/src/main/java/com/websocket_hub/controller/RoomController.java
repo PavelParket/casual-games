@@ -1,7 +1,9 @@
 package com.websocket_hub.controller;
 
+import com.websocket_hub.domain.dto.RoomFilterRequest;
 import com.websocket_hub.domain.dto.RoomRequest;
 import com.websocket_hub.domain.dto.RoomResponse;
+import com.websocket_hub.domain.dto.RoomResponseMap;
 import com.websocket_hub.domain.dto.RoomStatusResponse;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.service.RoomService;
@@ -69,5 +71,10 @@ public class RoomController {
     @GetMapping("status/{roomId}/{roomType}")
     public RoomStatusResponse getStatus(@PathVariable UUID roomId, @PathVariable RoomType roomType) {
         return roomService.getStatus(roomId, roomType);
+    }
+
+    @PostMapping("/search")
+    public RoomResponseMap search(@Valid @RequestBody RoomFilterRequest request) {
+        return roomService.search(request);
     }
 }
