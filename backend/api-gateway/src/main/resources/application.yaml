@@ -52,10 +52,10 @@ spring:
               filters:
                 - StripPrefix=1
 
-            - id: websocket-service
+            - id: websocket-hub-service
               uri: http://localhost:8081
               predicates:
-                - Path=/websocket-service/**
+                - Path=/websocket-hub-service/**
               filters:
                 - StripPrefix=1
 
@@ -65,6 +65,9 @@ spring:
                 - Path=/bank-service/**
               filters:
                 - StripPrefix=1
+
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS_URLS:http://localhost:5173,https://localhost:5173}
 
   security:
     jwt:
@@ -77,7 +80,7 @@ spring:
 
 server:
   port: 8888
-  max-http-header-size: 16384
+  max-http-request-header-size: 16384
 
 logging:
   level:
