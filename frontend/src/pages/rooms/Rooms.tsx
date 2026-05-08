@@ -3,13 +3,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState, useMemo } from "react";
 import { Box, Button, Card, Container, Icon, Modal, ComboBox, Stack, FormField, Textfield, Typography, useThemedIcon, Grid, CheckBox, Divider } from "../../ui";
-import { ROOM_TYPE_HANDLERS, ROOM_TYPE_LABELS, type Room, type RoomType } from "../../models/Room";
+import { ROOM_TYPE_HANDLERS, ROOM_TYPE_LABELS, type Room, type RoomType, type RoomSortField, type SortDirection, type RoomFilterRequest } from "../../models/Room";
 import { validateRoomName } from "../../utils/SecurityUtils";
-import { clearError, createRoom, getRooms } from "../../store/slices/RoomSlice";
+import { clearError, createRoom, searchRooms } from "../../store/slices/RoomSlice";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
-
-type SortOption = 'newest' | 'alphabet';
-type SortDirection = 'asc' | 'desc';
+import { useSystemToastContext } from "../../providers/SystemToastContext";
 
 const AVAILABLE_ROOM_TYPES = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
 
@@ -52,91 +50,120 @@ export default function Rooms() {
     const dispatch = useDispatch<AppDispatch>();
 
     const authentication = useSelector((state: RootState) => state.auth);
-    const { rooms } = useSelector((state: RootState) => state.rooms);
+    const { groupedRooms: backendGroupedRooms } = useSelector((state: RootState) => state.rooms);
 
     const [isCreateRoomModalOpen, setIsCreateRoomModalOpen] = useState<boolean>(false);
     const [roomName, setRoomName] = useState<string>("");
     const [roomType, setRoomType] = useState<RoomType>();
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [sortOption, setSortOption] = useState<SortOption>('newest');
-    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+    const [sortOption, setSortOption] = useState<RoomSortField>('CREATED_AT');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('DESC');
     const [selectedTypes, setSelectedTypes] = useState<RoomType[]>([]);
+
+    const [appliedFilters, setAppliedFilters] = useState<RoomFilterRequest>({
+        name: "",
+        types: [],
+        sortField: "CREATED_AT",
+        sortDirection: "DESC"
+    });
+
     const [isTypesExpanded, setIsTypesExpanded] = useState<boolean>(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const { getIcon, getInverseIcon } = useThemedIcon();
+    const { showSystemToast } = useSystemToastContext();
+
     const [validationError, setValidationError] = useState<string>("");
 
     useSliceErrorToast((state: RootState) => state.rooms.errors, clearError);
 
     useEffect(() => {
-        dispatch(getRooms());
-    }, [dispatch]);
+        dispatch(searchRooms(appliedFilters));
+
+        const intervalId = setInterval(() => {
+            if (!document.hidden) {
+                dispatch(searchRooms(appliedFilters));
+            }
+        }, 120000);
+
+        return () => clearInterval(intervalId);
+    }, [dispatch, appliedFilters]);
 
     useEffect(() => {
         const state = location.state as { preselectRoomType?: RoomType } | null;
 
         if (state?.preselectRoomType) {
-            setSelectedTypes([state.preselectRoomType]);
+            const types = [state.preselectRoomType];
+            setSelectedTypes(types);
+
+            setAppliedFilters(prev => ({ ...prev, types }));
 
             setIsTypesExpanded(true);
-
             navigate(location.pathname, { replace: true, state: {} });
         }
     }, [location.pathname, location.state, navigate]);
 
-    const groupedRooms = useMemo(() => {
-        if (!rooms) return [];
+    const handleResetFilters = () => {
+        setSearchQuery("");
+        setSelectedTypes([]);
+        setSortOption('CREATED_AT');
+        setSortDirection('DESC');
 
-        let result = rooms.map((room, index) => ({ room, index }));
-
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            result = result.filter(r => r.room.name.toLowerCase().includes(q));
-        }
-
-        const activeTypes = selectedTypes.length > 0 ? [...selectedTypes] : [...AVAILABLE_ROOM_TYPES];
-        result = result.filter(r => activeTypes.includes(r.room.type));
-
-        const groups: Record<string, typeof result> = {};
-
-        activeTypes.forEach(type => {
-            groups[type] = [];
+        setAppliedFilters({
+            name: "",
+            types: [],
+            sortField: "CREATED_AT",
+            sortDirection: "DESC"
         });
+    };
+    const hasUnappliedFilters = useMemo(() => {
+        if (searchQuery !== (appliedFilters.name || "")) return true;
+        if (sortOption !== appliedFilters.sortField) return true;
+        if (sortDirection !== appliedFilters.sortDirection) return true;
 
-        result.forEach(r => {
-            if (groups[r.room.type]) {
-                groups[r.room.type].push(r);
-            }
+        const appliedSet = new Set(appliedFilters.types || []);
+        if (selectedTypes.length !== appliedSet.size) return true;
+        return selectedTypes.some(t => !appliedSet.has(t));
+    }, [searchQuery, sortOption, sortDirection, selectedTypes, appliedFilters]);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await dispatch(searchRooms(appliedFilters)).unwrap().catch(() => { });
+        showSystemToast("Rooms list updated successfully", "system-info");
+        setIsRefreshing(false);
+    };
+
+    const handleApplyFilters = () => {
+        setAppliedFilters({
+            name: searchQuery,
+            types: selectedTypes,
+            sortField: sortOption,
+            sortDirection: sortDirection
         });
+    };
 
-        return activeTypes
-            .map(type => {
-                const groupRooms = groups[type];
+    const displayGroups = useMemo(() => {
+        if (!backendGroupedRooms) return [];
 
-                groupRooms.sort((a, b) => {
-                    let cmp = 0;
-                    if (sortOption === 'alphabet') {
-                        cmp = a.room.name.localeCompare(b.room.name, 'en', { numeric: true });
-                    } else {
-                        cmp = a.index - b.index;
-                    }
-                    return sortDirection === 'asc' ? cmp : -cmp;
-                });
+        const typesToRender = appliedFilters.types && appliedFilters.types.length > 0
+            ? appliedFilters.types
+            : AVAILABLE_ROOM_TYPES;
 
-                return {
-                    type: type as RoomType,
-                    rooms: groupRooms.map(r => r.room)
-                };
-            });
-    }, [rooms, searchQuery, selectedTypes, sortOption, sortDirection]);
+        return [...typesToRender]
+            .sort((a, b) => ROOM_TYPE_LABELS[a].localeCompare(ROOM_TYPE_LABELS[b]))
+            .map(type => ({
+                type,
+                rooms: backendGroupedRooms[type] || []
+            }));
+    }, [backendGroupedRooms, appliedFilters.types]);
 
-    const handleSortClick = (option: SortOption) => {
-        if (sortOption === option) {
-            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    const handleSortClick = (field: RoomSortField) => {
+        if (sortOption === field) {
+            setSortDirection(prev => prev === 'ASC' ? 'DESC' : 'ASC');
         } else {
-            setSortOption(option);
-            setSortDirection('asc');
+            setSortOption(field);
+            setSortDirection(field === 'CREATED_AT' ? 'DESC' : 'ASC');
         }
     };
 
@@ -205,7 +232,8 @@ export default function Rooms() {
             background: "var(--color-bg-glass)",
             backdropFilter: "blur(2px)",
             borderRadius: "var(--radius-md)",
-            boxShadow: "var(--shadow-lg)"
+            boxShadow: "var(--shadow-lg)",
+            overflow: "hidden"
         }}>
             <Container>
 
@@ -236,9 +264,10 @@ export default function Rooms() {
                 >
 
                     <Stack
+                        className="custom-scrollbar"
                         gap="1.5rem"
                         style={{
-                            height: "100%",
+                            height: "auto",
                             overflowY: "auto",
                             paddingRight: "0.5rem",
                             borderRadius: "var(--radius-md)",
@@ -247,15 +276,30 @@ export default function Rooms() {
                             padding: "1.25rem 1.5rem",
                         }}
                     >
-                        <FormField
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search by name"
-                            rounded
-                            endAdornmentSrc={getIcon("search")}
-                            endAdornmentAlt="search"
-                            style={{ flexShrink: 0 }}
-                        />
+                        <Stack direction="row" gap="0.5rem" align="stretch" style={{ flexShrink: 0 }}>
+                            <FormField
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search by name"
+                                rounded
+                                endAdornmentSrc={getIcon("search")}
+                                endAdornmentAlt="search"
+                                style={{ flex: 1, minWidth: 0 }}
+                            />
+
+                            <Button
+                                variant="ghost"
+                                onClick={handleRefresh}
+                                disabled={isRefreshing}
+                                style={{ padding: "0.4rem" }}
+                            >
+                                <Icon
+                                    src={getIcon("refresh")}
+                                    alt="refresh"
+                                    size={20}
+                                />
+                            </Button>
+                        </Stack>
 
                         <Box>
                             <Stack
@@ -270,8 +314,8 @@ export default function Rooms() {
                                 }}
                             >
                                 <Button
-                                    variant={sortOption === 'newest' ? 'solid' : 'ghost'}
-                                    onClick={() => handleSortClick('newest')}
+                                    variant={sortOption === 'CREATED_AT' ? 'solid' : 'ghost'}
+                                    onClick={() => handleSortClick('CREATED_AT')}
                                     style={{ flex: 1, padding: "0.5rem 0.2rem", boxShadow: 'none', minWidth: 0 }}
                                 >
                                     <Stack direction="row" align="center" justify="center" gap="4px" style={{ width: "100%" }}>
@@ -279,7 +323,7 @@ export default function Rooms() {
                                             variant="body"
                                             style={{
                                                 fontSize: "0.85rem",
-                                                fontWeight: sortOption === 'newest' ? 600 : 500,
+                                                fontWeight: sortOption === 'CREATED_AT' ? 600 : 500,
                                                 color: 'inherit',
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis'
@@ -292,8 +336,8 @@ export default function Rooms() {
                                             alt="sort dir"
                                             size={16}
                                             style={{
-                                                transform: sortOption === 'newest' && sortDirection === 'asc' ? 'rotate(180deg)' : 'none',
-                                                opacity: sortOption === 'newest' ? 0.8 : 0,
+                                                transform: sortOption === 'CREATED_AT' && sortDirection === 'ASC' ? 'rotate(180deg)' : 'none',
+                                                opacity: sortOption === 'CREATED_AT' ? 0.8 : 0,
                                                 transition: 'transform 0.2s ease'
                                             }}
                                         />
@@ -301,8 +345,8 @@ export default function Rooms() {
                                 </Button>
 
                                 <Button
-                                    variant={sortOption === 'alphabet' ? 'solid' : 'ghost'}
-                                    onClick={() => handleSortClick('alphabet')}
+                                    variant={sortOption === 'NAME' ? 'solid' : 'ghost'}
+                                    onClick={() => handleSortClick('NAME')}
                                     style={{ flex: 1, padding: "0.5rem 0.2rem", boxShadow: 'none', minWidth: 0 }}
                                 >
                                     <Stack direction="row" align="center" justify="center" gap="4px" style={{ width: "100%" }}>
@@ -310,7 +354,7 @@ export default function Rooms() {
                                             variant="body"
                                             style={{
                                                 fontSize: "0.85rem",
-                                                fontWeight: sortOption === 'alphabet' ? 600 : 500,
+                                                fontWeight: sortOption === 'NAME' ? 600 : 500,
                                                 color: 'inherit',
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis'
@@ -323,8 +367,8 @@ export default function Rooms() {
                                             alt="sort dir"
                                             size={16}
                                             style={{
-                                                transform: sortOption === 'alphabet' && sortDirection === 'asc' ? 'rotate(180deg)' : 'none',
-                                                opacity: sortOption === 'alphabet' ? 0.8 : 0,
+                                                transform: sortOption === 'NAME' && sortDirection === 'DESC' ? 'rotate(180deg)' : 'none',
+                                                opacity: sortOption === 'NAME' ? 0.8 : 0,
                                                 transition: 'transform 0.2s ease'
                                             }}
                                         />
@@ -365,26 +409,51 @@ export default function Rooms() {
                                             />
                                         </Stack>
                                     ))}
+
+
                                 </Stack>
                             )}
+                            <Button
+                                variant="solid"
+                                disabled={!hasUnappliedFilters || isRefreshing}
+                                onClick={handleApplyFilters}
+                                style={{
+                                    marginTop: "0.5rem",
+                                    padding: "0.4rem",
+                                    fontSize: "0.85rem"
+                                }}
+                            >
+                                Apply Filters
+                            </Button>
                         </Stack>
                     </Stack>
 
-                    <Box style={{
-                        height: "100%",
-                        overflowY: "auto",
-                        paddingRight: "0.5rem",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "2.5rem",
-                        padding: "1.25rem 1.5rem",
-                    }}>
-                        {!rooms || rooms.length === 0 ? (
-                            <Box style={{ textAlign: "center", padding: "3rem" }}>
-                                <Typography variant="body" style={{ opacity: 0.7 }}>No rooms available. Be the first to create one!</Typography>
+                    <Box
+                        className="custom-scrollbar"
+                        style={{
+                            height: "100%",
+                            overflowY: "auto",
+                            paddingRight: "0.5rem",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "2.5rem",
+                            padding: "1.25rem 1.5rem",
+                            background: "var(--color-bg-glass)",
+                            borderRadius: "var(--radius-md)",
+                            border: "1px solid var(--color-border)",
+                            boxShadow: "var(--shadow-sm)",
+                        }}>
+                        {((appliedFilters.name?.trim().length || 0) > 0 || (appliedFilters.types && appliedFilters.types.length > 0)) && displayGroups.every(g => g.rooms.length === 0) ? (
+                            <Box style={{ textAlign: "center", padding: "4rem 2rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+                                <Typography variant="h3" style={{ opacity: 0.8 }}>
+                                    No rooms found matching your filters.
+                                </Typography>
+                                <Button variant="outline" onClick={handleResetFilters}>
+                                    Reset Filters
+                                </Button>
                             </Box>
                         ) : (
-                            groupedRooms.map(group => (
+                            displayGroups.map(group => (
                                 <Box key={group.type}>
                                     <Box style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
                                         <Typography variant="h2">{ROOM_TYPE_LABELS[group.type]}</Typography>

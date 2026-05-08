@@ -1,5 +1,5 @@
 import { WEBSOCKET_HUB_SERVICE_URL } from "./ApiDictionary";
-import type { PlayerBet, Room, RoomRequest, RoomStatus, RoomType } from "../models/Room";
+import type { PlayerBet, Room, RoomFilterRequest, RoomRequest, RoomResponseMap, RoomStatus, RoomType } from "../models/Room";
 import type { HorseRaceGamePreset } from "../models/HorseRace";
 import { client } from "./AxiosConfig";
 
@@ -7,6 +7,9 @@ export const RoomAPI = {
    getRooms: () => client.get<Room[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/all`),
 
    getTypes: () => client.get<RoomType[]>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/types`),
+
+   searchRooms: (request: RoomFilterRequest) =>
+      client.post<RoomResponseMap>(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/search`, request),
 
    getUsernamesInRoom: (roomId: string, roomType: RoomType) =>
       client.get(`${WEBSOCKET_HUB_SERVICE_URL}/ws/rooms/players/${roomId}/${roomType}`),
