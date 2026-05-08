@@ -1,12 +1,11 @@
 package com.bank_service.factory;
 
-import com.bank_service.domain.dto.game.GameTransactionRequest;
-import com.bank_service.domain.dto.game.TicTacToeTransactionRequest;
-import com.bank_service.domain.entity.PlayerBet;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
 import com.bank_service.domain.enums.TransactionStatus;
 import com.bank_service.domain.enums.TransactionType;
+import com.casualgames.grpc.transaction.PlayerBetMessage;
+import com.casualgames.grpc.transaction.TicTacToeTransactionRequest;
 import com.common_utils.exception.NotFoundException;
 import org.springframework.stereotype.Component;
 
@@ -27,43 +26,46 @@ public class TicTacToeTransactionFactory implements GameTransactionFactory<TicTa
 
     @Override
     public List<Transaction> createTransactions(TicTacToeTransactionRequest request) {
-        UUID winnerGuid = request.winner();
+        UUID winnerGuid = UUID.fromString(request.getWinner());
+        UUID roomId = UUID.fromString(request.getRoomId());
+        RoomType roomType = RoomType.valueOf(request.getRoomType());
 
-        PlayerBet winner = request.playerBets().stream()
-                .filter(playerBet -> playerBet.getGuid().equals(winnerGuid))
+        PlayerBetMessage winner = request.getPlayerBetsList().stream()
+                .filter(bet -> UUID.fromString(bet.getGuid()).equals(winnerGuid))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_WINNER));
 
-        PlayerBet loser = request.playerBets().stream()
-                .filter(playerBet -> !playerBet.getGuid().equals(winnerGuid))
+        PlayerBetMessage loser = request.getPlayerBetsList().stream()
+                .filter(bet -> !UUID.fromString(bet.getGuid()).equals(winnerGuid))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_LOSER));
 
-        BigDecimal reward = loser.getBet();
+        BigDecimal reward = new BigDecimal(loser.getBet());
 
         return List.of(
-                buildTransaction(request, winner, TransactionType.ADDITION, reward),
-                buildTransaction(request, loser, TransactionType.SUBTRACTION, reward)
+                buildTransaction(roomId, roomType, winner, TransactionType.ADDITION, reward),
+                buildTransaction(roomId, roomType, loser, TransactionType.SUBTRACTION, reward)
         );
     }
 
-    private Transaction buildTransaction(GameTransactionRequest gameTransactionRequest,
-                                         PlayerBet playerBet,
+    private Transaction buildTransaction(UUID roomId,
+                                         RoomType roomType,
+                                         PlayerBetMessage bet,
                                          TransactionType type,
                                          BigDecimal amount) {
-
+        BigDecimal balanceBefore = new BigDecimal(bet.getBalanceBefore());
         BigDecimal balanceAfter = TransactionType.ADDITION.equals(type)
-                ? playerBet.getBalanceBefore().add(amount)
-                : playerBet.getBalanceBefore().subtract(amount);
+                ? balanceBefore.add(amount)
+                : balanceBefore.subtract(amount);
 
         return Transaction.builder()
-                .userGuid(playerBet.getGuid())
-                .roomId(gameTransactionRequest.roomId())
-                .roomType(gameTransactionRequest.roomType())
+                .userGuid(UUID.fromString(bet.getGuid()))
+                .roomId(roomId)
+                .roomType(roomType)
                 .type(type)
                 .status(TransactionStatus.PENDING)
                 .amount(amount)
-                .balanceBefore(playerBet.getBalanceBefore())
+                .balanceBefore(balanceBefore)
                 .balanceAfter(balanceAfter)
                 .build();
     }

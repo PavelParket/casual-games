@@ -1,6 +1,6 @@
 plugins {
     id 'java-library'
-    id 'org.springframework.boot' version '3.5.13'
+    id 'org.springframework.boot' version '3.5.14'
     id 'io.spring.dependency-management'
     id 'maven-publish'
     id 'com.google.protobuf' version '0.9.6'
@@ -14,20 +14,28 @@ jar {
     enabled = true
 }
 
-def grpcVersion = '1.80.0'
+def grpcVersion = '1.81.0'
 def protobufVersion = '4.34.1'
 
 dependencyManagement {
     dependencies {
         dependency "com.google.protobuf:protobuf-java:${protobufVersion}"
+        dependency "com.google.protobuf:protobuf-java-util:${protobufVersion}"
     }
 }
 
 dependencies {
-    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
-    implementation "io.grpc:grpc-core:${grpcVersion}"
-    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    implementation "io.grpc:grpc-api:${grpcVersion}"
+    implementation "io.grpc:grpc-netty:${grpcVersion}"
+    implementation "io.grpc:grpc-core:${grpcVersion}"
+    implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
+    implementation "io.grpc:grpc-context:${grpcVersion}"
+    implementation "io.grpc:grpc-services:${grpcVersion}"
+    implementation "io.grpc:grpc-inprocess:${grpcVersion}"
+    implementation "io.grpc:grpc-util:${grpcVersion}"
 }
 
 protobuf {

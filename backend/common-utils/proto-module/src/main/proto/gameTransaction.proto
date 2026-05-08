@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package transaction;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.casualgames.grpc.transaction";
+option java_multiple_files = true;
+
+message PlayerBetMessage {
+  string guid = 1;
+  string bet = 2;
+  string balance_before = 3;
+}
+
+message HorseRacePlayerBetMessage {
+  string guid = 1;
+  int32  horse_index = 2;
+  double odd = 3;
+  string amount = 4;
+  string balance_before = 5;
+}
+
+message GameTransactionResponse {
+  string room_id = 1;
+  string room_type = 2;
+  int32 transaction_count = 3;
+  google.protobuf.Timestamp processed_at = 4;
+}
+
+message TicTacToeTransactionRequest {
+  string room_id = 1;
+  string room_type = 2;
+  repeated PlayerBetMessage player_bets = 3;
+  optional string winner = 4;
+}
+
+message HorseRaceTransactionRequest {
+  string room_id = 1;
+  string room_type = 2;
+  int32 winner_horse_index = 3;
+  repeated HorseRacePlayerBetMessage player_bets = 4;
+}
+
+message DurakTransactionRequest {
+  string room_id = 1;
+  string room_type = 2;
+  repeated PlayerBetMessage player_bets = 3;
+  optional string winner = 4;
+}
+
+message DeCoderTransactionRequest {
+  string room_id = 1;
+  string room_type = 2;
+  PlayerBetMessage player_bet = 3;
+  optional string winner = 4;
+}
+
+service GameTransactionService {
+
+  rpc ProcessTicTacToeTransaction (TicTacToeTransactionRequest) returns (GameTransactionResponse);
+
+  rpc ProcessHorseRaceTransaction (HorseRaceTransactionRequest) returns (GameTransactionResponse);
+
+  rpc ProcessDurakTransaction (DurakTransactionRequest) returns (GameTransactionResponse);
+
+  rpc ProcessDeCoderTransaction (DeCoderTransactionRequest) returns (GameTransactionResponse);
+}

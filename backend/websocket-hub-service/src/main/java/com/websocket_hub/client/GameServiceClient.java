@@ -1,9 +1,9 @@
 package com.websocket_hub.client;
 
-import com.websocket_hub.domain.dto.client.DurakGameInternalRequest;
-import com.websocket_hub.domain.dto.client.DurakGameInternalResponse;
 import com.websocket_hub.domain.dto.client.DeCoderGameInternalRequest;
 import com.websocket_hub.domain.dto.client.DeCoderGameInternalResponse;
+import com.websocket_hub.domain.dto.client.DurakGameInternalRequest;
+import com.websocket_hub.domain.dto.client.DurakGameInternalResponse;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;

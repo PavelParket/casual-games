@@ -32,13 +32,27 @@ spring:
 server:
   port: 8081
 
+grpc:
+  client:
+    user-service:
+      address: static://localhost:7093
+      negotiation-type: plaintext
+      keep-alive-time: 30s
+      keep-alive-timeout: 5s
+    bank-service:
+      address: static://localhost:7094
+      negotiation-type: plaintext
+      keep-alive-time: 30s
+      keep-alive-timeout: 5s
+  client-custom:
+    timeout-seconds: 30
+    retry:
+      max-attempts: 3
+      delay-milliseconds: 1000
+
 app:
   game-service:
     url: http://localhost:8082
-  user-service:
-    url: http://localhost:8083
-  bank-service:
-    url: http://localhost:8084
 
 scheduler:
   room-cleanup:
@@ -59,3 +73,4 @@ logging:
   level:
     org.springframework.web: DEBUG
     org.springframework.web.websocket: DEBUG
+    com.grpc_utils: DEBUG

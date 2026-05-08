@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.13'
+    id 'org.springframework.boot' version '3.5.14'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -24,16 +24,25 @@ repositories {
     mavenCentral()
 }
 
-def grpcVersion = '1.80.0'
+def grpcVersion = '1.81.0'
 def protobufVersion = '4.34.1'
+def grpcSpring = '3.1.0.RELEASE'
 
 dependencyManagement {
     dependencies {
-        dependency "io.grpc:grpc-netty-shaded:${grpcVersion}"
-        dependency "io.grpc:grpc-core:${grpcVersion}"
-        dependency "io.grpc:grpc-protobuf:${grpcVersion}"
         dependency "io.grpc:grpc-stub:${grpcVersion}"
+        dependency "io.grpc:grpc-protobuf:${grpcVersion}"
+        dependency "io.grpc:grpc-netty-shaded:${grpcVersion}"
+        dependency "io.grpc:grpc-api:${grpcVersion}"
+        dependency "io.grpc:grpc-netty:${grpcVersion}"
+        dependency "io.grpc:grpc-core:${grpcVersion}"
+        dependency "io.grpc:grpc-protobuf-lite:${grpcVersion}"
+        dependency "io.grpc:grpc-context:${grpcVersion}"
+        dependency "io.grpc:grpc-services:${grpcVersion}"
+        dependency "io.grpc:grpc-inprocess:${grpcVersion}"
+        dependency "io.grpc:grpc-util:${grpcVersion}"
         dependency "com.google.protobuf:protobuf-java:${protobufVersion}"
+        dependency "com.google.protobuf:protobuf-java-util:${protobufVersion}"
     }
 }
 
@@ -52,16 +61,16 @@ dependencies {
     implementation 'org.springframework.kafka:spring-kafka'
 
     // gRPC
-    implementation "net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE"
-    implementation "net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE"
+    implementation "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
+    implementation "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"
 
-    runtimeOnly 'org.postgresql:postgresql:42.7.10'
+    runtimeOnly 'org.postgresql:postgresql:42.7.11'
 
     implementation 'org.liquibase:liquibase-core'
     implementation 'org.apache.commons:commons-lang3:3.20.0'
 
-    compileOnly 'org.projectlombok:lombok:1.18.38'
-    annotationProcessor 'org.projectlombok:lombok:1.18.38'
+    compileOnly 'org.projectlombok:lombok:1.18.46'
+    annotationProcessor 'org.projectlombok:lombok:1.18.46'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
     implementation 'org.mapstruct:mapstruct:1.6.3'

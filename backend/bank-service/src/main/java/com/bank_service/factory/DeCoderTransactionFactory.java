@@ -1,15 +1,17 @@
 package com.bank_service.factory;
 
-import com.bank_service.domain.dto.game.DeCoderTransactionRequest;
-import com.bank_service.domain.entity.PlayerBet;
+
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.RoomType;
 import com.bank_service.domain.enums.TransactionStatus;
 import com.bank_service.domain.enums.TransactionType;
+import com.casualgames.grpc.transaction.DeCoderTransactionRequest;
+import com.casualgames.grpc.transaction.PlayerBetMessage;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class DeCoderTransactionFactory implements GameTransactionFactory<DeCoderTransactionRequest> {
@@ -21,29 +23,26 @@ public class DeCoderTransactionFactory implements GameTransactionFactory<DeCoder
 
     @Override
     public List<Transaction> createTransactions(DeCoderTransactionRequest request) {
-        PlayerBet playerBet = request.playerBet();
-        TransactionType type;
-        BigDecimal balanceAfter;
+        PlayerBetMessage bet = request.getPlayerBet();
+        UUID roomId = UUID.fromString(request.getRoomId());
+        RoomType roomType = RoomType.valueOf(request.getRoomType());
+        BigDecimal betAmount = new BigDecimal(bet.getBet());
+        BigDecimal balanceBefore = new BigDecimal(bet.getBalanceBefore());
 
-        if (request.isWin()) {
-            type = TransactionType.ADDITION;
-            balanceAfter = playerBet.getBalanceBefore().add(playerBet.getBet());
-        } else {
-            type = TransactionType.SUBTRACTION;
-            balanceAfter = playerBet.getBalanceBefore().subtract(playerBet.getBet());
-        }
+        TransactionType type = request.hasWinner() ? TransactionType.ADDITION : TransactionType.SUBTRACTION;
+        BigDecimal balanceAfter = TransactionType.ADDITION.equals(type)
+                ? balanceBefore.add(betAmount)
+                : balanceBefore.subtract(betAmount);
 
-        Transaction transaction = Transaction.builder()
-                .userGuid(playerBet.getGuid())
-                .roomId(request.roomId())
-                .roomType(RoomType.DE_CODER)
+        return List.of(Transaction.builder()
+                .userGuid(UUID.fromString(bet.getGuid()))
+                .roomId(roomId)
+                .roomType(roomType)
                 .type(type)
                 .status(TransactionStatus.PENDING)
-                .amount(playerBet.getBet())
-                .balanceBefore(playerBet.getBalanceBefore())
+                .amount(betAmount)
+                .balanceBefore(balanceBefore)
                 .balanceAfter(balanceAfter)
-                .build();
-
-        return List.of(transaction);
+                .build());
     }
 }

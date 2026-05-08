@@ -11,6 +11,7 @@ import net.devh.boot.grpc.server.service.GrpcService;
 
 import java.util.UUID;
 
+//todo: переименовать заменив security может на auth или user
 @GrpcService
 @RequiredArgsConstructor
 @Slf4j
