@@ -85,7 +85,7 @@ export default function Rooms() {
             if (!document.hidden) {
                 dispatch(searchRooms(appliedFilters));
             }
-        }, 120000);
+        }, 60000);
 
         return () => clearInterval(intervalId);
     }, [dispatch, appliedFilters]);
@@ -443,7 +443,7 @@ export default function Rooms() {
                             border: "1px solid var(--color-border)",
                             boxShadow: "var(--shadow-sm)",
                         }}>
-                        {((appliedFilters.name?.trim().length || 0) > 0 || (appliedFilters.types && appliedFilters.types.length > 0)) && displayGroups.every(g => g.rooms.length === 0) ? (
+                        {((appliedFilters.name?.trim().length || 0) > 0) && displayGroups.every(g => g.rooms.length === 0) ? (
                             <Box style={{ textAlign: "center", padding: "4rem 2rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
                                 <Typography variant="h3" style={{ opacity: 0.8 }}>
                                     No rooms found matching your filters.

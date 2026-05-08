@@ -319,75 +319,43 @@ export default function TicTacToeRoom() {
                       justifyContent: "center",
                       rowGap: "1.5rem",
                    }}>
-                      {isGame ? (
-                          Object.entries(playersWithSymbols).map(([username, symbol]) => (
-                              <MiniProfile key={guid} guid={guid} username={username}>
-                                 <Stack
-                                     direction="row"
-                                     align="center"
-                                     gap="0.75rem"
-                                     style={{
-                                        cursor: "pointer",
-                                        width: "200px",
-                                        padding: "0.35rem",
-                                        paddingRight: "1rem",
-                                        background: "var(--color-bg-glass)",
-                                        border: "1px solid var(--color-border)",
-                                        borderRadius: "var(--radius-md)",
-                                        boxShadow: "var(--shadow-sm)",
-                                        transition: "all 0.2s ease",
-                                        userSelect: "none"
-                                     }}
-                                     onMouseEnter={(e) => {
-                                        e.currentTarget.style.boxShadow = "var(--shadow-md)";
-                                     }}
-                                     onMouseLeave={(e) => {
-                                        e.currentTarget.style.boxShadow = "var(--shadow-sm)";
-                                     }}
-                                 >
-                                    <Avatar fallback={username} size={40} />
+                      {Object.entries(players ?? {}).map(([playerGuid, username]) => {
+                         const symbol = isGame && playersWithSymbols ? playersWithSymbols[username] : null;
 
-                                    <Typography key={username} variant="body" style={{ fontWeight: "bold" }}>
-                                       {username}: {symbol}
-                                    </Typography>
-                                 </Stack>
-                              </MiniProfile>
-                          ))
-                      ) : (
-                          Object.values(players || {}).map((username) => (
-                              <MiniProfile key={guid} guid={guid} username={username}>
-                                 <Stack
-                                     direction="row"
-                                     align="center"
-                                     gap="0.75rem"
-                                     style={{
-                                        cursor: "pointer",
-                                        minWidth: "200px",
-                                        padding: "0.35rem",
-                                        paddingRight: "1rem",
-                                        background: "var(--color-bg-glass)",
-                                        border: "1px solid var(--color-border)",
-                                        borderRadius: "var(--radius-md)",
-                                        boxShadow: "var(--shadow-sm)",
-                                        transition: "all 0.2s ease",
-                                        userSelect: "none"
-                                     }}
-                                     onMouseEnter={(e) => {
-                                        e.currentTarget.style.boxShadow = "var(--shadow-md)";
-                                     }}
-                                     onMouseLeave={(e) => {
-                                        e.currentTarget.style.boxShadow = "var(--shadow-sm)";
-                                     }}
-                                 >
-                                    <Avatar fallback={username} size={40} />
+                         return (
+                             <MiniProfile key={playerGuid} guid={playerGuid} username={username}>
+                                <Stack
+                                    direction="row"
+                                    align="center"
+                                    gap="0.75rem"
+                                    style={{
+                                       cursor: "pointer",
+                                       minWidth: "200px",
+                                       padding: "0.35rem",
+                                       paddingRight: "1rem",
+                                       background: "var(--color-bg-glass)",
+                                       border: "1px solid var(--color-border)",
+                                       borderRadius: "var(--radius-md)",
+                                       boxShadow: "var(--shadow-sm)",
+                                       transition: "all 0.2s ease",
+                                       userSelect: "none"
+                                    }}
+                                    onMouseEnter={(e) => {
+                                       e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                       e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+                                    }}
+                                >
+                                   <Avatar fallback={username} size={40} />
 
-                                    <Typography variant="body" style={{ fontWeight: "bold" }}>
-                                       {username}
-                                    </Typography>
-                                 </Stack>
-                              </MiniProfile>
-                          ))
-                      )}
+                                   <Typography variant="body" style={{ fontWeight: "bold" }}>
+                                      {username}{symbol ? `: ${symbol}` : ""}
+                                   </Typography>
+                                </Stack>
+                             </MiniProfile>
+                         );
+                      })}
                    </Box>
 
                    {/* ===== BOARD ===== */}
