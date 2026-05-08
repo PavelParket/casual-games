@@ -9,12 +9,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -26,6 +28,7 @@ public class SecurityConfig {
     private final JwtProperties jwtProperties;
     private final ObjectMapper objectMapper;
     private final BlockedTokenRedisRepository blockedTokenRepository;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -43,6 +46,7 @@ public class SecurityConfig {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(Customizer.withDefaults())
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .requestCache(requestCache -> requestCache.requestCache(NoOpServerRequestCache.getInstance()))
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
@@ -63,4 +67,3 @@ public class SecurityConfig {
         return jwtProperties.publicPaths().toArray(String[]::new);
     }
 }
-

@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Import;
 @EnableAspectJAutoProxy
 @EnableConfigurationProperties({JwtProperties.class, ServiceWhitelistProperties.class})
 @Import({
-        CorsConfig.class, DefaultSecurityFilterChain.class,
+        DefaultSecurityFilterChain.class,
         PermissionValidator.class, PermissionContextFactory.class, PermissionContextHelper.class,
         JwtAccessDeniedHandler.class, JwtAuthenticationEntryPoint.class, SecurityExceptionHandler.class,
         JwtAuthenticationFilter.class, JwtDecoder.class,

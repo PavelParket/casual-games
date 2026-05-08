@@ -1,4 +1,4 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { client } from './AxiosConfig';
 import type { AppDispatch, RootState } from '../store/store';
 import { logout, refresh } from '../store/slices/AuthSlice';
@@ -14,7 +14,7 @@ const isRefreshEndpoint = (url: string): boolean => {
 };
 
 export const AxiosInterceptorsConfig = (store: { getState: () => RootState; dispatch: AppDispatch }) => {
-   axios.interceptors.request.use((config) => {
+   client.interceptors.request.use((config) => {
       const token = store.getState().auth.user?.accessToken;
 
       if (token && config.headers) {
@@ -24,7 +24,7 @@ export const AxiosInterceptorsConfig = (store: { getState: () => RootState; disp
       return config;
    });
 
-   axios.interceptors.response.use(
+   client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
          const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
