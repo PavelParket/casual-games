@@ -18,11 +18,15 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true
+    default-schema: security_service
+    liquibase-schema: security_service
 
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
+    properties:
+      hibernate:
+        default_schema: security_service
 
   data:
     redis:
