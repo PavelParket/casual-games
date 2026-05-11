@@ -10,15 +10,21 @@ spring:
     username: ${BANK_POSTGRES_USERNAME}
     password: ${BANK_POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      schema: bank-service
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true
+    default-schema: bank_service
+    liquibase-schema: bank_service
 
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
+    properties:
+      hibernate:
+        default_schema: bank_service
 
   data:
     redis:
