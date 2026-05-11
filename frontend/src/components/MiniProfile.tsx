@@ -81,8 +81,6 @@ export function MiniProfile({ guid, username, children }: MiniProfileProps) {
         };
     }, [isOpen]);
 
-    const showSkeleton = isLoading && !profile;
-
     const menuContent = isOpen ? createPortal(
         <div
             ref={menuRef}
@@ -104,7 +102,7 @@ export function MiniProfile({ guid, username, children }: MiniProfileProps) {
                 alignItems: "center",
                 gap: "1rem"
             }}>
-                <Avatar src={profile.avatarUrl} fallback={username} size={40} />
+                <Avatar src={profile?.avatarUrl} fallback={username} size={40} />
                 <Typography
                     variant="body"
                     style={{
@@ -136,19 +134,19 @@ export function MiniProfile({ guid, username, children }: MiniProfileProps) {
                     justifyContent: "center",
                     flexShrink: 0
                 }}>
-                    {showSkeleton ? (
+                    {!profile?.status || isLoading ? (
                         <Skeleton variant="circular" width="24px" height="24px" />
                     ) : (
-                        <Icon src={getIcon(getStatusIconName(profile.status))} alt={profile.status} size={24} />
+                        <Icon src={getIcon(getStatusIconName(profile?.status))} alt={profile?.status} size={24} />
                     )}
                 </Box>
 
                 <Box style={{ display: "flex", alignItems: "center" }}>
-                    {showSkeleton ? (
+                    {!profile?.status || isLoading ? (
                         <Skeleton variant="text" width="60px" height="18px" />
                     ) : (
                         <Typography variant="caption" style={{ textTransform: "capitalize", fontWeight: 500, fontSize: "0.9rem" }}>
-                            {profile.status}
+                            {profile?.status}
                         </Typography>
                     )}
                 </Box>
