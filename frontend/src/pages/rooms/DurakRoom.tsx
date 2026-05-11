@@ -369,8 +369,8 @@ export default function DurakRoom() {
                         }}>
                             <Stack gap="1rem" align="center" justify="center" style={{ paddingTop: "1rem" }}>
                                 <Typography variant="h3">Players</Typography>
-                                {Object.values(players ?? {}).map(username => (
-                                    <MiniProfile key={guid} guid={guid} username={username}>
+                                {Object.entries(players ?? {}).map(([playerGuid, username]) => (
+                                    <MiniProfile key={playerGuid} guid={playerGuid} username={username}>
                                         <Stack
                                             direction="row"
                                             align="center"

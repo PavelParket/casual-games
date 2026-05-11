@@ -340,8 +340,8 @@ export default function DeCoderRoom() {
                                 }}
                             >
                                 {players &&
-                                    Object.values(players ?? {}).map(username => (
-                                        <MiniProfile key={guid} guid={guid} username={username}>
+                                    Object.entries(players ?? {}).map(([playerGuid, username]) => (
+                                        <MiniProfile key={playerGuid} guid={playerGuid} username={username}>
                                             <Stack
                                                 direction="row"
                                                 align="center"
