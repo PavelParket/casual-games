@@ -1,5 +1,6 @@
 package com.websocket_hub.service;
 
+import com.common_utils.exception.NotFoundException;
 import com.websocket_hub.domain.dto.RoomFilterRequest;
 import com.websocket_hub.domain.dto.RoomRequest;
 import com.websocket_hub.domain.dto.RoomResponse;
@@ -10,7 +11,6 @@ import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomSortField;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.SortDirection;
-import com.websocket_hub.exception.NotFoundException;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.mapper.RoomMapper;
 import lombok.extern.slf4j.Slf4j;

@@ -1,8 +1,9 @@
 package com.websocket_hub.provider;
 
+import com.security_starter.jwt.JwtClaimsExtractor;
+import com.security_starter.validator.JwtValidator;
 import com.websocket_hub.exception.AuthenticationException;
 import com.websocket_hub.exception.NotFoundException;
-import com.websocket_hub.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
@@ -19,21 +20,17 @@ import static com.websocket_hub.config.ResourceMessageConstants.ROOM_NOT_FOUND;
 @Slf4j
 public class DefaultIdentityProvider implements IdentityProvider {
 
-    private final JwtProvider provider;
+    private final JwtValidator jwtValidator;
+
+    private final JwtClaimsExtractor jwtClaimsExtractor;
 
     @Override
     public UUID resolveGuid(ServerHttpRequest request) {
         String token = resolveToken(request);
 
-        String guid = provider.getGuid(token);
-
-        if (guid == null || guid.isBlank()) {
-            throw new AuthenticationException(AUTHENTICATION_FAILED);
-        }
-
         try {
-            return UUID.fromString(guid);
-        } catch (IllegalArgumentException e) {
+            return jwtClaimsExtractor.extractGuid(token);
+        } catch (Exception e) {
             throw new AuthenticationException(AUTHENTICATION_FAILED);
         }
     }
@@ -61,11 +58,7 @@ public class DefaultIdentityProvider implements IdentityProvider {
 
         String token = params.getFirst("token");
 
-        if (!provider.isToken(token)) {
-            throw new AuthenticationException(AUTHENTICATION_FAILED);
-        }
-
-        if (!provider.validate(token)) {
+        if (!jwtValidator.isValid(token)) {
             throw new AuthenticationException(AUTHENTICATION_FAILED);
         }
 
