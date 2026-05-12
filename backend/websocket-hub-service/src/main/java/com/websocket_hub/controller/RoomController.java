@@ -1,10 +1,11 @@
 package com.websocket_hub.controller;
 
-import com.websocket_hub.domain.dto.RoomFilterRequest;
-import com.websocket_hub.domain.dto.RoomRequest;
-import com.websocket_hub.domain.dto.RoomResponse;
-import com.websocket_hub.domain.dto.RoomResponseMap;
-import com.websocket_hub.domain.dto.RoomStatusResponse;
+import com.websocket_hub.domain.dto.request.RoomFilterRequest;
+import com.websocket_hub.domain.dto.request.RoomRequest;
+import com.websocket_hub.domain.dto.response.PlayerResponse;
+import com.websocket_hub.domain.dto.response.RoomResponse;
+import com.websocket_hub.domain.dto.response.RoomResponseMap;
+import com.websocket_hub.domain.dto.response.RoomStatusResponse;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.service.RoomService;
 import jakarta.validation.Valid;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -38,8 +38,8 @@ public class RoomController {
     }
 
     @GetMapping("/players/{roomId}/{roomType}")
-    public Map<UUID, String> getUsernamesInRoom(@PathVariable UUID roomId, @PathVariable RoomType roomType) {
-        return roomService.getUsernamesInRoom(roomId, roomType);
+    public List<PlayerResponse> getPlayers(@PathVariable UUID roomId, @PathVariable RoomType roomType) {
+        return roomService.getPlayers(roomId, roomType);
     }
 
     @GetMapping("/ready-count/{roomId}/{roomType}")

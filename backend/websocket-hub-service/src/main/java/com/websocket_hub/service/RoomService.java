@@ -1,17 +1,18 @@
 package com.websocket_hub.service;
 
 import com.common_utils.exception.NotFoundException;
-import com.websocket_hub.domain.dto.RoomFilterRequest;
-import com.websocket_hub.domain.dto.RoomRequest;
-import com.websocket_hub.domain.dto.RoomResponse;
-import com.websocket_hub.domain.dto.RoomResponseMap;
-import com.websocket_hub.domain.dto.RoomStatusResponse;
-import com.websocket_hub.domain.entity.ClientSession;
+import com.websocket_hub.domain.dto.request.RoomFilterRequest;
+import com.websocket_hub.domain.dto.request.RoomRequest;
+import com.websocket_hub.domain.dto.response.PlayerResponse;
+import com.websocket_hub.domain.dto.response.RoomResponse;
+import com.websocket_hub.domain.dto.response.RoomResponseMap;
+import com.websocket_hub.domain.dto.response.RoomStatusResponse;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomSortField;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.SortDirection;
 import com.websocket_hub.manager.AbstractRoomManager;
+import com.websocket_hub.mapper.PlayerMapper;
 import com.websocket_hub.mapper.RoomMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,13 @@ public class RoomService {
 
     private final RoomMapper roomMapper;
 
-    public RoomService(List<AbstractRoomManager> managers, RoomMapper roomMapper) {
+    private final PlayerMapper playerMapper;
+
+    public RoomService(
+            List<AbstractRoomManager> managers,
+            RoomMapper roomMapper,
+            PlayerMapper playerMapper
+    ) {
         this.roomManagers = Arrays.stream(RoomType.values())
                 .collect(Collectors.toMap(
                         type -> type,
@@ -46,6 +53,7 @@ public class RoomService {
                                 .orElseThrow(() -> new RuntimeException("No manager found for room type: " + type))
                 ));
         this.roomMapper = roomMapper;
+        this.playerMapper = playerMapper;
     }
 
     public List<RoomResponse> getAll() {
@@ -62,12 +70,10 @@ public class RoomService {
                 .toList();
     }
 
-    public Map<UUID, String> getUsernamesInRoom(UUID roomId, RoomType roomType) {
+    public List<PlayerResponse> getPlayers(UUID roomId, RoomType roomType) {
         return getManager(roomType).getPlayersInRoom(roomId).stream()
-                .collect(Collectors.toMap(
-                        ClientSession::getGuid,
-                        ClientSession::getUsername
-                ));
+                .map(playerMapper::toResponse)
+                .toList();
     }
 
     public Integer getReadyPlayerCount(UUID roomId, RoomType roomType) {

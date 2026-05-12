@@ -1,8 +1,8 @@
 package com.websocket_hub.manager;
 
-import com.websocket_hub.domain.dto.RoomRequest;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.Message;
+import com.websocket_hub.domain.dto.request.RoomRequest;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.entity.RoomMetadata;

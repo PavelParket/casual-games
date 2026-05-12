@@ -1,4 +1,4 @@
-package com.websocket_hub.domain.dto;
+package com.websocket_hub.domain.dto.request;
 
 import com.websocket_hub.domain.enums.RoomType;
 import jakarta.validation.constraints.NotBlank;
