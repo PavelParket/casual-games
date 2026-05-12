@@ -9,6 +9,7 @@ import com.websocket_hub.domain.dto.response.RoomResponseMap;
 import com.websocket_hub.domain.dto.response.RoomStatusResponse;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomSortField;
+import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.SortDirection;
 import com.websocket_hub.manager.AbstractRoomManager;
@@ -56,16 +57,11 @@ public class RoomService {
         this.playerMapper = playerMapper;
     }
 
+    @Deprecated(forRemoval = true)
     public List<RoomResponse> getAll() {
         return roomManagers.values().stream()
                 .filter(manager -> manager.getRedisKey() != null)
                 .flatMap(manager -> manager.getRoomsList().stream())
-                .map(roomMapper::toResponse)
-                .toList();
-    }
-
-    public List<RoomResponse> getRoomsByType(RoomType roomType) {
-        return getManager(roomType).getRoomsList().stream()
                 .map(roomMapper::toResponse)
                 .toList();
     }
@@ -126,6 +122,7 @@ public class RoomService {
                         type -> type,
                         type -> types.contains(type)
                                 ? getManager(type).getRoomsList().stream()
+                                .filter(room -> isJoinable(room.getStatus()))
                                 .filter(room -> matchesName(room, request.name()))
                                 .sorted(comparator)
                                 .map(roomMapper::toResponse)
@@ -136,6 +133,10 @@ public class RoomService {
                 ));
 
         return new RoomResponseMap(rooms);
+    }
+
+    private boolean isJoinable(RoomStatus status) {
+        return status == RoomStatus.WAITING || status == RoomStatus.PENDING_DELETE;
     }
 
     private boolean matchesName(Room room, String name) {
