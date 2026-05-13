@@ -122,7 +122,7 @@ public class RoomService {
                         type -> type,
                         type -> types.contains(type)
                                 ? getManager(type).getRoomsList().stream()
-                                .filter(room -> isJoinable(room.getStatus()))
+                                .filter(room -> isJoinable(room))
                                 .filter(room -> matchesName(room, request.name()))
                                 .sorted(comparator)
                                 .map(roomMapper::toResponse)
@@ -135,8 +135,12 @@ public class RoomService {
         return new RoomResponseMap(rooms);
     }
 
-    private boolean isJoinable(RoomStatus status) {
-        return status == RoomStatus.WAITING || status == RoomStatus.PENDING_DELETE;
+    private boolean isJoinable(Room room) {
+        if (RoomType.DE_CODER.equals(room.getType())) {
+            return !RoomStatus.FINISHED.equals(room.getStatus());
+        }
+
+        return RoomStatus.WAITING.equals(room.getStatus()) || RoomStatus.PENDING_DELETE.equals(room.getStatus());
     }
 
     private boolean matchesName(Room room, String name) {

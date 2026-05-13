@@ -1,5 +1,6 @@
 package com.websocket_hub.manager;
 
+import com.common_utils.exception.NotFoundException;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.PlayerBet;
@@ -11,7 +12,6 @@ import com.websocket_hub.domain.enums.events.DurakGameEvent;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
 import com.websocket_hub.exception.GameException;
-import com.websocket_hub.exception.NotFoundException;
 import com.websocket_hub.factory.ObjectFactory;
 import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.helper.WebSocketHelper;

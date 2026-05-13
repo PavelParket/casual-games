@@ -1,5 +1,10 @@
 package com.websocket_hub.handler;
 
+import com.common_utils.exception.BadRequestException;
+import com.common_utils.exception.ForbiddenException;
+import com.common_utils.exception.JwtException;
+import com.common_utils.exception.NotFoundException;
+import com.common_utils.exception.ServiceUnavailableException;
 import com.websocket_hub.domain.context.WebSocketContext;
 import com.websocket_hub.domain.dto.message.ErrorMessage;
 import com.websocket_hub.domain.entity.ClientSession;
@@ -30,18 +35,23 @@ public class WebSocketErrorHandler {
         ErrorCode code = resolveErrorCode(exception);
         ErrorCategory category = code.getCategory();
         String message = resolveMessage(code, category, exception);
+        UUID userGuid = null;
+
+        if (webSocketContext.user() != null) {
+            userGuid = webSocketContext.user().guid();
+        }
 
         log(exception, code, category, webSocketContext);
 
         ErrorMessage errorMessage = buildErrorMessage(
                 webSocketContext.roomId(),
-                webSocketContext.user().guid(),
+                userGuid,
                 code,
                 category,
                 message
         );
 
-        webSocketHelper.sendToSession(webSocketContext.user().guid(), errorMessage);
+        webSocketHelper.sendToSession(userGuid, errorMessage);
 
         if (forceClose || category == ErrorCategory.PROTOCOL) {
             CloseStatus closeStatus = forceClose ? CloseStatus.SERVER_ERROR : CloseStatus.POLICY_VIOLATION;
@@ -79,11 +89,15 @@ public class WebSocketErrorHandler {
     }
 
     private ErrorCode resolveErrorCode(Exception exception) {
-        if (exception instanceof GameException e) {
-            return e.getErrorCode();
-        }
-
-        return ErrorCode.INTERNAL_SERVER_ERROR;
+        return switch (exception) {
+            case GameException e -> e.getErrorCode();
+            case ForbiddenException e -> ErrorCode.FORBIDDEN;
+            case NotFoundException e -> ErrorCode.NOT_FOUND;
+            case BadRequestException e -> ErrorCode.BAD_REQUEST;
+            case JwtException e -> ErrorCode.UNAUTHORIZED;
+            case ServiceUnavailableException e -> ErrorCode.SERVICE_UNAVAILABLE;
+            default -> ErrorCode.INTERNAL_SERVER_ERROR;
+        };
     }
 
     private String resolveMessage(ErrorCode code, ErrorCategory category, Exception e) {
@@ -98,11 +112,14 @@ public class WebSocketErrorHandler {
             case GAME ->
                     log.warn("Game error: errorCode={}, roomId={}, message={}", errorCode, context.roomId(), exception.getMessage());
 
-            case BUSINESS ->
-                    log.warn("Business error: errorCode={}, userId={}, message={}", errorCode, context.user().guid(), exception.getMessage());
+            case BUSINESS -> log.warn("Business error: errorCode={}, userId={}, message={}", errorCode,
+                    context.user() != null ? context.user().guid() : "unknown", exception.getMessage());
 
-            case SYSTEM ->
-                    log.error("System error: errorCode={}, userId={}", errorCode, context.user().guid(), exception);
+            case PROTOCOL -> log.warn("Protocol error: errorCode={}, userId={}, message={}", errorCode,
+                    context.user() != null ? context.user().guid() : "unknown", exception.getMessage());
+
+            case SYSTEM -> log.error("System error: errorCode={}, userId={}", errorCode,
+                    context.user() != null ? context.user().guid() : "unknown", exception);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.websocket_hub.handler;
 
+import com.common_utils.exception.ServiceUnavailableException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.websocket_hub.domain.dto.ErrorResponse;
 import com.websocket_hub.domain.enums.ErrorCategory;
@@ -37,7 +38,7 @@ public class RestErrorHandler implements ResponseErrorHandler {
 
         if (errorResponse == null) {
             log.warn("Could not parse downstream error body (status={}): {}", statusCode, body);
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
 
         ErrorCode errorCode = resolveErrorCode(errorResponse, statusCode);

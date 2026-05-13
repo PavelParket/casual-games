@@ -1,5 +1,6 @@
 package com.websocket_hub.client;
 
+import com.common_utils.exception.ServiceUnavailableException;
 import com.websocket_hub.domain.dto.client.DeCoderGameInternalRequest;
 import com.websocket_hub.domain.dto.client.DeCoderGameInternalResponse;
 import com.websocket_hub.domain.dto.client.DurakGameInternalRequest;
@@ -58,13 +59,14 @@ public class GameServiceClient {
                 throw new GameException(ErrorCode.GAME_NOT_STARTED);
             }
 
-            log.info("Game started successfully: roomId={}", request.roomId());
+            log.info("Game tic-tac-toe started successfully: roomId={}", request.roomId());
 
             return body;
         } catch (GameException e) {
             throw e;
         } catch (Exception e) {
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
+            log.error("Failed to start tic-tac-toe game: roomId={}", request.roomId(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
 
@@ -94,7 +96,8 @@ public class GameServiceClient {
         } catch (GameException e) {
             throw e;
         } catch (Exception e) {
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
+            log.error("Failed to process tic-tac-toe move: roomId={}", request.roomId(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
 
@@ -120,8 +123,8 @@ public class GameServiceClient {
 
             return Optional.ofNullable(response.getBody());
         } catch (Exception e) {
-            log.error("Failed to create race preset: {}", e.getMessage());
-            throw new RuntimeException("Failed to create race preset: " + e.getMessage(), e);
+            log.error("Failed to create race preset: roomId={}", request.roomId(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
 
@@ -145,7 +148,8 @@ public class GameServiceClient {
         } catch (GameException e) {
             throw e;
         } catch (Exception e) {
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
+            log.error("Failed to start race: roomId={}", request.roomId(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
 
@@ -165,8 +169,8 @@ public class GameServiceClient {
 
             log.info("Race finished successfully: roomId={}", request.roomId());
         } catch (Exception e) {
-            log.error("Failed to finish race: {}", e.getMessage());
-            throw new RuntimeException("Failed to finish race: " + e.getMessage(), e);
+            log.error("Failed to finish race: roomId={}", request.roomId(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
 
@@ -200,7 +204,8 @@ public class GameServiceClient {
         } catch (GameException e) {
             throw e;
         } catch (Exception e) {
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
+            log.error("Failed to start Durak game: roomId={}", request.roomId(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
 
@@ -221,27 +226,27 @@ public class GameServiceClient {
             DurakGameInternalResponse body = response.getBody();
 
             if (body == null) {
-                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
+                throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
             }
 
             log.info("Durak move processed: gameId={}, isGameOver={}, winner={}", body.id(), body.isGameOver(), body.winnerId());
 
             return body;
-        } catch (GameException e) {
+        } catch (GameException | ServiceUnavailableException e) {
             throw e;
         } catch (Exception e) {
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
+            log.error("Failed to process Durak move: gameId={}", request.id(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
 
-    public DurakGameInternalResponse processDurakEnd(DurakGameInternalRequest request) {
+    public void processDurakEnd(DurakGameInternalRequest request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
                 .path("/game/durak/timeout")
                 .build()
                 .toUri();
 
-        log.info("Calling game-service to finalize Durak game by timeout: gameId={}, winner={}",
-                request.id(), request.winnerId());
+        log.info("Calling game-service to finalize Durak game by timeout: gameId={}, winner={}", request.id(), request.winnerId());
 
         try {
             ResponseEntity<DurakGameInternalResponse> response = restTemplate.exchange(
@@ -252,17 +257,19 @@ public class GameServiceClient {
             DurakGameInternalResponse body = response.getBody();
 
             if (body == null || !body.isGameOver()) {
-                throw new GameException(ErrorCode.SERVICE_UNAVAILABLE);
+                throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
             }
 
             log.info("Durak game finalized: gameId={}", request.id());
-
-            return body;
+        } catch (ServiceUnavailableException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to finalize Durak game by timeout: gameId={}", request.id(), e);
-            throw new GameException(ErrorCode.SERVICE_UNAVAILABLE, e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
+
+    // -------------------------------------------------------------------------
     // De-Coder
     // -------------------------------------------------------------------------
 
@@ -288,8 +295,8 @@ public class GameServiceClient {
 
             return Optional.ofNullable(response.getBody());
         } catch (Exception e) {
-            log.error("Failed to start game {}", e.getMessage());
-            throw new RuntimeException("Failed to start game" + e.getMessage(), e);
+            log.error("Failed to start De-Coder game: roomId={}", request.roomId(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
 
@@ -316,8 +323,8 @@ public class GameServiceClient {
             throw new RuntimeException("COOLDOWN:" + e.getResponseHeaders().getFirst("Retry-After"));
 
         } catch (Exception e) {
-            log.error("Failed to process De-Coder move {}", e.getMessage());
-            throw new RuntimeException("Failed to process move: " + e.getMessage(), e);
+            log.error("Failed to process De-Coder move: roomId={}", request.roomId(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
 

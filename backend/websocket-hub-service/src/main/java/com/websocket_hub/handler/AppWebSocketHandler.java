@@ -51,18 +51,23 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
     @Override
     public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) throws Exception {
-        try {
-            UserInternalResponse user = WebSocketUtil.getUser(session);
-            UUID roomId = WebSocketUtil.getRoomId(session);
+        UserInternalResponse user = WebSocketUtil.getUser(session);
+        UUID roomId = WebSocketUtil.getRoomId(session);
 
+        try {
             roomManager.removeSession(roomId, user, session);
             sessionManager.removeIfCurrent(user.guid(), session);
 
             onLeave(roomId, user);
 
             log.info("Connection closed: userId={}, roomId={}, status={}", user.guid(), roomId, status);
+
         } catch (Exception e) {
-            log.warn("Error during connection cleanup for session {}: {}", session.getId(), e.getMessage());
+            log.warn("Error during connection cleanup: sessionId={}, userId={}, roomId={}, error={}",
+                    session.getId(),
+                    user != null ? user.guid() : "unknown",
+                    roomId != null ? roomId : "unknown",
+                    e.getMessage());
         }
     }
 

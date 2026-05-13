@@ -1,9 +1,9 @@
 package com.websocket_hub.provider;
 
+import com.common_utils.exception.JwtException;
+import com.common_utils.exception.NotFoundException;
 import com.security_starter.jwt.JwtClaimsExtractor;
 import com.security_starter.validator.JwtValidator;
-import com.websocket_hub.exception.AuthenticationException;
-import com.websocket_hub.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
@@ -31,7 +31,7 @@ public class DefaultIdentityProvider implements IdentityProvider {
         try {
             return jwtClaimsExtractor.extractGuid(token);
         } catch (Exception e) {
-            throw new AuthenticationException(AUTHENTICATION_FAILED);
+            throw new JwtException(AUTHENTICATION_FAILED);
         }
     }
 
@@ -59,7 +59,7 @@ public class DefaultIdentityProvider implements IdentityProvider {
         String token = params.getFirst("token");
 
         if (!jwtValidator.isValid(token)) {
-            throw new AuthenticationException(AUTHENTICATION_FAILED);
+            throw new JwtException(AUTHENTICATION_FAILED);
         }
 
         return token;
