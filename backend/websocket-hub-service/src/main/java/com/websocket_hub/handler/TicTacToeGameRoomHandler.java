@@ -8,7 +8,6 @@ import com.websocket_hub.domain.dto.message.ErrorMessage;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.PlayerBet;
-import com.websocket_hub.domain.enums.ErrorCategory;
 import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomStatus;
@@ -230,7 +229,6 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
                     .event(ErrorEvent.ERROR)
                     .roomId(roomId)
                     .errorCode(ErrorCode.SERVICE_UNAVAILABLE)
-                    .errorCategory(ErrorCategory.SYSTEM)
                     .message(ErrorCode.SERVICE_UNAVAILABLE.getMessage())
                     .build());
         } finally {

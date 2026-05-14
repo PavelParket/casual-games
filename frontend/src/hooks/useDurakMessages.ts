@@ -4,7 +4,7 @@ import type { Room } from "../models/Room";
 import type { DurakGameMessage, ErrorWSMessage } from "../models/WsMessage";
 import type { AppDispatch } from "../store/store";
 import type { ToastVariant } from "../ui";
-import { errorCodeMessages } from "../models/constants/ErrorCodeMessages";
+import { errorCodeMessages, systemErrorCodes } from "../models/constants/ErrorCodeMessages";
 import { validateToastMessage } from "../utils/SecurityUtils";
 import { getPlayersBets, syncReadiness, syncRoomState } from "../store/slices/DurakRoomSlice";
 
@@ -157,7 +157,7 @@ export function useDurakMessages({
                 const code = errorMsg.errorCode ?? "";
                 const text = errorCodeMessages[code] ?? errorCodeMessages.DEFAULT;
 
-                if (errorMsg.errorCategory === "SYSTEM") {
+                if (systemErrorCodes.has(code)) {
                     showSystemToast(text, "system-error");
                 } else {
                     showGameToast(text, "game-error");

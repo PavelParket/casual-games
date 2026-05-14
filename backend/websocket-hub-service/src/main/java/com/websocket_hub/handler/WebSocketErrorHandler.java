@@ -8,7 +8,6 @@ import com.common_utils.exception.ServiceUnavailableException;
 import com.websocket_hub.domain.context.WebSocketContext;
 import com.websocket_hub.domain.dto.message.ErrorMessage;
 import com.websocket_hub.domain.entity.ClientSession;
-import com.websocket_hub.domain.enums.ErrorCategory;
 import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.ErrorEvent;
@@ -33,27 +32,25 @@ public class WebSocketErrorHandler {
 
     public void handle(WebSocketContext webSocketContext, Exception exception, boolean forceClose) {
         ErrorCode code = resolveErrorCode(exception);
-        ErrorCategory category = code.getCategory();
-        String message = resolveMessage(code, category, exception);
+        String message = resolveMessage(code, exception);
         UUID userGuid = null;
 
         if (webSocketContext.user() != null) {
             userGuid = webSocketContext.user().guid();
         }
 
-        log(exception, code, category, webSocketContext);
+        log(exception, code, webSocketContext);
 
         ErrorMessage errorMessage = buildErrorMessage(
                 webSocketContext.roomId(),
                 userGuid,
                 code,
-                category,
                 message
         );
 
         webSocketHelper.sendToSession(userGuid, errorMessage);
 
-        if (forceClose || category == ErrorCategory.PROTOCOL) {
+        if (forceClose || shouldCloseConnection(code)) {
             CloseStatus closeStatus = forceClose ? CloseStatus.SERVER_ERROR : CloseStatus.POLICY_VIOLATION;
             closeSession(webSocketContext.session(), closeStatus);
         }
@@ -61,21 +58,16 @@ public class WebSocketErrorHandler {
 
     public void handle(UUID roomId, Set<ClientSession> clients, Exception exception) {
         ErrorCode code = resolveErrorCode(exception);
-        ErrorCategory category = code.getCategory();
-        String message = resolveMessage(code, category, exception);
+        String message = resolveMessage(code, exception);
 
         log.warn("Room error: errorCode={}, roomId={}, message={}", code, roomId, exception.getMessage());
 
-        ErrorMessage errorMessage = buildErrorMessage(roomId, null, code, category, message);
+        ErrorMessage errorMessage = buildErrorMessage(roomId, null, code, message);
 
         webSocketHelper.broadcastToSessions(clients, errorMessage);
     }
 
-    private ErrorMessage buildErrorMessage(UUID roomId,
-                                           UUID toUserId,
-                                           ErrorCode code,
-                                           ErrorCategory category,
-                                           String message) {
+    private ErrorMessage buildErrorMessage(UUID roomId, UUID toUserId, ErrorCode code, String message) {
         return ErrorMessage.builder()
                 .type(MessageType.SYSTEM)
                 .event(ErrorEvent.ERROR)
@@ -83,7 +75,6 @@ public class WebSocketErrorHandler {
                 .roomId(roomId)
                 .message(message)
                 .errorCode(code)
-                .errorCategory(category)
                 .timestamp(Instant.now())
                 .build();
     }
@@ -100,26 +91,25 @@ public class WebSocketErrorHandler {
         };
     }
 
-    private String resolveMessage(ErrorCode code, ErrorCategory category, Exception e) {
-        return switch (category) {
-            case GAME, BUSINESS -> e.getMessage();
-            case PROTOCOL, SYSTEM -> code.getMessage();
+    private String resolveMessage(ErrorCode code, Exception e) {
+        return (e instanceof GameException) ? e.getMessage() : code.getMessage();
+    }
+
+    private boolean shouldCloseConnection(ErrorCode code) {
+        return switch (code) {
+            case UNAUTHORIZED, FORBIDDEN -> true;
+            default -> false;
         };
     }
 
-    private void log(Exception exception, ErrorCode errorCode, ErrorCategory category, WebSocketContext context) {
-        switch (category) {
-            case GAME ->
-                    log.warn("Game error: errorCode={}, roomId={}, message={}", errorCode, context.roomId(), exception.getMessage());
+    private void log(Exception exception, ErrorCode code, WebSocketContext context) {
+        String userId = context.user() != null ? context.user().guid().toString() : "unknown";
 
-            case BUSINESS -> log.warn("Business error: errorCode={}, userId={}, message={}", errorCode,
-                    context.user() != null ? context.user().guid() : "unknown", exception.getMessage());
-
-            case PROTOCOL -> log.warn("Protocol error: errorCode={}, userId={}, message={}", errorCode,
-                    context.user() != null ? context.user().guid() : "unknown", exception.getMessage());
-
-            case SYSTEM -> log.error("System error: errorCode={}, userId={}", errorCode,
-                    context.user() != null ? context.user().guid() : "unknown", exception);
+        switch (code) {
+            case INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE ->
+                    log.error("System error: errorCode={}, userId={}, roomId={}", code, userId, context.roomId(), exception);
+            default ->
+                    log.warn("WS error: errorCode={}, userId={}, roomId={}, message={}", code, userId, context.roomId(), exception.getMessage());
         }
     }
 

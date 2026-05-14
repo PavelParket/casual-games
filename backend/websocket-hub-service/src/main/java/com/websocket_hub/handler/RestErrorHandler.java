@@ -3,7 +3,6 @@ package com.websocket_hub.handler;
 import com.common_utils.exception.ServiceUnavailableException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.websocket_hub.domain.dto.ErrorResponse;
-import com.websocket_hub.domain.enums.ErrorCategory;
 import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.exception.GameException;
 import lombok.RequiredArgsConstructor;
@@ -68,10 +67,10 @@ public class RestErrorHandler implements ResponseErrorHandler {
     }
 
     private String resolveMessage(ErrorResponse response, ErrorCode errorCode) {
-        ErrorCategory category = errorCode.getCategory();
-        if (category == ErrorCategory.GAME || category == ErrorCategory.BUSINESS) {
-            return response.message();
-        }
-        return errorCode.getMessage();
+        return switch (errorCode) {
+            case UNAUTHORIZED, FORBIDDEN, NOT_FOUND, BAD_REQUEST, CONFLICT,
+                 INVALID_MESSAGE, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE -> errorCode.getMessage();
+            default -> response.message();
+        };
     }
 }

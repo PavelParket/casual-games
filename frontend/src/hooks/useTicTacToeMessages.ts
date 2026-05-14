@@ -5,7 +5,7 @@ import type { AppDispatch } from "../store/store";
 import type { ToastVariant } from "../ui";
 import { validateToastMessage } from "../utils/SecurityUtils";
 import { getPlayersBets, syncReadiness, syncRoomState } from "../store/slices/TicTacToeRoomSlice";
-import { errorCodeMessages } from "../models/constants/ErrorCodeMessages";
+import { errorCodeMessages, systemErrorCodes } from "../models/constants/ErrorCodeMessages";
 
 interface UseTicTacToeMessagesProps {
     message: TicTacToeGameMessage | undefined;
@@ -142,7 +142,7 @@ export function useTicTacToeMessages({
                 const code = errorMsg.errorCode ?? "";
                 const text = errorCodeMessages[code] ?? errorCodeMessages.DEFAULT;
 
-                if (errorMsg.errorCategory === "SYSTEM") {
+                if (systemErrorCodes.has(code)) {
                     showSystemToast(text, "system-error");
                 } else {
                     showGameToast(text, "game-error");
