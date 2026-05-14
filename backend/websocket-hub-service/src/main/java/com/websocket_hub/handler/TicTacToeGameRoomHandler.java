@@ -15,6 +15,7 @@ import com.websocket_hub.domain.enums.events.ErrorEvent;
 import com.websocket_hub.domain.enums.events.TicTacToeGameEvent;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.manager.TicTacToeGameRoomManager;
+import com.websocket_hub.mapper.DefaultMessageMapper;
 import com.websocket_hub.mapper.GameTransactionMapper;
 import com.websocket_hub.mapper.TicTacToeGameMessageMapper;
 import com.websocket_hub.serializer.MessageDeserializer;
@@ -35,8 +36,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameRoomManager> {
 
-    private final MessageDeserializer messageDeserializer;
-
     private final TicTacToeGameMessageMapper ticTacToeGameMessageMapper;
 
     private final GameTransactionMapper gameTransactionMapper;
@@ -50,13 +49,13 @@ public class TicTacToeGameRoomHandler extends AppWebSocketHandler<TicTacToeGameR
             TicTacToeGameRoomManager roomManager,
             WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
+            DefaultMessageMapper defaultMessageMapper,
             TicTacToeGameMessageMapper ticTacToeGameMessageMapper,
             GameTransactionMapper gameTransactionMapper,
             GameServiceClient gameServiceClient,
             GrpcGameTransactionClient grpcGameTransactionClient
     ) {
-        super(sessionManager, roomManager, errorHandler);
-        this.messageDeserializer = messageDeserializer;
+        super(sessionManager, roomManager, errorHandler, messageDeserializer, defaultMessageMapper);
         this.ticTacToeGameMessageMapper = ticTacToeGameMessageMapper;
         this.gameTransactionMapper = gameTransactionMapper;
         this.gameServiceClient = gameServiceClient;

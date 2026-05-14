@@ -15,6 +15,7 @@ import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import com.websocket_hub.manager.DeCoderGameRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.DeCoderGameMessageMapper;
+import com.websocket_hub.mapper.DefaultMessageMapper;
 import com.websocket_hub.mapper.GameTransactionMapper;
 import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.service.grpc.client.GrpcGameTransactionClient;
@@ -34,8 +35,6 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
     private static final BigDecimal MOVE_COST = new BigDecimal("10.00");
 
-    private final MessageDeserializer messageDeserializer;
-
     private final DeCoderGameMessageMapper deCoderGameMessageMapper;
 
     private final GameTransactionMapper gameTransactionMapper;
@@ -50,14 +49,14 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
             DeCoderGameRoomManager roomManager,
             WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
+            DefaultMessageMapper defaultMessageMapper,
             DeCoderGameMessageMapper deCoderGameMessageMapper,
             GameTransactionMapper gameTransactionMapper,
             GameServiceClient gameServiceClient,
             GrpcGameTransactionClient grpcGameTransactionClient
 
     ) {
-        super(sessionManager, roomManager, errorHandler);
-        this.messageDeserializer = messageDeserializer;
+        super(sessionManager, roomManager, errorHandler, messageDeserializer, defaultMessageMapper);
         this.deCoderGameMessageMapper = deCoderGameMessageMapper;
         this.gameTransactionMapper = gameTransactionMapper;
         this.gameServiceClient = gameServiceClient;

@@ -15,6 +15,7 @@ import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.events.HorseRaceEvent;
 import com.websocket_hub.manager.HorseRaceGameRoomManager;
 import com.websocket_hub.manager.SessionManager;
+import com.websocket_hub.mapper.DefaultMessageMapper;
 import com.websocket_hub.mapper.GameTransactionMapper;
 import com.websocket_hub.mapper.HorseRaceGameMessageMapper;
 import com.websocket_hub.serializer.MessageDeserializer;
@@ -35,8 +36,6 @@ import java.util.UUID;
 @Slf4j
 public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameRoomManager> {
 
-    private final MessageDeserializer messageDeserializer;
-
     private final HorseRaceGameMessageMapper horseRaceMessageMapper;
 
     private final GameTransactionMapper gameTransactionMapper;
@@ -50,13 +49,13 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
             HorseRaceGameRoomManager roomManager,
             WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
+            DefaultMessageMapper defaultMessageMapper,
             HorseRaceGameMessageMapper horseRaceMessageMapper,
             GameTransactionMapper gameTransactionMapper,
             GameServiceClient gameServiceClient,
             GrpcGameTransactionClient grpcGameTransactionClient
     ) {
-        super(sessionManager, roomManager, errorHandler);
-        this.messageDeserializer = messageDeserializer;
+        super(sessionManager, roomManager, errorHandler, messageDeserializer, defaultMessageMapper);
         this.horseRaceMessageMapper = horseRaceMessageMapper;
         this.gameServiceClient = gameServiceClient;
         this.gameTransactionMapper = gameTransactionMapper;
