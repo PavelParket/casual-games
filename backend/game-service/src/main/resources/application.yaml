@@ -6,7 +6,7 @@ spring:
     import: optional:file:.env[.properties]
 
   datasource:
-    url: jdbc:postgresql://${GAME_POSTGRES_HOST:localhost}:${GAME_POSTGRES_PORT:5432}/${GAME_POSTGRES_DB:diploma}?${GAME_DB_DEFAULT_SCHEMA:game_service}
+    url: jdbc:postgresql://${GAME_POSTGRES_HOST:localhost}:${GAME_POSTGRES_PORT:5432}/${GAME_POSTGRES_DB:diploma}?currentSchema=${GAME_DB_DEFAULT_SCHEMA:game_service}
     username: ${GAME_POSTGRES_USERNAME:postgres}
     password: ${GAME_POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
