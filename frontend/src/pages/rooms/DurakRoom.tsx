@@ -4,16 +4,12 @@ import type { AppDispatch, RootState } from "../../store/store";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { clearError, getRoomById } from "../../store/slices/DurakRoomSlice";
+import { useCallback, useRef, useState } from "react";
+import { clearError } from "../../store/slices/DurakRoomSlice";
 import type { CardSuit, DurakAction, DurakCard, DurakPhase, DurakTablePair } from "../../models/Durak";
-import { findByGuid } from "../../store/slices/UserSlice";
-import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
+import { useWebSocket } from "../../hooks/useWebSocket";
 import type { DurakGameMessage } from "../../models/WsMessage";
 import { useDurakMessages } from "../../hooks/useDurakMessages";
-import LoadingPage from "../LoadingPage";
-import InvalidRoomPage from "./InvalidRoomPage";
-import type { ErrorResponse } from "../../helpers/ApiErrorHelper";
 import { Avatar, Box, Button, Card, Container, Stack, ToastContainer, Typography } from "../../ui";
 import { DurakBoard } from "./durak/components/DurakBoard";
 import { BettingPanel } from "./durak/components/BettingPanel";
@@ -35,9 +31,6 @@ export default function DurakRoom() {
     const { toasts, showGameToast, dismiss } = useGameToast();
     const { showSystemToast } = useSystemToastContext();
     useSliceErrorToast((state: RootState) => state.durakRoom.errors, clearError);
-
-    const [isLoading, setIsLoading] = useState(true);
-    const [roomError, setRoomError] = useState<ErrorResponse | null>(null);
 
     const [ready, setReady] = useState(false);
     const [betInput, setBetInput] = useState("");
@@ -75,52 +68,24 @@ export default function DurakRoom() {
 
     const isOpponentAttacker = !!attackerId && !!guid && attackerId !== guid;
 
-    useEffect(() => {
-        if (!roomId || !guid) {
-            navigate("/rooms");
-            return;
-        }
-
-        setIsLoading(true);
-        setRoomError(null);
-
-        Promise.all([
-            dispatch(getRoomById({ roomId })),
-            dispatch(findByGuid(guid)),
-        ])
-            .then(([roomResult]) => {
-                if (getRoomById.rejected.match(roomResult)) {
-                    setRoomError(roomResult.payload ?? { message: "Failed to fetch room" });
-                }
-            })
-            .finally(() => setIsLoading(false));
-    }, [dispatch, guid, navigate, roomId]);
-
     const handleDisplaced = useCallback(() => {
+        console.warn("[DurakRoom] session displaced");
         showSystemToast("Your session was opened in another window", "system-error");
         navigate("/rooms");
     }, [navigate, showSystemToast]);
 
     const handleDisconnect = useCallback(() => {
+        console.warn("[DurakRoom] connection lost");
         showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
         setTimeout(() => navigate("/rooms"), 3000);
     }, [navigate, showSystemToast]);
 
-    const { isConnected, message, send, reconnectAttempt } = useWebSocket<DurakGameMessage>(
+    const { isConnected, message, send } = useWebSocket<DurakGameMessage>({
         roomId,
-        room?.type,
-        handleDisconnect,
-        handleDisplaced,
-    );
-
-    useEffect(() => {
-        if (reconnectAttempt > 0) {
-            showSystemToast(
-                `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
-                "system-error"
-            );
-        }
-    }, [reconnectAttempt, showSystemToast]);
+        roomType: room?.type,
+        onDisplaced: handleDisplaced,
+        onConnectionLost: handleDisconnect,
+    });
 
     const processGameState = useCallback((msg: DurakGameMessage) => {
         const prevTable = prevTableRef.current;
@@ -221,6 +186,7 @@ export default function DurakRoom() {
             return;
         }
 
+        console.debug("[DurakRoom] send MOVE PLAY_CARD", card);
         setAwaitingResponse(true);
         send({ type: "USER_MESSAGE", event: "MOVE", fromUserId: guid, roomId: room.id, action: "PLAY_CARD", card });
     }, [awaitingResponse, guid, isConnected, room, send]);
@@ -230,6 +196,7 @@ export default function DurakRoom() {
             return;
         }
 
+        console.debug("[DurakRoom] send MOVE PASS");
         setAwaitingResponse(true);
         send({ type: "USER_MESSAGE", event: "MOVE", fromUserId: guid, roomId: room.id, action: "PASS" });
     }, [awaitingResponse, guid, isConnected, room, send]);
@@ -239,6 +206,7 @@ export default function DurakRoom() {
             return;
         }
 
+        console.debug("[DurakRoom] send MOVE TAKE_CARDS");
         setAwaitingResponse(true);
         send({ type: "USER_MESSAGE", event: "MOVE", fromUserId: guid, roomId: room.id, action: "TAKE_CARDS" });
     }, [awaitingResponse, guid, isConnected, room, send]);
@@ -259,6 +227,8 @@ export default function DurakRoom() {
             showGameToast("Insufficient balance", "game-error");
             return;
         }
+
+        console.debug("[DurakRoom] send BET");
         send({ type: "USER_MESSAGE", event: "BET", fromUserId: guid, roomId: room.id, bet: amount });
     };
 
@@ -272,19 +242,12 @@ export default function DurakRoom() {
             return;
         }
 
+        console.debug("[DurakRoom] send READY");
         send({ type: "USER_MESSAGE", event: "READY", roomId: room.id });
         setReady(true);
     };
 
     const handleLeave = () => navigate("/rooms");
-
-    if (isLoading) {
-        return <LoadingPage />;
-    }
-
-    if (roomError) {
-        return <InvalidRoomPage message={roomError.message} />;
-    }
 
     const isGameOver = winnerId !== undefined;
 
@@ -403,7 +366,7 @@ export default function DurakRoom() {
                                     </MiniProfile>
                                 ))}
                             </Stack>
-                            <Box/>
+                            <Box />
                             <BettingPanel
                                 players={players}
                                 balance={balance}

@@ -153,9 +153,15 @@ export function useDurakMessages({
 
             case "ERROR": {
                 setAwaitingResponse(false);
-                const errorMsg = message as unknown as ErrorWSMessage;
+                const errorMsg = message as ErrorWSMessage;
                 const code = errorMsg.errorCode ?? "";
-                const text = errorCodeMessages[code] ?? errorCodeMessages.DEFAULT;
+                let text = "";
+
+                if (code) {
+                    text = errorMsg.message ?? errorCodeMessages[code];
+                } else {
+                    text = errorCodeMessages.DEFAULT;
+                }
 
                 if (systemErrorCodes.has(code)) {
                     showSystemToast(text, "system-error");

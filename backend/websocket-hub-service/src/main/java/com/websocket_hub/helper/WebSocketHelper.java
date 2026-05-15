@@ -6,11 +6,10 @@ import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.events.EventType;
 import com.websocket_hub.manager.SessionManager;
-import com.websocket_hub.mapper.MessageMapper;
+import com.websocket_hub.mapper.DefaultMessageMapper;
 import com.websocket_hub.util.WebSocketUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -31,8 +30,7 @@ public class WebSocketHelper {
     public static final String BET_REQUIRED_MESSAGE = "You must place a bet before becoming ready";
     public static final String BET_OUTBID_MESSAGE = "Your bet has been outbid by: %s, please make a new one";
 
-    @Qualifier("messageMapperImpl")
-    private final MessageMapper messageMapper;
+    private final DefaultMessageMapper defaultMessageMapper;
 
     private final SessionManager sessionManager;
 
@@ -61,7 +59,7 @@ public class WebSocketHelper {
 
         others.forEach(other -> {
             if (other != null && !other.getGuid().equals(client.getGuid())) {
-                sessionManager.sendToSession(other, messageMapper.toResponse(
+                sessionManager.sendToSession(other, defaultMessageMapper.toResponse(
                         MessageType.SYSTEM,
                         event,
                         client.getGuid(),
@@ -79,7 +77,7 @@ public class WebSocketHelper {
             return;
         }
 
-        sessionManager.sendToSession(client, messageMapper.toResponse(
+        sessionManager.sendToSession(client, defaultMessageMapper.toResponse(
                 MessageType.SYSTEM,
                 event,
                 client.getGuid(),

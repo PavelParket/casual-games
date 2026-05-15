@@ -7,6 +7,7 @@ import com.websocket_hub.domain.dto.response.PlayerResponse;
 import com.websocket_hub.domain.dto.response.RoomResponse;
 import com.websocket_hub.domain.dto.response.RoomResponseMap;
 import com.websocket_hub.domain.dto.response.RoomStatusResponse;
+import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomSortField;
 import com.websocket_hub.domain.enums.RoomStatus;
@@ -158,5 +159,14 @@ public class RoomService {
         };
 
         return direction == SortDirection.DESC ? comparator.reversed() : comparator;
+    }
+
+    // todo: удалить перед слиянием
+    public Map<UUID, String> getUsernamesInRoom(UUID roomId, RoomType roomType) {
+        return getManager(roomType).getPlayersInRoom(roomId).stream()
+                .collect(Collectors.toMap(
+                        ClientSession::getGuid,
+                        ClientSession::getUsername
+                ));
     }
 }

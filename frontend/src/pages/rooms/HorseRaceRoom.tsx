@@ -6,7 +6,7 @@ import type { HorseRaceHorseKeyframes } from "../../models/HorseRace";
 import { validateToastMessage } from "../../utils/SecurityUtils";
 import { getPreset, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/HorseRaceRoomSlice";
 import { findByGuid } from "../../store/slices/UserSlice";
-import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
+import { useWebSocket } from "../../hooks/useWebSocket";
 import type { HorseRaceGameMessage } from "../../models/WsMessage";
 import { Box, Button, Card, Container, Input, Toast, Typography } from "../../ui";
 import HorseSprite from "../../assets/sprites/HorseSprite";
@@ -76,16 +76,6 @@ export default function HorseRaceRoom() {
     const animationsRef = useRef<Animation[]>([]);
     const winnerRef = useRef<number>(0);
 
-    useEffect(() => {
-        if (!roomId || !guid) {
-            navigate("/rooms");
-            return;
-        }
-
-        dispatch(getRoomById({ roomId }));
-        dispatch(findByGuid(guid));
-    }, [dispatch, guid, navigate, roomId]);
-
     const handleDisplaced = useCallback(() => {
         showSystemToast("Your session was opened in another window", "system-error");
         navigate("/rooms");
@@ -96,21 +86,12 @@ export default function HorseRaceRoom() {
         setTimeout(() => navigate("/rooms"), 3000);
     }, [navigate, showSystemToast]);
 
-    const { isConnected, message, send, reconnectAttempt } = useWebSocket<HorseRaceGameMessage>(
+    const { isConnected, message, send } = useWebSocket<HorseRaceGameMessage>({
         roomId,
-        room?.type,
-        handleDisconnect,
-        handleDisplaced,
-    );
-
-    useEffect(() => {
-        if (reconnectAttempt > 0) {
-            showSystemToast(
-                `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
-                "system-error"
-            );
-        }
-    }, [reconnectAttempt, showSystemToast]);
+        roomType: room?.type,
+        onDisplaced: handleDisplaced,
+        onConnectionLost: handleDisconnect,
+    });
 
     useEffect(() => {
         if (!isConnected || !roomId || !room) {
@@ -361,19 +342,6 @@ export default function HorseRaceRoom() {
         : null;
 
     const isBetButtonDisabled = betPlaced || selectedHorse === null || !betInput || parseFloat(betInput) <= 0;
-
-    if (!roomId || !room) {
-        return (
-            <Container>
-                <Card style={{ textAlign: "center", padding: "2rem" }}>
-                    <Typography variant="h2">Invalid Room</Typography>
-                    <Button onClick={() => navigate("/rooms")} style={{ marginTop: "1rem" }}>
-                        Back to Rooms
-                    </Button>
-                </Card>
-            </Container>
-        );
-    }
 
     return (
         <Box

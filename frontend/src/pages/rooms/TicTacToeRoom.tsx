@@ -1,20 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
-import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
+import { useCallback, useState } from "react";
+import { useWebSocket } from "../../hooks/useWebSocket";
 import { Avatar, Box, Button, Card, Container, Icon, Input, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
 import type { TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage } from "../../utils/SecurityUtils";
-import { findByGuid } from "../../store/slices/UserSlice";
-import { clearError, getRoomById } from "../../store/slices/TicTacToeRoomSlice";
+import { clearError } from "../../store/slices/TicTacToeRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
 import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
-import type { ErrorResponse } from "../../helpers/ApiErrorHelper";
-import LoadingPage from "../LoadingPage";
-import InvalidRoomPage from "./InvalidRoomPage";
 import { MiniProfile } from "../../components/MiniProfile";
 
 export default function TicTacToeRoom() {
@@ -46,30 +42,6 @@ export default function TicTacToeRoom() {
    const [betInput, setBetInput] = useState<string>("");
    const [betPlaced, setBetPlaced] = useState<boolean>(false);
 
-   const [isLoading, setIsLoading] = useState(true);
-   const [roomError, setRoomError] = useState<ErrorResponse | null>(null);
-
-   useEffect(() => {
-      if (!roomId || !guid) {
-         navigate("/rooms");
-         return;
-      }
-
-      setIsLoading(true);
-      setRoomError(null);
-
-      Promise.all([
-         dispatch(getRoomById({ roomId })),
-         dispatch(findByGuid(guid)),
-      ])
-          .then(([roomResult]) => {
-             if (getRoomById.rejected.match(roomResult)) {
-                setRoomError(roomResult.payload ?? { message: "Failed to fetch room" });
-             }
-          })
-          .finally(() => setIsLoading(false));
-   }, [dispatch, guid, navigate, roomId]);
-
    const handleDisplaced = useCallback(() => {
       showSystemToast("Your session was opened in another window", "system-error");
       navigate("/rooms");
@@ -80,21 +52,12 @@ export default function TicTacToeRoom() {
       setTimeout(() => navigate("/rooms"), 5000);
    }, [navigate, showSystemToast]);
 
-   const { isConnected, message, send, reconnectAttempt } = useWebSocket<TicTacToeGameMessage>(
-       roomId,
-       room?.type,
-       handleDisconnect,
-       handleDisplaced,
-   );
-
-   useEffect(() => {
-      if (reconnectAttempt > 0) {
-         showSystemToast(
-             `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
-             "system-error"
-         );
-      }
-   }, [reconnectAttempt, showSystemToast]);
+   const { isConnected, message, send } = useWebSocket<TicTacToeGameMessage>({
+      roomId,
+      roomType: room?.type,
+      onDisplaced: handleDisplaced,
+      onConnectionLost: handleDisconnect,
+   });
 
    const processReset = useCallback(() => {
       showGameToast("Your opponent left the room. Waiting for a new player...", "game-info");
@@ -256,18 +219,6 @@ export default function TicTacToeRoom() {
    const handleLeave = () => {
       navigate("/rooms");
    };
-
-   if (isLoading) {
-      return (
-          <LoadingPage />
-      );
-   }
-
-   if (roomError) {
-      return (
-          <InvalidRoomPage message={roomError.message} />
-      );
-   }
 
    return (
        <Box style={{

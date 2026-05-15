@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState, useMemo, } from "react
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
+import { useWebSocket } from "../../hooks/useWebSocket";
 import { getBalance } from "../../store/slices/UserSlice";
 import { getRoomById, getUsernamesInRoom, } from "../../store/slices/DeCoderRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
@@ -28,7 +28,7 @@ export default function DeCoderRoom() {
     }>();
     const roomName = validateRoomName(rawRoomName ?? "");
 
-    const { players } = useSelector((state: RootState) => state.deCoderRoom);
+    const { players, room } = useSelector((state: RootState) => state.deCoderRoom);
     const playersRef = useRef(players || {});
 
     const { toasts, showGameToast, dismiss } = useGameToast();
@@ -64,21 +64,12 @@ export default function DeCoderRoom() {
         setTimeout(() => navigate("/rooms"), 3000);
     }, [navigate, showSystemToast]);
 
-    const { isConnected, message, send, reconnectAttempt } = useWebSocket<DeCoderMessage>(
+    const { isConnected, message, send } = useWebSocket<DeCoderMessage>({
         roomId,
-        "DE_CODER",
-        handleDisconnect,
-        handleDisplaced,
-    );
-
-    useEffect(() => {
-        if (reconnectAttempt > 0) {
-            showSystemToast(
-                `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
-                "system-error"
-            );
-        }
-    }, [reconnectAttempt, showSystemToast]);
+        roomType: room?.type,
+        onDisplaced: handleDisplaced,
+        onConnectionLost: handleDisconnect,
+    });
 
     const processedMessageRef = useRef<DeCoderMessage | null>(null);
 
