@@ -6,7 +6,7 @@ spring:
     import: optional:file:.env[.properties]
 
   datasource:
-    url: ${DB_URL}
+    url: jdbc:postgresql://${USER_POSTGRES_HOST:localhost}:${USER_POSTGRES_PORT:5432}/${USER_POSTGRES_DB:diploma}?currentSchema=${USER_DB_DEFAULT_SCHEMA:user_service}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
