@@ -1,19 +1,16 @@
-import { useEffect, useRef, type RefObject } from "react";
+import { useCallback, type RefObject } from "react";
 import type { DurakPhase, DurakTablePair } from "../models/Durak";
-import type { Room } from "../models/Room";
 import type { DurakGameMessage, ErrorWSMessage } from "../models/WsMessage";
-import type { AppDispatch } from "../store/store";
+import type { AppDispatch, RootState } from "../store/store";
 import type { ToastVariant } from "../ui";
 import { errorCodeMessages, systemErrorCodes } from "../models/constants/ErrorCodeMessages";
 import { validateToastMessage } from "../utils/SecurityUtils";
 import { getPlayersBets, syncReadiness, syncRoomState } from "../store/slices/DurakRoomSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { useSystemToastContext } from "../providers/SystemToastContext";
 
 interface UseDurakMessagesProps {
-    message?: DurakGameMessage;
-    isConnected: boolean;
-    guid?: string;
     roomId?: string;
-    room?: Room;
     isGame: boolean;
     processGameState: (message: DurakGameMessage) => void;
     processGameOver: (winnerId?: string) => void;
@@ -26,16 +23,10 @@ interface UseDurakMessagesProps {
     prevTableRef: RefObject<DurakTablePair[]>;
     prevPhaseRef: RefObject<DurakPhase | null>;
     showGameToast: (message: string, variant: ToastVariant) => void;
-    showSystemToast: (message: string, variant: ToastVariant) => void;
-    dispatch: AppDispatch;
 }
 
 export function useDurakMessages({
-    message,
-    isConnected,
-    guid,
     roomId,
-    room,
     isGame,
     processGameState,
     processGameOver,
@@ -48,21 +39,19 @@ export function useDurakMessages({
     prevTableRef,
     prevPhaseRef,
     showGameToast,
-    showSystemToast,
-    dispatch,
-}: UseDurakMessagesProps) {
-    const processedMessageRef = useRef<DurakGameMessage | null>(null);
+}: UseDurakMessagesProps): (message: DurakGameMessage) => void {
+    const dispatch = useDispatch<AppDispatch>();
+    const guid = useSelector((state: RootState) => state.auth.user?.guid);
+    const room = useSelector((state: RootState) => state.durakRoom.room);
+    const { showSystemToast } = useSystemToastContext();
 
-    useEffect(() => {
-        if (!isConnected || !message || !guid || !roomId || !room) {
+    return useCallback((message: DurakGameMessage) => {
+        if (!guid || !roomId || !room) {
+            console.debug("[DurakMsg] skipped — no guid/roomId/room");
             return;
         }
 
-        if (message === processedMessageRef.current) {
-            return;
-        }
-
-        processedMessageRef.current = message;
+        console.debug(`[DurakMsg] received: event=${message.event}`);
 
         switch (message.event) {
             case "JOIN":
@@ -163,6 +152,8 @@ export function useDurakMessages({
                     text = errorCodeMessages.DEFAULT;
                 }
 
+                console.warn(`[DurakMsg] ERROR`, { code, message: errorMsg.message });
+
                 if (systemErrorCodes.has(code)) {
                     showSystemToast(text, "system-error");
                 } else {
@@ -172,10 +163,11 @@ export function useDurakMessages({
             }
 
             default:
+                console.debug(`[DurakMsg] unhandled event: ${message.event}`);
                 break;
         }
     }, [
-        dispatch, guid, isConnected, isGame, message, prevPhaseRef, prevTableRef,
+        dispatch, guid, isGame, prevPhaseRef, prevTableRef,
         processGameOver, processGameState, processReset, room, roomId,
         setAwaitingResponse, setBetPlaced, setDiscardCount, setReady, setRemainingSeconds,
         showGameToast, showSystemToast,

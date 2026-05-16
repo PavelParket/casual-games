@@ -1,6 +1,6 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import type { AppDispatch, RootState } from "../../store/store";
+import type { RootState } from "../../store/store";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
@@ -20,7 +20,6 @@ export type TableExitMode = "bita" | "pickup" | null;
 
 export default function DurakRoom() {
     const navigate = useNavigate();
-    const dispatch = useDispatch<AppDispatch>();
 
     const guid = useSelector((state: RootState) => state.auth.user?.guid);
     const balance = useSelector((state: RootState) => state.user.user?.balance);
@@ -79,13 +78,6 @@ export default function DurakRoom() {
         showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
         setTimeout(() => navigate("/rooms"), 3000);
     }, [navigate, showSystemToast]);
-
-    const { isConnected, message, send } = useWebSocket<DurakGameMessage>({
-        roomId,
-        roomType: room?.type,
-        onDisplaced: handleDisplaced,
-        onConnectionLost: handleDisconnect,
-    });
 
     const processGameState = useCallback((msg: DurakGameMessage) => {
         const prevTable = prevTableRef.current;
@@ -155,16 +147,8 @@ export default function DurakRoom() {
         prevPhaseRef.current = null;
     }, [showGameToast]);
 
-    const handleDealComplete = useCallback(() => {
-        setIsDealAnimation(false);
-    }, []);
-
-    useDurakMessages({
-        message,
-        isConnected,
-        guid,
+    const handleMessage = useDurakMessages({
         roomId,
-        room,
         isGame,
         processGameState,
         processGameOver,
@@ -177,9 +161,19 @@ export default function DurakRoom() {
         prevTableRef,
         prevPhaseRef,
         showGameToast,
-        showSystemToast,
-        dispatch,
     });
+
+    const { isConnected, send } = useWebSocket<DurakGameMessage>({
+        roomId,
+        roomType: room?.type,
+        onMessage: handleMessage,
+        onDisplaced: handleDisplaced,
+        onConnectionLost: handleDisconnect,
+    });
+
+    const handleDealComplete = useCallback(() => {
+        setIsDealAnimation(false);
+    }, []);
 
     const handlePlayCard = useCallback((card: DurakCard) => {
         if (!room || !isConnected || !guid || awaitingResponse) {

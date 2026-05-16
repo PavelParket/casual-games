@@ -338,38 +338,12 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
       try {
          socket.send(JSON.stringify(message));
          console.debug(`[WS] sent: event=${message.event}`);
-
-         if (pingTimerRef.current) {
-            clearInterval(pingTimerRef.current);
-            pingTimerRef.current = setInterval(() => {
-               const s = client.current;
-               if (!s || s.readyState !== WebSocket.OPEN) {
-                  return;
-               }
-               const ping: WSMessage = { type: "SYSTEM", event: "PING", roomId: roomId ?? "" };
-               try {
-                  s.send(JSON.stringify(ping));
-                  console.debug("[WS] PING sent (after activity)");
-               } catch (e) {
-                  console.warn("[WS] PING send failed", e);
-                  return;
-               }
-               if (pongTimeoutRef.current) {
-                  clearTimeout(pongTimeoutRef.current);
-               }
-               pongTimeoutRef.current = setTimeout(() => {
-                  console.warn("[WS] PONG timeout — forcing close");
-                  try { s.close(); } catch (e) { console.warn("[WS] force close failed", e); }
-               }, PONG_TIMEOUT_MS);
-            }, PING_INTERVAL_MS);
-         }
-
          return true;
       } catch (e) {
          console.warn("[WS] send threw", e);
          return false;
       }
-   }, [roomId]);
+   }, []);
 
    return {
       isConnected: connectionState === "connected",
