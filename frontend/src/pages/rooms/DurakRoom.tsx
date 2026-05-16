@@ -59,6 +59,7 @@ export default function DurakRoom() {
     const prevPhaseRef = useRef<DurakPhase | null>(null);
 
     const [awaitingResponse, setAwaitingResponse] = useState(false);
+    const [gameAborted, setGameAborted] = useState(false);
 
     const myName = guid && players ? (players[guid] ?? "You") : "You";
     const opponentName = guid && players
@@ -123,6 +124,7 @@ export default function DurakRoom() {
 
     const processReset = useCallback(() => {
         showGameToast("Your opponent left the room. Waiting for a new player...", "game-info");
+        setGameAborted(false);
         setIsGame(false);
         setPhase(null);
         setMyCards([]);
@@ -147,12 +149,21 @@ export default function DurakRoom() {
         prevPhaseRef.current = null;
     }, [showGameToast]);
 
+    const processAbort = useCallback(() => {
+        console.warn("[DurakRoom] game aborted — opponent left");
+        setGameAborted(true);
+        showGameToast("Opponent left the game. Redirecting to rooms...", "game-info");
+        setTimeout(() => navigate("/rooms"), 3000);
+    }, [navigate, showGameToast]);
+
     const handleMessage = useDurakMessages({
         roomId,
         isGame,
+        gameAborted,
         processGameState,
         processGameOver,
         processReset,
+        processAbort,
         setBetPlaced,
         setReady,
         setRemainingSeconds,
@@ -176,37 +187,37 @@ export default function DurakRoom() {
     }, []);
 
     const handlePlayCard = useCallback((card: DurakCard) => {
-        if (!room || !isConnected || !guid || awaitingResponse) {
+        if (!room || !isConnected || !guid || awaitingResponse || gameAborted) {
             return;
         }
 
         console.debug("[DurakRoom] send MOVE PLAY_CARD", card);
         setAwaitingResponse(true);
         send({ type: "USER_MESSAGE", event: "MOVE", fromUserId: guid, roomId: room.id, action: "PLAY_CARD", card });
-    }, [awaitingResponse, guid, isConnected, room, send]);
+    }, [awaitingResponse, gameAborted, guid, isConnected, room, send]);
 
     const handlePass = useCallback(() => {
-        if (!room || !isConnected || !guid || awaitingResponse) {
+        if (!room || !isConnected || !guid || awaitingResponse || gameAborted) {
             return;
         }
 
         console.debug("[DurakRoom] send MOVE PASS");
         setAwaitingResponse(true);
         send({ type: "USER_MESSAGE", event: "MOVE", fromUserId: guid, roomId: room.id, action: "PASS" });
-    }, [awaitingResponse, guid, isConnected, room, send]);
+    }, [awaitingResponse, gameAborted, guid, isConnected, room, send]);
 
     const handleTakeCards = useCallback(() => {
-        if (!room || !isConnected || !guid || awaitingResponse) {
+        if (!room || !isConnected || !guid || awaitingResponse || gameAborted) {
             return;
         }
 
         console.debug("[DurakRoom] send MOVE TAKE_CARDS");
         setAwaitingResponse(true);
         send({ type: "USER_MESSAGE", event: "MOVE", fromUserId: guid, roomId: room.id, action: "TAKE_CARDS" });
-    }, [awaitingResponse, guid, isConnected, room, send]);
+    }, [awaitingResponse, gameAborted, guid, isConnected, room, send]);
 
     const handlePlaceBet = () => {
-        if (!room || !isConnected || !guid || betPlaced) {
+        if (!room || !isConnected || !guid || betPlaced || gameAborted) {
             return;
         }
 
@@ -227,7 +238,7 @@ export default function DurakRoom() {
     };
 
     const handleReady = () => {
-        if (!room || !isConnected || ready) {
+        if (!room || !isConnected || ready || gameAborted) {
             return;
         }
 
@@ -303,7 +314,7 @@ export default function DurakRoom() {
                             onPlayCard={handlePlayCard}
                             onPass={handlePass}
                             onTakeCards={handleTakeCards}
-                            disabled={awaitingResponse || isDealAnimation}
+                            disabled={awaitingResponse || isDealAnimation || gameAborted}
                         />
                     )}
 

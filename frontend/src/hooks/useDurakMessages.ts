@@ -12,9 +12,11 @@ import { useSystemToastContext } from "../providers/SystemToastContext";
 interface UseDurakMessagesProps {
     roomId?: string;
     isGame: boolean;
+    gameAborted: boolean;
     processGameState: (message: DurakGameMessage) => void;
     processGameOver: (winnerId?: string) => void;
     processReset: () => void;
+    processAbort: () => void;
     setBetPlaced: (value: boolean) => void;
     setReady: (value: boolean) => void;
     setRemainingSeconds: (value: number | null) => void;
@@ -28,9 +30,11 @@ interface UseDurakMessagesProps {
 export function useDurakMessages({
     roomId,
     isGame,
+    gameAborted,
     processGameState,
     processGameOver,
     processReset,
+    processAbort,
     setBetPlaced,
     setReady,
     setRemainingSeconds,
@@ -55,13 +59,16 @@ export function useDurakMessages({
 
         switch (message.event) {
             case "JOIN":
+                if (gameAborted) {
+                    break;
+                }
                 showGameToast(validateToastMessage(message.message ?? "Player joined the room"), "game-info");
                 dispatch(syncRoomState({ roomId, roomType: room.type }));
                 break;
 
             case "LEAVE":
                 if (isGame) {
-                    processReset();
+                    processAbort();
                 } else {
                     showGameToast(validateToastMessage(message.message ?? "Player left the room"), "game-info");
                 }
@@ -166,10 +173,5 @@ export function useDurakMessages({
                 console.debug(`[DurakMsg] unhandled event: ${message.event}`);
                 break;
         }
-    }, [
-        dispatch, guid, isGame, prevPhaseRef, prevTableRef,
-        processGameOver, processGameState, processReset, room, roomId,
-        setAwaitingResponse, setBetPlaced, setDiscardCount, setReady, setRemainingSeconds,
-        showGameToast, showSystemToast,
-    ]);
+    }, [dispatch, gameAborted, guid, isGame, prevPhaseRef, prevTableRef, processAbort, processGameOver, processGameState, room, roomId, setAwaitingResponse, setBetPlaced, setDiscardCount, setReady, setRemainingSeconds, showGameToast, showSystemToast]);
 }
