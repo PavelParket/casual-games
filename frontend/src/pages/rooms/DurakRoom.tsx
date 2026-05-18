@@ -7,7 +7,6 @@ import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
 import { useCallback, useRef, useState } from "react";
 import { clearError } from "../../store/slices/DurakRoomSlice";
 import type { CardSuit, DurakAction, DurakCard, DurakPhase, DurakTablePair } from "../../models/Durak";
-import { useWebSocket } from "../../hooks/useWebSocket";
 import type { DurakGameMessage } from "../../models/WsMessage";
 import { useDurakMessages } from "../../hooks/useDurakMessages";
 import { Avatar, Box, Button, Card, Container, Stack, ToastContainer, Typography } from "../../ui";
@@ -15,6 +14,7 @@ import { DurakBoard } from "./durak/components/DurakBoard";
 import { BettingPanel } from "./durak/components/BettingPanel";
 import { GameOverOverlay } from "./durak/components/GameOverOverlay";
 import { MiniProfile } from "../../components/MiniProfile";
+import { useGameSocket } from "../../hooks/useGameSocket";
 
 export type TableExitMode = "bita" | "pickup" | null;
 
@@ -80,6 +80,10 @@ export default function DurakRoom() {
         setTimeout(() => navigate("/rooms"), 3000);
     }, [navigate, showSystemToast]);
 
+    const handleSocketError = useCallback(() => {
+        setAwaitingResponse(false);
+    }, []);
+
     const processGameState = useCallback((msg: DurakGameMessage) => {
         const prevTable = prevTableRef.current;
         const prevPhase = prevPhaseRef.current;
@@ -122,33 +126,6 @@ export default function DurakRoom() {
         setAwaitingResponse(false);
     }, []);
 
-    const processReset = useCallback(() => {
-        showGameToast("Your opponent left the room. Waiting for a new player...", "game-info");
-        setGameAborted(false);
-        setIsGame(false);
-        setPhase(null);
-        setMyCards([]);
-        setOpponentCardCount(0);
-        setDeckCardsLeft(0);
-        setTrumpCard(null);
-        setTrumpSuit(null);
-        setTable([]);
-        setIsMyTurn(false);
-        setAvailableActions([]);
-        setRemainingSeconds(null);
-        setDiscardCount(0);
-        setWinnerId(undefined);
-        setAttackerId(null);
-        setTableExitMode(null);
-        setIsDealAnimation(false);
-        wasGameRef.current = false;
-        setReady(false);
-        setBetPlaced(false);
-        setBetInput("");
-        prevTableRef.current = [];
-        prevPhaseRef.current = null;
-    }, [showGameToast]);
-
     const processAbort = useCallback(() => {
         console.warn("[DurakRoom] game aborted — opponent left");
         setGameAborted(true);
@@ -162,22 +139,22 @@ export default function DurakRoom() {
         gameAborted,
         processGameState,
         processGameOver,
-        processReset,
         processAbort,
         setBetPlaced,
         setReady,
         setRemainingSeconds,
-        setAwaitingResponse,
         setDiscardCount,
         prevTableRef,
         prevPhaseRef,
         showGameToast,
     });
 
-    const { isConnected, send } = useWebSocket<DurakGameMessage>({
+    const { isConnected, send } = useGameSocket<DurakGameMessage>({
         roomId,
         roomType: room?.type,
-        onMessage: handleMessage,
+        showGameToast,
+        onGameMessage: handleMessage,
+        onError: handleSocketError,
         onDisplaced: handleDisplaced,
         onConnectionLost: handleDisconnect,
     });

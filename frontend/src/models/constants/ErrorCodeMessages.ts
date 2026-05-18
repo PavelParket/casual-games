@@ -7,6 +7,8 @@ export const errorCodeMessages: Record<string, string> = {
     INSUFFICIENT_BALANCE: "Insufficient balance",
     ROOM_ALREADY_EXISTS: "Room with this name already exists",
     ROOM_TYPE_NOT_FOUND: "Unknown room type",
+    COOLDOWN: "Too many requests. Please wait before trying again",
+    VALIDATION_ERROR: "Validation error",
     INVALID_MESSAGE: "Invalid message received",
     SERVICE_UNAVAILABLE: "Service is temporarily unavailable",
     INTERNAL_SERVER_ERROR: "An unexpected error occurred",

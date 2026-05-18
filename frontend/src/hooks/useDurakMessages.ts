@@ -1,13 +1,12 @@
 import { useCallback, type RefObject } from "react";
 import type { DurakPhase, DurakTablePair } from "../models/Durak";
-import type { DurakGameMessage, ErrorWSMessage } from "../models/WsMessage";
+import type { DurakGameMessage } from "../models/WsMessage";
 import type { AppDispatch, RootState } from "../store/store";
 import type { ToastVariant } from "../ui";
-import { errorCodeMessages, systemErrorCodes } from "../models/constants/ErrorCodeMessages";
+import { errorCodeMessages } from "../models/constants/ErrorCodeMessages";
 import { validateToastMessage } from "../utils/SecurityUtils";
 import { getPlayersBets, syncReadiness, syncRoomState } from "../store/slices/DurakRoomSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { useSystemToastContext } from "../providers/SystemToastContext";
 
 interface UseDurakMessagesProps {
     roomId?: string;
@@ -15,12 +14,10 @@ interface UseDurakMessagesProps {
     gameAborted: boolean;
     processGameState: (message: DurakGameMessage) => void;
     processGameOver: (winnerId?: string) => void;
-    processReset: () => void;
     processAbort: () => void;
     setBetPlaced: (value: boolean) => void;
     setReady: (value: boolean) => void;
     setRemainingSeconds: (value: number | null) => void;
-    setAwaitingResponse: (value: boolean) => void;
     setDiscardCount: React.Dispatch<React.SetStateAction<number>>;
     prevTableRef: RefObject<DurakTablePair[]>;
     prevPhaseRef: RefObject<DurakPhase | null>;
@@ -33,12 +30,10 @@ export function useDurakMessages({
     gameAborted,
     processGameState,
     processGameOver,
-    processReset,
     processAbort,
     setBetPlaced,
     setReady,
     setRemainingSeconds,
-    setAwaitingResponse,
     setDiscardCount,
     prevTableRef,
     prevPhaseRef,
@@ -47,7 +42,6 @@ export function useDurakMessages({
     const dispatch = useDispatch<AppDispatch>();
     const guid = useSelector((state: RootState) => state.auth.user?.guid);
     const room = useSelector((state: RootState) => state.durakRoom.room);
-    const { showSystemToast } = useSystemToastContext();
 
     return useCallback((message: DurakGameMessage) => {
         if (!guid || !roomId || !room) {
@@ -147,31 +141,9 @@ export function useDurakMessages({
                 setRemainingSeconds(message.remainingSeconds ?? null);
                 break;
 
-            case "ERROR": {
-                setAwaitingResponse(false);
-                const errorMsg = message as ErrorWSMessage;
-                const code = errorMsg.errorCode ?? "";
-                let text = "";
-
-                if (code) {
-                    text = errorMsg.message ?? errorCodeMessages[code];
-                } else {
-                    text = errorCodeMessages.DEFAULT;
-                }
-
-                console.warn(`[DurakMsg] ERROR`, { code, message: errorMsg.message });
-
-                if (systemErrorCodes.has(code)) {
-                    showSystemToast(text, "system-error");
-                } else {
-                    showGameToast(text, "game-error");
-                }
-                break;
-            }
-
             default:
                 console.debug(`[DurakMsg] unhandled event: ${message.event}`);
                 break;
         }
-    }, [dispatch, gameAborted, guid, isGame, prevPhaseRef, prevTableRef, processAbort, processGameOver, processGameState, room, roomId, setAwaitingResponse, setBetPlaced, setDiscardCount, setReady, setRemainingSeconds, showGameToast, showSystemToast]);
+    }, [dispatch, gameAborted, guid, isGame, prevPhaseRef, prevTableRef, processAbort, processGameOver, processGameState, room, roomId, setBetPlaced, setDiscardCount, setReady, setRemainingSeconds, showGameToast]);
 }
