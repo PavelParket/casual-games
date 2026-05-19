@@ -54,6 +54,7 @@ public class RoomFactory implements ObjectFactory<Room> {
                 .id(roomMetadata.getId())
                 .name(roomMetadata.getName())
                 .type(roomMetadata.getType())
+                .status(roomMetadata.getStatus())
                 .participants(participants)
                 .createdAt(roomMetadata.getCreatedAt())
                 .build();

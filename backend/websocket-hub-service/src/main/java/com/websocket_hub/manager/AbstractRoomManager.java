@@ -1,8 +1,10 @@
 package com.websocket_hub.manager;
 
-import com.websocket_hub.domain.dto.RoomRequest;
+import com.common_utils.exception.BadRequestException;
+import com.common_utils.exception.NotFoundException;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.Message;
+import com.websocket_hub.domain.dto.request.RoomRequest;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.entity.RoomMetadata;
@@ -11,8 +13,6 @@ import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.events.EventType;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
-import com.websocket_hub.exception.BadRequestException;
-import com.websocket_hub.exception.NotFoundException;
 import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;

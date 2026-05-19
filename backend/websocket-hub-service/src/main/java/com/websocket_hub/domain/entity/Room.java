@@ -1,5 +1,6 @@
 package com.websocket_hub.domain.entity;
 
+import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.RoomType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,6 +29,9 @@ public class Room {
     private final RoomType type;
 
     @Builder.Default
+    private RoomStatus status = RoomStatus.WAITING;
+
+    @Builder.Default
     private final Set<ClientSession> participants = ConcurrentHashMap.newKeySet();
 
     @Builder.Default
@@ -47,12 +51,6 @@ public class Room {
 
     public Integer size() {
         return this.participants.size();
-    }
-
-    public List<String> getParticipantEmails() {
-        return this.participants.stream()
-                .map(ClientSession::getEmail)
-                .toList();
     }
 
     public List<UUID> getParticipantGuids() {

@@ -1,549 +1,492 @@
+import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
-import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
-import { Avatar, Box, Button, Card, Container, Icon, Input, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
-import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "../../store/store";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store/store";
 import type { TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage } from "../../utils/SecurityUtils";
-import { findByGuid } from "../../store/slices/UserSlice";
-import { clearError, getRoomById } from "../../store/slices/TicTacToeRoomSlice";
+import { clearError } from "../../store/slices/TicTacToeRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
-import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
+import { useGameSocket } from "../../hooks/useGameSocket";
 import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
-import type { ErrorResponse } from "../../helpers/ApiErrorHelper";
-import LoadingPage from "../LoadingPage";
-import InvalidRoomPage from "./InvalidRoomPage";
+import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
 import { MiniProfile } from "../../components/MiniProfile";
+import { Avatar, Box, Button, Card, Container, Icon, Input, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
 
 export default function TicTacToeRoom() {
-   const { getInverseIcon } = useThemedIcon();
+    const { getInverseIcon } = useThemedIcon();
 
-   const guid = useSelector((state: RootState) => state.auth.user?.guid);
-   const balance = useSelector((state: RootState) => state.user.user?.balance);
-   const navigate = useNavigate();
-   const dispatch = useDispatch<AppDispatch>();
+    const guid = useSelector((state: RootState) => state.auth.user?.guid);
+    const balance = useSelector((state: RootState) => state.user.user?.balance);
+    const { room, players, readyPlayersCount, totalPlayersCount, playerBetMap } = useSelector((state: RootState) => state.ticTacToeRoom);
 
-   const roomId: string | undefined = useParams<{ roomId?: string }>().roomId;
-   const { room, players, readyPlayersCount, totalPlayersCount, playerBetMap } = useSelector((state: RootState) => state.ticTacToeRoom);
+    const navigate = useNavigate();
 
-   const { toasts, showGameToast, dismiss } = useGameToast();
-   const { showSystemToast } = useSystemToastContext();
+    const roomId: string | undefined = useParams<{ roomId?: string }>().roomId;
 
-   useSliceErrorToast((state: RootState) => state.ticTacToeRoom.errors, clearError);
+    const [ready, setReady] = useState<boolean>(false);
+    const [gameAborted, setGameAborted] = useState(false);
 
-   const [ready, setReady] = useState<boolean>(false);
+    const [isGame, setIsGame] = useState(false);
+    const [board, setBoard] = useState<string[]>(Array(9).fill(null));
+    const [mySymbol, setMySymbol] = useState<string>();
+    const [currentPlayerSymbol, setCurrentPlayerSymbol] = useState<string>();
+    const [playersSymbols, setPlayersSymbols] = useState<Record<string, string>>();
+    const [playersWithSymbols, setPlayersWithSymbols] = useState<Record<string, string>>({});
+    const [winner, setWinner] = useState<string>();
 
-   const [isGame, setIsGame] = useState(false);
-   const [board, setBoard] = useState<string[]>(Array(9).fill(null));
-   const [mySymbol, setMySymbol] = useState<string>();
-   const [currentPlayerSymbol, setCurrentPlayerSymbol] = useState<string>();
-   const [playersSymbols, setPlayersSymbols] = useState<Record<string, string>>();
-   const [playersWithSymbols, setPlayersWithSymbols] = useState<Record<string, string>>({});
-   const [winner, setWinner] = useState<string>();
+    const [betInput, setBetInput] = useState<string>("");
+    const [betPlaced, setBetPlaced] = useState<boolean>(false);
 
-   const [betInput, setBetInput] = useState<string>("");
-   const [betPlaced, setBetPlaced] = useState<boolean>(false);
+    const { toasts, showGameToast, dismiss } = useGameToast();
+    const { showSystemToast } = useSystemToastContext();
 
-   const [isLoading, setIsLoading] = useState(true);
-   const [roomError, setRoomError] = useState<ErrorResponse | null>(null);
+    useSliceErrorToast((state: RootState) => state.ticTacToeRoom.errors, clearError);
 
-   useEffect(() => {
-      if (!roomId || !guid) {
-         navigate("/rooms");
-         return;
-      }
+    const handleDisplaced = useCallback(() => {
+        showSystemToast("Your session was opened in another window", "system-error");
+        navigate("/rooms");
+    }, [navigate, showSystemToast]);
 
-      setIsLoading(true);
-      setRoomError(null);
+    const handleDisconnect = useCallback(() => {
+        showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
+        setTimeout(() => navigate("/rooms"), 5000);
+    }, [navigate, showSystemToast]);
 
-      Promise.all([
-         dispatch(getRoomById({ roomId })),
-         dispatch(findByGuid(guid)),
-      ])
-          .then(([roomResult]) => {
-             if (getRoomById.rejected.match(roomResult)) {
-                setRoomError(roomResult.payload ?? { message: "Failed to fetch room" });
-             }
-          })
-          .finally(() => setIsLoading(false));
-   }, [dispatch, guid, navigate, roomId]);
+    const processStart = useCallback((message: TicTacToeGameMessage) => {
+        setBoard(message.board!);
+        setCurrentPlayerSymbol(message.currentPlayerSymbol);
+        setPlayersSymbols(message.playersSymbols);
 
-   const handleDisplaced = useCallback(() => {
-      showSystemToast("Your session was opened in another window", "system-error");
-      navigate("/rooms");
-   }, [navigate, showSystemToast]);
+        const playersMap = message.players || {};
+        const symbolsMap = message.playersSymbols || {};
+        const combinedMap: Record<string, string> = {};
 
-   const handleDisconnect = useCallback(() => {
-      showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
-      setTimeout(() => navigate("/rooms"), 5000);
-   }, [navigate, showSystemToast]);
+        Object.keys(playersMap).forEach(guid => {
+            const username = playersMap[guid];
+            const symbol = symbolsMap[guid];
+            if (username && symbol) {
+                combinedMap[username] = symbol;
+            }
+        });
 
-   const { isConnected, message, send, reconnectAttempt } = useWebSocket<TicTacToeGameMessage>(
-       roomId,
-       room?.type,
-       handleDisconnect,
-       handleDisplaced,
-   );
+        setPlayersWithSymbols(combinedMap);
 
-   useEffect(() => {
-      if (reconnectAttempt > 0) {
-         showSystemToast(
-             `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
-             "system-error"
-         );
-      }
-   }, [reconnectAttempt, showSystemToast]);
+        if (guid) {
+            setMySymbol(symbolsMap[guid]);
+        }
 
-   const processReset = useCallback(() => {
-      showGameToast("Your opponent left the room. Waiting for a new player...", "game-info");
-      setBoard(Array(9).fill(null));
-      setCurrentPlayerSymbol(undefined);
-      setMySymbol(undefined);
-      setPlayersWithSymbols({});
-      setWinner(undefined);
-      setReady(false);
-      setIsGame(false);
-      setBetPlaced(false);
-      setBetInput("");
-   }, [showGameToast]);
+        setIsGame(true);
+    }, [guid]);
 
-   const processStart = useCallback((message: TicTacToeGameMessage) => {
-      setBoard(message.board!);
-      setCurrentPlayerSymbol(message.currentPlayerSymbol);
-      setPlayersSymbols(message.playersSymbols);
+    const processMove = useCallback((message: TicTacToeGameMessage) => {
+        if (!message.board) {
+            return;
+        }
 
-      const playersMap = message.players || {};
-      const symbolsMap = message.playersSymbols || {};
-      const combinedMap: Record<string, string> = {};
+        setBoard(message.board);
+        setCurrentPlayerSymbol(message.nextPlayerSymbol);
+    }, []);
 
-      Object.keys(playersMap).forEach(guid => {
-         const username = playersMap[guid];
-         const symbol = symbolsMap[guid];
-         if (username && symbol) {
-            combinedMap[username] = symbol;
-         }
-      });
+    const processWin = useCallback((message: TicTacToeGameMessage) => {
+        if (!message.board || !message.winner || !message.players) {
+            return;
+        }
 
-      setPlayersWithSymbols(combinedMap);
+        setBoard(message.board);
+        setWinner(message.players[message.winner]);
 
-      if (guid) {
-         setMySymbol(symbolsMap[guid]);
-      }
+        if (message.winner === guid) {
+            showGameToast("You are the winner!", "game-info");
+        } else {
+            showGameToast("Your opponent won!", "game-info");
+        }
 
-      setIsGame(true);
-   }, [guid]);
+        setIsGame(false);
+    }, [guid, showGameToast]);
 
-   const processMove = useCallback((message: TicTacToeGameMessage) => {
-      if (!message.board) {
-         return;
-      }
+    const processDraw = useCallback((message: TicTacToeGameMessage) => {
+        if (!message.board || !message.message) {
+            return;
+        }
 
-      setBoard(message.board);
-      setCurrentPlayerSymbol(message.nextPlayerSymbol);
-   }, []);
+        setBoard(message.board);
+        setWinner(message.winner);
+        showGameToast(validateToastMessage(message.message), "game-info");
+        setIsGame(false);
+    }, [showGameToast]);
 
-   const processWin = useCallback((message: TicTacToeGameMessage) => {
-      if (!message.board || !message.winner || !message.players) {
-         return;
-      }
+    const processAbort = useCallback(() => {
+        console.warn("[TicTacToeRoom] game aborted — opponent left");
+        setGameAborted(true);
+        showGameToast("Opponent left the game. Redirecting to rooms...", "game-info");
+        setTimeout(() => navigate("/rooms"), 3000);
+    }, [navigate, showGameToast]);
 
-      setBoard(message.board);
-      setWinner(message.players[message.winner]);
+    const handleMessage = useTicTacToeMessages({
+        roomId,
+        isGame,
+        gameAborted,
+        processStart,
+        processMove,
+        processWin,
+        processDraw,
+        processAbort,
+        setBetPlaced,
+        setReady,
+        showGameToast,
+    });
 
-      if (message.winner === guid) {
-         showGameToast("You are the winner!", "game-info");
-      } else {
-         showGameToast("Your opponent won!", "game-info");
-      }
+    const { isConnected, send } = useGameSocket<TicTacToeGameMessage>({
+        roomId,
+        roomType: room?.type,
+        showGameToast,
+        onGameMessage: handleMessage,
+        onDisplaced: handleDisplaced,
+        onConnectionLost: handleDisconnect,
+    });
 
-      setIsGame(false);
-   }, [guid, showGameToast]);
+    const handleMove = (index: number) => {
+        if (!guid || !room || !isConnected || board[index] || winner || currentPlayerSymbol !== mySymbol || gameAborted) {
+            return;
+        }
 
-   const processDraw = useCallback((message: TicTacToeGameMessage) => {
-      if (!message.board || !message.message) {
-         return;
-      }
+        send({
+            type: "USER_MESSAGE",
+            event: "MOVE",
+            fromUserId: guid,
+            roomId: room.id,
+            board: board,
+            cell: index,
+            currentPlayerSymbol: mySymbol,
+            playersSymbols,
+        });
+    };
 
-      setBoard(message.board);
-      setWinner(message.winner);
-      showGameToast(validateToastMessage(message.message), "game-info");
-      setIsGame(false);
-   }, [showGameToast]);
+    const handleReady = () => {
+        if (!room || !isConnected || ready || gameAborted) {
+            return;
+        }
 
-   useTicTacToeMessages({
-      message,
-      isConnected,
-      guid,
-      roomId,
-      room,
-      isGame,
-      processStart,
-      processMove,
-      processWin,
-      processDraw,
-      processReset,
-      setBetPlaced,
-      setReady,
-      showGameToast,
-      showSystemToast,
-      dispatch,
-   });
+        if (!betPlaced) {
+            showGameToast("You must place a bet before becoming ready!", "game-error");
+            return;
+        }
 
-   const handleMove = (index: number) => {
-      if (!guid || !room || !isConnected || board[index] || winner || currentPlayerSymbol !== mySymbol) {
-         return;
-      }
+        send({
+            type: "USER_MESSAGE",
+            event: "READY",
+            roomId: room.id,
+        });
 
-      send({
-         type: "USER_MESSAGE",
-         event: "MOVE",
-         fromUserId: guid,
-         roomId: room.id,
-         board: board,
-         cell: index,
-         currentPlayerSymbol: mySymbol,
-         playersSymbols,
-      });
-   };
+        setReady(true);
+    };
 
-   const handleReady = () => {
-      if (!room || !isConnected || ready) {
-         return;
-      }
+    const handlePlaceBet = () => {
+        if (!room || !isConnected || !guid || gameAborted) {
+            return;
+        }
 
-      if (!betPlaced) {
-         showGameToast("You must place a bet before becoming ready!", "game-error");
-         return;
-      }
+        const betAmount = parseFloat(betInput);
 
-      send({
-         type: "USER_MESSAGE",
-         event: "READY",
-         roomId: room.id,
-      });
+        if (isNaN(betAmount) || betAmount <= 0) {
+            showGameToast("Please enter a valid bet amount greater than 0", "game-error");
+            return;
+        }
 
-      setReady(true);
-   };
+        if (balance && betAmount > balance) {
+            showGameToast("Insufficient balance", "game-error");
+            return;
+        }
 
-   const handlePlaceBet = () => {
-      if (!room || !isConnected || !guid) {
-         return;
-      }
+        send({
+            type: "USER_MESSAGE",
+            event: "BET",
+            fromUserId: guid,
+            roomId: room.id,
+            bet: betAmount,
+        });
+    };
 
-      const betAmount = parseFloat(betInput);
+    const handleLeave = () => {
+        navigate("/rooms");
+    };
 
-      if (isNaN(betAmount) || betAmount <= 0) {
-         showGameToast("Please enter a valid bet amount greater than 0", "game-error");
-         return;
-      }
+    return (
+        <Box style={{
+            minHeight: "calc(100vh - 60px - 50px)",
+            margin: "0 10rem",
+            padding: "0 1rem",
+            background: "var(--color-bg-glass)",
+            backdropFilter: "blur(2px)",
+            borderRadius: "var(--radius-md)",
+            boxShadow: "var(--shadow-lg)"
+        }}>
+            <Container>
+                <Box style={{ padding: "2rem 0" }}>
+                    <Typography variant="h2" style={{ textAlign: "center" }}>
+                        Tic-Tac-Toe: {room?.name}
+                    </Typography>
+                </Box>
 
-      if (balance && betAmount > balance) {
-         showGameToast("Insufficient balance", "game-error");
-         return;
-      }
-
-      send({
-         type: "USER_MESSAGE",
-         event: "BET",
-         fromUserId: guid,
-         roomId: room.id,
-         bet: betAmount,
-      });
-   };
-
-   const handleLeave = () => {
-      navigate("/rooms");
-   };
-
-   if (isLoading) {
-      return (
-          <LoadingPage />
-      );
-   }
-
-   if (roomError) {
-      return (
-          <InvalidRoomPage message={roomError.message} />
-      );
-   }
-
-   return (
-       <Box style={{
-          minHeight: "calc(100vh - 60px - 50px)",
-          margin: "0 10rem",
-          padding: "0 1rem",
-          background: "var(--color-bg-glass)",
-          backdropFilter: "blur(2px)",
-          borderRadius: "var(--radius-md)",
-          boxShadow: "var(--shadow-lg)"
-       }}>
-          <Container>
-             <Box style={{ padding: "2rem 0" }}>
-                <Typography variant="h2" style={{ textAlign: "center" }}>
-                   Tic-Tac-Toe: {room?.name}
-                </Typography>
-             </Box>
-
-             <Card style={{
-                padding: "0",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center"
-             }}>
-                <Typography variant="h3" style={{ margin: "2rem 0" }}>
-                   {winner
-                       ? winner === "Draw"
-                           ? "Draw!"
-                           : `Winner: ${winner}`
-                       : isGame
-                           ? `Turn: ${currentPlayerSymbol}`
-                           : `Ready players: ${readyPlayersCount} / ${totalPlayersCount}`
-                   }
-                </Typography>
-
-                <Box style={{
-                   width: "100%",
-                   display: "grid",
-                   gridTemplateColumns: "repeat(3, 1fr)",
-                   alignItems: "center",
-                   justifyContent: "center",
+                <Card style={{
+                    padding: "0",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center"
                 }}>
+                    <Typography variant="h3" style={{ margin: "2rem 0" }}>
+                        {winner
+                            ? winner === "Draw"
+                                ? "Draw!"
+                                : `Winner: ${winner}`
+                            : isGame
+                                ? `Turn: ${currentPlayerSymbol}`
+                                : `Ready players: ${readyPlayersCount} / ${totalPlayersCount}`
+                        }
+                    </Typography>
 
-                   {/* ===== PLAYERS ===== */}
-                   <Box style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      rowGap: "1.5rem",
-                   }}>
-                      {Object.entries(players ?? {}).map(([playerGuid, username]) => {
-                         const symbol = isGame && playersWithSymbols ? playersWithSymbols[username] : null;
+                    <Box style={{
+                        width: "100%",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(3, 1fr)",
+                        alignItems: "center",
+                        justifyContent: "center",
+                    }}>
 
-                         return (
-                             <MiniProfile key={playerGuid} guid={playerGuid} username={username}>
-                                <Stack
-                                    direction="row"
-                                    align="center"
-                                    gap="0.75rem"
-                                    style={{
-                                       cursor: "pointer",
-                                       minWidth: "200px",
-                                       padding: "0.35rem",
-                                       paddingRight: "1rem",
-                                       background: "var(--color-bg-glass)",
-                                       border: "1px solid var(--color-border)",
-                                       borderRadius: "var(--radius-md)",
-                                       boxShadow: "var(--shadow-sm)",
-                                       transition: "all 0.2s ease",
-                                       userSelect: "none"
-                                    }}
-                                    onMouseEnter={(e) => {
-                                       e.currentTarget.style.boxShadow = "var(--shadow-md)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                       e.currentTarget.style.boxShadow = "var(--shadow-sm)";
-                                    }}
-                                >
-                                   <Avatar fallback={username} size={40} />
+                        {/* ===== PLAYERS ===== */}
+                        <Box style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            rowGap: "1.5rem",
+                        }}>
+                            {Object.entries(players ?? {}).map(([playerGuid, username]) => {
+                                const symbol = isGame && playersWithSymbols ? playersWithSymbols[username] : null;
 
-                                   <Typography variant="body" style={{ fontWeight: "bold" }}>
-                                      {username}{symbol ? `: ${symbol}` : ""}
-                                   </Typography>
-                                </Stack>
-                             </MiniProfile>
-                         );
-                      })}
-                   </Box>
+                                return (
+                                    <MiniProfile key={playerGuid} guid={playerGuid} username={username}>
+                                        <Stack
+                                            direction="row"
+                                            align="center"
+                                            gap="0.75rem"
+                                            style={{
+                                                cursor: "pointer",
+                                                minWidth: "200px",
+                                                padding: "0.35rem",
+                                                paddingRight: "1rem",
+                                                background: "var(--color-bg-glass)",
+                                                border: "1px solid var(--color-border)",
+                                                borderRadius: "var(--radius-md)",
+                                                boxShadow: "var(--shadow-sm)",
+                                                transition: "all 0.2s ease",
+                                                userSelect: "none"
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+                                            }}
+                                        >
+                                            <Avatar fallback={username} size={40} />
 
-                   {/* ===== BOARD ===== */}
-                   <Box style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                   }}>
-                      <Box style={{
-                         display: "grid",
-                         gridTemplateColumns: "repeat(3, 80px)",
-                         gridTemplateRows: "repeat(3, 80px)",
-                         justifyContent: "center",
-                         borderRadius: "var(--radius-lg)",
-                         overflow: "hidden",
-                         boxShadow: "var(--shadow-lg)",
-                      }}>
-                         {board.map((cell, index) => {
-                            const style: React.CSSProperties = {
-                               width: "80px",
-                               height: "80px",
-                               fontSize: "32px",
-                               fontWeight: "bold",
-                               borderRadius: "0",
-                               borderRight: "none",
-                               borderBottom: "none",
-                               boxShadow: "0 0 0 var(--color-bg)",
-                            };
+                                            <Typography variant="body" style={{ fontWeight: "bold" }}>
+                                                {username}{symbol ? `: ${symbol}` : ""}
+                                            </Typography>
+                                        </Stack>
+                                    </MiniProfile>
+                                );
+                            })}
+                        </Box>
 
-                            if (index % 3 !== 2)
-                               style.borderRight = "2px solid var(--color-text)";
-                            if (index < 6)
-                               style.borderBottom = "2px solid var(--color-text)";
+                        {/* ===== BOARD ===== */}
+                        <Box style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}>
+                            <Box style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(3, 80px)",
+                                gridTemplateRows: "repeat(3, 80px)",
+                                justifyContent: "center",
+                                borderRadius: "var(--radius-lg)",
+                                overflow: "hidden",
+                                boxShadow: "var(--shadow-lg)",
+                            }}>
+                                {board.map((cell, index) => {
+                                    const style: React.CSSProperties = {
+                                        width: "80px",
+                                        height: "80px",
+                                        fontSize: "32px",
+                                        fontWeight: "bold",
+                                        borderRadius: "0",
+                                        borderRight: "none",
+                                        borderBottom: "none",
+                                        boxShadow: "0 0 0 var(--color-bg)",
+                                    };
 
-                            return (
-                                <Button
-                                    key={index}
-                                    variant="ghost"
-                                    style={style}
-                                    onClick={() => handleMove(index)}
-                                    disabled={!!cell || !!winner || !isGame}
-                                >
-                                   {cell}
-                                </Button>
-                            );
-                         })}
-                      </Box>
-                   </Box>
+                                    if (index % 3 !== 2)
+                                        style.borderRight = "2px solid var(--color-text)";
+                                    if (index < 6)
+                                        style.borderBottom = "2px solid var(--color-text)";
 
-                   {/* ===== BETS ===== */}
-                   <Box style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      gap: "1rem",
-                      marginRight: "1.5rem",
-                      padding: "1rem",
-                      background: "var(--color-bg-secondary)",
-                      borderRadius: "var(--radius-md)",
-                      boxShadow: "var(--shadow-md)",
-                   }}>
-                      {playerBetMap && Object.keys(playerBetMap).length > 0 && (
-                          <>
-                             <Typography variant="h3">Current Bets</Typography>
-                             <Box style={{
-                                width: "100%",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "0.5rem",
-                                padding: "0.75rem",
-                                background: "var(--color-bg)",
-                                borderRadius: "var(--radius-sm)",
-                                border: "1px solid var(--color-border)",
-                             }}>
-                                {Object.entries(playerBetMap).map(([username, bet]) => (
-                                    <Box key={username} style={{
-                                       display: "flex",
-                                       justifyContent: "space-between",
-                                       alignItems: "center"
+                                    return (
+                                        <Button
+                                            key={index}
+                                            variant="ghost"
+                                            style={style}
+                                            onClick={() => handleMove(index)}
+                                            disabled={!!cell || !!winner || !isGame || gameAborted}
+                                        >
+                                            {cell}
+                                        </Button>
+                                    );
+                                })}
+                            </Box>
+                        </Box>
+
+                        {/* ===== BETS ===== */}
+                        <Box style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-start",
+                            gap: "1rem",
+                            marginRight: "1.5rem",
+                            padding: "1rem",
+                            background: "var(--color-bg-secondary)",
+                            borderRadius: "var(--radius-md)",
+                            boxShadow: "var(--shadow-md)",
+                        }}>
+                            {playerBetMap && Object.keys(playerBetMap).length > 0 && (
+                                <>
+                                    <Typography variant="h3">Current Bets</Typography>
+                                    <Box style={{
+                                        width: "100%",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "0.5rem",
+                                        padding: "0.75rem",
+                                        background: "var(--color-bg)",
+                                        borderRadius: "var(--radius-sm)",
+                                        border: "1px solid var(--color-border)",
                                     }}>
-                                       <Typography variant="body" style={{ fontWeight: 500 }}>
-                                          {username}
-                                       </Typography>
-                                       <Typography variant="body" style={{ color: "var(--color-success)" }}>
-                                          ${bet}
-                                       </Typography>
+                                        {Object.entries(playerBetMap).map(([username, bet]) => (
+                                            <Box key={username} style={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center"
+                                            }}>
+                                                <Typography variant="body" style={{ fontWeight: 500 }}>
+                                                    {username}
+                                                </Typography>
+                                                <Typography variant="body" style={{ color: "var(--color-success)" }}>
+                                                    ${bet}
+                                                </Typography>
+                                            </Box>
+                                        ))}
                                     </Box>
-                                ))}
-                             </Box>
 
-                             <Box style={{
-                                width: "100%",
-                                height: "1px",
-                                background: "var(--color-border)",
-                                margin: "0.5rem 0"
-                             }} />
-                          </>
-                      )}
+                                    <Box style={{
+                                        width: "100%",
+                                        height: "1px",
+                                        background: "var(--color-border)",
+                                        margin: "0.5rem 0"
+                                    }} />
+                                </>
+                            )}
 
-                      <Typography variant="h3">Place Your Bet</Typography>
+                            <Typography variant="h3">Place Your Bet</Typography>
 
-                      {balance !== undefined && (
-                          <Typography variant="body" style={{ color: "var(--color-text-secondary)" }}>
-                             Balance: ${balance.toFixed(2)}
-                          </Typography>
-                      )}
+                            {balance !== undefined && (
+                                <Typography variant="body" style={{ color: "var(--color-text-secondary)" }}>
+                                    Balance: ${balance.toFixed(2)}
+                                </Typography>
+                            )}
 
-                      <Box style={{ width: "100%" }}>
-                         <Input
-                             type="number"
-                             value={betInput}
-                             onChange={(e) => setBetInput(e.target.value)}
-                             placeholder="Enter bet amount"
-                             disabled={betPlaced || isGame}
-                             style={{
-                                width: "100%",
-                                padding: "0.75rem",
-                                borderRadius: "var(--radius-sm)",
-                                border: "1px solid var(--color-border)",
-                                background: betPlaced || isGame ? "var(--color-bg-disabled)" : "var(--color-bg)",
-                                color: "var(--color-text)",
-                                fontSize: "1rem",
-                                opacity: betPlaced || isGame ? 0.6 : 1,
-                             }}
-                         />
-                      </Box>
+                            <Box style={{ width: "100%" }}>
+                                <Input
+                                    type="number"
+                                    value={betInput}
+                                    onChange={(e) => setBetInput(e.target.value)}
+                                    placeholder="Enter bet amount"
+                                    disabled={betPlaced || isGame}
+                                    style={{
+                                        width: "100%",
+                                        padding: "0.75rem",
+                                        borderRadius: "var(--radius-sm)",
+                                        border: "1px solid var(--color-border)",
+                                        background: betPlaced || isGame ? "var(--color-bg-disabled)" : "var(--color-bg)",
+                                        color: "var(--color-text)",
+                                        fontSize: "1rem",
+                                        opacity: betPlaced || isGame ? 0.6 : 1,
+                                    }}
+                                />
+                            </Box>
 
-                      <Button
-                          onClick={handlePlaceBet}
-                          disabled={betPlaced || isGame}
-                          style={{
-                             width: "100%",
-                             opacity: (betPlaced || isGame) ? 0.5 : 1,
-                          }}
-                      >
-                         Place Bet
-                      </Button>
+                            <Button
+                                onClick={handlePlaceBet}
+                                disabled={betPlaced || isGame}
+                                style={{
+                                    width: "100%",
+                                    opacity: (betPlaced || isGame) ? 0.5 : 1,
+                                }}
+                            >
+                                Place Bet
+                            </Button>
 
-                      <Typography
-                          variant="caption"
-                          style={{
-                             color: "var(--color-text-secondary)",
-                             fontSize: "0.875rem",
-                             lineHeight: "1.4"
-                          }}
-                      >
-                         {betPlaced
-                             ? "Your bet has been accepted. You can now get ready!"
-                             : "You must place a bet before becoming ready"
-                         }
-                      </Typography>
-                   </Box>
-                </Box>
+                            <Typography
+                                variant="caption"
+                                style={{
+                                    color: "var(--color-text-secondary)",
+                                    fontSize: "0.875rem",
+                                    lineHeight: "1.4"
+                                }}
+                            >
+                                {betPlaced
+                                    ? "Your bet has been accepted. You can now get ready!"
+                                    : "You must place a bet before becoming ready"
+                                }
+                            </Typography>
+                        </Box>
+                    </Box>
 
-                <Box style={{
-                   width: "100%",
-                   display: "grid",
-                   gridTemplateColumns: "repeat(3, 1fr)",
-                   alignItems: "center",
-                   justifyItems: "center",
-                }}>
-                   <Button variant="outline" onClick={handleLeave}>Leave</Button>
+                    <Box style={{
+                        width: "100%",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(3, 1fr)",
+                        alignItems: "center",
+                        justifyItems: "center",
+                    }}>
+                        <Button variant="outline" onClick={handleLeave}>Leave</Button>
 
-                   <Button
-                       onClick={handleReady}
-                       disabled={ready || !betPlaced}
-                       style={{
-                          margin: "2rem",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          opacity: (!betPlaced || ready) ? 0.5 : 1,
-                       }}
-                   >
-                      {ready ? (
-                          <>
-                             <Typography variant="body" inverse style={{ fontSize: "20px", fontWeight: 500 }}>Ready</Typography>
-                             <Icon src={getInverseIcon("check")} alt="check" size={20} />
-                          </>
-                      ) : (
-                          <Typography variant="body" inverse style={{ fontSize: "20px", fontWeight: 500 }}>Get Ready</Typography>
-                      )}
-                   </Button>
-                </Box>
-             </Card>
-          </Container>
+                        <Button
+                            onClick={handleReady}
+                            disabled={ready || !betPlaced || gameAborted}
+                            style={{
+                                margin: "2rem",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                opacity: (!betPlaced || ready) ? 0.5 : 1,
+                            }}
+                        >
+                            {ready ? (
+                                <>
+                                    <Typography variant="body" inverse style={{ fontSize: "20px", fontWeight: 500 }}>Ready</Typography>
+                                    <Icon src={getInverseIcon("check")} alt="check" size={20} />
+                                </>
+                            ) : (
+                                <Typography variant="body" inverse style={{ fontSize: "20px", fontWeight: 500 }}>Get Ready</Typography>
+                            )}
+                        </Button>
+                    </Box>
+                </Card>
+            </Container>
 
-          <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
-       </Box>
-   );
+            <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
+        </Box>
+    );
 }

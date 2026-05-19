@@ -1,71 +1,61 @@
-import { useEffect, useRef } from "react";
-import type { Room } from "../models/Room";
-import type { ErrorWSMessage, TicTacToeGameMessage } from "../models/WsMessage";
-import type { AppDispatch } from "../store/store";
-import type { ToastVariant } from "../ui";
-import { validateToastMessage } from "../utils/SecurityUtils";
+import { useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../store/store";
 import { getPlayersBets, syncReadiness, syncRoomState } from "../store/slices/TicTacToeRoomSlice";
+import type { TicTacToeGameMessage } from "../models/WsMessage";
 import { errorCodeMessages } from "../models/constants/ErrorCodeMessages";
+import { validateToastMessage } from "../utils/SecurityUtils";
+import type { ToastVariant } from "../ui";
 
 interface UseTicTacToeMessagesProps {
-    message: TicTacToeGameMessage | undefined;
-    isConnected: boolean;
-    guid: string | undefined;
-    roomId: string | undefined;
-    room: Room | undefined;
+    roomId?: string;
     isGame: boolean;
+    gameAborted: boolean;
     processStart: (message: TicTacToeGameMessage) => void;
     processMove: (message: TicTacToeGameMessage) => void;
     processWin: (message: TicTacToeGameMessage) => void;
     processDraw: (message: TicTacToeGameMessage) => void;
-    processReset: () => void;
+    processAbort: () => void;
     setBetPlaced: (value: boolean) => void;
     setReady: (value: boolean) => void;
     showGameToast: (message: string, variant: ToastVariant) => void;
-    showSystemToast: (message: string, variant: ToastVariant) => void;
-    dispatch: AppDispatch;
 }
 
 export function useTicTacToeMessages({
-    message,
-    isConnected,
-    guid,
     roomId,
-    room,
     isGame,
+    gameAborted,
     processStart,
     processMove,
     processWin,
     processDraw,
-    processReset,
+    processAbort,
     setBetPlaced,
     setReady,
     showGameToast,
-    showSystemToast,
-    dispatch,
-}: UseTicTacToeMessagesProps) {
-    const processedMessageRef = useRef<TicTacToeGameMessage | null>(null);
+}: UseTicTacToeMessagesProps): (message: TicTacToeGameMessage) => void {
 
-    useEffect(() => {
-        if (!isConnected || !message || !guid || !roomId || !room) {
+    const dispatch = useDispatch<AppDispatch>();
+    const guid = useSelector((state: RootState) => state.auth.user?.guid);
+    const room = useSelector((state: RootState) => state.ticTacToeRoom.room);
+
+    return useCallback((message: TicTacToeGameMessage) => {
+        if (!guid || !roomId || !room) {
             return;
         }
-
-        if (message === processedMessageRef.current) {
-            return;
-        }
-
-        processedMessageRef.current = message;
 
         switch (message.event) {
             case "JOIN":
+                if (gameAborted) {
+                    break;
+                }
                 showGameToast(validateToastMessage(message.message ?? "Player joined the room"), "game-info");
                 dispatch(syncRoomState({ roomId, roomType: room.type }));
                 break;
 
             case "LEAVE":
                 if (isGame) {
-                    processReset();
+                    processAbort();
                 } else {
                     showGameToast(validateToastMessage(message.message ?? "Player left the room"), "game-info");
                 }
@@ -137,21 +127,8 @@ export function useTicTacToeMessages({
                 dispatch(syncReadiness({ roomId, roomType: room.type }));
                 break;
 
-            case "ERROR": {
-                const errorMsg = message as ErrorWSMessage;
-                const code = errorMsg.errorCode ?? "";
-                const text = errorCodeMessages[code] ?? errorCodeMessages.DEFAULT;
-
-                if (errorMsg.errorCategory === "SYSTEM") {
-                    showSystemToast(text, "system-error");
-                } else {
-                    showGameToast(text, "game-error");
-                }
-                break;
-            }
-
             default:
                 break;
         }
-    }, [dispatch, guid, isConnected, isGame, message, processDraw, processMove, processReset, processStart, processWin, room, roomId, setBetPlaced, setReady, showGameToast, showSystemToast]);
+    }, [dispatch, gameAborted, guid, isGame, processAbort, processDraw, processMove, processStart, processWin, room, roomId, setBetPlaced, setReady, showGameToast]);
 }

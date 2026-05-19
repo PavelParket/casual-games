@@ -7,11 +7,9 @@ spring:
 
   datasource:
     url: jdbc:postgresql://${BANK_POSTGRES_HOST:localhost}:${BANK_POSTGRES_PORT:5432}/${BANK_POSTGRES_DB:diploma}?currentSchema=${BANK_DB_DEFAULT_SCHEMA:bank_service}
-    username: ${BANK_POSTGRES_USERNAME}
-    password: ${BANK_POSTGRES_PASSWORD}
+    username: ${BANK_POSTGRES_USERNAME:postgres}
+    password: ${BANK_POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
-    hikari:
-      schema: bank-service
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml

@@ -21,6 +21,7 @@ public interface UserMapper {
     @Mapping(target = "guid", expression = "java(UUID.randomUUID())")
     @Mapping(target = "role", expression = "java(Role.USER)")
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "password", source = "password")
     User toEntity(RegisterRequest registerRequest, String password);
 
     UserResponse toResponse(User user);

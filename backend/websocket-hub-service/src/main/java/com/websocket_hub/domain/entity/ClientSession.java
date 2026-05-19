@@ -1,5 +1,7 @@
 package com.websocket_hub.domain.entity;
 
+import com.security_starter.enums.Role;
+import com.security_starter.enums.Status;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,10 +29,10 @@ public class ClientSession {
     private final String email;
 
     @EqualsAndHashCode.Include
-    private final String role;
+    private final Role role;
 
     @EqualsAndHashCode.Include
-    private final String status;
+    private final Status status;
 
     private final WebSocketSession session;
 

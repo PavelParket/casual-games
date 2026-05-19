@@ -4,6 +4,8 @@ import com.casualgames.grpc.user.GetByGuidRequest;
 import com.casualgames.grpc.user.UserResponse;
 import com.casualgames.grpc.user.UserServiceGrpc;
 import com.grpc_utils.mapper.GrpcStatusExceptionMapper;
+import com.security_starter.enums.Role;
+import com.security_starter.enums.Status;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
@@ -45,8 +47,8 @@ public class GrpcUserClient {
                 .username(response.getUsername())
                 .email(response.getEmail())
                 .balance(new BigDecimal(response.getBalance()))
-                .role(response.getRole())
-                .status(response.getStatus())
+                .role(Role.valueOf(response.getRole()))
+                .status(Status.valueOf(response.getStatus()))
                 .build();
     }
 }

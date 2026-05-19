@@ -2,42 +2,35 @@ import React, { useCallback, useEffect, useRef, useState, useMemo, } from "react
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
-import { getBalance } from "../../store/slices/UserSlice";
-import { getRoomById, getUsernamesInRoom, } from "../../store/slices/DeCoderRoomSlice";
+import { getUsernamesInRoom, } from "../../store/slices/DeCoderRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
-import { errorCodeMessages } from "../../models/constants/ErrorCodeMessages";
 import { Box, Button, Card, Container, Typography, ToastContainer, Stack, Divider, Grid, CooldownTimer, Modal, Icon, Input, Avatar, } from "../../ui";
 import { useThemedIcon } from "../../ui";
-import { validateRoomName, validateWSMessage } from "../../utils/SecurityUtils";
-import type { DeCoderMessage, ErrorWSMessage } from "../../models/WsMessage";
+import { validateRoomName } from "../../utils/SecurityUtils";
+import type { DeCoderMessage } from "../../models/WsMessage";
 import type { DeCoderGameHistory } from "../../models/DeCoderGameHistory";
 import { MiniProfile } from "../../components/MiniProfile";
+import { useDeCoderMessages } from "../../hooks/useDeCoderMessages";
+import { useGameSocket } from "../../hooks/useGameSocket";
 
 export default function DeCoderRoom() {
+    const { getIcon } = useThemedIcon();
+
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
 
-    const { user } = useSelector((state: RootState) => state.auth);
-    const guid = user?.guid;
+    const { players, room } = useSelector((state: RootState) => state.deCoderRoom);
 
     const { roomName: rawRoomName, roomId } = useParams<{
         roomName?: string;
         roomId?: string;
     }>();
-    const roomName = validateRoomName(rawRoomName ?? "");
 
-    const { players } = useSelector((state: RootState) => state.deCoderRoom);
-    const playersRef = useRef(players || {});
+    const roomName = validateRoomName(rawRoomName ?? "");
 
     const { toasts, showGameToast, dismiss } = useGameToast();
     const { showSystemToast } = useSystemToastContext();
-    const { getIcon } = useThemedIcon();
-
-    useEffect(() => {
-        playersRef.current = players || {};
-    }, [players]);
 
     const [gameActive, setGameActive] = useState<boolean>(false);
     const [history, setHistory] = useState<DeCoderGameHistory[]>([]);
@@ -51,8 +44,10 @@ export default function DeCoderRoom() {
     } | null>(null);
 
     const [chars, setChars] = useState<string[]>(["", "", "", ""]);
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [cooldown, setCooldown] = useState(0);
+
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const requestSyncRef = useRef<() => void>(() => { });
 
     const handleDisplaced = useCallback(() => {
         showSystemToast("Your session was opened in another window", "system-error");
@@ -64,159 +59,35 @@ export default function DeCoderRoom() {
         setTimeout(() => navigate("/rooms"), 3000);
     }, [navigate, showSystemToast]);
 
-    const { isConnected, message, send, reconnectAttempt } = useWebSocket<DeCoderMessage>(
-        roomId,
-        "DE_CODER",
-        handleDisconnect,
-        handleDisplaced,
-    );
-
-    useEffect(() => {
-        if (reconnectAttempt > 0) {
-            showSystemToast(
-                `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
-                "system-error"
-            );
-        }
-    }, [reconnectAttempt, showSystemToast]);
-
-    const processedMessageRef = useRef<DeCoderMessage | null>(null);
-
-    useEffect(() => {
-        if (!roomName || !roomId) navigate("/rooms");
-        else {
-            dispatch(getRoomById({ roomId }));
-            dispatch(getUsernamesInRoom({ roomId, roomType: "DE_CODER" }));
-        }
-    }, [roomName, roomId, navigate, dispatch]);
-
-    useEffect(() => {
-        if (cooldown <= 0) return;
-        const timerId = setInterval(() => setCooldown((c) => c - 1), 1000);
-        return () => clearInterval(timerId);
-    }, [cooldown]);
-
-    const refreshUserBalance = useCallback(() => {
-        if (guid) dispatch(getBalance(guid));
-    }, [dispatch, guid]);
-
     const requestSync = useCallback(() => {
-        if (isConnected && roomId) {
-            send({ type: "SYSTEM", event: "STATE", roomId });
-        }
-    }, [isConnected, send, roomId]);
+        requestSyncRef.current();
+    }, []);
+
+    const handleMessage = useDeCoderMessages({
+        roomId,
+        setGameActive,
+        setHistory,
+        setJackpot,
+        setGameOverModal,
+        showGameToast,
+    });
+
+    const { isConnected, send } = useGameSocket<DeCoderMessage>({
+        roomId,
+        roomType: room?.type,
+        showGameToast,
+        onGameMessage: handleMessage,
+        onDisplaced: handleDisplaced,
+        onConnectionLost: handleDisconnect,
+    });
 
     useEffect(() => {
-        if (!isConnected || !message) return;
-
-        if (message === processedMessageRef.current) {
-            return;
-        }
-
-        processedMessageRef.current = message;
-
-        const sanitized = validateWSMessage(message, [
-            "type",
-            "event",
-            "message",
-            "code",
-            "player",
-            "winner",
-            "gameState",
-            "isGameStarted",
-            "jackpot",
-        ]) as DeCoderMessage;
-
-        switch (sanitized.event) {
-            case "STATE":
-                setHistory(sanitized.gameState || []);
-                setJackpot(sanitized.jackpot || 0);
-                if (sanitized.isGameStarted !== undefined) {
-                    setGameActive(sanitized.isGameStarted);
-                }
-                break;
-
-            case "MOVE":
-                if (sanitized.gameState && sanitized.gameState.length > 0) {
-                    setHistory((prev) => [...prev, ...sanitized.gameState!]);
-                }
-                if (sanitized.jackpot !== undefined) {
-                    setJackpot(sanitized.jackpot);
-                }
-
-                if (sanitized.player !== guid) {
-                    const playerName = playersRef.current[sanitized.player!] || "Someone";
-                    showGameToast(`${playerName} made a move`, "game-info");
-                } else {
-                    showGameToast("Move accepted", "game-info");
-                }
-
-                refreshUserBalance();
-                break;
-
-            case "WINNER": {
-                setGameActive(false);
-                if (sanitized.gameState && sanitized.gameState.length > 0) {
-                    setHistory((prev) => [...prev, ...sanitized.gameState!]);
-                }
-                if (sanitized.jackpot !== undefined) setJackpot(sanitized.jackpot);
-
-                const winnerName =
-                    playersRef.current[sanitized.winner!] || "Unknown Player";
-                const isMe = sanitized.winner === guid;
-
-                setGameOverModal({
-                    isOpen: true,
-                    isWin: isMe,
-                    winnerName: isMe ? "You" : winnerName,
-                });
-
-                refreshUserBalance();
-                break;
+        requestSyncRef.current = () => {
+            if (isConnected && roomId) {
+                send({ type: "SYSTEM", event: "STATE", roomId });
             }
-
-            case "ERROR": {
-                const errorMsg = message as ErrorWSMessage;
-                const code = errorMsg.errorCode ?? "";
-                let text = errorCodeMessages[code];
-
-                if (!text) {
-                    const msg = sanitized.message || "Error occurred";
-                    if (msg.includes("not started") || msg.includes("Game not found")) {
-                        setGameActive(false);
-                        text = "Game session expired or not started.";
-                    } else if (msg.includes("already in progress")) {
-                        setGameActive(true);
-                        requestSync();
-                        return;
-                    } else if (msg.includes("Insufficient funds")) {
-                        text = "Transaction failed: Insufficient funds!";
-                    } else {
-                        text = msg;
-                    }
-                }
-
-                showGameToast(text, "game-error");
-                break;
-            }
-
-            case "JOIN":
-            case "LEAVE":
-                if (roomId)
-                    dispatch(getUsernamesInRoom({ roomId, roomType: "DE_CODER" }));
-                break;
-        }
-    }, [
-        isConnected,
-        message,
-        guid,
-        refreshUserBalance,
-        dispatch,
-        roomId,
-        requestSync,
-        showGameToast,
-        showSystemToast,
-    ]);
+        };
+    }, [isConnected, roomId, send]);
 
     const handleCharChange = (index: number, val: string) => {
         const char = val
@@ -251,6 +122,18 @@ export default function DeCoderRoom() {
         setChars(["", "", "", ""]);
         inputRefs.current[0]?.focus();
     };
+
+    useEffect(() => {
+        if (roomId && room?.type) {
+            dispatch(getUsernamesInRoom({ roomId, roomType: room.type }));
+        }
+    }, [dispatch, roomId, room?.type]);
+
+    useEffect(() => {
+        if (cooldown <= 0) return;
+        const timerId = setInterval(() => setCooldown((c) => c - 1), 1000);
+        return () => clearInterval(timerId);
+    }, [cooldown]);
 
     const displayedHistory = useMemo(() => {
         let filtered = history;

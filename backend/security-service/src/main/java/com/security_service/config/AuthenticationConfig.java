@@ -22,6 +22,7 @@ public class AuthenticationConfig {
     public AuthenticationProvider authenticationProvider() {
         return new DaoAuthenticationProvider(service) {{
             setPasswordEncoder(passwordEncoder);
+            setHideUserNotFoundExceptions(false);
         }};
     }
 

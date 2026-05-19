@@ -17,6 +17,7 @@ import com.websocket_hub.domain.enums.events.DurakGameEvent;
 import com.websocket_hub.exception.GameException;
 import com.websocket_hub.manager.DurakGameRoomManager;
 import com.websocket_hub.manager.SessionManager;
+import com.websocket_hub.mapper.DefaultMessageMapper;
 import com.websocket_hub.mapper.DurakGameMessageMapper;
 import com.websocket_hub.mapper.GameTransactionMapper;
 import com.websocket_hub.serializer.MessageDeserializer;
@@ -36,8 +37,6 @@ import java.util.UUID;
 @Slf4j
 public class DurakGameRoomHandler extends AppWebSocketHandler<DurakGameRoomManager> {
 
-    private final MessageDeserializer messageDeserializer;
-
     private final DurakGameMessageMapper durakGameMessageMapper;
 
     private final GameTransactionMapper gameTransactionMapper;
@@ -53,14 +52,14 @@ public class DurakGameRoomHandler extends AppWebSocketHandler<DurakGameRoomManag
             DurakGameRoomManager roomManager,
             WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
+            DefaultMessageMapper defaultMessageMapper,
             DurakGameMessageMapper durakGameMessageMapper,
             GameTransactionMapper gameTransactionMapper,
             GameServiceClient gameServiceClient,
             GrpcGameTransactionClient grpcGameTransactionClient,
             DurakTurnTimerScheduler turnTimerScheduler
     ) {
-        super(sessionManager, roomManager, errorHandler);
-        this.messageDeserializer = messageDeserializer;
+        super(sessionManager, roomManager, errorHandler, messageDeserializer, defaultMessageMapper);
         this.durakGameMessageMapper = durakGameMessageMapper;
         this.gameTransactionMapper = gameTransactionMapper;
         this.gameServiceClient = gameServiceClient;

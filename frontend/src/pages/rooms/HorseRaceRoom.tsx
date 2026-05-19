@@ -2,15 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import type { HorseRaceHorseKeyframes } from "../../models/HorseRace";
-import { validateToastMessage } from "../../utils/SecurityUtils";
-import { getPreset, getRoomById, syncReadiness, syncRoomState } from "../../store/slices/HorseRaceRoomSlice";
-import { findByGuid } from "../../store/slices/UserSlice";
-import { MAX_RECONNECT_ATTEMPTS, useWebSocket } from "../../hooks/useWebSocket";
+import { getPreset, syncRoomState } from "../../store/slices/HorseRaceRoomSlice";
+import type { HorseRaceHorseKeyframes, PlacedBetInfo } from "../../models/HorseRace";
 import type { HorseRaceGameMessage } from "../../models/WsMessage";
-import { Box, Button, Card, Container, Input, Toast, Typography } from "../../ui";
 import HorseSprite from "../../assets/sprites/HorseSprite";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
+import { useGameToast } from "../../hooks/useGameToast";
+import { useHorseRaceMessages } from "../../hooks/useHorseRaceMessages";
+import { useGameSocket } from "../../hooks/useGameSocket";
+import { Box, Button, Card, Container, Input, ToastContainer, Typography } from "../../ui";
 
 const RACE_DURATION_MS = 12_000;
 
@@ -28,11 +28,6 @@ const HORSE_COLORS = [
 
 type RacePhase = "LOBBY" | "WAITING" | "RACING" | "FINISHED";
 
-interface PlacedBetInfo {
-    horseIndex: number;
-    amount: number;
-}
-
 function formatCountdown(seconds: number): string {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -41,7 +36,6 @@ function formatCountdown(seconds: number): string {
 }
 
 export default function HorseRaceRoom() {
-    const guid = useSelector((state: RootState) => state.auth.user?.guid);
     const balance = useSelector((state: RootState) => state.user.user?.balance);
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
@@ -52,11 +46,7 @@ export default function HorseRaceRoom() {
         (state: RootState) => state.horseRaceRoom
     );
 
-    const [toast, setToast] = useState<{ text: string } | null>(null);
-    const showToast = useCallback((text: string) => {
-        setToast({ text: validateToastMessage(text) });
-    }, []);
-
+    const { toasts, showGameToast, dismiss } = useGameToast();
     const { showSystemToast } = useSystemToastContext();
 
     const [phase, setPhase] = useState<RacePhase>("LOBBY");
@@ -76,16 +66,6 @@ export default function HorseRaceRoom() {
     const animationsRef = useRef<Animation[]>([]);
     const winnerRef = useRef<number>(0);
 
-    useEffect(() => {
-        if (!roomId || !guid) {
-            navigate("/rooms");
-            return;
-        }
-
-        dispatch(getRoomById({ roomId }));
-        dispatch(findByGuid(guid));
-    }, [dispatch, guid, navigate, roomId]);
-
     const handleDisplaced = useCallback(() => {
         showSystemToast("Your session was opened in another window", "system-error");
         navigate("/rooms");
@@ -95,31 +75,6 @@ export default function HorseRaceRoom() {
         showSystemToast("Connection lost. Redirecting to rooms...", "system-error");
         setTimeout(() => navigate("/rooms"), 3000);
     }, [navigate, showSystemToast]);
-
-    const { isConnected, message, send, reconnectAttempt } = useWebSocket<HorseRaceGameMessage>(
-        roomId,
-        room?.type,
-        handleDisconnect,
-        handleDisplaced,
-    );
-
-    useEffect(() => {
-        if (reconnectAttempt > 0) {
-            showSystemToast(
-                `Connection lost. Reconnecting... (${reconnectAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
-                "system-error"
-            );
-        }
-    }, [reconnectAttempt, showSystemToast]);
-
-    useEffect(() => {
-        if (!isConnected || !roomId || !room) {
-            return;
-        }
-
-        dispatch(syncRoomState({ roomId, roomType: room.type }));
-        dispatch(getPreset({ roomId }));
-    }, [dispatch, isConnected, room, roomId]);
 
     const clearCountdown = useCallback(() => {
         if (countdownIntervalRef.current !== null) {
@@ -204,98 +159,59 @@ export default function HorseRaceRoom() {
                 animations[0].finished.then(() => {
                     setWinnerIndex(winnerRef.current);
                     setPhase("FINISHED");
-                    showToast(`🏆 Horse #${winnerRef.current + 1} wins!`);
+                    showGameToast(`🏆 Horse #${winnerRef.current + 1} wins!`, "game-info");
                 }).catch(() => {
-
+                    /* canceled */
                 });
             }
         });
-    }, [showToast, stopAnimation]);
+    }, [showGameToast, stopAnimation]);
 
     useEffect(() => {
         return () => stopAnimation();
     }, [stopAnimation]);
 
-    useEffect(() => {
-        if (!isConnected || !message || !roomId || !room) {
+    const processStart = useCallback((message: HorseRaceGameMessage) => {
+        const { horseKeyframes, winnerHorseIndex } = message;
+
+        if (!horseKeyframes || winnerHorseIndex === undefined) {
             return;
         }
 
-        switch (message.event) {
-            case "JOIN":
-                showToast(message.message ?? "Player joined the room");
-                dispatch(syncRoomState({ roomId, roomType: room.type }));
-                break;
+        clearCountdown();
+        setPhase("RACING");
+        startAnimation(horseKeyframes, winnerHorseIndex);
+    }, [clearCountdown, startAnimation]);
 
-            case "LEAVE":
-                showToast(message.message ?? "Player left the room");
-                dispatch(syncRoomState({ roomId, roomType: room.type }));
-                break;
+    const handleMessage = useHorseRaceMessages({
+        roomId,
+        processStart,
+        startCountdown,
+        clearCountdown,
+        setSecondsLeft,
+        setBetPlaced,
+        setPlacedBetInfo,
+        setReady,
+        showGameToast,
+    });
 
-            case "READY":
-                showToast(message.message ?? "Player is ready");
-                dispatch(syncReadiness({ roomId, roomType: room.type }));
-                break;
+    const { isConnected, send } = useGameSocket<HorseRaceGameMessage>({
+        roomId,
+        roomType: room?.type,
+        showGameToast,
+        onGameMessage: handleMessage,
+        onDisplaced: handleDisplaced,
+        onConnectionLost: handleDisconnect,
+    });
 
-            case "START": {
-                const { horseKeyframes, winnerHorseIndex } = message;
-
-                if (!horseKeyframes || winnerHorseIndex === undefined) {
-                    break;
-                }
-
-                clearCountdown();
-                setPhase("RACING");
-                startAnimation(horseKeyframes, winnerHorseIndex);
-                break;
-            }
-
-            case "BET": {
-                if (message.fromUserId !== guid) {
-                    break;
-                }
-
-                const amount = message.bet;
-                const horseIdx = message.horseIndex;
-
-                if (amount !== undefined && horseIdx !== undefined) {
-                    setPlacedBetInfo({ horseIndex: horseIdx, amount });
-                }
-
-                setBetPlaced(true);
-                showToast(message.message ?? "Your bet has been accepted!");
-                break;
-            }
-
-            case "BET_REJECT":
-                setBetPlaced(false);
-                setPlacedBetInfo(null);
-                showToast(message.message ?? "Your bet was rejected. Please try again.");
-                break;
-
-            case "BET_REQUIRED":
-                showToast(message.message ?? "You must place a bet before becoming ready.");
-                break;
-
-            case "COUNTDOWN": {
-                const remaining = message.remainingSeconds;
-                if (remaining !== undefined && remaining > 0) {
-                    startCountdown(remaining);
-                }
-                break;
-            }
-
-            case "CANCELED": {
-                clearCountdown();
-                setSecondsLeft(null);
-                showToast(message.message ?? "Race was canceled — no players in the room.");
-                break;
-            }
-
-            default:
-                break;
+    useEffect(() => {
+        if (!isConnected || !roomId || !room) {
+            return;
         }
-    }, [dispatch, guid, isConnected, message, room, roomId, showToast, startAnimation, clearCountdown, startCountdown]);
+
+        dispatch(syncRoomState({ roomId, roomType: room.type }));
+        dispatch(getPreset({ roomId }));
+    }, [dispatch, isConnected, room, roomId]);
 
     const handlePlaceBet = () => {
         if (!room || !isConnected || betPlaced || phase !== "LOBBY") {
@@ -303,22 +219,23 @@ export default function HorseRaceRoom() {
         }
 
         if (selectedHorse === null) {
-            showToast("Please select a horse first.");
+            showGameToast("Please select a horse first.", "game-error");
             return;
         }
 
         const amount = parseFloat(betInput);
 
         if (isNaN(amount) || amount <= 0) {
-            showToast("Please enter a valid bet amount.");
+            showGameToast("Please enter a valid bet amount.", "game-error");
             return;
         }
 
         if (balance !== undefined && amount > balance) {
-            showToast("Bet amount exceeds your balance.");
+            showGameToast("Bet amount exceeds your balance.", "game-error");
             return;
         }
 
+        console.debug("[HorseRaceRoom] send BET", { horseIndex: selectedHorse, amount });
         send({
             type: "USER_MESSAGE",
             event: "BET",
@@ -362,19 +279,6 @@ export default function HorseRaceRoom() {
 
     const isBetButtonDisabled = betPlaced || selectedHorse === null || !betInput || parseFloat(betInput) <= 0;
 
-    if (!roomId || !room) {
-        return (
-            <Container>
-                <Card style={{ textAlign: "center", padding: "2rem" }}>
-                    <Typography variant="h2">Invalid Room</Typography>
-                    <Button onClick={() => navigate("/rooms")} style={{ marginTop: "1rem" }}>
-                        Back to Rooms
-                    </Button>
-                </Card>
-            </Container>
-        );
-    }
-
     return (
         <Box
             style={{
@@ -390,7 +294,7 @@ export default function HorseRaceRoom() {
             <Container>
                 <Box style={{ padding: "2rem 0" }}>
                     <Typography variant="h2" style={{ textAlign: "center" }}>
-                        Horse Race: {room.name}
+                        Horse Race: {room?.name}
                     </Typography>
                 </Box>
 
@@ -862,11 +766,7 @@ export default function HorseRaceRoom() {
                 </Card>
             </Container>
 
-            {toast && <Toast message={toast.text} onClose={() => setToast(null)} />}
+            <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
         </Box>
     );
 }
-function showSystemToast(arg0: string, arg1: string) {
-    throw new Error("Function not implemented.");
-}
-

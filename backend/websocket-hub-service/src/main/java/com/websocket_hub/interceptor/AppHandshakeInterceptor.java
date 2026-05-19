@@ -1,5 +1,9 @@
 package com.websocket_hub.interceptor;
 
+import com.common_utils.exception.BadRequestException;
+import com.common_utils.exception.ForbiddenException;
+import com.common_utils.exception.JwtException;
+import com.common_utils.exception.NotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.websocket_hub.domain.dto.ErrorResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
@@ -7,10 +11,6 @@ import com.websocket_hub.domain.entity.RoomMetadata;
 import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
-import com.websocket_hub.exception.AuthenticationException;
-import com.websocket_hub.exception.BadRequestException;
-import com.websocket_hub.exception.ForbiddenException;
-import com.websocket_hub.exception.NotFoundException;
 import com.websocket_hub.provider.IdentityProvider;
 import com.websocket_hub.service.grpc.client.GrpcUserClient;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +33,7 @@ import java.util.UUID;
 
 import static com.websocket_hub.config.ResourceMessageConstants.ROOM_ALREADY_FINISHED;
 import static com.websocket_hub.config.ResourceMessageConstants.ROOM_ALREADY_IN_PROGRESS;
+import static com.websocket_hub.config.ResourceMessageConstants.ROOM_NOT_FOUND;
 import static com.websocket_hub.config.ResourceMessageConstants.SERVICE_UNAVAILABLE;
 
 @Component
@@ -65,7 +66,7 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
             log.info("Handshake OK: user={}, room={}, ip={}", user.email(), roomId, ip);
             return true;
 
-        } catch (AuthenticationException e) {
+        } catch (JwtException e) {
             log.warn("Handshake rejected — unauthorized: ip={}, reason={}", ip, e.getMessage());
             writeErrorResponse(response, HttpStatus.UNAUTHORIZED, e.getMessage());
             return false;
@@ -104,7 +105,7 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
         RoomMetadata metadata = findMetadataByRoomId(roomId);
 
         if (metadata == null) {
-            return;
+            throw new NotFoundException(ROOM_NOT_FOUND);
         }
 
         RoomStatus status = metadata.getStatus();

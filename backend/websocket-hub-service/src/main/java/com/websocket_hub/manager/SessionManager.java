@@ -24,6 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class SessionManager {
 
+    private static final CloseStatus SESSION_DISPLACED = new CloseStatus(4001, "Session displaced");
+
     private final Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
 
     private final ObjectFactory<ClientSession> factory;
@@ -48,7 +50,7 @@ public class SessionManager {
             try {
                 log.info("User {} already connected — closing old session {}", user.email(), displaced[0].getSession().getId());
 
-                displaced[0].getSession().close(CloseStatus.POLICY_VIOLATION);
+                displaced[0].getSession().close(SESSION_DISPLACED);
             } catch (IOException e) {
                 log.warn("Failed to close previous session for user {}: {}", user.email(), e.getMessage());
             }

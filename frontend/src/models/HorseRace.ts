@@ -13,3 +13,8 @@ export interface HorseRaceGamePreset {
     horseCount: number;
     odds: number[];
 }
+
+export interface PlacedBetInfo {
+    horseIndex: number;
+    amount: number;
+}
