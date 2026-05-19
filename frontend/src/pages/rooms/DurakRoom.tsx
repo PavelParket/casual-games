@@ -61,9 +61,9 @@ export default function DurakRoom() {
     const [awaitingResponse, setAwaitingResponse] = useState(false);
     const [gameAborted, setGameAborted] = useState(false);
 
-    const myName = guid && players ? (players[guid] ?? "You") : "You";
+    const myName = guid && players ? (players[guid]?.username ?? "You") : "You";
     const opponentName = guid && players
-        ? (Object.entries(players).find(([g]) => g !== guid)?.[1] ?? "Opponent")
+        ? (Object.values(players).find((p) => p.guid !== guid)?.username ?? "Opponent")
         : "Opponent";
 
     const isOpponentAttacker = !!attackerId && !!guid && attackerId !== guid;
@@ -314,8 +314,8 @@ export default function DurakRoom() {
                         }}>
                             <Stack gap="1rem" align="center" justify="center" style={{ paddingTop: "1rem" }}>
                                 <Typography variant="h3">Players</Typography>
-                                {Object.entries(players ?? {}).map(([playerGuid, username]) => (
-                                    <MiniProfile key={playerGuid} guid={playerGuid} username={username}>
+                                {Object.entries(players ?? {}).map(([playerGuid, player]) => (
+                                    <MiniProfile key={playerGuid} guid={playerGuid} username={player.username} status={player.status}>
                                         <Stack
                                             direction="row"
                                             align="center"
@@ -339,10 +339,10 @@ export default function DurakRoom() {
                                                 e.currentTarget.style.boxShadow = "var(--shadow-sm)";
                                             }}
                                         >
-                                            <Avatar fallback={username} size={40} />
+                                            <Avatar fallback={player.username} size={40} />
 
                                             <Typography variant="body" style={{ fontWeight: "bold" }}>
-                                                {username}
+                                                {player.username}
                                             </Typography>
                                         </Stack>
                                     </MiniProfile>

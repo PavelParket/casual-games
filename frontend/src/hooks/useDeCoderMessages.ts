@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import type { DeCoderGameHistory } from "../models/DeCoderGameHistory";
 import type { DeCoderMessage } from "../models/WsMessage";
 import type { AppDispatch, RootState } from "../store/store";
-import { getUsernamesInRoom } from "../store/slices/DeCoderRoomSlice";
+import { getPlayers } from "../store/slices/DeCoderRoomSlice";
 import { getBalance } from "../store/slices/UserSlice";
 import type { ToastVariant } from "../ui";
 
@@ -52,7 +52,7 @@ export function useDeCoderMessages({
                 }
 
                 if (message.player !== guid) {
-                    const playerName = (players ?? {})[message.player!] || "Someone";
+                    const playerName = (players ?? {})[message.player!]?.username || "Someone";
                     showGameToast(`${playerName} made a move`, "game-info");
                 } else {
                     showGameToast("Move accepted", "game-info");
@@ -72,7 +72,7 @@ export function useDeCoderMessages({
                     setJackpot(message.jackpot);
                 }
 
-                const winnerName = (players ?? {})[message.winner!] || "Unknown Player";
+                const winnerName = (players ?? {})[message.winner!]?.username || "Unknown Player";
                 const isMe = message.winner === guid;
 
                 setGameOverModal({
@@ -89,7 +89,7 @@ export function useDeCoderMessages({
 
             case "JOIN":
             case "LEAVE":
-                dispatch(getUsernamesInRoom({ roomId, roomType: room.type }));
+                dispatch(getPlayers({ roomId, roomType: room.type }));
                 break;
 
             default:

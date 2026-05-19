@@ -1,11 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { Room, RoomType } from "../../models/Room";
+import type { PlayerResponse, Room, RoomType } from "../../models/Room";
 import { RoomAPI } from "../../api/WsHubApi";
 import type { AxiosError } from "axios";
 
 export interface DeCoderRoomState {
     room?: Room;
-    players?: Record<string, string>;
+    players?: Record<string, PlayerResponse>;
     error?: string;
 }
 
@@ -24,15 +24,15 @@ export const getRoomById = createAsyncThunk<Room, { roomId: string }, { rejectVa
     }
 );
 
-export const getUsernamesInRoom = createAsyncThunk<Record<string, string>, { roomId: string, roomType: RoomType }, { rejectValue: string }>(
-    "deCoderRoom/getUsernamesInRoom",
+export const getPlayers = createAsyncThunk<Record<string, PlayerResponse>, { roomId: string, roomType: RoomType }, { rejectValue: string }>(
+    "deCoderRoom/getPlayers",
     async ({ roomId, roomType }, { rejectWithValue }) => {
         try {
-            const response = await RoomAPI.getUsernamesInRoom(roomId, roomType);
+            const response = await RoomAPI.getPlayers(roomId, roomType);
             return response.data;
         } catch (err: unknown) {
             const error = err as AxiosError<{ message?: string }>;
-            return rejectWithValue(error.response?.data?.message ?? "Failed to fetch usernames");
+            return rejectWithValue(error.response?.data?.message ?? "Failed to fetch players");
         }
     }
 );
@@ -66,14 +66,14 @@ const deCoderRoomSlice = createSlice({
                 state.error = action.payload ?? "Failed to fetch room";
             })
             /* === Get Players === */
-            .addCase(getUsernamesInRoom.pending, (state) => {
+            .addCase(getPlayers.pending, (state) => {
                 state.error = undefined;
             })
-            .addCase(getUsernamesInRoom.fulfilled, (state, action) => {
+            .addCase(getPlayers.fulfilled, (state, action) => {
                 state.players = action.payload;
             })
-            .addCase(getUsernamesInRoom.rejected, (state, action) => {
-                state.error = action.payload ?? "Failed to fetch usernames";
+            .addCase(getPlayers.rejected, (state, action) => {
+                state.error = action.payload ?? "Failed to fetch players";
             })
     },
 });

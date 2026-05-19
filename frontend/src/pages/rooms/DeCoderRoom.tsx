@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState, useMemo, } from "react
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import { getUsernamesInRoom, } from "../../store/slices/DeCoderRoomSlice";
+import { getPlayers, } from "../../store/slices/DeCoderRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { Box, Button, Card, Container, Typography, ToastContainer, Stack, Divider, Grid, CooldownTimer, Modal, Icon, Input, Avatar, } from "../../ui";
@@ -125,7 +125,7 @@ export default function DeCoderRoom() {
 
     useEffect(() => {
         if (roomId && room?.type) {
-            dispatch(getUsernamesInRoom({ roomId, roomType: room.type }));
+            dispatch(getPlayers({ roomId, roomType: room.type }));
         }
     }, [dispatch, roomId, room?.type]);
 
@@ -223,8 +223,8 @@ export default function DeCoderRoom() {
                                 }}
                             >
                                 {players &&
-                                    Object.entries(players ?? {}).map(([playerGuid, username]) => (
-                                        <MiniProfile key={playerGuid} guid={playerGuid} username={username}>
+                                    Object.entries(players ?? {}).map(([playerGuid, player]) => (
+                                        <MiniProfile key={playerGuid} guid={playerGuid} username={player.username} status={player.status}>
                                             <Stack
                                                 direction="row"
                                                 align="center"
@@ -248,10 +248,10 @@ export default function DeCoderRoom() {
                                                     e.currentTarget.style.boxShadow = "var(--shadow-sm)";
                                                 }}
                                             >
-                                                <Avatar fallback={username} size={40} />
+                                                <Avatar fallback={player.username} size={40} />
 
                                                 <Typography variant="body" style={{ fontWeight: "bold" }}>
-                                                    {username}
+                                                    {player.username}
                                                 </Typography>
                                             </Stack>
                                         </MiniProfile>

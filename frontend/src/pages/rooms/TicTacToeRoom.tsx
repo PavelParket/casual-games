@@ -262,11 +262,11 @@ export default function TicTacToeRoom() {
                             justifyContent: "center",
                             rowGap: "1.5rem",
                         }}>
-                            {Object.entries(players ?? {}).map(([playerGuid, username]) => {
-                                const symbol = isGame && playersWithSymbols ? playersWithSymbols[username] : null;
+                            {Object.entries(players ?? {}).map(([playerGuid, player]) => {
+                                const symbol = isGame && playersWithSymbols ? playersWithSymbols[player.username] : null;
 
                                 return (
-                                    <MiniProfile key={playerGuid} guid={playerGuid} username={username}>
+                                    <MiniProfile key={playerGuid} guid={playerGuid} username={player.username} status={player.status}>
                                         <Stack
                                             direction="row"
                                             align="center"
@@ -290,10 +290,10 @@ export default function TicTacToeRoom() {
                                                 e.currentTarget.style.boxShadow = "var(--shadow-sm)";
                                             }}
                                         >
-                                            <Avatar fallback={username} size={40} />
+                                            <Avatar fallback={player.username} size={40} />
 
                                             <Typography variant="body" style={{ fontWeight: "bold" }}>
-                                                {username}{symbol ? `: ${symbol}` : ""}
+                                                {player.username}{symbol ? `: ${symbol}` : ""}
                                             </Typography>
                                         </Stack>
                                     </MiniProfile>
