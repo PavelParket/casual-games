@@ -2,11 +2,11 @@ package com.bank_service.repository;
 
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.TransactionStatus;
+import com.bank_service.repository.projection.TransactionSummaryProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -27,10 +27,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             ORDER BY t.created_at DESC
             LIMIT 1
             """, nativeQuery = true)
-    Optional<Transaction> findFirstByUserGuidAndStatusOrderByCreatedAtDesc(
-            @Param("userGuid") UUID userGuid,
-            @Param("status") String status
-    );
+    Optional<Transaction> findFirstByUserGuidAndStatusOrderByCreatedAtDesc(UUID userGuid, String status);
 
     @Query(value = """
             SELECT DISTINCT t.user_guid
@@ -38,28 +35,40 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             WHERE t.status = :status
             AND t.created_at >= :start
             AND t.created_at < :end
-            """, nativeQuery = true)
-    Page<UUID> findDistinctUsersWithTransactionsInPeriod(
-            @Param("status") String status,
-            @Param("start") Instant start,
-            @Param("end") Instant end,
-            Pageable pageable
-    );
+            """,
+            countQuery = """
+                    SELECT COUNT(DISTINCT t.user_guid)
+                    FROM transactions t
+                    WHERE t.status = :status
+                    AND t.created_at >= :start
+                    AND t.created_at < :end
+                    """,
+            nativeQuery = true)
+    Page<UUID> findDistinctUsersWithTransactionsInPeriod(String status, Instant start, Instant end, Pageable pageable);
 
     @Query(value = """
-            SELECT *
+            SELECT
+                COALESCE(SUM(CASE WHEN t.type = 'ADDITION' THEN t.amount ELSE 0 END), 0) AS total_won,
+                COALESCE(SUM(CASE WHEN t.type = 'SUBTRACTION' THEN t.amount ELSE 0 END), 0) AS total_lost,
+                (SELECT t2.balance_before AS balance_before
+                    FROM transactions t2
+                    WHERE t2.user_guid = :userGuid
+                    AND t2.status = :status
+                    AND t2.created_at >= :start
+                    AND t2.created_at < :end
+                    ORDER BY t2.created_at LIMIT 1),
+                (SELECT t2.balance_after AS balance_after
+                    FROM transactions t2
+                    WHERE t2.user_guid = :userGuid
+                    AND t2.status = :status
+                    AND t2.created_at >= :start
+                    AND t2.created_at < :end
+                    ORDER BY t2.created_at DESC LIMIT 1)
             FROM transactions t
             WHERE t.user_guid = :userGuid
             AND t.status = :status
             AND t.created_at >= :start
             AND t.created_at < :end
-            ORDER BY t.created_at
             """, nativeQuery = true)
-    Page<Transaction> findTransactionsForSummary(
-            @Param("userGuid") UUID userGuid,
-            @Param("status") String status,
-            @Param("start") Instant start,
-            @Param("end") Instant end,
-            Pageable pageable
-    );
+    Optional<TransactionSummaryProjection> findUserAggregatedSummary(UUID userGuid, String status, Instant start, Instant end);
 }

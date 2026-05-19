@@ -61,15 +61,8 @@ grpc:
       max-attempts: 3
       delay-milliseconds: 1000
 
-
-app:
-  user-service:
-    url: http://localhost:8083
-
-  scheduling:
-    transaction-summary:
-      initial-delay: 10000
-      fixed-rate: P30D # every month default
+cron:
+  create-transaction-summaries: ${CRON_CREATE_TRANSACTION_SUMMARIES:0 0 3 1 * *}
 
 logging:
   level:
