@@ -54,12 +54,15 @@ app:
   game-service:
     url: http://localhost:8082
 
-scheduler:
+cron:
   room-cleanup:
-    scheduler-delay-minutes: 5
-    scheduler-initial-delay-minutes: 5
+    cleanup-rooms: ${CRON_CLEANUP_ROOMS:0 0/5 * * * *}
+    cleanup-pending-delete-rooms: ${CRON_CLEANUP_PENDING_DELETE_ROOMS:0 2/5 * * * *}
     finished-kick-timeout-minutes: 2
-    pending-delete-delay-seconds: 2
+    waiting-stale-timeout-minutes: 30
+    tic-tac-toe-in-progress-timeout-minutes: 20
+    durak-in-progress-timeout-minutes: 60
+    de-coder-in-progress-timeout-minutes: 60
 
 kafka:
   enabled: ${KAFKA_ENABLED:true}

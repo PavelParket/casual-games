@@ -29,6 +29,8 @@ public class RoomMetadata {
     @Builder.Default
     private RoomStatus status = RoomStatus.WAITING;
 
+    private Instant gameStartedAt;
+
     private Instant gameFinishedAt;
 
     public static RoomMetadata create(Room room) {

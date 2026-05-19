@@ -2,16 +2,21 @@ package com.websocket_hub.config.properies;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "scheduler.room-cleanup")
+@ConfigurationProperties(prefix = "cron.room-cleanup")
 public record RoomCleanupProperties(
 
-        long schedulerDelayMinutes,
+        String cleanupRooms,
 
-        long schedulerInitialDelayMinutes,
+        String cleanupPendingDeleteRooms,
 
         long finishedKickTimeoutMinutes,
 
-        long pendingDeleteDelaySeconds
+        long waitingStaleTimeoutMinutes,
 
+        long ticTacToeInProgressTimeoutMinutes,
+
+        long durakInProgressTimeoutMinutes,
+
+        long deCoderInProgressTimeoutMinutes
 ) {
 }

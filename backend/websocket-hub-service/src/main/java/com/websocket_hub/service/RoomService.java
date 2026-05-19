@@ -123,7 +123,7 @@ public class RoomService {
                         type -> type,
                         type -> types.contains(type)
                                 ? getManager(type).getRoomsList().stream()
-                                .filter(room -> isJoinable(room))
+                                .filter(this::isJoinable)
                                 .filter(room -> matchesName(room, request.name()))
                                 .sorted(comparator)
                                 .map(roomMapper::toResponse)

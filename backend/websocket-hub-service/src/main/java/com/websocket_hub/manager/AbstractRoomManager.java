@@ -19,6 +19,7 @@ import com.websocket_hub.serializer.MessageSerializer;
 import com.websocket_hub.validator.RoomValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -275,6 +276,10 @@ public abstract class AbstractRoomManager {
 
         metadata.setStatus(status);
 
+        if (status == RoomStatus.IN_PROGRESS) {
+            metadata.setGameStartedAt(Instant.now());
+        }
+
         if (status == RoomStatus.FINISHED) {
             metadata.setGameFinishedAt(Instant.now());
         }
@@ -288,7 +293,11 @@ public abstract class AbstractRoomManager {
 
     public void kickAll(UUID roomId) {
         getPlayersInRoom(roomId).forEach(client -> {
-            sessionManager.remove(client.getGuid());
+            try {
+                client.getSession().close(CloseStatus.POLICY_VIOLATION);
+            } catch (IOException e) {
+                log.warn("Failed to close session for client={}", client.getGuid());
+            }
         });
     }
 
