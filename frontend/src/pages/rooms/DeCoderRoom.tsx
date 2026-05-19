@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState, useMemo, } from "react
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import { useWebSocket } from "../../hooks/useWebSocket";
 import { getUsernamesInRoom, } from "../../store/slices/DeCoderRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
@@ -13,6 +12,7 @@ import type { DeCoderMessage } from "../../models/WsMessage";
 import type { DeCoderGameHistory } from "../../models/DeCoderGameHistory";
 import { MiniProfile } from "../../components/MiniProfile";
 import { useDeCoderMessages } from "../../hooks/useDeCoderMessages";
+import { useGameSocket } from "../../hooks/useGameSocket";
 
 export default function DeCoderRoom() {
     const { getIcon } = useThemedIcon();
@@ -20,10 +20,7 @@ export default function DeCoderRoom() {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
 
-    const { user } = useSelector((state: RootState) => state.auth);
     const { players, room } = useSelector((state: RootState) => state.deCoderRoom);
-
-    const guid = user?.guid;
 
     const { roomName: rawRoomName, roomId } = useParams<{
         roomName?: string;
@@ -72,14 +69,14 @@ export default function DeCoderRoom() {
         setHistory,
         setJackpot,
         setGameOverModal,
-        requestSync,
         showGameToast,
     });
 
-    const { isConnected, send } = useWebSocket<DeCoderMessage>({
+    const { isConnected, send } = useGameSocket<DeCoderMessage>({
         roomId,
         roomType: room?.type,
-        onMessage: handleMessage,
+        showGameToast,
+        onGameMessage: handleMessage,
         onDisplaced: handleDisplaced,
         onConnectionLost: handleDisconnect,
     });

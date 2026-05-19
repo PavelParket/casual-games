@@ -13,6 +13,7 @@ import com.websocket_hub.exception.GameException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -319,9 +320,11 @@ public class GameServiceClient {
             return Optional.ofNullable(response.getBody());
 
         } catch (HttpClientErrorException.TooManyRequests e) {
-            assert e.getResponseHeaders() != null;
-            throw new RuntimeException("COOLDOWN:" + e.getResponseHeaders().getFirst("Retry-After"));
+            String seconds = e.getResponseHeaders() != null
+                    ? e.getResponseHeaders().getFirst(HttpHeaders.RETRY_AFTER)
+                    : "a moment";
 
+            throw new GameException(ErrorCode.COOLDOWN, "Too fast! Please wait " + seconds + " seconds.");
         } catch (Exception e) {
             log.error("Failed to process De-Coder move: roomId={}", request.roomId(), e);
             throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());

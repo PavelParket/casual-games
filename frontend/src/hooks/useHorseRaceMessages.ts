@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import type { PlacedBetInfo } from "../models/HorseRace";
 import type { HorseRaceGameMessage } from "../models/WsMessage";
 import type { AppDispatch, RootState } from "../store/store";
-import { useSystemToastContext } from "../providers/SystemToastContext";
 import type { ToastVariant } from "../ui";
 import { validateToastMessage } from "../utils/SecurityUtils";
 import { syncReadiness, syncRoomState } from "../store/slices/HorseRaceRoomSlice";
@@ -34,15 +33,11 @@ export function useHorseRaceMessages({
     const dispatch = useDispatch<AppDispatch>();
     const guid = useSelector((state: RootState) => state.auth.user?.guid);
     const room = useSelector((state: RootState) => state.horseRaceRoom.room);
-    const { showSystemToast } = useSystemToastContext();
 
     return useCallback((message: HorseRaceGameMessage) => {
         if (!guid || !roomId || !room) {
-            console.debug("[HorseRaceMsg] skipped — no guid/roomId/room");
             return;
         }
-
-        console.debug(`[HorseRaceMsg] received: event=${message.event}`);
 
         switch (message.event) {
             case "JOIN":
@@ -121,7 +116,6 @@ export function useHorseRaceMessages({
                 break;
 
             default:
-                console.debug(`[HorseRaceMsg] unhandled event: ${message.event}`);
                 break;
         }
     }, [clearCountdown, dispatch, guid, processStart, room, roomId, setBetPlaced, setPlacedBetInfo, setReady, setSecondsLeft, showGameToast, startCountdown]);

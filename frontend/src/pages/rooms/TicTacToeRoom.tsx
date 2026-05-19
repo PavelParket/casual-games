@@ -1,17 +1,17 @@
-import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useState } from "react";
-import { useWebSocket } from "../../hooks/useWebSocket";
-import { Avatar, Box, Button, Card, Container, Icon, Input, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
-import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "../../store/store";
+import { useNavigate, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store/store";
 import type { TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage } from "../../utils/SecurityUtils";
 import { clearError } from "../../store/slices/TicTacToeRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
-import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
+import { useGameSocket } from "../../hooks/useGameSocket";
 import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
+import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
 import { MiniProfile } from "../../components/MiniProfile";
+import { Avatar, Box, Button, Card, Container, Icon, Input, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
 
 export default function TicTacToeRoom() {
     const { getInverseIcon } = useThemedIcon();
@@ -21,7 +21,6 @@ export default function TicTacToeRoom() {
     const { room, players, readyPlayersCount, totalPlayersCount, playerBetMap } = useSelector((state: RootState) => state.ticTacToeRoom);
 
     const navigate = useNavigate();
-    const dispatch = useDispatch<AppDispatch>();
 
     const roomId: string | undefined = useParams<{ roomId?: string }>().roomId;
 
@@ -138,10 +137,11 @@ export default function TicTacToeRoom() {
         showGameToast,
     });
 
-    const { isConnected, send } = useWebSocket<TicTacToeGameMessage>({
+    const { isConnected, send } = useGameSocket<TicTacToeGameMessage>({
         roomId,
         roomType: room?.type,
-        onMessage: handleMessage,
+        showGameToast,
+        onGameMessage: handleMessage,
         onDisplaced: handleDisplaced,
         onConnectionLost: handleDisconnect,
     });

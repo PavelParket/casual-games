@@ -2,9 +2,8 @@ import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
 import { getPlayersBets, syncReadiness, syncRoomState } from "../store/slices/TicTacToeRoomSlice";
-import type { ErrorWSMessage, TicTacToeGameMessage } from "../models/WsMessage";
-import { errorCodeMessages, systemErrorCodes } from "../models/constants/ErrorCodeMessages";
-import { useSystemToastContext } from "../providers/SystemToastContext";
+import type { TicTacToeGameMessage } from "../models/WsMessage";
+import { errorCodeMessages } from "../models/constants/ErrorCodeMessages";
 import { validateToastMessage } from "../utils/SecurityUtils";
 import type { ToastVariant } from "../ui";
 
@@ -39,15 +38,11 @@ export function useTicTacToeMessages({
     const dispatch = useDispatch<AppDispatch>();
     const guid = useSelector((state: RootState) => state.auth.user?.guid);
     const room = useSelector((state: RootState) => state.ticTacToeRoom.room);
-    const { showSystemToast } = useSystemToastContext();
 
     return useCallback((message: TicTacToeGameMessage) => {
         if (!guid || !roomId || !room) {
-            console.debug("[TicTacToeMsg] skipped — no guid/roomId/room");
             return;
         }
-
-        console.debug(`[TicTacToeMsg] received: event=${message.event}`);
 
         switch (message.event) {
             case "JOIN":
@@ -132,24 +127,8 @@ export function useTicTacToeMessages({
                 dispatch(syncReadiness({ roomId, roomType: room.type }));
                 break;
 
-            case "ERROR": {
-                const errorMsg = message as ErrorWSMessage;
-                const code = errorMsg.errorCode ?? "";
-                const text = errorCodeMessages[code] ?? errorCodeMessages.DEFAULT;
-
-                console.warn(`[TicTacToeMsg] ERROR`, { code, message: errorMsg.message });
-
-                if (systemErrorCodes.has(code)) {
-                    showSystemToast(text, "system-error");
-                } else {
-                    showGameToast(text, "game-error");
-                }
-                break;
-            }
-
             default:
-                console.debug(`[TicTacToeMsg] unhandled event: ${message.event}`);
                 break;
         }
-    }, [dispatch, gameAborted, guid, isGame, processAbort, processDraw, processMove, processStart, processWin, room, roomId, setBetPlaced, setReady, showGameToast, showSystemToast]);
+    }, [dispatch, gameAborted, guid, isGame, processAbort, processDraw, processMove, processStart, processWin, room, roomId, setBetPlaced, setReady, showGameToast]);
 }

@@ -45,11 +45,8 @@ export function useDurakMessages({
 
     return useCallback((message: DurakGameMessage) => {
         if (!guid || !roomId || !room) {
-            console.debug("[DurakMsg] skipped — no guid/roomId/room");
             return;
         }
-
-        console.debug(`[DurakMsg] received: event=${message.event}`);
 
         switch (message.event) {
             case "JOIN":
@@ -142,7 +139,6 @@ export function useDurakMessages({
                 break;
 
             default:
-                console.debug(`[DurakMsg] unhandled event: ${message.event}`);
                 break;
         }
     }, [dispatch, gameAborted, guid, isGame, prevPhaseRef, prevTableRef, processAbort, processGameOver, processGameState, room, roomId, setBetPlaced, setDiscardCount, setReady, setRemainingSeconds, showGameToast]);

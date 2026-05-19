@@ -1,12 +1,10 @@
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { DeCoderGameHistory } from "../models/DeCoderGameHistory";
-import type { DeCoderMessage, ErrorWSMessage } from "../models/WsMessage";
-import { errorCodeMessages } from "../models/constants/ErrorCodeMessages";
+import type { DeCoderMessage } from "../models/WsMessage";
 import type { AppDispatch, RootState } from "../store/store";
 import { getUsernamesInRoom } from "../store/slices/DeCoderRoomSlice";
 import { getBalance } from "../store/slices/UserSlice";
-import { useSystemToastContext } from "../providers/SystemToastContext";
 import type { ToastVariant } from "../ui";
 
 interface UseDeCoderMessagesProps {
@@ -15,7 +13,6 @@ interface UseDeCoderMessagesProps {
     setHistory: React.Dispatch<React.SetStateAction<DeCoderGameHistory[]>>;
     setJackpot: (value: number) => void;
     setGameOverModal: (modal: { isOpen: boolean; isWin: boolean; winnerName?: string }) => void;
-    requestSync: () => void;
     showGameToast: (message: string, variant: ToastVariant) => void;
 }
 
@@ -25,22 +22,17 @@ export function useDeCoderMessages({
     setHistory,
     setJackpot,
     setGameOverModal,
-    requestSync,
     showGameToast,
 }: UseDeCoderMessagesProps): (message: DeCoderMessage) => void {
     const dispatch = useDispatch<AppDispatch>();
     const guid = useSelector((state: RootState) => state.auth.user?.guid);
     const players = useSelector((state: RootState) => state.deCoderRoom.players);
     const room = useSelector((state: RootState) => state.deCoderRoom.room);
-    const { showSystemToast } = useSystemToastContext();
 
     return useCallback((message: DeCoderMessage) => {
         if (!guid || !roomId || !room) {
-            console.debug("[DeCoderMsg] skipped — no guid/roomId/room");
             return;
         }
-
-        console.debug(`[DeCoderMsg] received: event=${message.event}`);
 
         switch (message.event) {
             case "STATE":
@@ -95,41 +87,13 @@ export function useDeCoderMessages({
                 break;
             }
 
-            case "ERROR": {
-                const errorMsg = message as ErrorWSMessage;
-                const code = errorMsg.errorCode ?? "";
-                let text = errorCodeMessages[code];
-
-                console.warn(`[DeCoderMsg] ERROR`, { code, message: errorMsg.message });
-
-                if (!text) {
-                    const msg = errorMsg.message || "Error occurred";
-                    if (msg.includes("not started") || msg.includes("Game not found")) {
-                        setGameActive(false);
-                        text = "Game session expired or not started.";
-                    } else if (msg.includes("already in progress")) {
-                        setGameActive(true);
-                        requestSync();
-                        return;
-                    } else if (msg.includes("Insufficient funds")) {
-                        text = "Transaction failed: Insufficient funds!";
-                    } else {
-                        text = msg;
-                    }
-                }
-
-                showGameToast(text, "game-error");
-                break;
-            }
-
             case "JOIN":
             case "LEAVE":
                 dispatch(getUsernamesInRoom({ roomId, roomType: room.type }));
                 break;
 
             default:
-                console.debug(`[DeCoderMsg] unhandled event: ${message.event}`);
                 break;
         }
-    }, [dispatch, guid, players, requestSync, room, roomId, setGameActive, setGameOverModal, setHistory, setJackpot, showGameToast]);
+    }, [dispatch, guid, players, room, roomId, setGameActive, setGameOverModal, setHistory, setJackpot, showGameToast]);
 }

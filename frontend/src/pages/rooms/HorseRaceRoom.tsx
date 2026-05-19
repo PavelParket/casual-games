@@ -2,15 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import type { HorseRaceHorseKeyframes, PlacedBetInfo } from "../../models/HorseRace";
 import { getPreset, syncRoomState } from "../../store/slices/HorseRaceRoomSlice";
-import { useWebSocket } from "../../hooks/useWebSocket";
+import type { HorseRaceHorseKeyframes, PlacedBetInfo } from "../../models/HorseRace";
 import type { HorseRaceGameMessage } from "../../models/WsMessage";
-import { Box, Button, Card, Container, Input, ToastContainer, Typography } from "../../ui";
 import HorseSprite from "../../assets/sprites/HorseSprite";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useHorseRaceMessages } from "../../hooks/useHorseRaceMessages";
+import { useGameSocket } from "../../hooks/useGameSocket";
+import { Box, Button, Card, Container, Input, ToastContainer, Typography } from "../../ui";
 
 const RACE_DURATION_MS = 12_000;
 
@@ -195,10 +195,11 @@ export default function HorseRaceRoom() {
         showGameToast,
     });
 
-    const { isConnected, send } = useWebSocket<HorseRaceGameMessage>({
+    const { isConnected, send } = useGameSocket<HorseRaceGameMessage>({
         roomId,
         roomType: room?.type,
-        onMessage: handleMessage,
+        showGameToast,
+        onGameMessage: handleMessage,
         onDisplaced: handleDisplaced,
         onConnectionLost: handleDisconnect,
     });
