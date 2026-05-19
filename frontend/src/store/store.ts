@@ -9,16 +9,16 @@ import horseRaceReducer from "./slices/HorseRaceRoomSlice";
 import durakReducer from "./slices/DurakRoomSlice";
 
 export const store = configureStore({
-   reducer: {
-      auth: authReducer,
-      rooms: roomReducer,
-      user: userReducer,
-      bank: bankReducer,
-      ticTacToeRoom: ticTacToeReducer,
-      deCoderRoom: deCoderReducer,
-      horseRaceRoom: horseRaceReducer,
-      durakRoom: durakReducer,
-   },
+    reducer: {
+        auth: authReducer,
+        rooms: roomReducer,
+        user: userReducer,
+        bank: bankReducer,
+        ticTacToeRoom: ticTacToeReducer,
+        deCoderRoom: deCoderReducer,
+        horseRaceRoom: horseRaceReducer,
+        durakRoom: durakReducer,
+    },
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -32,7 +32,7 @@
     backdrop-filter: blur(var(--glass-blur));
 }
 
-.checkbox-input:focus-visible ~ .checkbox-box {
+.checkbox-input:focus-visible~.checkbox-box {
     outline: none;
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 30%, transparent) !important;
 }
@@ -98,6 +98,7 @@
         transform: scale(0.5);
         opacity: 0;
     }
+
     100% {
         transform: scale(1);
         opacity: 1;
