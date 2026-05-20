@@ -13,8 +13,6 @@ import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.enums.events.EventType;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
-import com.websocket_hub.exception.BadRequestException;
-import com.websocket_hub.exception.NotFoundException;
 import com.websocket_hub.factory.RoomFactory;
 import com.websocket_hub.mapper.MessageMapper;
 import com.websocket_hub.serializer.MessageSerializer;

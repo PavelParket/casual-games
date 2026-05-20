@@ -1,5 +1,7 @@
 package com.websocket_hub.domain.dto.client;
 
+import com.security_starter.enums.Role;
+import com.security_starter.enums.Status;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -16,8 +18,8 @@ public record UserInternalResponse(
 
         BigDecimal balance,
 
-        String role,
+        Role role,
 
-        String status
+        Status status
 ) {
 }
