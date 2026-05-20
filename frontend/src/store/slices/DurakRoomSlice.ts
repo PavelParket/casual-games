@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { PlayerBet, Room, RoomStatus, RoomType } from "../../models/Room";
+import type { PlayerResponse, PlayerBet, Room, RoomStatus, RoomType } from "../../models/Room";
 import { extractErrorResponse, extractErrorResponseMessage, type ErrorResponse } from "../../helpers/ApiErrorHelper";
 import { DurakRoomApi, RoomAPI } from "../../api/WsHubApi";
 import type { RootState } from "../store";
@@ -15,7 +15,7 @@ export const DURAK_OPERATION_KEYS = {
 export interface DurakRoomState {
     room?: Room;
     roomStatus?: RoomStatus;
-    players?: Record<string, string>;
+    players?: Record<string, PlayerResponse>;
     readyPlayersCount?: number;
     totalPlayersCount?: number;
     playerBets?: PlayerBet[];
@@ -49,18 +49,18 @@ export const getRoomStatus = createAsyncThunk<RoomStatus, { roomId: string; room
     }
 );
 
-export const getUsernamesInRoom = createAsyncThunk<
-    Record<string, string>,
+export const getPlayers = createAsyncThunk<
+    Record<string, PlayerResponse>,
     { roomId: string; roomType: RoomType },
     { rejectValue: string }
 >(
-    "durakRoom/getUsernamesInRoom",
+    "durakRoom/getPlayers",
     async ({ roomId, roomType }, { rejectWithValue }) => {
         try {
-            const response = await RoomAPI.getUsernamesInRoom(roomId, roomType);
+            const response = await RoomAPI.getPlayers(roomId, roomType);
             return response.data;
         } catch (err: unknown) {
-            return rejectWithValue(extractErrorResponseMessage(err, "Failed to fetch usernames"));
+            return rejectWithValue(extractErrorResponseMessage(err, "Failed to fetch players"));
         }
     }
 );
@@ -96,7 +96,7 @@ export const getPlayersBets = createAsyncThunk<PlayerBet[], { roomId: string }, 
 export const syncRoomState = createAsyncThunk<void, { roomId: string; roomType: RoomType }, { state: RootState }>(
     "durakRoom/syncRoomState",
     async ({ roomId, roomType }, { dispatch }) => {
-        await dispatch(getUsernamesInRoom({ roomId, roomType })).unwrap();
+        await dispatch(getPlayers({ roomId, roomType })).unwrap();
         await dispatch(getReadyPlayers({ roomId, roomType })).unwrap();
         await dispatch(getPlayersBets({ roomId })).unwrap();
     }
@@ -159,15 +159,15 @@ const durakRoomSlice = createSlice({
             })
 
             /* === Players === */
-            .addCase(getUsernamesInRoom.pending, (state) => {
+            .addCase(getPlayers.pending, (state) => {
                 state.errors[DURAK_OPERATION_KEYS.GET_PLAYERS] = null;
             })
-            .addCase(getUsernamesInRoom.fulfilled, (state, action) => {
+            .addCase(getPlayers.fulfilled, (state, action) => {
                 state.players = action.payload;
                 state.totalPlayersCount = Object.keys(action.payload).length;
             })
-            .addCase(getUsernamesInRoom.rejected, (state, action) => {
-                state.errors[DURAK_OPERATION_KEYS.GET_PLAYERS] = action.payload ?? "Failed to fetch usernames";
+            .addCase(getPlayers.rejected, (state, action) => {
+                state.errors[DURAK_OPERATION_KEYS.GET_PLAYERS] = action.payload ?? "Failed to fetch players";
             })
 
             /* === Ready Players === */

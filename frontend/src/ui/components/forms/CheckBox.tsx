@@ -39,7 +39,7 @@ export function CheckBox({
                 onChange={(e) => onChange(e.target.checked)}
                 disabled={disabled}
             />
-            
+
             <div className={classNames("checkbox-box", `checkbox-${variant}`, checked && "checked")}>
                 {checked && (
                     <Icon

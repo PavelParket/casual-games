@@ -9,28 +9,28 @@ export function Typography(props: { variant: "caption"; inverse?: boolean } & Co
 export function Typography(props: { variant?: "body"; inverse?: boolean } & ComponentPropsWithoutRef<"p">): JSX.Element;
 
 export function Typography(
-   props:
-      | ({ variant: "h1"; inverse?: boolean } & ComponentPropsWithoutRef<"h1">)
-      | ({ variant: "h2"; inverse?: boolean } & ComponentPropsWithoutRef<"h2">)
-      | ({ variant: "h3"; inverse?: boolean } & ComponentPropsWithoutRef<"h3">)
-      | ({ variant: "caption"; inverse?: boolean } & ComponentPropsWithoutRef<"span">)
-      | ({ variant?: "body"; inverse?: boolean } & ComponentPropsWithoutRef<"p">)
+    props:
+        | ({ variant: "h1"; inverse?: boolean } & ComponentPropsWithoutRef<"h1">)
+        | ({ variant: "h2"; inverse?: boolean } & ComponentPropsWithoutRef<"h2">)
+        | ({ variant: "h3"; inverse?: boolean } & ComponentPropsWithoutRef<"h3">)
+        | ({ variant: "caption"; inverse?: boolean } & ComponentPropsWithoutRef<"span">)
+        | ({ variant?: "body"; inverse?: boolean } & ComponentPropsWithoutRef<"p">)
 ) {
-   const { variant = "body", inverse = false, className, children, ...rest } = props;
+    const { variant = "body", inverse = false, className, children, ...rest } = props;
 
-   const Tag =
-      variant === "body"
-         ? "p"
-         : variant === "caption"
-            ? "span"
-            : variant;
+    const Tag =
+        variant === "body"
+            ? "p"
+            : variant === "caption"
+                ? "span"
+                : variant;
 
-   return (
-      <Tag
-         className={classNames("typography", variant, inverse && "text-color-inverse", className)}
-         {...rest}
-      >
-         {children}
-      </Tag>
-   );
+    return (
+        <Tag
+            className={classNames("typography", variant, inverse && "text-color-inverse", className)}
+            {...rest}
+        >
+            {children}
+        </Tag>
+    );
 }

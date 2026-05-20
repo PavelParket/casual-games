@@ -1,5 +1,5 @@
 export interface DeCoderGameHistory {
-   code: string;
-   exactMatch: number;
-   partialMatch: number;
+    code: string;
+    exactMatch: number;
+    partialMatch: number;
 }

@@ -1,8 +1,9 @@
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Icon, useThemedIcon, Box } from "../ui"
+import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Icon, Img, useThemedIcon, Box } from "../ui"
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
 import { logout } from "../store/slices/AuthSlice";
+import logoImg from "../assets/images/logo.png";
 
 export default function Header() {
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
@@ -25,7 +26,7 @@ export default function Header() {
         <AppBar
             left={(
                 <Link to="/" style={{ textDecoration: "none" }}>
-                    <Typography variant="h3">Casual Games</Typography>
+                    <Img src={logoImg} style={{ height: "50px" }} />
                 </Link>
             )}
             right={(

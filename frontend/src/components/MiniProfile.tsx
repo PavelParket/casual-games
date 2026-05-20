@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "../store/store";
-import { getPlayersMiniProfiles } from "../store/slices/UserSlice";
 import { Box, Typography, Icon, useThemedIcon, Divider, Avatar } from "../ui";
-import { Skeleton } from "../ui/components/common/Skeleton";
 import type { Icons } from "../assets/icons";
 
 interface MiniProfileProps {
     guid: string;
     username: string;
+    status?: string;
     avatarUrl?: string | null;
     children: React.ReactNode;
 }
@@ -18,12 +15,8 @@ const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
 };
 
-export function MiniProfile({ guid, username, children }: MiniProfileProps) {
-    const dispatch = useDispatch<AppDispatch>();
+export function MiniProfile({ guid, username, status = "DEFAULT", avatarUrl, children }: MiniProfileProps) {
     const { getIcon } = useThemedIcon();
-
-    const profile = useSelector((state: RootState) => state.user.playersMiniProfiles[guid]);
-    const isLoading = useSelector((state: RootState) => state.user.isLoadingPlayersMiniProfiles[guid]);
 
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState({ top: 0, left: 0 });
@@ -45,7 +38,6 @@ export function MiniProfile({ guid, username, children }: MiniProfileProps) {
                         top: rect.bottom + window.scrollY + 8,
                         left: rect.left + window.scrollX,
                     });
-                    dispatch(getPlayersMiniProfiles(guid));
                 }
                 setIsOpen(true);
             }, 500);
@@ -102,7 +94,7 @@ export function MiniProfile({ guid, username, children }: MiniProfileProps) {
                 alignItems: "center",
                 gap: "1rem"
             }}>
-                <Avatar src={profile?.avatarUrl} fallback={username} size={40} />
+                <Avatar src={avatarUrl} fallback={username} size={40} />
                 <Typography
                     variant="body"
                     style={{
@@ -134,21 +126,13 @@ export function MiniProfile({ guid, username, children }: MiniProfileProps) {
                     justifyContent: "center",
                     flexShrink: 0
                 }}>
-                    {!profile?.status || isLoading ? (
-                        <Skeleton variant="circular" width="24px" height="24px" />
-                    ) : (
-                        <Icon src={getIcon(getStatusIconName(profile?.status))} alt={profile?.status} size={24} />
-                    )}
+                    <Icon src={getIcon(getStatusIconName(status))} alt={status} size={24} />
                 </Box>
 
                 <Box style={{ display: "flex", alignItems: "center" }}>
-                    {!profile?.status || isLoading ? (
-                        <Skeleton variant="text" width="60px" height="18px" />
-                    ) : (
-                        <Typography variant="caption" style={{ textTransform: "capitalize", fontWeight: 500, fontSize: "0.9rem" }}>
-                            {profile?.status}
-                        </Typography>
-                    )}
+                    <Typography variant="caption" style={{ textTransform: "capitalize", fontWeight: 500, fontSize: "0.9rem" }}>
+                        {status}
+                    </Typography>
                 </Box>
             </Box>
         </div>,

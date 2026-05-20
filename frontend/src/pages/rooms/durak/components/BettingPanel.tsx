@@ -1,4 +1,5 @@
 import { Box, Button, Input, Stack, Typography } from "../../../../ui";
+import type { PlayerResponse } from "../../../../models/Room";
 
 interface BettingPanelProps {
     balance: number | undefined;
@@ -6,7 +7,7 @@ interface BettingPanelProps {
     betPlaced: boolean;
     ready: boolean;
     playerBetMap: Record<string, number> | undefined;
-    players: Record<string, string> | undefined;
+    players: Record<string, PlayerResponse> | undefined;
     isConnected: boolean;
     onBetInputChange: (value: string) => void;
     onPlaceBet: () => void;
@@ -41,7 +42,7 @@ export function BettingPanel({
                     <Stack gap="0.25rem">
                         {Object.entries(playerBetMap!).map(([guid, bet]) => (
                             <Box key={guid} style={{ display: "flex", justifyContent: "space-between" }}>
-                                <Typography variant="body">{players?.[guid] ?? guid}</Typography>
+                                <Typography variant="body">{players?.[guid]?.username ?? guid}</Typography>
                                 <Typography variant="body" style={{ color: "var(--color-income-text)", fontWeight: 600 }}>
                                     ${bet}
                                 </Typography>

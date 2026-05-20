@@ -1,51 +1,51 @@
 * {
-   margin: 0;
-   padding: 0;
-   box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-   font-family: var(--font-family, "Poppins", sans-serif);
-   background: var(--color-bg);
-   color: var(--color-text);
-   transition: background 0.25s ease, color 0.25s ease;
-   background-image: var(--bg-image);
-   background-size: cover;
-   background-position: center;
-   background-attachment: fixed;
+    font-family: var(--font-family, "Poppins", sans-serif);
+    background: var(--color-bg);
+    color: var(--color-text);
+    transition: background 0.25s ease, color 0.25s ease;
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
 }
 
 html {
-   overflow-y: auto;
-   scrollbar-gutter: stable;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 /* Webkit / Blink (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
-   width: 8px;
-   background: transparent;
+    width: 8px;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-track {
-   background: transparent;
+    background: transparent;
 }
 
 /* Light theme */
 ::-webkit-scrollbar-thumb {
-   background: rgba(0, 0, 0, 0);
-   border-radius: 4px;
-   border: 2px solid transparent;
-   background-clip: content-box;
-   transition: background 0.3s ease;
+    background: rgba(0, 0, 0, 0);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: background 0.3s ease;
 }
 
 /* Dark theme */
 html.dark ::-webkit-scrollbar-thumb {
-   background: rgba(255, 255, 255, 0);
-   border-radius: 4px;
-   border: 2px solid transparent;
-   background-clip: content-box;
-   transition: background 0.3s ease;
+    background: rgba(255, 255, 255, 0);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: background 0.3s ease;
 }
 
 .custom-scrollbar {
@@ -86,213 +86,213 @@ html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
 }
 
 html.is-scrolling ::-webkit-scrollbar-thumb {
-   background: rgba(0, 0, 0, 0.25);
-   background-clip: content-box;
+    background: rgba(0, 0, 0, 0.25);
+    background-clip: content-box;
 }
 
 html.is-scrolling.dark ::-webkit-scrollbar-thumb {
-   background: rgba(255, 255, 255, 0.25);
-   background-clip: content-box;
+    background: rgba(255, 255, 255, 0.25);
+    background-clip: content-box;
 }
 
 /* Hover по thumb */
 html.is-scrolling ::-webkit-scrollbar-thumb:hover {
-   background: rgba(0, 0, 0, 0.4);
-   background-clip: content-box;
+    background: rgba(0, 0, 0, 0.4);
+    background-clip: content-box;
 }
 
 html.is-scrolling.dark ::-webkit-scrollbar-thumb:hover {
-   background: rgba(255, 255, 255, 0.4);
-   background-clip: content-box;
+    background: rgba(255, 255, 255, 0.4);
+    background-clip: content-box;
 }
 
 /* Firefox: thin + auto-theme */
 html {
-   scrollbar-width: thin;
-   scrollbar-color: transparent transparent;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
 }
 
 html.is-scrolling {
-   scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
 }
 
 html.is-scrolling.dark {
-   scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
 }
 
 /* Light theme by default */
 :root {
-   --color-bg: #ffffff;
-   --color-bg-soft: rgba(255, 255, 255, 0.9);
-   --color-bg-glass: rgba(255, 255, 255, 0.6);
-   /* Unified glass surface + blur preset */
-   --glass-surface: rgba(255, 255, 255, 0.6);
-   --glass-blur: 5px;
-   --color-text: #111111;
-   --color-text-inverse: #ffffff;
-   --color-border: rgba(0, 0, 0, 0.1);
-   /* Grayscale primary for light theme */
-   --color-primary: #111111;
-   --color-primary-hover: #000000;
-   --on-primary: #ffffff;
+    --color-bg: #ffffff;
+    --color-bg-soft: rgba(255, 255, 255, 0.9);
+    --color-bg-glass: rgba(255, 255, 255, 0.6);
+    /* Unified glass surface + blur preset */
+    --glass-surface: rgba(255, 255, 255, 0.6);
+    --glass-blur: 5px;
+    --color-text: #111111;
+    --color-text-inverse: #ffffff;
+    --color-border: rgba(0, 0, 0, 0.1);
+    /* Grayscale primary for light theme */
+    --color-primary: #111111;
+    --color-primary-hover: #000000;
+    --on-primary: #ffffff;
 
-   --color-income-text: #1e7d41cb;
-   --color-income-bg: rgba(34, 176, 93, 0.08);
-   --color-income-border: rgba(34, 176, 93, 0.2);
-   --color-income-icon-bg: rgba(34, 176, 93, 0.25);
+    --color-income-text: #1e7d41cb;
+    --color-income-bg: rgba(34, 176, 93, 0.08);
+    --color-income-border: rgba(34, 176, 93, 0.2);
+    --color-income-icon-bg: rgba(34, 176, 93, 0.25);
 
-   --color-expense-text: #b32d2dcb;
-   --color-expense-bg: rgba(212, 56, 56, 0.08);
-   --color-expense-border: rgba(212, 56, 56, 0.2);
-   --color-expense-icon-bg: rgba(212, 56, 56, 0.25);
+    --color-expense-text: #b32d2dcb;
+    --color-expense-bg: rgba(212, 56, 56, 0.08);
+    --color-expense-border: rgba(212, 56, 56, 0.2);
+    --color-expense-icon-bg: rgba(212, 56, 56, 0.25);
 
-   --radius-sm: 6px;
-   --radius-md: 12px;
-   --radius-lg: 20px;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
 
-   --shadow-sm:
-      0 0 1px rgba(0, 0, 0, 0.1),
-      0 1px 3px rgba(0, 0, 0, 0.12);
-   --shadow-md:
-      0 0 4px rgba(0, 0, 0, 0.12),
-      0 4px 6px rgba(0, 0, 0, 0.15);
-   --shadow-lg:
-      0 0 8px rgba(0, 0, 0, 0.12),
-      0 8px 24px rgba(0, 0, 0, 0.2);
+    --shadow-sm:
+        0 0 1px rgba(0, 0, 0, 0.1),
+        0 1px 3px rgba(0, 0, 0, 0.12);
+    --shadow-md:
+        0 0 4px rgba(0, 0, 0, 0.12),
+        0 4px 6px rgba(0, 0, 0, 0.15);
+    --shadow-lg:
+        0 0 8px rgba(0, 0, 0, 0.12),
+        0 8px 24px rgba(0, 0, 0, 0.2);
 
-   /* Background image tokens (set to an URL from /public if needed) */
-   --bg-image: url("../assets/images/bg-light.jpg");
+    /* Background image tokens (set to an URL from /public if needed) */
+    --bg-image: url("../assets/images/bg-light.jpg");
 
-   /* Button interaction tokens (light theme) */
-   /* Solid (dark bg -> lighten on hover/active) */
-   --btn-solid-hover-bg: color-mix(in oklab, var(--color-primary) 85%, white 15%);
-   --btn-solid-active-bg: color-mix(in oklab, var(--color-primary) 70%, white 30%);
-   /* Outline (hover -> dark bg; active -> slightly lighten) */
-   --btn-outline-hover-bg: var(--color-primary);
-   --btn-outline-active-bg: color-mix(in oklab, var(--color-primary) 85%, white 30%);
-   /* Ghost (light glass -> darken on hover/active) */
-   --btn-ghost-hover-bg: color-mix(in oklab, var(--glass-surface) 85%, black 15%);
-   --btn-ghost-active-bg: color-mix(in oklab, var(--glass-surface) 70%, black 30%);
+    /* Button interaction tokens (light theme) */
+    /* Solid (dark bg -> lighten on hover/active) */
+    --btn-solid-hover-bg: color-mix(in oklab, var(--color-primary) 85%, white 15%);
+    --btn-solid-active-bg: color-mix(in oklab, var(--color-primary) 70%, white 30%);
+    /* Outline (hover -> dark bg; active -> slightly lighten) */
+    --btn-outline-hover-bg: var(--color-primary);
+    --btn-outline-active-bg: color-mix(in oklab, var(--color-primary) 85%, white 30%);
+    /* Ghost (light glass -> darken on hover/active) */
+    --btn-ghost-hover-bg: color-mix(in oklab, var(--glass-surface) 85%, black 15%);
+    --btn-ghost-active-bg: color-mix(in oklab, var(--glass-surface) 70%, black 30%);
 
-   /* Link interaction tokens (light theme): darken on hover/active */
-   --link-hover-color: color-mix(in oklab, var(--color-text) 85%, black 15%);
-   --link-active-color: color-mix(in oklab, var(--color-text) 70%, black 30%);
+    /* Link interaction tokens (light theme): darken on hover/active */
+    --link-hover-color: color-mix(in oklab, var(--color-text) 85%, black 15%);
+    --link-active-color: color-mix(in oklab, var(--color-text) 70%, black 30%);
 
-   /* Switch button tokens */
-   --swtch-btn-bg: rgba(220, 220, 220, 0.9);
-   --swtch-btn-thumb: rgba(0, 0, 0, 0.9);
+    /* Switch button tokens */
+    --swtch-btn-bg: rgba(220, 220, 220, 0.9);
+    --swtch-btn-thumb: rgba(0, 0, 0, 0.9);
 
-   /* Skeleton component tokens */
-   --skeleton-bg: rgba(200, 200, 200, 0.35);
-   --skeleton-shimmer: rgba(255, 255, 255, 0.6);
+    /* Skeleton component tokens */
+    --skeleton-bg: rgba(200, 200, 200, 0.35);
+    --skeleton-shimmer: rgba(255, 255, 255, 0.6);
 }
 
 /* Dark theme */
 html.dark {
-   --color-bg: #121212;
-   --color-bg-soft: rgba(0, 0, 0, 0.9);
-   --color-bg-glass: rgba(30, 30, 30, 0.7);
-   /* Unified glass surface + blur preset */
-   --glass-surface: rgba(30, 30, 30, 0.7);
-   --glass-blur: 5px;
-   --color-text: #f5f5f5;
-   --color-text-inverse: #121212;
-   --color-border: rgba(255, 255, 255, 0.1);
-   /* Grayscale primary for dark theme */
-   --color-primary: #f5f5f5;
-   --color-primary-hover: #ffffff;
-   --on-primary: #000000;
+    --color-bg: #121212;
+    --color-bg-soft: rgba(0, 0, 0, 0.9);
+    --color-bg-glass: rgba(30, 30, 30, 0.7);
+    /* Unified glass surface + blur preset */
+    --glass-surface: rgba(30, 30, 30, 0.7);
+    --glass-blur: 5px;
+    --color-text: #f5f5f5;
+    --color-text-inverse: #121212;
+    --color-border: rgba(255, 255, 255, 0.1);
+    /* Grayscale primary for dark theme */
+    --color-primary: #f5f5f5;
+    --color-primary-hover: #ffffff;
+    --on-primary: #000000;
 
-   --color-income-text: #22b05d;
-   --color-income-bg: rgba(46, 204, 113, 0.08);
-   --color-income-border: rgba(46, 204, 113, 0.2);
-   --color-income-icon-bg: rgba(46, 204, 113, 0.25);
+    --color-income-text: #22b05d;
+    --color-income-bg: rgba(46, 204, 113, 0.08);
+    --color-income-border: rgba(46, 204, 113, 0.2);
+    --color-income-icon-bg: rgba(46, 204, 113, 0.25);
 
-   --color-expense-text: #d43838;
-   --color-expense-bg: rgba(255, 82, 82, 0.08);
-   --color-expense-border: rgba(255, 82, 82, 0.2);
-   --color-expense-icon-bg: rgba(255, 82, 82, 0.25);
+    --color-expense-text: #d43838;
+    --color-expense-bg: rgba(255, 82, 82, 0.08);
+    --color-expense-border: rgba(255, 82, 82, 0.2);
+    --color-expense-icon-bg: rgba(255, 82, 82, 0.25);
 
-   /* Background image for dark theme (set as needed) */
-   --bg-image: url("../assets/images/bg-dark.jpeg");
+    /* Background image for dark theme (set as needed) */
+    --bg-image: url("../assets/images/bg-dark.jpeg");
 
-   /* Button interaction tokens (dark theme) */
-   /* Solid (light bg -> darken on hover/active) */
-   --btn-solid-hover-bg: color-mix(in oklab, var(--color-primary) 85%, black 15%);
-   --btn-solid-active-bg: color-mix(in oklab, var(--color-primary) 70%, black 30%);
-   /* Outline (hover -> light bg; active -> slightly darken) */
-   --btn-outline-hover-bg: var(--color-primary);
-   --btn-outline-active-bg: color-mix(in oklab, var(--color-primary) 85%, black 30%);
-   /* Ghost (dark glass -> lighten on hover/active) */
-   --btn-ghost-hover-bg: color-mix(in oklab, var(--glass-surface) 85%, white 15%);
-   --btn-ghost-active-bg: color-mix(in oklab, var(--glass-surface) 70%, white 30%);
+    /* Button interaction tokens (dark theme) */
+    /* Solid (light bg -> darken on hover/active) */
+    --btn-solid-hover-bg: color-mix(in oklab, var(--color-primary) 85%, black 15%);
+    --btn-solid-active-bg: color-mix(in oklab, var(--color-primary) 70%, black 30%);
+    /* Outline (hover -> light bg; active -> slightly darken) */
+    --btn-outline-hover-bg: var(--color-primary);
+    --btn-outline-active-bg: color-mix(in oklab, var(--color-primary) 85%, black 30%);
+    /* Ghost (dark glass -> lighten on hover/active) */
+    --btn-ghost-hover-bg: color-mix(in oklab, var(--glass-surface) 85%, white 15%);
+    --btn-ghost-active-bg: color-mix(in oklab, var(--glass-surface) 70%, white 30%);
 
-   /* Link interaction tokens (dark theme): lighten on hover/active */
-   --link-hover-color: color-mix(in oklab, var(--color-text) 85%, white 15%);
-   --link-active-color: color-mix(in oklab, var(--color-text) 70%, white 30%);
+    /* Link interaction tokens (dark theme): lighten on hover/active */
+    --link-hover-color: color-mix(in oklab, var(--color-text) 85%, white 15%);
+    --link-active-color: color-mix(in oklab, var(--color-text) 70%, white 30%);
 
-   --shadow-sm:
-      0 0 1px rgba(255, 255, 255, 0.1),
-      0 1px 3px rgba(255, 255, 255, 0.12);
-   --shadow-md:
-      0 0 4px rgba(255, 255, 255, 0.12),
-      0 4px 6px rgba(255, 255, 255, 0.15);
-   --shadow-lg:
-      0 0 8px rgba(255, 255, 255, 0.12),
-      0 8px 24px rgba(255, 255, 255, 0.2);
+    --shadow-sm:
+        0 0 1px rgba(255, 255, 255, 0.1),
+        0 1px 3px rgba(255, 255, 255, 0.12);
+    --shadow-md:
+        0 0 4px rgba(255, 255, 255, 0.12),
+        0 4px 6px rgba(255, 255, 255, 0.15);
+    --shadow-lg:
+        0 0 8px rgba(255, 255, 255, 0.12),
+        0 8px 24px rgba(255, 255, 255, 0.2);
 
-   /* Switch button tokens */
-   --swtch-btn-bg: rgba(90, 90, 90, 0.9);
-   --swtch-btn-thumb: rgba(255, 255, 255, 0.9);
+    /* Switch button tokens */
+    --swtch-btn-bg: rgba(90, 90, 90, 0.9);
+    --swtch-btn-thumb: rgba(255, 255, 255, 0.9);
 
-   /* Skeleton component tokens */
-   --skeleton-bg: rgba(60, 60, 60, 0.6);
-   --skeleton-shimmer: rgba(255, 255, 255, 0.25);
+    /* Skeleton component tokens */
+    --skeleton-bg: rgba(60, 60, 60, 0.6);
+    --skeleton-shimmer: rgba(255, 255, 255, 0.25);
 }
 
 /* Generic link styling */
 .link {
-   color: inherit;
-   transition: color 0.15s ease;
+    color: inherit;
+    transition: color 0.15s ease;
 }
 
 .link:hover {
-   color: var(--link-hover-color);
+    color: var(--link-hover-color);
 }
 
 .link:active {
-   color: var(--link-active-color);
+    color: var(--link-active-color);
 }
 
 /* High-contrast modifier (accessibility) */
 html.high-contrast {
-   /* Increase text/background contrast and border visibility */
-   --color-text: #000000;
-   --color-bg: #ffffff;
-   --color-border: rgba(0, 0, 0, 0.35);
-   --color-primary: #000000;
-   --color-primary-hover: #000000;
-   --on-primary: #ffffff;
-   /* Reduce transparency on glass to improve legibility, and slightly increase blur */
-   --glass-surface: rgba(255, 255, 255, 0.85);
-   --glass-blur: 5px;
+    /* Increase text/background contrast and border visibility */
+    --color-text: #000000;
+    --color-bg: #ffffff;
+    --color-border: rgba(0, 0, 0, 0.35);
+    --color-primary: #000000;
+    --color-primary-hover: #000000;
+    --on-primary: #ffffff;
+    /* Reduce transparency on glass to improve legibility, and slightly increase blur */
+    --glass-surface: rgba(255, 255, 255, 0.85);
+    --glass-blur: 5px;
 }
 
 .text-color-inverse {
-   color: var(--color-text-inverse);
+    color: var(--color-text-inverse);
 }
 
 .switch-sm {
-   --thumb-diameter: 16px;
-   --thumb-margin: 2px;
+    --thumb-diameter: 16px;
+    --thumb-margin: 2px;
 }
 
 .switch-md {
-   --thumb-diameter: 19px;
-   --thumb-margin: 3px;
+    --thumb-diameter: 19px;
+    --thumb-margin: 3px;
 }
 
 .switch-lg {
-   --thumb-diameter: 22px;
-   --thumb-margin: 4px;
+    --thumb-diameter: 22px;
+    --thumb-margin: 4px;
 }

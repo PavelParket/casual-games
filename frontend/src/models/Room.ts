@@ -48,6 +48,12 @@ export interface RoomStatus {
     status: string;
 }
 
+export interface PlayerResponse {
+    guid: string;
+    username: string;
+    status: string;
+}
+
 /* ============================ */
 /* ===== TIC TAC TOE ROOM ===== */
 /* ============================ */

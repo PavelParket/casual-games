@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
 import { Box, Button, Stack, Typography } from "../../../../ui";
+import type { PlayerResponse } from "../../../../models/Room";
 
 interface GameOverOverlayProps {
     winnerId: string | null;
     myGuid: string | undefined;
-    players: Record<string, string> | undefined;
+    players: Record<string, PlayerResponse> | undefined;
     onLeave: () => void;
 }
 
@@ -36,7 +37,7 @@ const itemVariants = {
 export function GameOverOverlay({ winnerId, myGuid, players, onLeave }: GameOverOverlayProps) {
     const isDraw = winnerId === null;
     const iWon = !isDraw && winnerId === myGuid;
-    const winnerName = !isDraw && winnerId && players ? (players[winnerId] ?? "Opponent") : null;
+    const winnerName = !isDraw && winnerId && players ? (players[winnerId]?.username ?? "Opponent") : null;
 
     return (
         <motion.div

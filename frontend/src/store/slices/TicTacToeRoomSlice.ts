@@ -1,10 +1,10 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { PlayerBet, Room, RoomStatus, RoomType } from "../../models/Room";
+import type { PlayerResponse, PlayerBet, Room, RoomStatus, RoomType } from "../../models/Room";
 import { RoomAPI, TicTacToeRoomApi } from "../../api/WsHubApi";
 import type { RootState } from "../store";
 import { extractErrorResponse, extractErrorResponseMessage, type ErrorResponse } from "../../helpers/ApiErrorHelper";
 
-export const TTT_OPERATION_REYS = {
+export const TTT_OPERATION_KEYS = {
     GET_ROOM: "getRoom",
     GET_ROOM_STATUS: "getRoomStatus",
     GET_PLAYERS: "getPlayers",
@@ -15,7 +15,7 @@ export const TTT_OPERATION_REYS = {
 export interface TicTacToeRoomState {
     room?: Room;
     roomStatus?: RoomStatus;
-    players?: Record<string, string>;
+    players?: Record<string, PlayerResponse>;
     readyPlayersCount?: number;
     totalPlayersCount?: number;
     playerBets?: PlayerBet[];
@@ -49,14 +49,14 @@ export const getRoomStatus = createAsyncThunk<RoomStatus, { roomId: string, room
     }
 );
 
-export const getUsernamesInRoom = createAsyncThunk<Record<string, string>, { roomId: string, roomType: RoomType }, { rejectValue: string }>(
-    "ticTacToeRoom/getUsernamesInRoom",
+export const getPlayers = createAsyncThunk<Record<string, PlayerResponse>, { roomId: string, roomType: RoomType }, { rejectValue: string }>(
+    "ticTacToeRoom/getPlayers",
     async ({ roomId, roomType }, { rejectWithValue }) => {
         try {
-            const response = await RoomAPI.getUsernamesInRoom(roomId, roomType);
+            const response = await RoomAPI.getPlayers(roomId, roomType);
             return response.data;
         } catch (err: unknown) {
-            return rejectWithValue(extractErrorResponseMessage(err, "Failed to fetch usernames"));
+            return rejectWithValue(extractErrorResponseMessage(err, "Failed to fetch players"));
         }
     }
 );
@@ -88,7 +88,7 @@ export const getPlayersBets = createAsyncThunk<PlayerBet[], { roomId: string }, 
 export const syncRoomState = createAsyncThunk<void, { roomId: string, roomType: RoomType }, { state: RootState }>(
     "ticTacToeRoom/syncRoomState",
     async ({ roomId, roomType }, { dispatch }) => {
-        await dispatch(getUsernamesInRoom({ roomId, roomType })).unwrap();
+        await dispatch(getPlayers({ roomId, roomType })).unwrap();
         await dispatch(getReadyPlayers({ roomId, roomType })).unwrap();
         await dispatch(getPlayersBets({ roomId })).unwrap();
     }
@@ -131,67 +131,67 @@ const ticTacToeRoomSlice = createSlice({
 
             /* === Get Room === */
             .addCase(getRoomById.pending, (state) => {
-                state.errors[TTT_OPERATION_REYS.GET_ROOM] = null;
+                state.errors[TTT_OPERATION_KEYS.GET_ROOM] = null;
             })
             .addCase(getRoomById.fulfilled, (state, action) => {
                 state.room = action.payload;
             })
             .addCase(getRoomById.rejected, (state, action) => {
-                state.errors[TTT_OPERATION_REYS.GET_ROOM] = action.payload?.message ?? "Failed to fetch room";
+                state.errors[TTT_OPERATION_KEYS.GET_ROOM] = action.payload?.message ?? "Failed to fetch room";
             })
 
             .addCase(getRoomStatus.pending, (state) => {
-                state.errors[TTT_OPERATION_REYS.GET_ROOM_STATUS] = null;
+                state.errors[TTT_OPERATION_KEYS.GET_ROOM_STATUS] = null;
             })
             .addCase(getRoomStatus.fulfilled, (state, action) => {
                 state.roomStatus = action.payload;
             })
             .addCase(getRoomStatus.rejected, (state, action) => {
-                state.errors[TTT_OPERATION_REYS.GET_ROOM_STATUS] = action.payload ?? "Failed to fetch room status";
+                state.errors[TTT_OPERATION_KEYS.GET_ROOM_STATUS] = action.payload ?? "Failed to fetch room status";
             })
 
             /* === Get Players === */
-            .addCase(getUsernamesInRoom.pending, (state) => {
-                state.errors[TTT_OPERATION_REYS.GET_PLAYERS] = null;
+            .addCase(getPlayers.pending, (state) => {
+                state.errors[TTT_OPERATION_KEYS.GET_PLAYERS] = null;
             })
-            .addCase(getUsernamesInRoom.fulfilled, (state, action) => {
+            .addCase(getPlayers.fulfilled, (state, action) => {
                 state.players = action.payload;
                 state.totalPlayersCount = Object.keys(action.payload).length;
             })
-            .addCase(getUsernamesInRoom.rejected, (state, action) => {
-                state.errors[TTT_OPERATION_REYS.GET_PLAYERS] = action.payload ?? "Failed to fetch usernames";
+            .addCase(getPlayers.rejected, (state, action) => {
+                state.errors[TTT_OPERATION_KEYS.GET_PLAYERS] = action.payload ?? "Failed to fetch players";
             })
 
             /* === Get Ready Players === */
             .addCase(getReadyPlayers.pending, (state) => {
-                state.errors[TTT_OPERATION_REYS.GET_READY_PLAYERS] = null;
+                state.errors[TTT_OPERATION_KEYS.GET_READY_PLAYERS] = null;
             })
             .addCase(getReadyPlayers.fulfilled, (state, action) => {
                 state.readyPlayersCount = action.payload;
             })
             .addCase(getReadyPlayers.rejected, (state, action) => {
-                state.errors[TTT_OPERATION_REYS.GET_READY_PLAYERS] = action.payload ?? "Failed to fetch ready players";
+                state.errors[TTT_OPERATION_KEYS.GET_READY_PLAYERS] = action.payload ?? "Failed to fetch ready players";
             })
 
             /* === Get Players Bets === */
             .addCase(getPlayersBets.pending, (state) => {
-                state.errors[TTT_OPERATION_REYS.GET_PLAYERS_BETS] = null;
+                state.errors[TTT_OPERATION_KEYS.GET_PLAYERS_BETS] = null;
             })
             .addCase(getPlayersBets.fulfilled, (state, action) => {
                 state.playerBets = action.payload;
                 const bets: Record<string, number> = {};
 
                 action.payload.forEach(({ guid, bet }) => {
-                    const username = state.players?.[guid];
-                    if (username != null) {
-                        bets[username] = bet;
+                    const player = state.players?.[guid];
+                    if (player != null) {
+                        bets[player.username] = bet;
                     }
                 });
 
                 state.playerBetMap = bets;
             })
             .addCase(getPlayersBets.rejected, (state, action) => {
-                state.errors[TTT_OPERATION_REYS.GET_PLAYERS_BETS] = action.payload ?? "Failed to fetch player bets";
+                state.errors[TTT_OPERATION_KEYS.GET_PLAYERS_BETS] = action.payload ?? "Failed to fetch player bets";
             });
     },
 });

@@ -8,9 +8,9 @@ import { AxiosInterceptorsConfig } from './api/AxiosInterceptorsConfig.ts';
 AxiosInterceptorsConfig(store);
 
 createRoot(document.getElementById('root')!).render(
-   //<StrictMode>
-   <Provider store={store}>
-      <App />
-   </Provider>
-   //</StrictMode>
+    //<StrictMode>
+    <Provider store={store}>
+        <App />
+    </Provider>
+    //</StrictMode>
 )
