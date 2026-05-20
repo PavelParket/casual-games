@@ -28,14 +28,8 @@ public class RoomController {
 
     private final RoomService roomService;
 
-    @Deprecated(forRemoval = true)
-    @GetMapping("/all")
-    public List<RoomResponse> getAll() {
-        return roomService.getAll();
-    }
-
     @GetMapping("/players/{roomId}/{roomType}")
-    public List<PlayerResponse> getPlayers(@PathVariable UUID roomId, @PathVariable RoomType roomType) {
+    public Map<UUID, PlayerResponse> getPlayers(@PathVariable UUID roomId, @PathVariable RoomType roomType) {
         return roomService.getPlayers(roomId, roomType);
     }
 

@@ -58,19 +58,12 @@ public class RoomService {
         this.playerMapper = playerMapper;
     }
 
-    @Deprecated(forRemoval = true)
-    public List<RoomResponse> getAll() {
-        return roomManagers.values().stream()
-                .filter(manager -> manager.getRedisKey() != null)
-                .flatMap(manager -> manager.getRoomsList().stream())
-                .map(roomMapper::toResponse)
-                .toList();
-    }
-
-    public List<PlayerResponse> getPlayers(UUID roomId, RoomType roomType) {
+    public Map<UUID, PlayerResponse> getPlayers(UUID roomId, RoomType roomType) {
         return getManager(roomType).getPlayersInRoom(roomId).stream()
-                .map(playerMapper::toResponse)
-                .toList();
+                .collect(Collectors.toMap(
+                        ClientSession::getGuid,
+                        playerMapper::toResponse
+                ));
     }
 
     public Integer getReadyPlayerCount(UUID roomId, RoomType roomType) {
@@ -123,7 +116,7 @@ public class RoomService {
                         type -> type,
                         type -> types.contains(type)
                                 ? getManager(type).getRoomsList().stream()
-                                .filter(room -> isJoinable(room))
+                                .filter(this::isJoinable)
                                 .filter(room -> matchesName(room, request.name()))
                                 .sorted(comparator)
                                 .map(roomMapper::toResponse)
@@ -159,14 +152,5 @@ public class RoomService {
         };
 
         return direction == SortDirection.DESC ? comparator.reversed() : comparator;
-    }
-
-    // todo: удалить перед слиянием
-    public Map<UUID, String> getUsernamesInRoom(UUID roomId, RoomType roomType) {
-        return getManager(roomType).getPlayersInRoom(roomId).stream()
-                .collect(Collectors.toMap(
-                        ClientSession::getGuid,
-                        ClientSession::getUsername
-                ));
     }
 }
