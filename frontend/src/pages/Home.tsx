@@ -13,14 +13,6 @@ import deCoderImg from "../assets/images/img-de-coder.png";
 import durakImg from "../assets/images/img-durak.png";
 import horseRaceImg from "../assets/images/img-horse-race.png";
 
-const MOCK_DATA = [
-    { name: "Fonbet", description: "Щедро поделились основным дизайном" },
-    { name: "Betbet", description: "Подарили идею проекта" },
-    { name: "Betera", description: "Вдохновили оформить карточки" },
-    { name: "MaxLine", description: "Поделились дизайном списка комнат" },
-    { name: "WinLine", description: "Стали примером аккуратного дизайна" },
-];
-
 export default function Home() {
     const { theme } = useTheme();
     const { getIcon } = useThemedIcon();
@@ -87,7 +79,7 @@ export default function Home() {
                     <Grid
                         columns="280px 1fr"
                         gap="1.5rem"
-                        style={{ flex: 1, minHeight: 0 }}
+                        style={{ flex: 1, minHeight: "520px" }}
                     >
                         <Card
                             style={{
@@ -96,8 +88,8 @@ export default function Home() {
                                 overflow: "hidden",
                             }}
                         >
-                            <Typography variant="h3" style={{ marginBottom: "1rem" }}>
-                                Our Partners
+                            <Typography variant="h3" style={{ marginBottom: "1rem", textAlign: "center" }}>
+                                Top winners
                             </Typography>
 
                             <Stack
@@ -135,44 +127,9 @@ export default function Home() {
                                         </Stack>
                                     ))
                                 ) : (
-
-                                    // <Typography variant="body" style={{ opacity: 0.6, textAlign: "center", marginTop: "2rem" }}>
-                                    //     No big wins yet. Be the first!
-                                    // </Typography>
-                                    <Stack
-                                        gap="0.75rem"
-                                        style={{ flex: 1, overflowY: "auto", paddingRight: "4px" }}
-                                    >
-                                        {MOCK_DATA.map((winner, idx) => (
-                                            <Stack
-                                                key={idx}
-                                                direction="row"
-                                                justify="space-between"
-                                                align="center"
-                                                style={{
-                                                    background: "var(--color-bg-glass)",
-                                                    padding: "0.5rem 0.75rem",
-                                                    borderRadius: "var(--radius-sm)",
-                                                    border: "1px solid var(--color-border)",
-                                                    flexShrink: 0,
-                                                }}
-                                            >
-                                                <Stack gap="0">
-                                                    <Typography
-                                                        variant="body"
-                                                    >
-                                                        {winner.name}
-                                                    </Typography>
-                                                    <Typography
-                                                        variant="caption"
-                                                        style={{ fontSize: "0.7rem", opacity: 0.7 }}
-                                                    >
-                                                        {winner.description}
-                                                    </Typography>
-                                                </Stack>
-                                            </Stack>
-                                        ))}
-                                    </Stack>
+                                    <Typography variant="body" style={{ opacity: 0.6, textAlign: "center", marginTop: "2rem" }}>
+                                        No big wins yet. Be the first!
+                                    </Typography>
                                 )}
                             </Stack>
                         </Card>
@@ -215,7 +172,6 @@ export default function Home() {
                                         <Typography variant="h2">De-Coder</Typography>
                                         <Typography variant="body">
                                             Use pure logic to deduce the secret combination.
-                                            Crack the vault before your rivals and claim the ever-growing progressive jackpot!
                                         </Typography>
                                     </Stack>
 
@@ -270,8 +226,7 @@ export default function Home() {
                                     <Stack gap="0.5rem" style={{ maxWidth: "49%" }}>
                                         <Typography variant="h2">Durak</Typography>
                                         <Typography variant="body">
-                                            A ruthless card battle of attack and defense.
-                                            Outsmart your opponents, clear your hand, and don't end up the fool.
+                                            Clear your hand, and don't end up the fool.
                                         </Typography>
                                     </Stack>
 
@@ -320,7 +275,6 @@ export default function Home() {
                                     <Stack gap="0.5rem" style={{ maxWidth: "49%" }}>
                                         <Typography variant="h2">Horse Race</Typography>
                                         <Typography variant="body">
-                                            High-stakes virtual racing at its finest.
                                             Trust your gut, and cheer your champion to the finish line.
                                         </Typography>
                                     </Stack>
@@ -370,7 +324,6 @@ export default function Home() {
                                     <Stack gap="0.5rem" style={{ maxWidth: "49%" }}>
                                         <Typography variant="h2">Tic-Tac-Toe</Typography>
                                         <Typography variant="body">
-                                            Pure mind games on a 3x3 grid.
                                             Trap your opponent in this fast-paced, highly competitive classic.
                                         </Typography>
                                     </Stack>
