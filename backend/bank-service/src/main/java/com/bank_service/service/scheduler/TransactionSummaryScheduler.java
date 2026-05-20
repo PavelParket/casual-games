@@ -17,17 +17,16 @@ public class TransactionSummaryScheduler {
 
     private final TransactionSummaryService summaryService;
 
-    @Scheduled(
-            initialDelayString = "${app.scheduling.transaction-summary.initial-delay}",
-            fixedRateString = "${app.scheduling.transaction-summary.fixed-rate}"
-    )
-    public void runMonthlySummary() {
-        GenerateSummaryRequest request = GenerateSummaryRequest.builder()
-                .targetMonth(LocalDate.now(ZoneOffset.UTC).minusMonths(1))
-                .build();
+    @Scheduled(cron = "${cron.create-transaction-summaries}", zone = "UTC")
+    public void run() {
+        LocalDate targetMonth = LocalDate.now(ZoneOffset.UTC).minusMonths(1);
 
-        log.info("Scheduler triggered transaction summary generation for {}", request.targetMonth());
+        log.info("Scheduler start transaction summaries generation for {}", targetMonth);
 
-        summaryService.generateSummary(request);
+        summaryService.generateSummary(
+                GenerateSummaryRequest.builder()
+                        .targetMonth(targetMonth)
+                        .build()
+        );
     }
 }

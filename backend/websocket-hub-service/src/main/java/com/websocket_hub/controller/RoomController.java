@@ -1,10 +1,11 @@
 package com.websocket_hub.controller;
 
-import com.websocket_hub.domain.dto.RoomFilterRequest;
-import com.websocket_hub.domain.dto.RoomRequest;
-import com.websocket_hub.domain.dto.RoomResponse;
-import com.websocket_hub.domain.dto.RoomResponseMap;
-import com.websocket_hub.domain.dto.RoomStatusResponse;
+import com.websocket_hub.domain.dto.request.RoomFilterRequest;
+import com.websocket_hub.domain.dto.request.RoomRequest;
+import com.websocket_hub.domain.dto.response.PlayerResponse;
+import com.websocket_hub.domain.dto.response.RoomResponse;
+import com.websocket_hub.domain.dto.response.RoomResponseMap;
+import com.websocket_hub.domain.dto.response.RoomStatusResponse;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.service.RoomService;
 import jakarta.validation.Valid;
@@ -27,19 +28,9 @@ public class RoomController {
 
     private final RoomService roomService;
 
-    @GetMapping("/all")
-    public List<RoomResponse> getAll() {
-        return roomService.getAll();
-    }
-
-    @GetMapping("/type/{roomType}")
-    public List<RoomResponse> getRoomsByType(@PathVariable RoomType roomType) {
-        return roomService.getRoomsByType(roomType);
-    }
-
     @GetMapping("/players/{roomId}/{roomType}")
-    public Map<UUID, String> getUsernamesInRoom(@PathVariable UUID roomId, @PathVariable RoomType roomType) {
-        return roomService.getUsernamesInRoom(roomId, roomType);
+    public Map<UUID, PlayerResponse> getPlayers(@PathVariable UUID roomId, @PathVariable RoomType roomType) {
+        return roomService.getPlayers(roomId, roomType);
     }
 
     @GetMapping("/ready-count/{roomId}/{roomType}")

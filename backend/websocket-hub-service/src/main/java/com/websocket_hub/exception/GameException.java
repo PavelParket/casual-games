@@ -13,8 +13,8 @@ public class GameException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
-    public GameException(ErrorCode errorCode, String debugMessage) {
-        super(debugMessage);
+    public GameException(ErrorCode errorCode, String message) {
+        super(message);
         this.errorCode = errorCode;
     }
 

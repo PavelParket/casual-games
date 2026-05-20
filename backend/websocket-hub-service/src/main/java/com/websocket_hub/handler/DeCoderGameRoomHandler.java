@@ -7,14 +7,16 @@ import com.websocket_hub.domain.dto.client.DeCoderGameInternalRequest;
 import com.websocket_hub.domain.dto.client.DeCoderGameInternalResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
-import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.PlayerBet;
+import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
+import com.websocket_hub.exception.GameException;
 import com.websocket_hub.manager.DeCoderGameRoomManager;
 import com.websocket_hub.manager.SessionManager;
 import com.websocket_hub.mapper.DeCoderGameMessageMapper;
+import com.websocket_hub.mapper.DefaultMessageMapper;
 import com.websocket_hub.mapper.GameTransactionMapper;
 import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.service.grpc.client.GrpcGameTransactionClient;
@@ -34,8 +36,6 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
     private static final BigDecimal MOVE_COST = new BigDecimal("10.00");
 
-    private final MessageDeserializer messageDeserializer;
-
     private final DeCoderGameMessageMapper deCoderGameMessageMapper;
 
     private final GameTransactionMapper gameTransactionMapper;
@@ -50,14 +50,14 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
             DeCoderGameRoomManager roomManager,
             WebSocketErrorHandler errorHandler,
             MessageDeserializer messageDeserializer,
+            DefaultMessageMapper defaultMessageMapper,
             DeCoderGameMessageMapper deCoderGameMessageMapper,
             GameTransactionMapper gameTransactionMapper,
             GameServiceClient gameServiceClient,
             GrpcGameTransactionClient grpcGameTransactionClient
 
     ) {
-        super(sessionManager, roomManager, errorHandler);
-        this.messageDeserializer = messageDeserializer;
+        super(sessionManager, roomManager, errorHandler, messageDeserializer, defaultMessageMapper);
         this.deCoderGameMessageMapper = deCoderGameMessageMapper;
         this.gameTransactionMapper = gameTransactionMapper;
         this.gameServiceClient = gameServiceClient;
@@ -70,25 +70,18 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
             return;
         }
 
-        String payload = message.getPayload();
+        DeCoderGameMessage deCoderGameMessage = messageDeserializer.deserialize(message.getPayload(), DeCoderGameMessage.class);
+        UUID roomId = WebSocketUtil.getRoomId(session);
+        UserInternalResponse user = WebSocketUtil.getUser(session);
 
-        try {
-            DeCoderGameMessage deCoderGameMessage = messageDeserializer.deserialize(payload, DeCoderGameMessage.class);
-            UUID roomId = WebSocketUtil.getRoomId(session);
-            UserInternalResponse user = WebSocketUtil.getUser(session);
+        log.info("DeCoder action: {}", deCoderGameMessage);
 
-            log.info("DeCoder action: {}", deCoderGameMessage);
+        switch (deCoderGameMessage.event()) {
+            case MOVE -> handleGameMove(roomId, user, deCoderGameMessage);
 
-            switch (deCoderGameMessage.event()) {
-                case MOVE -> handleGameMove(roomId, user, deCoderGameMessage);
+            case STATE -> handleGetGameState(roomId, user);
 
-                case STATE -> handleGetGameState(roomId, user);
-
-                case null, default -> log.warn("Unknown event: {}", deCoderGameMessage.event());
-            }
-
-        } catch (Exception e) {
-            log.error("Failed to handle DeCoder message", e);
+            default -> log.warn("Unknown event: {}", deCoderGameMessage.event());
         }
     }
 
@@ -116,14 +109,12 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
         try {
             GameTransactionResponse moveTransactionResponse = grpcGameTransactionClient.saveDeCoderGameTransaction(deCoderTransactionRequest);
-
             if (moveTransactionResponse != null) {
                 log.info("Bank service debited {}", MOVE_COST);
             }
         } catch (Exception e) {
             log.warn("Bank service rejected move for {}. Aborting.", user.username());
-            handleGameException(user.guid(), roomId, new RuntimeException("Insufficient funds or bank unavailable."));
-            return;
+            throw new GameException(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
         try {
@@ -151,10 +142,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
             try {
                 PlayerBet refundPlayerBet = roomManager.markPlayerBet(user, MOVE_COST);
                 DeCoderTransactionRequest refundRequest = gameTransactionMapper.toDeCoderRequest(
-                        roomId,
-                        roomManager.getRoomType(),
-                        refundPlayerBet,
-                        user.guid()
+                        roomId, roomManager.getRoomType(), refundPlayerBet, user.guid()
                 );
                 grpcGameTransactionClient.saveDeCoderGameTransaction(refundRequest);
                 log.info("Refund successful for user {}", user.username());
@@ -162,7 +150,7 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
                 log.error("CRITICAL: Failed to refund user {} after game error!", user.username(), refundEx);
             }
 
-            handleGameException(user.guid(), roomId, e);
+            throw e;
         }
     }
 
@@ -194,33 +182,5 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
     private void handleGetGameState(UUID roomId, UserInternalResponse user) {
         roomManager.sendGameState(user, roomId);
-    }
-
-    private void handleGameException(UUID userId, UUID roomId, Exception e) {
-        String errorMessage = "Unexpected game error";
-
-        if (e instanceof RuntimeException && e.getMessage() != null) {
-            if (e.getMessage().startsWith("COOLDOWN:")) {
-                String seconds = e.getMessage().split(":")[1];
-                errorMessage = "Too fast! Please wait " + seconds + " seconds.";
-            } else if (e.getMessage().startsWith("Game Error:")) {
-                errorMessage = e.getMessage().replace("Game Error: ", "");
-            }
-        } else {
-            log.error("Error in game flow for room {}", roomId, e);
-        }
-
-        ClientSession session = sessionManager.getByGuid(userId);
-        if (session != null) {
-            DeCoderGameMessage errorMsg = DeCoderGameMessage.builder()
-                    .type(MessageType.SYSTEM)
-                    .event(DeCoderGameEvent.ERROR)
-                    .roomId(roomId)
-                    .toUserId(userId)
-                    .message(errorMessage)
-                    .build();
-
-            sessionManager.sendToSession(session, errorMsg);
-        }
     }
 }

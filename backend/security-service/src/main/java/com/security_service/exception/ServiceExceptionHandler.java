@@ -6,7 +6,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -21,5 +23,19 @@ public class ServiceExceptionHandler {
     public ErrorResponse handleExpiredCredentials(CredentialsExpiredException e, HttpServletRequest request) {
         log.warn("Credentials expired: {}", e.getMessage());
         return ErrorResponse.of(ErrorCode.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, e.getMessage(), null, request.getRequestURI());
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBadCredentials(BadCredentialsException e, HttpServletRequest request) {
+        log.warn("Bad credentials: {}", e.getMessage());
+        return ErrorResponse.of(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, e.getMessage(), null, request.getRequestURI());
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleUsernameNotFound(UsernameNotFoundException e, HttpServletRequest request) {
+        log.warn("User not found: {}", e.getMessage());
+        return ErrorResponse.of(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, e.getMessage(), null, request.getRequestURI());
     }
 }

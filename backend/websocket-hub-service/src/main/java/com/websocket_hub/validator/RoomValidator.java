@@ -1,6 +1,6 @@
 package com.websocket_hub.validator;
 
-import com.websocket_hub.domain.dto.RoomRequest;
+import com.websocket_hub.domain.dto.request.RoomRequest;
 import com.websocket_hub.domain.entity.RoomMetadata;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

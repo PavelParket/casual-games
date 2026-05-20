@@ -7,8 +7,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://${USER_POSTGRES_HOST:localhost}:${USER_POSTGRES_PORT:5432}/${USER_POSTGRES_DB:diploma}?currentSchema=${USER_DB_DEFAULT_SCHEMA:user_service}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    username: ${USER_POSTGRES_USERNAME:postgres}
+    password: ${USER_POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   liquibase:

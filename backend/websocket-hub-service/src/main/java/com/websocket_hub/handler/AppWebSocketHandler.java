@@ -2,8 +2,13 @@ package com.websocket_hub.handler;
 
 import com.websocket_hub.domain.context.WebSocketContext;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
+import com.websocket_hub.domain.entity.ClientSession;
+import com.websocket_hub.domain.enums.MessageType;
+import com.websocket_hub.domain.enums.events.SystemEvent;
 import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.manager.SessionManager;
+import com.websocket_hub.mapper.DefaultMessageMapper;
+import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.util.WebSocketUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +29,11 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
     protected final T roomManager;
 
-    protected WebSocketErrorHandler errorHandler;
+    protected final WebSocketErrorHandler errorHandler;
+
+    protected final MessageDeserializer messageDeserializer;
+
+    private final DefaultMessageMapper defaultMessageMapper;
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
@@ -51,18 +60,23 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
 
     @Override
     public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) throws Exception {
-        try {
-            UserInternalResponse user = WebSocketUtil.getUser(session);
-            UUID roomId = WebSocketUtil.getRoomId(session);
+        UserInternalResponse user = WebSocketUtil.getUser(session);
+        UUID roomId = WebSocketUtil.getRoomId(session);
 
+        try {
             roomManager.removeSession(roomId, user, session);
             sessionManager.removeIfCurrent(user.guid(), session);
 
             onLeave(roomId, user);
 
             log.info("Connection closed: userId={}, roomId={}, status={}", user.guid(), roomId, status);
+
         } catch (Exception e) {
-            log.warn("Error during connection cleanup for session {}: {}", session.getId(), e.getMessage());
+            log.warn("Error during connection cleanup: sessionId={}, userId={}, roomId={}, error={}",
+                    session.getId(),
+                    user != null ? user.guid() : "unknown",
+                    roomId != null ? roomId : "unknown",
+                    e.getMessage());
         }
     }
 
@@ -77,6 +91,12 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
             roomId = WebSocketUtil.getRoomId(session);
             connectedAt = WebSocketUtil.getConnectedAt(session);
 
+            if (isPing(message)) {
+                sendPong(user, roomId);
+
+                return;
+            }
+
             handleMessage(session, message);
 
         } catch (Exception e) {
@@ -89,4 +109,28 @@ public abstract class AppWebSocketHandler<T extends AbstractRoomManager> extends
     protected abstract void onJoin(UUID roomId, UserInternalResponse user);
 
     protected abstract void onLeave(UUID roomId, UserInternalResponse user);
+
+    private boolean isPing(TextMessage message) {
+        return SystemEvent.PING.name().equals(messageDeserializer.deserializeEvent(message.getPayload()));
+    }
+
+    private void sendPong(UserInternalResponse user, UUID roomId) {
+        ClientSession client = sessionManager.getByGuid(user.guid());
+
+        if (client == null) {
+            return;
+        }
+
+        sessionManager.sendToSession(
+                client,
+                defaultMessageMapper.toResponse(
+                        MessageType.SYSTEM,
+                        SystemEvent.PONG,
+                        null,
+                        user.guid(),
+                        roomId,
+                        null
+                )
+        );
+    }
 }
