@@ -56,6 +56,12 @@ grpc:
       enable-keep-alive: true
       keep-alive-time: 30s
       keep-alive-timeout: 5s
+    bank-service: # новое
+      address: static://localhost:7094
+      negotiation-type: plaintext
+      enable-keep-alive: true
+      keep-alive-time: 30s
+      keep-alive-timeout: 5s
     client-custom:
       timeout-seconds: 30
       retry:
@@ -71,9 +77,8 @@ kafka:
   transactional-outbox:
     enabled: true
 
-app:
-  security-service:
-    url: http://localhost:8080
+cron:
+  update-user-subscriptions: ${CRON_UPDATE_USER_SUBSCRIPTIONS:0 0 2 * * *}
 
 logging:
   level:
