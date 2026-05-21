@@ -40,35 +40,30 @@ public class Transaction {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false)
     private UUID userGuid;
 
-    @Column(nullable = false)
     private UUID roomId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private RoomType roomType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private TransactionType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private TransactionStatus status;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(precision = 19, scale = 2)
     private BigDecimal amount;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(precision = 19, scale = 2)
     private BigDecimal balanceBefore;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(precision = 19, scale = 2)
     private BigDecimal balanceAfter;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(updatable = false)
     private Instant createdAt;
 
     @Version
