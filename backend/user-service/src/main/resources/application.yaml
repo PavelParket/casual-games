@@ -56,12 +56,6 @@ grpc:
       enable-keep-alive: true
       keep-alive-time: 30s
       keep-alive-timeout: 5s
-    bank-service: # новое
-      address: static://localhost:7094
-      negotiation-type: plaintext
-      enable-keep-alive: true
-      keep-alive-time: 30s
-      keep-alive-timeout: 5s
     client-custom:
       timeout-seconds: 30
       retry:
@@ -74,6 +68,7 @@ kafka:
   bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   topics:
     user: ${KAFKA_USER_TOPIC:user}
+    update-subscription: ${KAFKA_UPDATE_SUBSCRIPTION_TOPIC:update-subscription}
   transactional-outbox:
     enabled: true
 

@@ -33,6 +33,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = """
             SELECT *
             FROM users
+            WHERE guid = :guid
+            FOR UPDATE
+            """, nativeQuery = true)
+    Optional<User> findByGuidForUpdate(UUID guid);
+
+    @Query(value = """
+            SELECT *
+            FROM users
             WHERE (:username IS NULL OR username ILIKE CONCAT('%', :username, '%'))
             AND (:status IS NULL OR status = :status)
             """, nativeQuery = true)

@@ -35,37 +35,4 @@ public class SubscriptionTransactionService {
 
         transactionRepository.save(transaction);
     }
-
-    /*private final SubscriptionTransactionFactory subscriptionTransactionFactory;
-
-    private final TransactionLifecycleService transactionLifecycleService;
-
-    private final GrpcUserTransactionClient grpcUserTransactionClient;
-
-    @Transactional
-    public Transaction processSubscription(SubscriptionTransactionRequest request) {
-        log.info("Subscription charge: userGuid={}, amount={}, type={}", request.getUserGuid(), request.getAmount(), request.getType());
-
-        BigDecimal balanceBefore = transactionRepository
-                .findFirstByUserGuidAndStatusOrderByCreatedAtDesc(UUID.fromString(request.getUserGuid()), TransactionStatus.SUCCESS.name())
-                .map(Transaction::getBalanceAfter)
-                .orElse(BigDecimal.ZERO);
-
-        Transaction transaction = subscriptionTransactionFactory.createSubscriptionTransaction(request, balanceBefore);
-
-        List<Transaction> transactions = transactionLifecycleService.pending(List.of(transaction));
-
-        try {
-            grpcUserTransactionClient.sendUpdates(List.of(subscriptionTransactionFactory.createSubtractionTransaction(transactions.getFirst())));
-            transactionLifecycleService.success(transactions);
-
-            return transactions.getFirst();
-        } catch (Exception e) {
-            log.error("Subscription charge failed for user: {}. Moving to REJECTED.", request.getUserGuid());
-
-            transactionLifecycleService.rejectSafely(transactions);
-
-            throw e;
-        }
-    }*/
 }
