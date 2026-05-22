@@ -1,3 +1,20 @@
+export type UserStatus = "DEFAULT" | "PRO" | "VIP";
+
+export interface SubscriptionRequest {
+    status: UserStatus;
+}
+
+export interface SubscriptionResponse {
+    status: UserStatus;
+    startedAt: string;
+    expiresAt: string;
+    autoRenew: boolean;
+    newStatus?: UserStatus;
+    statusChangeAt?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface UserGameHistory {
     game: string;
     result: "Win" | "Loss" | "Draw";

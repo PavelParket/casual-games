@@ -1,19 +1,25 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { AxiosError } from "axios";
 import { UserAPI } from "../../api/UserApi";
-import type { UpdateUserRequest, User } from "../../models/User";
+import type { UpdateUserRequest, User, SubscriptionRequest, SubscriptionResponse } from "../../models/User";
 import { deposit } from './BankSlice';
 
 export interface UserState {
     user?: User;
+    subscription?: SubscriptionResponse;
     isLoading: boolean;
+    isLoadingSubscription: boolean;
+    isPurchasing: boolean;
     error?: string;
     isLoadingPlayersMiniProfiles: Record<string, boolean>;
 }
 
 const initialState: UserState = {
     user: undefined,
+    subscription: undefined,
     isLoading: false,
+    isLoadingSubscription: false,
+    isPurchasing: false,
     error: undefined,
     isLoadingPlayersMiniProfiles: {},
 };
@@ -73,6 +79,32 @@ export const getBalance = createAsyncThunk<number, string, { rejectValue: string
     }
 );
 
+export const getCurrentSubscription = createAsyncThunk<SubscriptionResponse, void, { rejectValue: string }>(
+    "user/getSubscription",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await UserAPI.getSubscription();
+            return response.data;
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message?: string }>;
+            return rejectWithValue(error.response?.data?.message ?? "Failed to fetch subscription");
+        }
+    }
+);
+
+export const purchase = createAsyncThunk<SubscriptionResponse, SubscriptionRequest, { rejectValue: string }>(
+    "user/purchaseSubscription",
+    async (requestData, { rejectWithValue }) => {
+        try {
+            const response = await UserAPI.purchase(requestData);
+            return response.data;
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message?: string }>;
+            return rejectWithValue(error.response?.data?.message ?? "Failed to purchase subscription");
+        }
+    }
+);
+
 // ------------------ Slice ------------------
 
 const userSlice = createSlice({
@@ -81,8 +113,11 @@ const userSlice = createSlice({
     reducers: {
         clearUser: (state) => {
             state.user = undefined;
+            state.subscription = undefined;
             state.error = undefined;
             state.isLoading = false;
+            state.isLoadingSubscription = false;
+            state.isPurchasing = false;
         },
     },
     extraReducers: (builder) => {
@@ -120,6 +155,39 @@ const userSlice = createSlice({
                 if (state.user) {
                     state.user.balance = action.payload;
                 }
+            })
+
+            /* === Get Subscription === */
+            .addCase(getCurrentSubscription.pending, (state) => {
+                state.isLoadingSubscription = true;
+                state.error = undefined;
+            })
+            .addCase(getCurrentSubscription.fulfilled, (state, action) => {
+                state.isLoadingSubscription = false;
+                state.subscription = action.payload;
+                if (state.user) {
+                    state.user.status = action.payload.status;
+                }
+            })
+            .addCase(getCurrentSubscription.rejected, (state, action) => {
+                state.isLoadingSubscription = false;
+                state.error = action.payload ?? "Failed to fetch subscription";
+            })
+
+            /* === Purchase Subscription === */
+            .addCase(purchase.pending, (state) => {
+                state.isPurchasing = true;
+                state.error = undefined;
+            })
+            .addCase(purchase.fulfilled, (state, action) => {
+                state.isPurchasing = false;
+                if (state.user) {
+                    state.user.status = action.payload.status;
+                }
+            })
+            .addCase(purchase.rejected, (state, action) => {
+                state.isPurchasing = false;
+                state.error = action.payload ?? "Purchase failed";
             })
 
             /* === Deposit === */

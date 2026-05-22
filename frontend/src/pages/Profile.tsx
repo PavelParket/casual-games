@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
@@ -16,6 +17,7 @@ const getStatusIconName = (status: string): keyof typeof Icons.light => {
 
 export default function Profile() {
     const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
 
     const { user, isLoading } = useSelector((state: RootState) => state.user);
     const authUser = useSelector((state: RootState) => state.auth.user);
@@ -34,13 +36,11 @@ export default function Profile() {
     const [isAvatarHovered, setIsAvatarHovered] = useState(false);
 
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
-    const [achievementsModalOpen, setAchievementsModalOpen] = useState(false);
 
     const [depositModalOpen, setDepositModalOpen] = useState(false);
     const [depositAmount, setDepositAmount] = useState("");
 
     const [loadingAvatar, setLoadingAvatar] = useState(false);
-    const [loadingAchievements, setLoadingAchievements] = useState(false);
     const [loadingHistory, setLoadingHistory] = useState(false);
 
     useEffect(() => {
@@ -153,7 +153,6 @@ export default function Profile() {
     const email = user?.email || "";
     const balance = user?.balance ?? 0;
     const status = user?.status || "default";
-    const achievements = user?.achievements || [];
     const history = user?.history || [];
 
     const formattedDate = user?.createdAt
@@ -256,7 +255,7 @@ export default function Profile() {
                             {isLoading ? (
                                 <Skeleton variant="rectangular" width="100%" height={38} />
                             ) : (
-                                <Button variant="solid" style={{ width: "100%" }}>
+                                <Button variant="solid" style={{ width: "100%" }} onClick={() => navigate('/upgrade')}>
                                     Upgrade
                                 </Button>
                             )}
@@ -266,7 +265,7 @@ export default function Profile() {
                                     <Skeleton variant="text" width={80} height={16} />
                                 ) : (
                                     <Typography variant="caption" style={{ opacity: 0.6 }}>
-                                        Date: {formattedDate}
+                                        Registered on: {formattedDate}
                                     </Typography>
                                 )}
                             </Box>
@@ -415,61 +414,6 @@ export default function Profile() {
 
                             {activeTab === 'default' && (
                                 <>
-                                    <Box style={infoBlockStyle}>
-                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                                            <Typography variant="h3">Achievements</Typography>
-                                            <Button
-                                                variant="ghost"
-                                                onClick={() => setAchievementsModalOpen(true)}
-                                                disabled={!achievements || achievements.length === 0}
-                                                style={{ fontSize: "0.8rem" }}
-                                            >
-                                                See All
-                                            </Button>
-                                        </Box>
-
-
-                                        {loadingAchievements ? (
-                                            <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                                                <Skeleton variant="rectangular" height={30} />
-                                                <Skeleton variant="rectangular" height={30} />
-                                                <Skeleton variant="rectangular" height={30} />
-                                            </Box>
-                                        ) : (
-                                            achievements.length > 0 ? (
-                                                <Box style={{
-                                                    display: "flex",
-                                                    gap: "10px",
-                                                    flexWrap: "wrap",
-                                                    overflow: "hidden",
-                                                    maxHeight: "130px"
-                                                }}>
-                                                    {achievements.slice(0, 5).map((ach, i) => (
-                                                        <Box key={i} style={{
-                                                            padding: "5px 12px",
-                                                            background: "var(--color-primary)",
-                                                            color: "var(--on-primary)",
-                                                            borderRadius: "20px",
-                                                            fontSize: "0.9rem",
-                                                            fontWeight: 500
-                                                        }}>
-                                                            {ach}
-                                                        </Box>
-                                                    ))}
-                                                    {achievements.length > 5 && (
-                                                        <Box style={{ padding: "5px 10px", fontSize: "0.9rem", opacity: 0.7, alignSelf: "center" }}>
-                                                            +{achievements.length - 5} more...
-                                                        </Box>
-                                                    )}
-                                                </Box>
-                                            ) : (
-                                                <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
-                                                    No achievements yet. Go play some games!
-                                                </Typography>
-                                            )
-                                        )}
-                                    </Box>
-
                                     <Box style={infoBlockStyle}>
                                         <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
                                             <Typography variant="h3">Game History</Typography>
@@ -732,16 +676,6 @@ export default function Profile() {
                 />
             )
             }
-
-            <Modal isOpen={achievementsModalOpen} onClose={() => setAchievementsModalOpen(false)} title="All Achievements">
-                <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap", padding: "1rem 0" }}>
-                    {achievements.map((ach, i) => (
-                        <Box key={i} style={{ padding: "8px 16px", background: "var(--color-primary)", color: "var(--on-primary)", borderRadius: "20px", fontSize: "1rem", boxShadow: "var(--shadow-sm)" }}>
-                            {ach}
-                        </Box>
-                    ))}
-                </Box>
-            </Modal>
 
             <Modal isOpen={historyModalOpen} onClose={() => setHistoryModalOpen(false)} title="Match History">
                 <Stack gap="0.8rem" style={{ padding: "0.5rem 0" }}>

@@ -21,75 +21,77 @@ import TicTacToeRoomShell from './pages/rooms/shell/TicTacToeRoomShell'
 import HorseRaceRoomShell from './pages/rooms/shell/HorseRaceRoomShell'
 import DeCoderRoomShell from './pages/rooms/shell/DeCoderRoomShell'
 import DurakRoomShell from './pages/rooms/shell/DurakRoomShell'
+import UpgradeStatus from './pages/UpgradeStatus'
 
 export default function App() {
-  const dispatch = useDispatch<AppDispatch>();
-  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+    const dispatch = useDispatch<AppDispatch>();
+    const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
-  useScrollbarVisibility();
+    useScrollbarVisibility();
 
-  useEffect(() => {
-    // todo: Переделать обновление токена и его прокид при вебсокетном подключении
-    /* setOnRefreshRequired(() => {
-         dispatch(refresh());
-      }); */
+    useEffect(() => {
+        // todo: Переделать обновление токена и его прокид при вебсокетном подключении
+        /* setOnRefreshRequired(() => {
+             dispatch(refresh());
+          }); */
 
-    const initialize = async () => {
-      try {
-        await dispatch(refresh()).unwrap();
-      } catch (error) {
-        console.debug("Auth initialization failed:", error);
-      }
+        const initialize = async () => {
+            try {
+                await dispatch(refresh()).unwrap();
+            } catch (error) {
+                console.debug("Auth initialization failed:", error);
+            }
 
-      setIsInitialized(true);
-    };
+            setIsInitialized(true);
+        };
 
-    initialize();
-  }, [dispatch]);
+        initialize();
+    }, [dispatch]);
 
-  return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <SystemToastProvider>
-          {!isInitialized ? (
-            <Routes>
-              <Route element={<Layout centered />}>
-                <Route path="*" element={<LoadingPage />} />
-              </Route>
-            </Routes>
-          ) : (
-            <Routes>
-              {/* Public Routes */}
-              <Route element={<Layout />}>
-                <Route path="/" element={<Home />} />
-              </Route>
+    return (
+        <BrowserRouter>
+            <ThemeProvider>
+                <SystemToastProvider>
+                    {!isInitialized ? (
+                        <Routes>
+                            <Route element={<Layout centered />}>
+                                <Route path="*" element={<LoadingPage />} />
+                            </Route>
+                        </Routes>
+                    ) : (
+                        <Routes>
+                            {/* Public Routes */}
+                            <Route element={<Layout />}>
+                                <Route path="/" element={<Home />} />
+                            </Route>
 
-              {/* ===== Experiment Room ===== */}
-              <Route path="/ws" element={<ExperimentalPage />} />
+                            {/* ===== Experiment Room ===== */}
+                            <Route path="/ws" element={<ExperimentalPage />} />
 
-              {/* Protected Routes */}
-              <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>
-                <Route element={<Layout />}>
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/rooms" element={<Rooms />} />
-                  <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoomShell />} />
-                  <Route path="/room/horse-race/:roomName/:roomId" element={<HorseRaceRoomShell />} />
-                  <Route path="/room/de-coder/:roomName/:roomId" element={<DeCoderRoomShell />} />
-                  <Route path="/room/durak/:roomName/:roomId" element={<DurakRoomShell />} />
-                </Route>
-              </Route>
+                            {/* Protected Routes */}
+                            <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>
+                                <Route element={<Layout />}>
+                                    <Route path="/profile" element={<Profile />} />
+                                    <Route path="/upgrade" element={<UpgradeStatus />} />
+                                    <Route path="/rooms" element={<Rooms />} />
+                                    <Route path="/room/t-t-t/:roomName/:roomId" element={<TicTacToeRoomShell />} />
+                                    <Route path="/room/horse-race/:roomName/:roomId" element={<HorseRaceRoomShell />} />
+                                    <Route path="/room/de-coder/:roomName/:roomId" element={<DeCoderRoomShell />} />
+                                    <Route path="/room/durak/:roomName/:roomId" element={<DurakRoomShell />} />
+                                </Route>
+                            </Route>
 
-              {/* Auth and Error Routes*/}
-              <Route element={<Layout centered />}>
-                <Route path="/register" element={<Register />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/forbidden" element={<Forbidden />} />
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
-          )}
-        </SystemToastProvider>
-      </ThemeProvider>
-    </BrowserRouter>
-  );
+                            {/* Auth and Error Routes*/}
+                            <Route element={<Layout centered />}>
+                                <Route path="/register" element={<Register />} />
+                                <Route path="/login" element={<Login />} />
+                                <Route path="/forbidden" element={<Forbidden />} />
+                                <Route path="*" element={<NotFound />} />
+                            </Route>
+                        </Routes>
+                    )}
+                </SystemToastProvider>
+            </ThemeProvider>
+        </BrowserRouter>
+    );
 }
