@@ -61,6 +61,16 @@ grpc:
       max-attempts: 3
       delay-milliseconds: 1000
 
+kafka:
+  enabled: true
+  consumer-enabled: true
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  consumer-config:
+    "[group.id]": bank-service-update-subscription
+    "[auto.offset.reset]": earliest
+  topics:
+    update-subscription: ${KAFKA_UPDATE_SUBSCRIPTION_TOPIC:update-subscription}
+
 cron:
   create-transaction-summaries: ${CRON_CREATE_TRANSACTION_SUMMARIES:0 0 3 1 * *}
 
