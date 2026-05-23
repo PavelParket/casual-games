@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Icon, Img, useThemedIcon, Box } from "../ui"
 import { useDispatch, useSelector } from "react-redux";
@@ -10,6 +11,8 @@ export default function Header() {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
     const location = useLocation();
+
+    const [isRoomsHovered, setIsRoomsHovered] = useState(false);
 
     const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
 
@@ -25,9 +28,32 @@ export default function Header() {
     return (
         <AppBar
             left={(
-                <Link to="/" style={{ textDecoration: "none" }}>
-                    <Img src={logoImg} style={{ height: "50px" }} />
-                </Link>
+                <Box style={{ display: "flex", height: "60px", alignItems: "center" }}>
+                    <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", marginRight: "0.5rem" }}>
+                        <Img src={logoImg} style={{ height: "50px" }} />
+                    </Link>
+
+                    {isAuthenticated && (
+                        <Button
+                            variant="ghost"
+                            onClick={() => navigate("/rooms")}
+                            onMouseEnter={() => setIsRoomsHovered(true)}
+                            onMouseLeave={() => setIsRoomsHovered(false)}
+                            style={{
+                                height: "60px",
+                                borderRadius: 0,
+                                borderLeft: "none",
+                                boxShadow: "none",
+                                background: isRoomsHovered ? undefined : "rgba(0, 0, 0, 0.05)",
+                                padding: "0 1.25rem",
+                            }}
+                        >
+                            <Typography variant="body" style={{ fontWeight: 600, color: "inherit" }}>
+                                Rooms
+                            </Typography>
+                        </Button>
+                    )}
+                </Box>
             )}
             right={(
                 <>
@@ -62,8 +88,8 @@ export default function Header() {
                                 <MenuItem onClick={() => navigate("/profile")}>
                                     Profile
                                 </MenuItem>
-                                <MenuItem onClick={() => navigate("/settings")}>
-                                    Settings
+                                <MenuItem onClick={() => navigate("/rooms")}>
+                                    Rooms
                                 </MenuItem>
 
                                 <Box

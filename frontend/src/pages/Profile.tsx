@@ -2,14 +2,18 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
-import { findByGuid, update } from "../store/slices/UserSlice";
+import { findByGuid, update, getMatches } from "../store/slices/UserSlice";
 import { deposit, getByUserGuid } from "../store/slices/BankSlice";
 import type { Icons } from "../assets/icons";
-import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, Toast, FormField, Avatar } from "../ui";
+import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, Toast, FormField, Avatar, ComboBox } from "../ui";
 import { useThemedIcon } from "../ui";
 import { validateUsername } from "../utils/SecurityUtils";
 import { Skeleton } from "../ui/components/common/Skeleton";
-import { ROOM_TYPE_LABELS } from "../models/Room";
+import { ROOM_TYPE_LABELS, type RoomType } from "../models/Room";
+import { PageablePanel } from "../components/PageablePanel";
+import { HistoryItem } from "../components/HistoryItem";
+
+const AVAILABLE_ROOM_TYPES = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
 
 const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
@@ -19,9 +23,11 @@ export default function Profile() {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
 
-    const { user, isLoading } = useSelector((state: RootState) => state.user);
+    const { user, isLoading, gameHistory, isLoadingGameHistory, gameHistoryPage, gameHistoryTotalPages } =
+        useSelector((state: RootState) => state.user);
     const authUser = useSelector((state: RootState) => state.auth.user);
-    const { isDepositing, error: bankError, transactions, isLoadingTransactions, currentPage, totalPages } = useSelector((state: RootState) => state.bank);
+    const { isDepositing, error: bankError, transactions, isLoadingTransactions, currentPage, totalPages } =
+        useSelector((state: RootState) => state.bank);
 
     const { getIcon } = useThemedIcon();
 
@@ -30,7 +36,9 @@ export default function Profile() {
 
     const [validationError, setValidationError] = useState<string | null>(null);
     const [toast, setToast] = useState<{ text: string, type: "success" | "error" } | null>(null);
-    const [activeTab, setActiveTab] = useState<'default' | 'balanceHistory'>('default');
+    const [activeTab, setActiveTab] = useState<'games' | 'balanceHistory'>('games');
+
+    const [selectedGameType, setSelectedGameType] = useState<RoomType>('DURAK');
 
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isAvatarHovered, setIsAvatarHovered] = useState(false);
@@ -41,13 +49,14 @@ export default function Profile() {
     const [depositAmount, setDepositAmount] = useState("");
 
     const [loadingAvatar, setLoadingAvatar] = useState(false);
-    const [loadingHistory, setLoadingHistory] = useState(false);
+
+    const userGuid = authUser?.guid;
 
     useEffect(() => {
-        if (authUser?.guid) {
-            dispatch(findByGuid(authUser.guid));
+        if (userGuid) {
+            dispatch(findByGuid(userGuid));
         }
-    }, [dispatch, authUser?.guid]);
+    }, [dispatch, userGuid]);
 
     useEffect(() => {
         if (user?.username) {
@@ -55,10 +64,23 @@ export default function Profile() {
         }
     }, [user]);
 
+    useEffect(() => {
+        if (userGuid && activeTab === 'games') {
+            dispatch(getMatches({ guid: userGuid, filter: { gameType: selectedGameType }, size: 4 }));
+        }
+    }, [dispatch, userGuid, activeTab, selectedGameType]);
+
+    const handleGameHistoryPageChange = (newPage: number) => {
+        if (userGuid) {
+            dispatch(getMatches({ guid: userGuid, filter: { gameType: selectedGameType }, page: newPage, size: 4 }));
+        }
+    };
+
     const handleEditClick = () => {
         setValidationError(null);
         setIsEditingUsername(true);
     };
+
     const handleSaveUsername = async () => {
         const sanitizedUsername = validateUsername(tempUsername);
 
@@ -72,7 +94,7 @@ export default function Profile() {
             return;
         }
 
-        if (!authUser?.guid) {
+        if (!userGuid) {
             setToast({ text: "User not authenticated", type: "error" });
             return;
         }
@@ -128,7 +150,7 @@ export default function Profile() {
             return;
         }
 
-        if (!authUser?.guid) {
+        if (!userGuid) {
             setToast({ text: "User not identified", type: "error" });
             return;
         }
@@ -144,7 +166,7 @@ export default function Profile() {
     };
 
     const handlePageChange = (newPage: number) => {
-        if (authUser?.guid) {
+        if (userGuid) {
             dispatch(getByUserGuid({ guid: authUser.guid, page: newPage, size: 4 }));
         }
     };
@@ -159,8 +181,7 @@ export default function Profile() {
         ? new Date(user.createdAt).toLocaleDateString()
         : "Unknown";
 
-    const statusIconName = getStatusIconName(status);
-    const statusIconSrc = getIcon(statusIconName) || getIcon("defaultStatus");
+    const statusIconSrc = getIcon(getStatusIconName(status));
 
     const infoBlockStyle = {
         background: "var(--color-bg-glass)",
@@ -392,9 +413,9 @@ export default function Profile() {
                                                     variant={activeTab === 'balanceHistory' ? "solid" : "outline"}
                                                     onClick={() => {
                                                         if (activeTab === 'balanceHistory') {
-                                                            setActiveTab('default');
+                                                            setActiveTab('games');
                                                         } else {
-                                                            if (authUser?.guid) {
+                                                            if (userGuid) {
                                                                 dispatch(getByUserGuid({ guid: authUser.guid, size: 4 }));
                                                             }
                                                             setActiveTab('balanceHistory');
@@ -412,262 +433,59 @@ export default function Profile() {
                                 </Stack>
                             </Box>
 
-                            {activeTab === 'default' && (
-                                <>
-                                    <Box style={infoBlockStyle}>
-                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                                            <Typography variant="h3">Game History</Typography>
-                                            <Button
-                                                variant="ghost"
-                                                onClick={() => setHistoryModalOpen(true)}
-                                                disabled={history.length === 0}
-                                                style={{ fontSize: "0.8rem" }}
-                                            >
-                                                See All
-                                            </Button>
-                                        </Box>
-
-                                        {loadingHistory ? (
-                                            <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                                                <Skeleton variant="rectangular" height={30} />
-                                                <Skeleton variant="rectangular" height={30} />
-                                                <Skeleton variant="rectangular" height={30} />
-                                            </Box>
-                                        ) : (
-                                            history.length > 0 ? (
-                                                <Stack gap="0.5rem">
-                                                    {history.slice(0, 3).map((item, i) => (
-                                                        <Box key={i} style={{
-                                                            display: "flex",
-                                                            justifyContent: "space-between",
-                                                            borderBottom: i === 2 ? "none" : "1px solid var(--color-border)",
-                                                            paddingBottom: "10px",
-                                                            paddingTop: i === 0 ? "0" : "5px"
-                                                        }}>
-                                                            <Box>
-                                                                <Typography variant="body" style={{ fontWeight: 500 }}>{item.game}</Typography>
-                                                                <Typography variant="caption">{new Date(item.date).toLocaleDateString()}</Typography>
-                                                            </Box>
-                                                            <Typography variant="body" style={{
-                                                                fontWeight: "bold",
-                                                                color: item.result === "Win" ? "green" : item.result === "Loss" ? "red" : "gray"
-                                                            }}>
-                                                                {item.result}
-                                                            </Typography>
-                                                        </Box>
-                                                    ))}
-                                                </Stack>
-                                            ) : (
-                                                <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
-                                                    No match history available.
-                                                </Typography>
-                                            )
-                                        )}
-                                    </Box>
-                                </>
+                            {activeTab === 'games' ? (
+                                <PageablePanel
+                                    title="Game History"
+                                    isLoading={isLoadingGameHistory}
+                                    isEmpty={!gameHistory || gameHistory.length === 0}
+                                    currentPage={gameHistoryPage}
+                                    totalPages={gameHistoryTotalPages}
+                                    onPageChange={handleGameHistoryPageChange}
+                                    headerActions={
+                                        <>
+                                            <ComboBox options={AVAILABLE_ROOM_TYPES.map(t => ({ value: t, label: ROOM_TYPE_LABELS[t] }))} value={selectedGameType} onValueChange={(val) => setSelectedGameType(val as RoomType)} style={{ width: '170px' }} />
+                                            <Button variant="ghost" onClick={() => dispatch(getMatches({ guid: userGuid!, filter: { gameType: selectedGameType } }))}><Icon src={getIcon("refresh")} size={16} /></Button>
+                                        </>
+                                    }
+                                >
+                                    {gameHistory.map(m => (
+                                        <HistoryItem
+                                            key={m.id}
+                                            variant={m.winnerId === userGuid ? 'income' : !m.winnerId ? 'neutral' : 'expense'}
+                                            iconText={m.winnerId === userGuid ? '+' : !m.winnerId ? '=' : '-'}
+                                            title={ROOM_TYPE_LABELS[m.gameType]}
+                                            date={`${new Date(m.createdAt).toLocaleDateString()} • ${new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                            rightText={m.winnerId === userGuid ? 'Victory' : !m.winnerId ? 'Draw' : 'Defeat'}
+                                        />
+                                    ))}
+                                </PageablePanel>
+                            ) : (
+                                <PageablePanel
+                                    title="Balance History"
+                                    isLoading={isLoadingTransactions}
+                                    isEmpty={!transactions || transactions.length === 0}
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={handlePageChange}
+                                    headerActions={<Button variant="ghost" onClick={() => dispatch(getByUserGuid({ guid: userGuid! }))}><Icon src={getIcon("refresh")} size={16} /></Button>}
+                                >
+                                    {transactions.map(t => (
+                                        <HistoryItem
+                                            key={t.id}
+                                            variant={t.type === 'ADDITION' ? 'income' : 'expense'}
+                                            iconText={t.type === 'ADDITION' ? '+' : '-'}
+                                            title={t.roomType ? ROOM_TYPE_LABELS[t.roomType] : 'Deposit'}
+                                            date={`${t.createdAtDate} • ${t.createdAtTime.substring(0, 5)} UTC`}
+                                            rightText={String(t.amount)}
+                                            rightSubText={`${t.balanceBefore} → ${t.balanceAfter}`}
+                                        />
+                                    ))}
+                                </PageablePanel>
                             )}
-                            {activeTab === 'balanceHistory' && (
-                                <Box style={{
-                                    ...infoBlockStyle,
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    maxHeight: "360px"
-                                }}>
-                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                                        <Typography variant="h3">Balance History</Typography>
-                                        <Button
-                                            variant="ghost"
-                                            onClick={() => {
-                                                if (authUser?.guid) {
-                                                    dispatch(getByUserGuid({ guid: authUser.guid, size: 4 }));
-                                                }
-                                            }}
-                                            disabled={isLoadingTransactions}
-                                            style={{ fontSize: "0.8rem", padding: "7px" }}
-                                        >
-                                            {isLoadingTransactions ? 'Updating...' : <Icon src={getIcon("refresh")} alt="refresh" size={16} />}
-                                        </Button>
-                                    </Box>
-
-                                    <Box style={{
-                                        flex: 1,
-                                        overflowY: "auto",
-                                        paddingRight: "12px",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: "0.5rem"
-                                    }}>
-                                        {isLoadingTransactions ? (
-                                            <Box style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                                                <Skeleton variant="rectangular" height={45} />
-                                                <Skeleton variant="rectangular" height={45} />
-                                                <Skeleton variant="rectangular" height={45} />
-                                            </Box>
-                                        ) : transactions && transactions.length > 0 ? (
-                                            transactions.map(transaction => {
-                                                const typeTransaction = transaction.type === 'ADDITION' ? 'income' : 'expense';
-                                                const sign = typeTransaction === 'income' ? '+' : '-';
-                                                const roomName = transaction.roomType ? (ROOM_TYPE_LABELS[transaction.roomType] || transaction.roomType) : 'Deposit';
-                                                const time = transaction.createdAtTime ? transaction.createdAtTime.substring(0, 5) : '';
-
-                                                return (
-                                                    <Box key={transaction.id} style={{
-                                                        padding: "8px 12px",
-                                                        display: "grid",
-                                                        gridTemplateColumns: "32px 1fr auto 90px",
-                                                        gap: "12px",
-                                                        alignItems: "center",
-                                                        background: `var(--color-${typeTransaction}-bg)`,
-                                                        border: `1px solid var(--color-${typeTransaction}-border)`,
-                                                        borderRadius: "var(--radius-sm)",
-                                                        flexShrink: 0,
-                                                        transition: "transform 0.2s ease"
-                                                    }}>
-                                                        <Box style={{
-                                                            width: "32px",
-                                                            height: "32px",
-                                                            borderRadius: "50%",
-                                                            background: `var(--color-${typeTransaction}-icon-bg)`,
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            color: "#ffffff",
-                                                            fontWeight: "bold",
-                                                            fontSize: "1.2rem"
-                                                        }}>
-                                                            {sign}
-                                                        </Box>
-
-                                                        <Stack gap="2px" justify="center" style={{ overflow: "hidden" }}>
-                                                            <Typography
-                                                                variant="body"
-                                                                style={{
-                                                                    fontWeight: 600,
-                                                                    fontSize: "0.95rem",
-                                                                    whiteSpace: "nowrap",
-                                                                    overflow: "hidden",
-                                                                    textOverflow: "ellipsis"
-                                                                }}
-                                                            >
-                                                                {roomName}
-                                                            </Typography>
-                                                            <Typography variant="caption" style={{ opacity: 0.6, fontSize: "0.75rem" }}>
-                                                                {transaction.createdAtDate} • {time} UTC
-                                                            </Typography>
-                                                        </Stack>
-
-                                                        <Typography
-                                                            variant="body"
-                                                            style={{
-                                                                fontWeight: "100",
-                                                                color: `var(--color-${typeTransaction}-text)`,
-                                                                fontSize: "1.1rem",
-                                                                textAlign: "right",
-                                                                paddingRight: "4px"
-                                                            }}
-                                                        >
-                                                            {transaction.amount}
-                                                        </Typography>
-
-                                                        <Stack gap="0px" style={{ alignItems: "flex-start", minWidth: "90px" }}>
-                                                            <Stack direction="row" justify="space-between" style={{ width: "100%" }}>
-                                                                <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.7rem" }}>
-                                                                    Before:
-                                                                </Typography>
-                                                                <Typography variant="caption"
-                                                                    style={{
-                                                                        opacity: 0.8,
-                                                                        fontWeight: "500",
-                                                                        fontFamily: "monospace",
-                                                                        fontSize: "0.7rem"
-                                                                    }}
-                                                                >
-                                                                    {transaction.balanceBefore}
-                                                                </Typography>
-                                                            </Stack>
-
-                                                            <Stack direction="row" justify="space-between" style={{ width: "100%" }}>
-                                                                <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.7rem" }}>
-                                                                    After:
-                                                                </Typography>
-                                                                <Typography
-                                                                    variant="caption"
-                                                                    style={{
-                                                                        opacity: 0.8,
-                                                                        fontWeight: "500",
-                                                                        fontFamily: "monospace",
-                                                                        fontSize: "0.7rem"
-                                                                    }}
-                                                                >
-                                                                    {transaction.balanceAfter}
-                                                                </Typography>
-                                                            </Stack>
-                                                        </Stack>
-                                                    </Box>
-                                                );
-                                            })
-                                        ) : (
-                                            <Typography variant="body" style={{ textAlign: "center", opacity: 0.6, padding: "2rem 0" }}>
-                                                No transactions found.
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                    {totalPages > 1 && (
-                                        <Box style={{
-                                            marginTop: "1rem",
-                                            paddingTop: "0.5rem",
-                                            borderTop: "1px solid var(--color-border)",
-                                            display: "flex",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                            gap: "1rem"
-                                        }}>
-                                            <Button
-                                                variant="ghost"
-                                                disabled={currentPage === 0 || isLoadingTransactions}
-                                                onClick={() => handlePageChange(0)}
-                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
-                                            >
-                                                <Icon src={getIcon("doubleLeftArrow")} alt="to the first page" size={16} />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                disabled={currentPage === 0 || isLoadingTransactions}
-                                                onClick={() => handlePageChange(currentPage - 1)}
-                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
-                                            >
-                                                <Icon src={getIcon("leftArrow")} alt="prev page" size={16} />
-                                            </Button>
-
-                                            <Typography variant="caption" style={{ fontVariantNumeric: "tabular-nums" }}>
-                                                Page {currentPage + 1} of {totalPages}
-                                            </Typography>
-
-                                            <Button
-                                                variant="ghost"
-                                                disabled={currentPage >= totalPages - 1 || isLoadingTransactions}
-                                                onClick={() => handlePageChange(currentPage + 1)}
-                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
-                                            >
-                                                <Icon src={getIcon("rightArrow")} alt="next page" size={16} />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                disabled={currentPage >= totalPages - 1 || isLoadingTransactions}
-                                                onClick={() => handlePageChange(totalPages - 1)}
-                                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0.5rem" }}
-                                            >
-                                                <Icon src={getIcon("doubleRightArrow")} alt="to the last page" size={16} />
-                                            </Button>
-                                        </Box>
-                                    )}
-                                </Box>
-                            )}
-
                         </Stack>
                     </Grid>
-                </Card >
-            </Container >
+                </Card>
+            </Container>
 
             {toast && (
                 <Toast
