@@ -19,24 +19,24 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserSubscriptionController {
 
-    private final UserSubscriptionService subscriptionService;
+    private final UserSubscriptionService userSubscriptionService;
 
     // todo: delete!!!
     private final SubscriptionScheduler subscriptionScheduler;
 
     @PostMapping("/purchase")
     public SubscriptionResponse purchase(@Valid @RequestBody SubscriptionRequest request) {
-        return subscriptionService.purchase(request);
+        return userSubscriptionService.purchase(request);
     }
 
     @GetMapping
     public SubscriptionResponse get() {
-        return subscriptionService.get();
+        return userSubscriptionService.get();
     }
 
     @PatchMapping("/auto-renew")
     public SubscriptionResponse updateAutoRenew(@RequestParam Boolean enable) {
-        return subscriptionService.updateAutoRenew(enable);
+        return userSubscriptionService.updateAutoRenew(enable);
     }
 
     @PostMapping("/update-subscriptions")

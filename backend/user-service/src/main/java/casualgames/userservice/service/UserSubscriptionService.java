@@ -1,11 +1,13 @@
 package casualgames.userservice.service;
 
+import casualgames.userservice.dto.SubscriptionPlanResponse;
 import casualgames.userservice.dto.SubscriptionRequest;
 import casualgames.userservice.dto.SubscriptionResponse;
 import casualgames.userservice.entity.SubscriptionPlan;
 import casualgames.userservice.entity.User;
 import casualgames.userservice.entity.UserSubscription;
 import casualgames.userservice.mapper.SubscriptionMapper;
+import casualgames.userservice.mapper.SubscriptionPlanMapper;
 import casualgames.userservice.repository.SubscriptionPlanRepository;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.repository.UserSubscriptionRepository;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 
 import static casualgames.userservice.config.ResourceMessageConstants.BAD_REQUEST_NO_NECESSARY_BALANCE_AMOUNT;
@@ -48,6 +51,8 @@ public class UserSubscriptionService {
     private final UserSubscriptionRepository userSubscriptionRepository;
 
     private final SubscriptionMapper subscriptionMapper;
+
+    private final SubscriptionPlanMapper subscriptionPlanMapper;
 
     private final SubscriptionHelper subscriptionHelper;
 
@@ -258,5 +263,9 @@ public class UserSubscriptionService {
     @Transactional(readOnly = true)
     public Page<UserSubscription> findExpiringOrScheduled(Instant now, PageRequest pageRequest) {
         return userSubscriptionRepository.findExpiringOrScheduled(now, pageRequest);
+    }
+
+    public List<SubscriptionPlanResponse> getPlans() {
+        return subscriptionPlanMapper.toResponseList(subscriptionPlanRepository.findAll());
     }
 }
