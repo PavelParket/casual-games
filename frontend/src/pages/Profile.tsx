@@ -438,13 +438,21 @@ export default function Profile() {
                                     title="Game History"
                                     isLoading={isLoadingGameHistory}
                                     isEmpty={!gameHistory || gameHistory.length === 0}
+                                    emptyMessage={`No matches found for ${ROOM_TYPE_LABELS[selectedGameType]}. It's time to play!`}
                                     currentPage={gameHistoryPage}
                                     totalPages={gameHistoryTotalPages}
                                     onPageChange={handleGameHistoryPageChange}
                                     headerActions={
                                         <>
-                                            <ComboBox options={AVAILABLE_ROOM_TYPES.map(t => ({ value: t, label: ROOM_TYPE_LABELS[t] }))} value={selectedGameType} onValueChange={(val) => setSelectedGameType(val as RoomType)} style={{ width: '170px' }} />
-                                            <Button variant="ghost" onClick={() => dispatch(getMatches({ guid: userGuid!, filter: { gameType: selectedGameType } }))}><Icon src={getIcon("refresh")} size={16} /></Button>
+                                            <ComboBox
+                                                options={AVAILABLE_ROOM_TYPES.map(t => ({ value: t, label: ROOM_TYPE_LABELS[t] }))}
+                                                value={selectedGameType}
+                                                onValueChange={(val) => setSelectedGameType(val as RoomType)}
+                                                style={{ width: '190px' }}
+                                            />
+                                            <Button variant="ghost" onClick={() => dispatch(getMatches({ guid: userGuid!, filter: { gameType: selectedGameType } }))}>
+                                                <Icon src={getIcon("refresh")} size={16} />
+                                            </Button>
                                         </>
                                     }
                                 >
@@ -454,7 +462,7 @@ export default function Profile() {
                                             variant={m.winnerId === userGuid ? 'income' : !m.winnerId ? 'neutral' : 'expense'}
                                             iconText={m.winnerId === userGuid ? '+' : !m.winnerId ? '=' : '-'}
                                             title={ROOM_TYPE_LABELS[m.gameType]}
-                                            date={`${new Date(m.createdAt).toLocaleDateString()} • ${new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                            date={`${m.createdAt.substring(0, 10)} • ${m.createdAt.substring(11, 16)} UTC`}
                                             rightText={m.winnerId === userGuid ? 'Victory' : !m.winnerId ? 'Draw' : 'Defeat'}
                                         />
                                     ))}
@@ -464,10 +472,14 @@ export default function Profile() {
                                     title="Balance History"
                                     isLoading={isLoadingTransactions}
                                     isEmpty={!transactions || transactions.length === 0}
+                                    emptyMessage="No transactions found."
                                     currentPage={currentPage}
                                     totalPages={totalPages}
                                     onPageChange={handlePageChange}
-                                    headerActions={<Button variant="ghost" onClick={() => dispatch(getByUserGuid({ guid: userGuid! }))}><Icon src={getIcon("refresh")} size={16} /></Button>}
+                                    headerActions={
+                                        <Button variant="ghost" onClick={() => dispatch(getByUserGuid({ guid: userGuid! }))}>
+                                            <Icon src={getIcon("refresh")} size={16} />
+                                        </Button>}
                                 >
                                     {transactions.map(t => (
                                         <HistoryItem
@@ -477,7 +489,7 @@ export default function Profile() {
                                             title={t.roomType ? ROOM_TYPE_LABELS[t.roomType] : 'Deposit'}
                                             date={`${t.createdAtDate} • ${t.createdAtTime.substring(0, 5)} UTC`}
                                             rightText={String(t.amount)}
-                                            rightSubText={`${t.balanceBefore} → ${t.balanceAfter}`}
+                                            rightSubText={`Before: ${t.balanceBefore} \n After: ${t.balanceAfter}`}
                                         />
                                     ))}
                                 </PageablePanel>

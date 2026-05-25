@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import { Box, Typography, Stack, Divider, Button, Icon, useThemedIcon } from "../ui";
 import { Skeleton } from "../ui/components/common/Skeleton";
 
-
 interface PageablePanelProps {
     title: string;
     headerActions?: ReactNode;
     isLoading: boolean;
     isEmpty: boolean;
+    emptyMessage?: string | ReactNode;
     currentPage: number;
     totalPages: number;
     onPageChange: (page: number) => void;
@@ -19,6 +19,7 @@ export function PageablePanel({
     headerActions,
     isLoading,
     isEmpty,
+    emptyMessage = "No records found.",
     currentPage,
     totalPages,
     onPageChange,
@@ -58,9 +59,15 @@ export function PageablePanel({
                         <Skeleton variant="rectangular" height={45} count={4} />
                     </Box>
                 ) : isEmpty ? (
-                    <Typography variant="body" style={{ textAlign: "center", opacity: 0.6, padding: "2rem 0" }}>
-                        No records found.
-                    </Typography>
+                    typeof emptyMessage === "string" ? (
+                        <Typography variant="body" style={{ textAlign: "center", opacity: 0.6, padding: "2rem 0" }}>
+                            {emptyMessage}
+                        </Typography>
+                    ) : (
+                        <Box style={{ textAlign: "center", opacity: 0.6, padding: "2rem 0" }}>
+                            {emptyMessage}
+                        </Box>
+                    )
                 ) : (
                     children
                 )}
@@ -95,7 +102,7 @@ export function PageablePanel({
                 </Button>
 
                 <Typography variant="caption" style={{ fontVariantNumeric: "tabular-nums" }}>
-                    Page {totalPages === 0 ? 0 : currentPage + 1} of {totalPages}
+                    Page {totalPages === 0 ? 1 : currentPage + 1} of {totalPages || 1}
                 </Typography>
 
                 <Button

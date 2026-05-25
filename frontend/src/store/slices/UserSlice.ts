@@ -223,6 +223,9 @@ const userSlice = createSlice({
             .addCase(getMatches.pending, (state) => {
                 state.isLoadingGameHistory = true;
                 state.error = undefined;
+                state.gameHistory = [];
+                state.gameHistoryPage = 0;
+                state.gameHistoryTotalPages = 0;
             })
             .addCase(getMatches.fulfilled, (state, action) => {
                 state.isLoadingGameHistory = false;
@@ -233,6 +236,9 @@ const userSlice = createSlice({
             .addCase(getMatches.rejected, (state, action) => {
                 state.isLoadingGameHistory = false;
                 state.error = action.payload ?? "Failed to fetch game history";
+                state.gameHistory = [];
+                state.gameHistoryPage = 0;
+                state.gameHistoryTotalPages = 0;
             })
 
             /* === Deposit === */

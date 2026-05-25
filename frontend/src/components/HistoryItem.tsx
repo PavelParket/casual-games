@@ -53,7 +53,6 @@ export function HistoryItem({ variant, iconText, title, date, rightText, rightSu
 
             {rightSubText && (
                 <Stack gap="0px" style={{ alignItems: "flex-start", minWidth: "90px" }}>
-                    <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.65rem" }}>Balance info:</Typography>
                     <Typography variant="caption" style={{ opacity: 0.8, fontSize: "0.7rem", fontFamily: "monospace" }}>
                         {rightSubText}
                     </Typography>

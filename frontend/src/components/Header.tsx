@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Icon, Img, useThemedIcon, Box } from "../ui"
+import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Icon, Img, useThemedIcon, Box, useTheme } from "../ui"
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
 import { logout } from "../store/slices/AuthSlice";
-import logoImg from "../assets/images/logo.png";
+import logoDark from "../assets/images/logo-dark.png";
+import logoLight from "../assets/images/logo-light.png";
 
 export default function Header() {
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
     const location = useLocation();
+    const { theme } = useTheme();
 
     const [isRoomsHovered, setIsRoomsHovered] = useState(false);
 
@@ -30,28 +32,21 @@ export default function Header() {
             left={(
                 <Box style={{ display: "flex", height: "60px", alignItems: "center" }}>
                     <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", marginRight: "0.5rem" }}>
-                        <Img src={logoImg} style={{ height: "50px" }} />
+                        <Img src={theme === "dark" ? logoLight : logoDark} style={{ height: "50px" }} />
                     </Link>
 
                     {isAuthenticated && (
-                        <Button
-                            variant="ghost"
-                            onClick={() => navigate("/rooms")}
+                        <Link
+                            to="/rooms"
+                            className="link"
                             onMouseEnter={() => setIsRoomsHovered(true)}
                             onMouseLeave={() => setIsRoomsHovered(false)}
-                            style={{
-                                height: "60px",
-                                borderRadius: 0,
-                                borderLeft: "none",
-                                boxShadow: "none",
-                                background: isRoomsHovered ? undefined : "rgba(0, 0, 0, 0.05)",
-                                padding: "0 1.25rem",
-                            }}
+                            style={{ textDecoration: "none", margin: "1.5rem" }}
                         >
-                            <Typography variant="body" style={{ fontWeight: 600, color: "inherit" }}>
+                            <Typography variant="h3" style={{ color: isRoomsHovered ? "var(--color-text-hover)" : "inherit" }}>
                                 Rooms
                             </Typography>
-                        </Button>
+                        </Link>
                     )}
                 </Box>
             )}
