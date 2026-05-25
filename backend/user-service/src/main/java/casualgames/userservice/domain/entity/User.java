@@ -1,4 +1,4 @@
-package casualgames.userservice.entity;
+package casualgames.userservice.domain.entity;
 
 import com.security_starter.annotation.Permission;
 import com.security_starter.enums.Permissions;

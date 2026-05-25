@@ -1,6 +1,6 @@
 package casualgames.userservice.service.grpc;
 
-import casualgames.userservice.entity.User;
+import casualgames.userservice.domain.entity.User;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.validator.UserValidator;
 import com.casualgames.grpc.user.CreateUserRequest;

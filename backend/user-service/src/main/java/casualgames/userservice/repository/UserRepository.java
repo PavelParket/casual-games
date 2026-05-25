@@ -1,6 +1,6 @@
 package casualgames.userservice.repository;
 
-import casualgames.userservice.entity.User;
+import casualgames.userservice.domain.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

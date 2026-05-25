@@ -1,4 +1,4 @@
-package casualgames.userservice.dto;
+package casualgames.userservice.domain.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;

@@ -13,4 +13,7 @@ public class ResourceMessageConstants {
     public static final String REQUIRED_TRANSACTION_LIST = "Transaction list must not be empty";
     public static final String REQUIRED_PENDING_STATUS_FOR_TRANSACTIONS = "All transactions must have PENDING status";
     public static final String REQUIRED_POSITIVE_TRANSACTION_AMOUNTS = "All transaction amounts must be positive";
+    public static final String TOO_LARGE_UPLOADING_FILE = "File size exceeds the maximum allowed limit";
+    public static final String INVALID_FILE_TYPE = "Invalid file type";
+    public static final String UNSUPPORTED_FILE_TYPE = "Unsupported file type: %s. Allowed: %s";
 }

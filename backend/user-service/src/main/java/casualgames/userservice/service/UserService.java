@@ -1,9 +1,9 @@
 package casualgames.userservice.service;
 
-import casualgames.userservice.dto.UpdateUserRequest;
-import casualgames.userservice.dto.UserResponse;
-import casualgames.userservice.dto.UserSearchFilterRequest;
-import casualgames.userservice.entity.User;
+import casualgames.userservice.domain.dto.UpdateUserRequest;
+import casualgames.userservice.domain.dto.UserResponse;
+import casualgames.userservice.domain.dto.UserSearchFilterRequest;
+import casualgames.userservice.domain.entity.User;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.grpc.client.GrpcSecurityClient;

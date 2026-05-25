@@ -1,8 +1,8 @@
 package casualgames.userservice.controller;
 
-import casualgames.userservice.dto.UpdateUserRequest;
-import casualgames.userservice.dto.UserResponse;
-import casualgames.userservice.dto.UserSearchFilterRequest;
+import casualgames.userservice.domain.dto.UpdateUserRequest;
+import casualgames.userservice.domain.dto.UserResponse;
+import casualgames.userservice.domain.dto.UserSearchFilterRequest;
 import casualgames.userservice.service.UserService;
 import com.security_starter.enums.Role;
 import jakarta.validation.Valid;

@@ -5,6 +5,13 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 6MB
+      file-size-threshold: 5MB
+
   datasource:
     url: jdbc:postgresql://${USER_POSTGRES_HOST:localhost}:${USER_POSTGRES_PORT:5432}/${USER_POSTGRES_DB:diploma}?currentSchema=${USER_DB_DEFAULT_SCHEMA:user_service}
     username: ${USER_POSTGRES_USERNAME:postgres}
@@ -71,9 +78,33 @@ kafka:
   transactional-outbox:
     enabled: true
 
-app:
-  security-service:
-    url: http://localhost:8080
+aws:
+  s3:
+    enabled-s3-config: true
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9001}
+    region: ${MINIO_REGION:eu-north-1}
+    access-key-id: ${MINIO_ACCESS_KEY:super_admin}
+    secret-access-key: ${MINIO_SECRET_KEY:super_admin}
+
+attachments:
+  by-type:
+    PROFILE_PICTURE:
+      bucket: ${MINIO_PROFILE_PICTURE_BUCKET:user-profile-picture}
+      folder: ${MINIO_PROFILE_PICTURE_FOLDER:profile-pictures/}
+      public-base-url: ${MINIO_PUBLIC_BASE_URL:http://localhost:9001}
+      max-file-size: 5MB
+      max-dimension-px: 4096
+      cache-control: "public, max-age=31536000, immutable"
+      allowed-mime-types:
+        - image/jpeg
+        - image/png
+      variants:
+        full:
+          size: 256
+          quality: 0.85
+        mini:
+          size: 64
+          quality: 0.85
 
 logging:
   level:

@@ -5,6 +5,9 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+  codec:
+    max-in-memory-size: 6MB
+
   data:
     redis:
       enabled: ${REDIS_ENABLED:true}
