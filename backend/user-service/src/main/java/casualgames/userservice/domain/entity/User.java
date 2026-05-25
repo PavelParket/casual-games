@@ -63,6 +63,10 @@ public class User {
     @Permission(Permissions.STATUS)
     private Status status = Status.DEFAULT;
 
+    private String linkProfilePicture;
+
+    private String linkProfilePictureMini;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;

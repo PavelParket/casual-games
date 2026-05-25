@@ -16,4 +16,6 @@ public class ResourceMessageConstants {
     public static final String TOO_LARGE_UPLOADING_FILE = "File size exceeds the maximum allowed limit";
     public static final String INVALID_FILE_TYPE = "Invalid file type";
     public static final String UNSUPPORTED_FILE_TYPE = "Unsupported file type: %s. Allowed: %s";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_UPDATE_PROFILE_PICTURE = "You do not have permission to update profile picture";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_DELETE_PROFILE_PICTURE = "You do not have permission to delete profile picture";
 }

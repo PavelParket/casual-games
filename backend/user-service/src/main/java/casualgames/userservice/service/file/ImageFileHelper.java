@@ -1,4 +1,4 @@
-package casualgames.userservice.service.helper;
+package casualgames.userservice.service.file;
 
 import casualgames.userservice.exception.CorruptedImageException;
 import casualgames.userservice.exception.InvalidImageDimensionsException;
@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.geometry.Positions;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -15,10 +15,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class ImageFileHelper {
+
+    public static final String VARIANT_FULL = "full";
+    public static final String VARIANT_MINI = "mini";
+    public static final String CONTENT_TYPE_JPEG = "image/jpeg";
 
     private final static String JPG_FORMAT = "jpg";
     private final static String IMAGE_FORMAT_SUFFIX = ".jpg";

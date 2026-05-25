@@ -14,7 +14,7 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "attachments")
 public class AttachmentsProperties {
 
-    private Map<AttachmentType, AttachmentProperties> propertiesByType = new EnumMap<>(AttachmentType.class);
+    private Map<AttachmentType, AttachmentProperties> byType = new EnumMap<>(AttachmentType.class);
 
     @Data
     public static class AttachmentProperties {

@@ -5,7 +5,6 @@ import com.common_utils.enums.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.InvalidMimeTypeException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -17,10 +16,10 @@ import static casualgames.userservice.config.ResourceMessageConstants.TOO_LARGE_
 @Slf4j
 public class ServiceExceptionHandler {
 
-    @ExceptionHandler(InvalidMimeTypeException.class)
+    @ExceptionHandler(InvalidAttachmentTypeException.class)
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-    public ErrorResponse handleInvalidMimeType(InvalidMimeTypeException ex, HttpServletRequest request) {
-        log.warn("Invalid MIME type: {}", ex.getMessage());
+    public ErrorResponse handleInvalidAttachmentType(InvalidAttachmentTypeException ex, HttpServletRequest request) {
+        log.warn("Invalid attachment type: {}", ex.getMessage());
         return ErrorResponse.of(
                 ErrorCode.BAD_REQUEST,
                 HttpStatus.UNSUPPORTED_MEDIA_TYPE,

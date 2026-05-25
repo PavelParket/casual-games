@@ -37,5 +37,9 @@ public class UserResponse {
     @Permission(Permissions.STATUS)
     private Status status;
 
+    private String linkProfilePicture;
+
+    private String linkProfilePictureMini;
+
     private Instant createdAt;
 }

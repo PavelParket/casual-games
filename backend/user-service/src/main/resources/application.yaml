@@ -90,7 +90,7 @@ attachments:
   by-type:
     PROFILE_PICTURE:
       bucket: ${MINIO_PROFILE_PICTURE_BUCKET:user-profile-picture}
-      folder: ${MINIO_PROFILE_PICTURE_FOLDER:profile-pictures/}
+      folder: ${MINIO_PROFILE_PICTURE_FOLDER:user-profile-pictures/}
       public-base-url: ${MINIO_PUBLIC_BASE_URL:http://localhost:9001}
       max-file-size: 5MB
       max-dimension-px: 4096

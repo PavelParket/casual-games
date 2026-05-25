@@ -8,6 +8,7 @@ import com.security_starter.enums.Role;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -17,8 +18,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -65,5 +68,16 @@ public class UserController {
     @GetMapping("/balance/{guid}")
     public BigDecimal getBalance(@PathVariable UUID guid) {
         return userService.getBalance(guid);
+    }
+
+    @PostMapping(value = "/attachments/{guid}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public UserResponse uploadProfilePicture(@PathVariable UUID guid, @RequestPart("file") MultipartFile file) {
+        return userService.uploadImageFile(guid, file);
+    }
+
+    @DeleteMapping("/attachments/{guid}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteProfilePicture(@PathVariable UUID guid) {
+        userService.deleteImageFile(guid);
     }
 }
