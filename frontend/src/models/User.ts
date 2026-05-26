@@ -15,6 +15,13 @@ export interface SubscriptionResponse {
     updatedAt: string;
 }
 
+export interface SubscriptionPlanResponse {
+    id: number;
+    status: UserStatus;
+    price: number;
+    tier: number;
+}
+
 export interface UserGameHistory {
     game: string;
     result: "Win" | "Loss" | "Draw";

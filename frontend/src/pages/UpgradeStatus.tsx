@@ -4,40 +4,25 @@ import { useDispatch, useSelector } from "react-redux";
 import { Box, Container, Card, Typography, Button, Grid, Stack, Divider, Modal, Icon, Avatar, useThemedIcon, List, Accordion } from "../ui";
 import { Skeleton } from "../ui/components/common/Skeleton";
 import { useSystemToastContext } from "../providers/SystemToastContext";
-import { purchase, getBalance, getCurrentSubscription, findByGuid } from "../store/slices/UserSlice";
+import { purchase, getBalance, getCurrentSubscription, getSubscriptionPlans, findByGuid } from "../store/slices/UserSlice";
 import type { AppDispatch, RootState } from "../store/store";
 import type { SubscriptionResponse, UserStatus } from "../models/User";
 import type { Icons } from "../assets/icons";
 import { UPGRADE_FAQ } from "../models/constants/UpgradeFAQ";
 
-const STATUSES: { id: number; title: UserStatus; basePrice: number; features: string[] }[] = [
-    {
-        id: 0,
-        title: "DEFAULT",
-        basePrice: 0,
-        features: []
-    },
-    {
-        id: 1,
-        title: "PRO",
-        basePrice: 5000,
-        features: [
-            "Developer's approval",
-            "Respect in the school"
-        ]
-    },
-    {
-        id: 2,
-        title: "VIP",
-        basePrice: 10000,
-        features: [
-            "Increases your coolness by 20%",
-            "B. H. recommends",
-            "Developer's eternal gratitude",
-            "May (or may not) improve your luck"
-        ]
-    }
-];
+const PLAN_FEATURES: Record<string, string[]> = {
+    DEFAULT: [],
+    PRO: [
+        "Developer's approval",
+        "Respect in the school"
+    ],
+    VIP: [
+        "Increases your coolness by 20%",
+        "B. H. recommends",
+        "Developer's eternal gratitude",
+        "May (or may not) improve your luck"
+    ]
+};
 
 const P_MIN = 0.1;
 const P_MAX = 0.9;
@@ -85,10 +70,18 @@ export default function Upgrade() {
     const { getIcon } = useThemedIcon();
 
     const authUser = useSelector((state: RootState) => state.auth.user);
-    const { user, subscription, isPurchasing, isLoadingSubscription, isLoading } = useSelector((state: RootState) => state.user);
+    const {
+        user,
+        subscription,
+        subscriptionPlans,
+        isPurchasing,
+        isLoadingSubscription,
+        isLoadingPlans,
+        isLoading
+    } = useSelector((state: RootState) => state.user);
 
     const activeStatus = subscription?.status ?? user?.status;
-    const isDataReady = !!activeStatus && !isLoadingSubscription && !isLoading;
+    const isDataReady = !!activeStatus && subscriptionPlans.length > 0 && !isLoadingSubscription && !isLoadingPlans && !isLoading;
 
     const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
@@ -106,6 +99,7 @@ export default function Upgrade() {
 
     useEffect(() => {
         dispatch(getCurrentSubscription());
+        dispatch(getSubscriptionPlans());
     }, [dispatch]);
 
     useEffect(() => {
@@ -113,14 +107,6 @@ export default function Upgrade() {
             dispatch(findByGuid(authUser.guid));
         }
     }, [dispatch, authUser?.guid, user]);
-
-    const getPrice = (targetTitle: UserStatus) => {
-        if (targetTitle === "VIP") {
-            return calculateVipPrice(subscription);
-        }
-        const statusObj = STATUSES.find(s => s.title === targetTitle);
-        return statusObj ? statusObj.basePrice : 0;
-    };
 
     const handleOpenConfirm = (targetTitle: UserStatus, price: number, isDowngrade: boolean) => {
         setConfirmModal({ isOpen: true, statusTitle: targetTitle, price, isDowngrade });
@@ -150,6 +136,8 @@ export default function Upgrade() {
             setConfirmModal({ isOpen: false, statusTitle: null, price: 0, isDowngrade: false });
         }
     };
+
+    const sortedPlans = [...subscriptionPlans].sort((a, b) => a.tier - b.tier);
 
     return (
         <Box
@@ -181,24 +169,27 @@ export default function Upgrade() {
                     </Grid>
                 ) : (
                     <Grid columns="repeat(auto-fit, minmax(240px, 1fr))" gap="1.5rem">
-                        {STATUSES.map((status) => {
-                            const currentStatusObj = STATUSES.find(s => s.title === activeStatus);
+                        {sortedPlans.map((plan) => {
+                            const currentPlanObj = sortedPlans.find(p => p.status === activeStatus);
+                            if (!currentPlanObj) return null;
 
-                            if (!currentStatusObj) return null;
+                            const isCurrent = activeStatus === plan.status;
+                            const isScheduled = subscription?.newStatus === plan.status && !isCurrent;
+                            const isDowngrade = plan.tier < currentPlanObj.tier;
 
-                            const isCurrent = activeStatus === status.title;
-                            const isScheduled = subscription?.newStatus === status.title && !isCurrent;
-                            const isDowngrade = status.id < currentStatusObj.id;
+                            const displayPrice = plan.status === "VIP"
+                                ? calculateVipPrice(subscription)
+                                : plan.price;
 
-                            const price = getPrice(status.title);
-                            const statusIconSrc = getIcon(getStatusIconName(status.title));
+                            const statusIconSrc = getIcon(getStatusIconName(plan.status));
+                            const features = PLAN_FEATURES[plan.status] || [];
 
                             let buttonText = "Get";
                             let isButtonDisabled = isPurchasing;
 
                             if (isCurrent) {
                                 isButtonDisabled = true;
-                                if (subscription?.expiresAt && status.title !== "DEFAULT") {
+                                if (subscription?.expiresAt && plan.status !== "DEFAULT") {
                                     buttonText = `Active until ${new Date(subscription.expiresAt).toLocaleDateString()}`;
                                 } else {
                                     buttonText = "Current";
@@ -206,7 +197,7 @@ export default function Upgrade() {
                             } else if (isScheduled) {
                                 isButtonDisabled = true;
                                 if (subscription?.statusChangeAt) {
-                                    buttonText = `Activates after ${new Date(subscription.statusChangeAt).toLocaleDateString()}`;
+                                    buttonText = `Activates ${new Date(subscription.statusChangeAt).toLocaleDateString()}`;
                                 } else {
                                     buttonText = "Scheduled";
                                 }
@@ -214,11 +205,11 @@ export default function Upgrade() {
                                 buttonText = "Downgrade";
                             }
 
-                            const displayPriceText = status.basePrice === 0 ? "Free" : `${price} CG Coins`;
+                            const displayPriceText = displayPrice === 0 ? "Free" : `${displayPrice} CG Coins`;
 
                             return (
                                 <Card
-                                    key={status.id}
+                                    key={plan.id}
                                     style={{
                                         display: "flex",
                                         flexDirection: "column",
@@ -232,7 +223,7 @@ export default function Upgrade() {
                                     }}
                                 >
                                     <Typography variant="h3" style={{ textAlign: "center", marginBottom: "0.5rem", fontWeight: 700 }}>
-                                        {status.title}
+                                        {plan.status}
                                     </Typography>
 
                                     <Divider variant="middle" style={{ margin: "1rem 0" }} />
@@ -291,19 +282,19 @@ export default function Upgrade() {
                                                         justifyContent: "center",
                                                         flexShrink: 0
                                                     }}>
-                                                        <Icon src={statusIconSrc} alt={status.title} size={24} />
+                                                        <Icon src={statusIconSrc} alt={plan.status} size={24} />
                                                     </Box>
                                                     <Typography variant="caption" style={{ textTransform: "capitalize", fontWeight: 500, fontSize: "0.9rem" }}>
-                                                        {status.title}
+                                                        {plan.status}
                                                     </Typography>
                                                 </Box>
                                             </Box>
                                         </Box>
 
-                                        {status.features.length > 0 && (
+                                        {features.length > 0 && (
                                             <Box style={{ padding: "0 0.5rem" }}>
                                                 <List
-                                                    items={status.features.map((f, i) => (
+                                                    items={features.map((f, i) => (
                                                         <Typography key={i} variant="caption" style={{ fontSize: "0.85rem", opacity: 0.9 }}>
                                                             {f}
                                                         </Typography>
@@ -315,13 +306,13 @@ export default function Upgrade() {
                                     </Box>
 
                                     <Box style={{ textAlign: "center", marginTop: "auto", paddingTop: "1rem" }}>
-                                        <Typography variant="h3" style={{ marginBottom: "1rem", fontWeight: "bold", color: price > 0 ? "var(--color-text)" : "var(--color-success)" }}>
+                                        <Typography variant="h3" style={{ marginBottom: "1rem", fontWeight: "bold", color: displayPrice > 0 ? "var(--color-text)" : "var(--color-success)" }}>
                                             {displayPriceText}
                                         </Typography>
                                         <Button
                                             variant={isCurrent ? "ghost" : "outline"}
                                             disabled={isButtonDisabled}
-                                            onClick={() => handleOpenConfirm(status.title, price, isDowngrade)}
+                                            onClick={() => handleOpenConfirm(plan.status, displayPrice, isDowngrade)}
                                             style={{ width: "100%", opacity: isButtonDisabled ? 0.5 : 1 }}
                                         >
                                             {buttonText}

@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { AxiosError } from "axios";
 import { UserAPI } from "../../api/UserApi";
 import { GameAPI } from "../../api/GameApi";
-import type { UpdateUserRequest, User, SubscriptionRequest, SubscriptionResponse } from "../../models/User";
+import type { UpdateUserRequest, User, SubscriptionRequest, SubscriptionResponse, SubscriptionPlanResponse } from "../../models/User";
 import type { GameMatchRequestFilter, GameMatchResponse } from "../../models/GameMatch";
 import type { PageResponse } from "../../models/Bank";
 import { deposit } from './BankSlice';
@@ -10,8 +10,10 @@ import { deposit } from './BankSlice';
 export interface UserState {
     user?: User;
     subscription?: SubscriptionResponse;
+    subscriptionPlans: SubscriptionPlanResponse[];
     isLoading: boolean;
     isLoadingSubscription: boolean;
+    isLoadingPlans: boolean;
     isPurchasing: boolean;
     error?: string;
     gameHistory: GameMatchResponse[];
@@ -23,8 +25,10 @@ export interface UserState {
 const initialState: UserState = {
     user: undefined,
     subscription: undefined,
+    subscriptionPlans: [],
     isLoading: false,
     isLoadingSubscription: false,
+    isLoadingPlans: false,
     isPurchasing: false,
     error: undefined,
     gameHistory: [],
@@ -101,6 +105,19 @@ export const getCurrentSubscription = createAsyncThunk<SubscriptionResponse, voi
     }
 );
 
+export const getSubscriptionPlans = createAsyncThunk<SubscriptionPlanResponse[], void, { rejectValue: string }>(
+    "user/getSubscriptionPlans",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await UserAPI.getSubscriptionPlans();
+            return response.data;
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message?: string }>;
+            return rejectWithValue(error.response?.data?.message ?? "Failed to fetch subscription plans");
+        }
+    }
+);
+
 export const purchase = createAsyncThunk<SubscriptionResponse, SubscriptionRequest, { rejectValue: string }>(
     "user/purchaseSubscription",
     async (requestData, { rejectWithValue }) => {
@@ -140,9 +157,11 @@ const userSlice = createSlice({
         clearUser: (state) => {
             state.user = undefined;
             state.subscription = undefined;
+            state.subscriptionPlans = [];
             state.error = undefined;
             state.isLoading = false;
             state.isLoadingSubscription = false;
+            state.isLoadingPlans = false;
             state.isPurchasing = false;
             state.gameHistory = [];
             state.gameHistoryPage = 0;
@@ -201,6 +220,20 @@ const userSlice = createSlice({
             .addCase(getCurrentSubscription.rejected, (state, action) => {
                 state.isLoadingSubscription = false;
                 state.error = action.payload ?? "Failed to fetch subscription";
+            })
+
+            /* === Get Subscription Plans=== */
+            .addCase(getSubscriptionPlans.pending, (state) => {
+                state.isLoadingPlans = true;
+                state.error = undefined;
+            })
+            .addCase(getSubscriptionPlans.fulfilled, (state, action) => {
+                state.isLoadingPlans = false;
+                state.subscriptionPlans = action.payload;
+            })
+            .addCase(getSubscriptionPlans.rejected, (state, action) => {
+                state.isLoadingPlans = false;
+                state.error = action.payload ?? "Failed to fetch subscription plans";
             })
 
             /* === Purchase Subscription === */

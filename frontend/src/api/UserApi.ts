@@ -1,4 +1,4 @@
-import type { UpdateUserRequest, User, SubscriptionRequest, SubscriptionResponse } from "../models/User";
+import type { UpdateUserRequest, User, SubscriptionRequest, SubscriptionResponse, SubscriptionPlanResponse } from "../models/User";
 import { USER_SERVICE_URL } from "./ApiDictionary";
 import { client } from "./AxiosConfig";
 
@@ -12,4 +12,6 @@ export const UserAPI = {
     purchase: (data: SubscriptionRequest) => client.post<SubscriptionResponse>(`${USER_SERVICE_URL}/user-subscriptions/purchase`, data),
 
     getSubscription: () => client.get<SubscriptionResponse>(`${USER_SERVICE_URL}/user-subscriptions`),
+
+    getSubscriptionPlans: () => client.get<SubscriptionPlanResponse[]>(`${USER_SERVICE_URL}/subscription-plans/all`),
 };
