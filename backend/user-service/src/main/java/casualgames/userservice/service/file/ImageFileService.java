@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +26,8 @@ public class ImageFileService {
     private static final int PROTOCOL_SEPARATOR_LENGTH = PROTOCOL_SEPARATOR.length();
     private static final char URL_SLASH = '/';
     private static final int NEXT_CHAR_OFFSET = 1;
+    private static final int ONE_INT = 1;
+    private static final int MINUS_ONE_INT = -1;
 
     private final S3Service s3Service;
 
@@ -34,87 +37,101 @@ public class ImageFileService {
 
     private final ImageFileHelper imageFileHelper;
 
-    public User upload(User user, MultipartFile file) {
+    public User upload(User user, MultipartFile fullFile, MultipartFile miniFile) {
         AttachmentsProperties.AttachmentProperties props = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE);
-        AttachmentsProperties.VariantProperties fullVariant = props.getVariants().get(ImageFileHelper.VARIANT_FULL);
-        AttachmentsProperties.VariantProperties miniVariant = props.getVariants().get(ImageFileHelper.VARIANT_MINI);
+        AttachmentsProperties.VariantProperties fullProps = props.getVariants().get(ImageFileHelper.VARIANT_FULL);
+        AttachmentsProperties.VariantProperties miniProps = props.getVariants().get(ImageFileHelper.VARIANT_MINI);
 
-        byte[] content;
-        try {
-            content = file.getBytes();
-        } catch (IOException e) {
-            throw new BadRequestException("Failed to read uploaded file");
-        }
+        imageFileHelper.validateSize(fullFile, fullProps.getMaxFileSize());
+        imageFileHelper.validateSize(miniFile, miniProps.getMaxFileSize());
 
-        attachmentTypeValidator.validate(content, props.getAllowedMimeTypes());
-        imageFileHelper.validateDimensions(content, props.getMaxDimensionPx());
+        byte[] fullBytes = readBytes(fullFile);
+        byte[] miniBytes = readBytes(miniFile);
 
-        byte[] fullJpeg = imageFileHelper.resizeToJpeg(content, fullVariant.getSize(), fullVariant.getQuality());
-        byte[] miniJpeg = imageFileHelper.resizeToJpeg(content, miniVariant.getSize(), miniVariant.getQuality());
+        attachmentTypeValidator.validate(fullBytes, props.getAllowedMimeTypes());
+        imageFileHelper.validateDimensions(fullBytes, fullProps.getMaxDimensionPx());
 
-        UUID pictureUuid = UUID.randomUUID();
-        String fullKey = imageFileHelper.buildFullKey(user.getId(), pictureUuid, props.getFolder());
-        String miniKey = imageFileHelper.buildMiniKey(user.getId(), pictureUuid, props.getFolder());
+        attachmentTypeValidator.validate(miniBytes, props.getAllowedMimeTypes());
+        imageFileHelper.validateDimensions(miniBytes, miniProps.getMaxDimensionPx());
 
-        s3Service.upload(props.getBucket(), fullKey, fullJpeg, ImageFileHelper.CONTENT_TYPE_JPEG, props.getCacheControl(), null);
-        s3Service.upload(props.getBucket(), miniKey, miniJpeg, ImageFileHelper.CONTENT_TYPE_JPEG, props.getCacheControl(), null);
+        String fullKey = imageFileHelper.buildFullKey(user.getId(), UUID.randomUUID(), props.getFolder());
+        String miniKey = imageFileHelper.buildMiniKey(user.getId(), UUID.randomUUID(), props.getFolder());
 
-        String fullUrl = imageFileHelper.buildUrl(props.getPublicBaseUrl(), props.getBucket(), fullKey);
-        String miniUrl = imageFileHelper.buildUrl(props.getPublicBaseUrl(), props.getBucket(), miniKey);
+        s3Service.upload(props.getBucket(), fullKey, fullBytes, ImageFileHelper.CONTENT_TYPE_JPEG, props.getCacheControl(), null);
+        s3Service.upload(props.getBucket(), miniKey, miniBytes, ImageFileHelper.CONTENT_TYPE_JPEG, props.getCacheControl(), null);
 
-        deleteOldImages(user, props.getBucket());
-
-        user.setLinkProfilePicture(fullUrl);
-        user.setLinkProfilePictureMini(miniUrl);
+        user.setLinkProfilePicture(imageFileHelper.buildUrl(props.getPublicBaseUrl(), props.getBucket(), fullKey));
+        user.setLinkProfilePictureMini(imageFileHelper.buildUrl(props.getPublicBaseUrl(), props.getBucket(), miniKey));
 
         return user;
     }
 
-    private void deleteOldImages(User user, String bucket) {
-        String oldFull = user.getLinkProfilePicture();
-        String oldMini = user.getLinkProfilePictureMini();
-
-        if (oldFull == null && oldMini == null) {
+    public void deleteOldImages(String bucket, String oldFullUrl, String oldMiniUrl) {
+        if (oldFullUrl == null && oldMiniUrl == null) {
             return;
         }
 
-        List<String> keysToDelete = new java.util.ArrayList<>();
+        List<String> keysToDelete = new ArrayList<>();
 
-        if (oldFull != null) {
-            keysToDelete.add(extractKey(oldFull));
+        String fullKey = extractKey(oldFullUrl);
+        if (fullKey != null) {
+            keysToDelete.add(fullKey);
         }
 
-        if (oldMini != null) {
-            keysToDelete.add(extractKey(oldMini));
+        String miniKey = extractKey(oldMiniUrl);
+        if (miniKey != null) {
+            keysToDelete.add(miniKey);
+        }
+
+        if (keysToDelete.isEmpty()) {
+            return;
         }
 
         try {
             s3Service.deleteAll(bucket, keysToDelete);
         } catch (S3OperationException e) {
-            log.error("Failed to delete old profile pictures for user id={}, keys={}. Orphaned objects remain.", user.getId(), keysToDelete, e);
+            log.error("Failed to delete old profile pictures, keys={}. Orphaned objects remain.", keysToDelete, e);
         }
     }
 
-    public User delete(User user) {
-        AttachmentsProperties.AttachmentProperties props = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE);
-
-        deleteOldImages(user, props.getBucket());
-
-        user.setLinkProfilePicture(null);
-        user.setLinkProfilePictureMini(null);
-
-        return user;
+    private byte[] readBytes(MultipartFile file) {
+        try {
+            return file.getBytes();
+        } catch (IOException e) {
+            throw new BadRequestException("Failed to read uploaded file");
+        }
     }
 
     private String extractKey(String url) {
-        // URL format: {publicBaseUrl}/{bucket}/{key}
-        // key starts after the third slash segment
+        if (url == null) {
+            return null;
+        }
+
         try {
-            int bucketSlash = url.indexOf(URL_SLASH, url.indexOf(PROTOCOL_SEPARATOR) + PROTOCOL_SEPARATOR_LENGTH);
-            return url.substring(url.indexOf(URL_SLASH, bucketSlash + NEXT_CHAR_OFFSET) + NEXT_CHAR_OFFSET);
+            int protocolEnd = url.indexOf(PROTOCOL_SEPARATOR);
+
+            if (protocolEnd == MINUS_ONE_INT) {
+                return null;
+            }
+
+            int firstSlash = url.indexOf(URL_SLASH, protocolEnd + PROTOCOL_SEPARATOR_LENGTH);
+
+            if (firstSlash == MINUS_ONE_INT) {
+                return null;
+            }
+
+            int secondSlash = url.indexOf(URL_SLASH, firstSlash + NEXT_CHAR_OFFSET);
+
+            if (secondSlash == MINUS_ONE_INT) {
+                return null;
+            }
+
+            String key = url.substring(secondSlash + ONE_INT);
+
+            return key.isEmpty() ? null : key;
         } catch (Exception e) {
             log.warn("Failed to extract S3 key from URL: {}", url);
-            return url;
+            return null;
         }
     }
 }

@@ -18,4 +18,5 @@ public class ResourceMessageConstants {
     public static final String UNSUPPORTED_FILE_TYPE = "Unsupported file type: %s. Allowed: %s";
     public static final String DO_NOT_HAVE_PERMISSION_TO_UPDATE_PROFILE_PICTURE = "You do not have permission to update profile picture";
     public static final String DO_NOT_HAVE_PERMISSION_TO_DELETE_PROFILE_PICTURE = "You do not have permission to delete profile picture";
+    public static final String FILES_ARE_MISSING = "All files are not present";
 }

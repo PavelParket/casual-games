@@ -71,8 +71,10 @@ public class UserController {
     }
 
     @PostMapping(value = "/attachments/{guid}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public UserResponse uploadProfilePicture(@PathVariable UUID guid, @RequestPart("file") MultipartFile file) {
-        return userService.uploadImageFile(guid, file);
+    public UserResponse uploadProfilePicture(@PathVariable UUID guid,
+                                             @RequestPart("full") MultipartFile fullFile,
+                                             @RequestPart("mini") MultipartFile miniFile) {
+        return userService.uploadImageFile(guid, fullFile, miniFile);
     }
 
     @DeleteMapping("/attachments/{guid}")

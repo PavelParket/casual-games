@@ -1,9 +1,11 @@
 package casualgames.userservice.service;
 
+import casualgames.userservice.config.AttachmentsProperties;
 import casualgames.userservice.domain.dto.UpdateUserRequest;
 import casualgames.userservice.domain.dto.UserResponse;
 import casualgames.userservice.domain.dto.UserSearchFilterRequest;
 import casualgames.userservice.domain.entity.User;
+import casualgames.userservice.domain.enums.AttachmentType;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.file.ImageFileService;
@@ -57,6 +59,8 @@ public class UserService {
     private final KafkaMessageHelper kafkaMessageHelper;
 
     private final ImageFileService imageFileService;
+
+    private final AttachmentsProperties attachmentsProperties;
 
     @Transactional
     public UserResponse update(UUID guid, UpdateUserRequest request) {
@@ -154,8 +158,7 @@ public class UserService {
                 .getBalance();
     }
 
-    @Transactional
-    public UserResponse uploadImageFile(UUID guid, MultipartFile file) {
+    public UserResponse uploadImageFile(UUID guid, MultipartFile fullFile, MultipartFile miniFile) {
         PermissionContext context = permissionHelper.getContext(guid);
         AuthenticationToken token = permissionHelper.getToken();
 
@@ -166,15 +169,20 @@ public class UserService {
         User user = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
 
-        User updated = imageFileService.upload(user, file);
+        String oldFullUrl = user.getLinkProfilePicture();
+        String oldMiniUrl = user.getLinkProfilePictureMini();
+
+        User updated = imageFileService.upload(user, fullFile, miniFile);
         User saved = userRepository.save(updated);
+
+        String bucket = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE).getBucket();
+        imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);
 
         log.info("Profile picture uploaded for user guid={}", guid);
 
         return buildResponse(saved, context, token);
     }
 
-    @Transactional
     public void deleteImageFile(UUID guid) {
         PermissionContext context = permissionHelper.getContext(guid);
         AuthenticationToken token = permissionHelper.getToken();
@@ -186,12 +194,19 @@ public class UserService {
         User user = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
 
-        if (user.getLinkProfilePicture() == null && user.getLinkProfilePictureMini() == null) {
+        String oldFullUrl = user.getLinkProfilePicture();
+        String oldMiniUrl = user.getLinkProfilePictureMini();
+
+        if (oldFullUrl == null && oldMiniUrl == null) {
             return;
         }
 
-        User updated = imageFileService.delete(user);
-        userRepository.save(updated);
+        user.setLinkProfilePicture(null);
+        user.setLinkProfilePictureMini(null);
+        userRepository.save(user);
+
+        String bucket = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE).getBucket();
+        imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);
 
         log.info("Profile picture deleted for user guid={}", guid);
     }

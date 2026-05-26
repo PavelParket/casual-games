@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
+import static casualgames.userservice.config.ResourceMessageConstants.FILES_ARE_MISSING;
 import static casualgames.userservice.config.ResourceMessageConstants.TOO_LARGE_UPLOADING_FILE;
 
 @RestControllerAdvice
@@ -63,6 +65,19 @@ public class ServiceExceptionHandler {
                 ErrorCode.BAD_REQUEST,
                 HttpStatus.PAYLOAD_TOO_LARGE,
                 TOO_LARGE_UPLOADING_FILE,
+                null,
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMissingServletRequestPart(MissingServletRequestPartException ex, HttpServletRequest request) {
+        log.warn("Missing request part: {}", ex.getRequestPartName());
+        return ErrorResponse.of(
+                ErrorCode.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST,
+                FILES_ARE_MISSING,
                 null,
                 request.getRequestURI()
         );

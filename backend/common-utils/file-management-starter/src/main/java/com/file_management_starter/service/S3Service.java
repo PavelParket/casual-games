@@ -3,7 +3,6 @@ package com.file_management_starter.service;
 import com.file_management_starter.exception.S3OperationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -25,7 +24,6 @@ import static com.file_management_starter.config.ResourceMessageConstants.DELETE
 import static com.file_management_starter.config.ResourceMessageConstants.DOWNLOAD_OBJECT_ERROR;
 import static com.file_management_starter.config.ResourceMessageConstants.UPLOAD_OBJECT_ERROR;
 
-@Service
 @RequiredArgsConstructor
 @Slf4j
 public class S3Service {
