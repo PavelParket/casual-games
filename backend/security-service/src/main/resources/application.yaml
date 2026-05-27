@@ -93,10 +93,6 @@ kafka:
   topics:
     user: ${KAFKA_USER_TOPIC:user}
 
-app:
-  user-service:
-    url: http://localhost:8083
-
 logging:
   level:
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
