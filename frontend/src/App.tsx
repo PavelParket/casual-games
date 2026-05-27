@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
 import { refresh } from './store/slices/AuthSlice'
 import { ProtectedRoute } from './router/ProtectedRoute'
 import Rooms from './pages/rooms/Rooms'
-import Profile from './pages/Profile'
+import Profile from './pages/profile/Profile'
 import ExperimentalPage from './pages/ExperimentalPage'
 import LoadingPage from './pages/LoadingPage'
 import { useScrollbarVisibility } from './hooks/useScrollbarVisibility'
@@ -21,7 +21,7 @@ import TicTacToeRoomShell from './pages/rooms/shell/TicTacToeRoomShell'
 import HorseRaceRoomShell from './pages/rooms/shell/HorseRaceRoomShell'
 import DeCoderRoomShell from './pages/rooms/shell/DeCoderRoomShell'
 import DurakRoomShell from './pages/rooms/shell/DurakRoomShell'
-import UpgradeStatus from './pages/UpgradeStatus'
+import UpgradeStatus from './pages/profile/UpgradeStatus'
 
 export default function App() {
     const dispatch = useDispatch<AppDispatch>();

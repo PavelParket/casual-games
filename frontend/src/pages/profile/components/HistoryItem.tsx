@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from "../ui";
+import { Box, Stack, Typography } from "../../../ui";
 
 interface HistoryItemProps {
     variant: 'income' | 'expense' | 'neutral';

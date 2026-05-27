@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Box, Typography, Stack, Divider, Button, Icon, useThemedIcon } from "../ui";
-import { Skeleton } from "../ui/components/common/Skeleton";
+import { Box, Typography, Stack, Divider, Button, Icon, useThemedIcon } from "../../../ui";
+import { Skeleton } from "../../../ui/components/common/Skeleton";
 
 interface PageablePanelProps {
     title: string;

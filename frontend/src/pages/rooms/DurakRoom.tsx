@@ -13,7 +13,7 @@ import { Avatar, Box, Button, Card, Container, Stack, ToastContainer, Typography
 import { DurakBoard } from "./durak/components/DurakBoard";
 import { BettingPanel } from "./durak/components/BettingPanel";
 import { GameOverOverlay } from "./durak/components/GameOverOverlay";
-import { MiniProfile } from "../../components/MiniProfile";
+import { MiniProfile } from "../profile/components/MiniProfile";
 import { useGameSocket } from "../../hooks/useGameSocket";
 
 export type TableExitMode = "bita" | "pickup" | null;

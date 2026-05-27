@@ -1,17 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "../store/store";
-import { findByGuid, update, getMatches } from "../store/slices/UserSlice";
-import { deposit, getByUserGuid } from "../store/slices/BankSlice";
-import type { Icons } from "../assets/icons";
-import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, Toast, FormField, Avatar, ComboBox } from "../ui";
-import { useThemedIcon } from "../ui";
-import { validateUsername } from "../utils/SecurityUtils";
-import { Skeleton } from "../ui/components/common/Skeleton";
-import { ROOM_TYPE_LABELS, type RoomType } from "../models/Room";
-import { PageablePanel } from "../components/PageablePanel";
-import { HistoryItem } from "../components/HistoryItem";
+import type { AppDispatch, RootState } from "../../store/store";
+import { findByGuid, update, getMatches } from "../../store/slices/UserSlice";
+import { deposit, getByUserGuid } from "../../store/slices/BankSlice";
+import type { Icons } from "../../assets/icons";
+import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, Toast, FormField, Avatar, ComboBox } from "../../ui";
+import { useThemedIcon } from "../../ui";
+import { validateUsername } from "../../utils/SecurityUtils";
+import { Skeleton } from "../../ui/components/common/Skeleton";
+import { ROOM_TYPE_LABELS, type RoomType } from "../../models/Room";
+import { PageablePanel } from "./components/PageablePanel";
+import { HistoryItem } from "./components/HistoryItem";
 
 const AVAILABLE_ROOM_TYPES = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
 
