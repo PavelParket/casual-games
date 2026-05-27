@@ -13,4 +13,8 @@ public class ResourceMessageConstants {
     public static final String REQUIRED_TRANSACTION_LIST = "Transaction list must not be empty";
     public static final String REQUIRED_PENDING_STATUS_FOR_TRANSACTIONS = "All transactions must have PENDING status";
     public static final String REQUIRED_POSITIVE_TRANSACTION_AMOUNTS = "All transaction amounts must be positive";
+    public static final String NOT_FOUND_SUBSCRIPTION_PLAN = "Subscription plan not found for status: %s";
+    public static final String NOT_FOUND_SUBSCRIPTION = "Subscription not found for user: %s";
+    public static final String CONFLICT_SAME_TIER_SUBSCRIPTION = "You already have an active %s subscription";
+    public static final String BAD_REQUEST_NO_NECESSARY_BALANCE_AMOUNT = "You balance have no necessary balance amount";
 }
