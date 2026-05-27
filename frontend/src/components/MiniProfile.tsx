@@ -15,7 +15,7 @@ const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
 };
 
-export function MiniProfile({ guid, username, status = "DEFAULT", avatarUrl, children }: MiniProfileProps) {
+export function MiniProfile({ username, status = "DEFAULT", avatarUrl, children }: MiniProfileProps) {
     const { getIcon } = useThemedIcon();
 
     const [isOpen, setIsOpen] = useState(false);
@@ -94,7 +94,7 @@ export function MiniProfile({ guid, username, status = "DEFAULT", avatarUrl, chi
                 alignItems: "center",
                 gap: "1rem"
             }}>
-                <Avatar src={avatarUrl} fallback={username} size={40} />
+                <Avatar src={avatarUrl} fallback={username} size={52} />
                 <Typography
                     variant="body"
                     style={{

@@ -73,6 +73,31 @@ export const getBalance = createAsyncThunk<number, string, { rejectValue: string
     }
 );
 
+export const uploadProfilePicture = createAsyncThunk<User, { guid: string; files: { full: File; mini: File } }, { rejectValue: string }>(
+    "user/uploadProfilePicture",
+     async ({ guid, files }, { rejectWithValue }) => {
+        try {
+            const response = await UserAPI.uploadProfilePicture(guid, files);
+            return response.data;
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message?: string }>;
+            return rejectWithValue(error.response?.data?.message ?? "Failed to upload avatar");
+        }
+    }
+);
+
+export const deleteProfilePicture = createAsyncThunk<void, string, { rejectValue: string }>(
+    "user/deleteProfilePicture",
+    async (guid, { rejectWithValue }) => {
+        try {
+            await UserAPI.deleteProfilePicture(guid);
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message?: string }>;
+            return rejectWithValue(error.response?.data?.message ?? "Failed to delete avatar");
+        }
+    }
+);
+
 // ------------------ Slice ------------------
 
 const userSlice = createSlice({
@@ -127,6 +152,38 @@ const userSlice = createSlice({
                 if (state.user) {
                     state.user.balance = action.payload.balanceAfter;
                 }
+            })
+
+            /* === Upload Profile Picture === */
+            .addCase(uploadProfilePicture.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(uploadProfilePicture.fulfilled, (state, action) => {
+                state.isLoading = false;
+                if (state.user) {
+                    state.user.linkProfilePicture = action.payload.linkProfilePicture;
+                    state.user.linkProfilePictureMini = action.payload.linkProfilePictureMini;
+                }
+            })
+            .addCase(uploadProfilePicture.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.payload ?? "Avatar upload failed";
+            })
+
+            /* === Delete Profile Picture === */
+            .addCase(deleteProfilePicture.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(deleteProfilePicture.fulfilled, (state) => {
+                state.isLoading = false;
+                if (state.user) {
+                    state.user.linkProfilePicture = null;
+                    state.user.linkProfilePictureMini = null;
+                }
+            })
+            .addCase(deleteProfilePicture.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.payload ?? "Avatar delete failed";
             });
 
     },

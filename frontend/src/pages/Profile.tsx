@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
-import { findByGuid, update } from "../store/slices/UserSlice";
+import { findByGuid, update, uploadProfilePicture, deleteProfilePicture } from "../store/slices/UserSlice";
 import { deposit, getByUserGuid } from "../store/slices/BankSlice";
 import type { Icons } from "../assets/icons";
 import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, Toast, FormField, Avatar } from "../ui";
@@ -9,6 +9,7 @@ import { useThemedIcon } from "../ui";
 import { validateUsername } from "../utils/SecurityUtils";
 import { Skeleton } from "../ui/components/common/Skeleton";
 import { ROOM_TYPE_LABELS } from "../models/Room";
+import { AvatarEditorModal } from "../components/AvatarEditorModal";
 
 const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
@@ -30,24 +31,23 @@ export default function Profile() {
     const [toast, setToast] = useState<{ text: string, type: "success" | "error" } | null>(null);
     const [activeTab, setActiveTab] = useState<'default' | 'balanceHistory'>('default');
 
-    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isAvatarHovered, setIsAvatarHovered] = useState(false);
 
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
-    const [achievementsModalOpen, setAchievementsModalOpen] = useState(false);
 
     const [depositModalOpen, setDepositModalOpen] = useState(false);
     const [depositAmount, setDepositAmount] = useState("");
 
-    const [loadingAvatar, setLoadingAvatar] = useState(false);
-    const [loadingAchievements, setLoadingAchievements] = useState(false);
-    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+    const userGuid = authUser?.guid;
 
     useEffect(() => {
-        if (authUser?.guid) {
-            dispatch(findByGuid(authUser.guid));
+        if (userGuid) {
+            dispatch(findByGuid(userGuid));
         }
-    }, [dispatch, authUser?.guid]);
+    }, [dispatch, userGuid]);
 
     useEffect(() => {
         if (user?.username) {
@@ -59,6 +59,7 @@ export default function Profile() {
         setValidationError(null);
         setIsEditingUsername(true);
     };
+
     const handleSaveUsername = async () => {
         const sanitizedUsername = validateUsername(tempUsername);
 
@@ -72,7 +73,7 @@ export default function Profile() {
             return;
         }
 
-        if (!authUser?.guid) {
+        if (!userGuid) {
             setToast({ text: "User not authenticated", type: "error" });
             return;
         }
@@ -101,8 +102,38 @@ export default function Profile() {
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) {
-            setAvatarPreview(URL.createObjectURL(e.target.files[0]));
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.addEventListener("load", () => {
+                setSelectedImage(reader.result as string);
+                setIsEditorOpen(true);
+            });
+            reader.readAsDataURL(file);
+        }
+        e.target.value = "";
+    };
+
+
+    const handleUploadProfilePicture = async (files: { full: File; mini: File }) => {
+        if (!userGuid) return;
+        try {
+            await dispatch(uploadProfilePicture({ guid: userGuid, files })).unwrap();
+            setToast({ text: "Profile picture updated!", type: "success" });
+            setIsEditorOpen(false);
+            setSelectedImage(null);
+        } catch (err) {
+            setToast({ text: `Upload failed: ${err}`, type: "error" });
+        }
+    };
+
+    const handleDeleteProfilePicture = async () => {
+        if (!userGuid) return;
+        try {
+            await dispatch(deleteProfilePicture(userGuid)).unwrap();
+            setToast({ text: "Profile picture deleted!", type: "success" });
+        } catch (err) {
+            setToast({ text: `Failed to delete profile picture: ${err}`, type: "error" });
         }
     };
 
@@ -128,7 +159,7 @@ export default function Profile() {
             return;
         }
 
-        if (!authUser?.guid) {
+        if (!userGuid) {
             setToast({ text: "User not identified", type: "error" });
             return;
         }
@@ -144,7 +175,7 @@ export default function Profile() {
     };
 
     const handlePageChange = (newPage: number) => {
-        if (authUser?.guid) {
+        if (userGuid) {
             dispatch(getByUserGuid({ guid: authUser.guid, page: newPage, size: 4 }));
         }
     };
@@ -153,15 +184,13 @@ export default function Profile() {
     const email = user?.email || "";
     const balance = user?.balance ?? 0;
     const status = user?.status || "default";
-    const achievements = user?.achievements || [];
     const history = user?.history || [];
 
     const formattedDate = user?.createdAt
         ? new Date(user.createdAt).toLocaleDateString()
         : "Unknown";
 
-    const statusIconName = getStatusIconName(status);
-    const statusIconSrc = getIcon(statusIconName) || getIcon("defaultStatus");
+    const statusIconSrc = getIcon(getStatusIconName(status));
 
     const infoBlockStyle = {
         background: "var(--color-bg-glass)",
@@ -190,53 +219,64 @@ export default function Profile() {
                                 onMouseEnter={() => setIsAvatarHovered(true)}
                                 onMouseLeave={() => setIsAvatarHovered(false)}
                             >
-                                {loadingAvatar ? (
-                                    <Skeleton variant="circular" height={150} width={150} />
-                                ) : (
-                                    <>
-                                        <Avatar
-                                            src={avatarPreview || user?.avatarUrl}
-                                            fallback={username}
-                                            size={150}
-                                            isLoading={loadingAvatar}
-                                        />
+                                <Avatar
+                                    src={user?.linkProfilePicture}
+                                    fallback={username}
+                                    size={150}
+                                    isLoading={isLoading}
+                                />
 
+                                <label htmlFor="avatar-upload">
+                                    <Box
+                                        style={{
+                                            position: "absolute",
+                                            bottom: 5, right: 5,
+                                            borderRadius: "50%",
+                                            width: "40px", height: "40px",
+                                            background: "var(--color-bg)",
+                                            border: "1px solid var(--color-border)",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            zIndex: 2, boxShadow: "var(--shadow-sm)",
+                                            opacity: isAvatarHovered ? 1 : 0,
+                                            transform: isAvatarHovered ? "scale(1)" : "scale(0.8)",
+                                            transition: "all 0.2s ease",
+                                            cursor: "pointer"
+                                        }}
+                                        title="Change Picture"
+                                    >
+                                        <Icon src={getIcon("edit")} alt="edit avatar" size={20} />
+                                    </Box>
+                                </label>
 
-                                        <label htmlFor="avatar-upload">
-                                            <Box
-                                                style={{
-                                                    position: "absolute",
-                                                    bottom: 5, right: 5,
-                                                    borderRadius: "50%",
-                                                    width: "40px", height: "40px",
-                                                    background: "var(--color-bg)",
-                                                    border: "1px solid var(--glass-border)",
-                                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                                    zIndex: 2, boxShadow: "var(--shadow-sm)",
-                                                    opacity: isAvatarHovered ? 1 : 0,
-                                                    transform: isAvatarHovered ? "scale(1)" : "scale(0.8)",
-                                                    transition: "all 0.2s ease",
-                                                    cursor: "pointer"
-                                                }}
-                                            >
-                                                <Icon src={getIcon("edit")} alt="edit avatar" size={20} />
-                                            </Box>
-                                        </label>
+                                {user?.linkProfilePicture && isAvatarHovered && (
+                                    <Box
+                                        onClick={handleDeleteProfilePicture}
+                                        style={{
+                                            position: "absolute",
+                                            bottom: 5, left: 5,
+                                            borderRadius: "50%",
+                                            width: "40px", height: "40px",
+                                            background: "var(--color-expense-bg)",
+                                            border: "1px solid var(--color-expense-border)",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            zIndex: 2, boxShadow: "var(--shadow-sm)",
+                                            cursor: "pointer",
+                                            color: "var(--color-expense-text)",
+                                            fontWeight: "bold"
+                                        }}
+                                        title="Delete Picture"
+                                    >
+                                        ✕
+                                    </Box>
+                                )}
 
-                                        <Input
-                                            id="avatar-upload"
-                                            type="file"
-                                            style={{
-                                                width: 0,
-                                                height: 0,
-                                                opacity: 0,
-                                                position: "absolute",
-                                                zIndex: -1,
-                                            }}
-                                            accept="image/*"
-                                            onChange={handleFileChange}
-                                        />
-                                    </>)}
+                                <Input
+                                    id="avatar-upload"
+                                    type="file"
+                                    style={{ display: "none" }}
+                                    accept="image/jpeg, image/jpg"
+                                    onChange={handleFileChange}
+                                />
                             </Box>
 
                             {isLoading ? (
@@ -266,7 +306,7 @@ export default function Profile() {
                                     <Skeleton variant="text" width={80} height={16} />
                                 ) : (
                                     <Typography variant="caption" style={{ opacity: 0.6 }}>
-                                        Date: {formattedDate}
+                                        Registered on: {formattedDate}
                                     </Typography>
                                 )}
                             </Box>
@@ -417,61 +457,6 @@ export default function Profile() {
                                 <>
                                     <Box style={infoBlockStyle}>
                                         <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                                            <Typography variant="h3">Achievements</Typography>
-                                            <Button
-                                                variant="ghost"
-                                                onClick={() => setAchievementsModalOpen(true)}
-                                                disabled={!achievements || achievements.length === 0}
-                                                style={{ fontSize: "0.8rem" }}
-                                            >
-                                                See All
-                                            </Button>
-                                        </Box>
-
-
-                                        {loadingAchievements ? (
-                                            <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                                                <Skeleton variant="rectangular" height={30} />
-                                                <Skeleton variant="rectangular" height={30} />
-                                                <Skeleton variant="rectangular" height={30} />
-                                            </Box>
-                                        ) : (
-                                            achievements.length > 0 ? (
-                                                <Box style={{
-                                                    display: "flex",
-                                                    gap: "10px",
-                                                    flexWrap: "wrap",
-                                                    overflow: "hidden",
-                                                    maxHeight: "130px"
-                                                }}>
-                                                    {achievements.slice(0, 5).map((ach, i) => (
-                                                        <Box key={i} style={{
-                                                            padding: "5px 12px",
-                                                            background: "var(--color-primary)",
-                                                            color: "var(--on-primary)",
-                                                            borderRadius: "20px",
-                                                            fontSize: "0.9rem",
-                                                            fontWeight: 500
-                                                        }}>
-                                                            {ach}
-                                                        </Box>
-                                                    ))}
-                                                    {achievements.length > 5 && (
-                                                        <Box style={{ padding: "5px 10px", fontSize: "0.9rem", opacity: 0.7, alignSelf: "center" }}>
-                                                            +{achievements.length - 5} more...
-                                                        </Box>
-                                                    )}
-                                                </Box>
-                                            ) : (
-                                                <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
-                                                    No achievements yet. Go play some games!
-                                                </Typography>
-                                            )
-                                        )}
-                                    </Box>
-
-                                    <Box style={infoBlockStyle}>
-                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
                                             <Typography variant="h3">Game History</Typography>
                                             <Button
                                                 variant="ghost"
@@ -483,42 +468,11 @@ export default function Profile() {
                                             </Button>
                                         </Box>
 
-                                        {loadingHistory ? (
-                                            <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                                                <Skeleton variant="rectangular" height={30} />
-                                                <Skeleton variant="rectangular" height={30} />
-                                                <Skeleton variant="rectangular" height={30} />
-                                            </Box>
-                                        ) : (
-                                            history.length > 0 ? (
-                                                <Stack gap="0.5rem">
-                                                    {history.slice(0, 3).map((item, i) => (
-                                                        <Box key={i} style={{
-                                                            display: "flex",
-                                                            justifyContent: "space-between",
-                                                            borderBottom: i === 2 ? "none" : "1px solid var(--color-border)",
-                                                            paddingBottom: "10px",
-                                                            paddingTop: i === 0 ? "0" : "5px"
-                                                        }}>
-                                                            <Box>
-                                                                <Typography variant="body" style={{ fontWeight: 500 }}>{item.game}</Typography>
-                                                                <Typography variant="caption">{new Date(item.date).toLocaleDateString()}</Typography>
-                                                            </Box>
-                                                            <Typography variant="body" style={{
-                                                                fontWeight: "bold",
-                                                                color: item.result === "Win" ? "green" : item.result === "Loss" ? "red" : "gray"
-                                                            }}>
-                                                                {item.result}
-                                                            </Typography>
-                                                        </Box>
-                                                    ))}
-                                                </Stack>
-                                            ) : (
-                                                <Typography variant="caption" style={{ fontStyle: "italic", opacity: 0.6 }}>
-                                                    No match history available.
-                                                </Typography>
-                                            )
-                                        )}
+                                        <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                                            <Skeleton variant="rectangular" height={30} />
+                                            <Skeleton variant="rectangular" height={30} />
+                                            <Skeleton variant="rectangular" height={30} />
+                                        </Box>
                                     </Box>
                                 </>
                             )}
@@ -722,8 +676,8 @@ export default function Profile() {
 
                         </Stack>
                     </Grid>
-                </Card >
-            </Container >
+                </Card>
+            </Container>
 
             {toast && (
                 <Toast
@@ -733,15 +687,16 @@ export default function Profile() {
             )
             }
 
-            <Modal isOpen={achievementsModalOpen} onClose={() => setAchievementsModalOpen(false)} title="All Achievements">
-                <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap", padding: "1rem 0" }}>
-                    {achievements.map((ach, i) => (
-                        <Box key={i} style={{ padding: "8px 16px", background: "var(--color-primary)", color: "var(--on-primary)", borderRadius: "20px", fontSize: "1rem", boxShadow: "var(--shadow-sm)" }}>
-                            {ach}
-                        </Box>
-                    ))}
-                </Box>
-            </Modal>
+            <AvatarEditorModal
+                isOpen={isEditorOpen}
+                imageSrc={selectedImage}
+                onClose={() => {
+                    setIsEditorOpen(false);
+                    setSelectedImage(null);
+                }}
+                onUpload={handleUploadProfilePicture}
+                isLoading={isLoading}
+            />
 
             <Modal isOpen={historyModalOpen} onClose={() => setHistoryModalOpen(false)} title="Match History">
                 <Stack gap="0.8rem" style={{ padding: "0.5rem 0" }}>

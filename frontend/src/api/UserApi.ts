@@ -8,4 +8,18 @@ export const UserAPI = {
     updateByGuid: (guid: string, data: UpdateUserRequest) => client.put<User>(`${USER_SERVICE_URL}/users/${guid}`, data),
 
     getBalance: (guid: string) => client.get<number>(`${USER_SERVICE_URL}/users/balance/${guid}`),
+
+    uploadProfilePicture: (guid: string, files: { full: File; mini: File }) => {
+        const formData = new FormData();
+        formData.append("full", files.full);
+        formData.append("mini", files.mini);
+
+        return client.post<User>(`${USER_SERVICE_URL}/users/attachments/${guid}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    },
+
+    deleteProfilePicture: (guid: string) => client.delete(`${USER_SERVICE_URL}/users/attachments/${guid}`),
 };
