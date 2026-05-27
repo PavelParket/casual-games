@@ -3,7 +3,6 @@ package casualgames.userservice.controller;
 import casualgames.userservice.dto.SubscriptionRequest;
 import casualgames.userservice.dto.SubscriptionResponse;
 import casualgames.userservice.service.UserSubscriptionService;
-import casualgames.userservice.service.scheduler.SubscriptionScheduler;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,9 +20,6 @@ public class UserSubscriptionController {
 
     private final UserSubscriptionService userSubscriptionService;
 
-    // todo: delete!!!
-    private final SubscriptionScheduler subscriptionScheduler;
-
     @PostMapping("/purchase")
     public SubscriptionResponse purchase(@Valid @RequestBody SubscriptionRequest request) {
         return userSubscriptionService.purchase(request);
@@ -37,10 +33,5 @@ public class UserSubscriptionController {
     @PatchMapping("/auto-renew")
     public SubscriptionResponse updateAutoRenew(@RequestParam Boolean enable) {
         return userSubscriptionService.updateAutoRenew(enable);
-    }
-
-    @PostMapping("/update-subscriptions")
-    public void process() {
-        subscriptionScheduler.run();
     }
 }
