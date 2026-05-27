@@ -10,7 +10,7 @@ import { useThemedIcon } from "../../ui";
 import { validateRoomName } from "../../utils/SecurityUtils";
 import type { DeCoderMessage } from "../../models/WsMessage";
 import type { DeCoderGameHistory } from "../../models/DeCoderGameHistory";
-import { MiniProfile } from "../../components/MiniProfile";
+import { MiniProfile } from "../profile/components/MiniProfile";
 import { useDeCoderMessages } from "../../hooks/useDeCoderMessages";
 import { useGameSocket } from "../../hooks/useGameSocket";
 

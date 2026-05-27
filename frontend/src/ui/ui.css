@@ -129,7 +129,9 @@ html.is-scrolling.dark {
     --glass-surface: rgba(255, 255, 255, 0.6);
     --glass-blur: 5px;
     --color-text: #111111;
+    --color-text-hover: #777777;
     --color-text-inverse: #ffffff;
+    --color-text-inverse-hover: #999999;
     --color-border: rgba(0, 0, 0, 0.1);
     /* Grayscale primary for light theme */
     --color-primary: #111111;
@@ -196,7 +198,9 @@ html.dark {
     --glass-surface: rgba(30, 30, 30, 0.7);
     --glass-blur: 5px;
     --color-text: #f5f5f5;
+    --color-text-hover: #9b9b9b;
     --color-text-inverse: #121212;
+    --color-text-inverse-hover: #787878;
     --color-border: rgba(255, 255, 255, 0.1);
     /* Grayscale primary for dark theme */
     --color-primary: #f5f5f5;

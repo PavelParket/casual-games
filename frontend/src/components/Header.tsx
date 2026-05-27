@@ -1,15 +1,20 @@
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Icon, Img, useThemedIcon, Box } from "../ui"
+import { Button, AppBar, ThemeSwitcher, Typography, Menu, MenuList, MenuItem, Icon, Img, useThemedIcon, Box, useTheme } from "../ui"
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
 import { logout } from "../store/slices/AuthSlice";
-import logoImg from "../assets/images/logo.png";
+import logoDark from "../assets/images/logo-dark.png";
+import logoLight from "../assets/images/logo-light.png";
 
 export default function Header() {
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
     const location = useLocation();
+    const { theme } = useTheme();
+
+    const [isRoomsHovered, setIsRoomsHovered] = useState(false);
 
     const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
 
@@ -25,9 +30,25 @@ export default function Header() {
     return (
         <AppBar
             left={(
-                <Link to="/" style={{ textDecoration: "none" }}>
-                    <Img src={logoImg} style={{ height: "50px" }} />
-                </Link>
+                <Box style={{ display: "flex", height: "60px", alignItems: "center" }}>
+                    <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", marginRight: "0.5rem" }}>
+                        <Img src={theme === "dark" ? logoLight : logoDark} style={{ height: "50px" }} />
+                    </Link>
+
+                    {isAuthenticated && (
+                        <Link
+                            to="/rooms"
+                            className="link"
+                            onMouseEnter={() => setIsRoomsHovered(true)}
+                            onMouseLeave={() => setIsRoomsHovered(false)}
+                            style={{ textDecoration: "none", margin: "1.5rem" }}
+                        >
+                            <Typography variant="h3" style={{ color: isRoomsHovered ? "var(--color-text-hover)" : "inherit" }}>
+                                Rooms
+                            </Typography>
+                        </Link>
+                    )}
+                </Box>
             )}
             right={(
                 <>
@@ -62,8 +83,8 @@ export default function Header() {
                                 <MenuItem onClick={() => navigate("/profile")}>
                                     Profile
                                 </MenuItem>
-                                <MenuItem onClick={() => navigate("/settings")}>
-                                    Settings
+                                <MenuItem onClick={() => navigate("/rooms")}>
+                                    Rooms
                                 </MenuItem>
 
                                 <Box
