@@ -230,6 +230,7 @@ export default function DeCoderRoom() {
                                             username={player.username}
                                             status={player.status}
                                             avatarUrl={player.linkProfilePictureMini}
+                                            avatarUrlFull={player.linkProfilePicture}
                                         >
                                             <Stack
                                                 direction="row"

@@ -33,7 +33,7 @@ export function AvatarEditorModal({ isOpen, imageSrc, onClose, onUpload, isLoadi
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Creating a Miniature">
+        <Modal isOpen={isOpen} onClose={onClose} disableOutsideClick title="Creating a Miniature">
             <Stack gap="1.5rem">
                 {imageSrc ? (
                     <Box style={{ position: "relative", width: "100%", height: "300px", background: "#333", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
