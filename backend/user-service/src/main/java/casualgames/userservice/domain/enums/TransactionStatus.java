@@ -1,4 +1,4 @@
-package casualgames.userservice.enums;
+package casualgames.userservice.domain.enums;
 
 public enum TransactionStatus {
 

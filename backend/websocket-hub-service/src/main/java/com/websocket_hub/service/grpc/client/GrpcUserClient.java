@@ -49,6 +49,8 @@ public class GrpcUserClient {
                 .balance(new BigDecimal(response.getBalance()))
                 .role(Role.valueOf(response.getRole()))
                 .status(Status.valueOf(response.getStatus()))
+                .linkProfilePicture(response.getLinkProfilePicture().isBlank() ? null : response.getLinkProfilePicture())
+                .linkProfilePictureMini(response.getLinkProfilePictureMini().isBlank() ? null : response.getLinkProfilePictureMini())
                 .build();
     }
 }

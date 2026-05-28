@@ -1,4 +1,4 @@
-package casualgames.userservice.entity;
+package casualgames.userservice.domain.entity;
 
 import com.security_starter.annotation.Permission;
 import com.security_starter.enums.Permissions;
@@ -62,6 +62,10 @@ public class User {
     @Column(nullable = false)
     @Permission(Permissions.STATUS)
     private Status status = Status.DEFAULT;
+
+    private String linkProfilePicture;
+
+    private String linkProfilePictureMini;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

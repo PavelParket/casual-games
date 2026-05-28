@@ -1,11 +1,14 @@
 package casualgames.userservice.service;
 
-import casualgames.userservice.dto.UpdateUserRequest;
-import casualgames.userservice.dto.UserResponse;
-import casualgames.userservice.dto.UserSearchFilterRequest;
-import casualgames.userservice.entity.User;
+import casualgames.userservice.config.AttachmentsProperties;
+import casualgames.userservice.domain.dto.UpdateUserRequest;
+import casualgames.userservice.domain.dto.UserResponse;
+import casualgames.userservice.domain.dto.UserSearchFilterRequest;
+import casualgames.userservice.domain.entity.User;
+import casualgames.userservice.domain.enums.AttachmentType;
 import casualgames.userservice.mapper.UserMapper;
 import casualgames.userservice.repository.UserRepository;
+import casualgames.userservice.service.file.ImageFileService;
 import casualgames.userservice.service.grpc.client.GrpcSecurityClient;
 import casualgames.userservice.service.helper.KafkaMessageHelper;
 import casualgames.userservice.service.helper.PermissionHelper;
@@ -22,13 +25,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_DELETE_PROFILE_PICTURE;
 import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_DELETE_USER;
 import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_READ_USER_BALANCE;
+import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_UPDATE_PROFILE_PICTURE;
 import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_UPDATE_USER;
 import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_UPDATE_USER_ROLE;
 import static casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_USER;
@@ -51,6 +57,10 @@ public class UserService {
     private final PermissionValidator permissionValidator;
 
     private final KafkaMessageHelper kafkaMessageHelper;
+
+    private final ImageFileService imageFileService;
+
+    private final AttachmentsProperties attachmentsProperties;
 
     @Transactional
     public UserResponse update(UUID guid, UpdateUserRequest request) {
@@ -146,5 +156,58 @@ public class UserService {
         return userRepository.findByGuid(guid)
                 .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)))
                 .getBalance();
+    }
+
+    public UserResponse uploadImageFile(UUID guid, MultipartFile fullFile, MultipartFile miniFile) {
+        PermissionContext context = permissionHelper.getContext(guid);
+        AuthenticationToken token = permissionHelper.getToken();
+
+        if (!permissionValidator.can(Permissions.USER, Operation.UPDATE, context, token)) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_PROFILE_PICTURE);
+        }
+
+        User user = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
+
+        String oldFullUrl = user.getLinkProfilePicture();
+        String oldMiniUrl = user.getLinkProfilePictureMini();
+
+        User updated = imageFileService.upload(user, fullFile, miniFile);
+        User saved = userRepository.save(updated);
+
+        String bucket = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE).getBucket();
+        imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);
+
+        log.info("Profile picture uploaded for user guid={}", guid);
+
+        return buildResponse(saved, context, token);
+    }
+
+    public void deleteImageFile(UUID guid) {
+        PermissionContext context = permissionHelper.getContext(guid);
+        AuthenticationToken token = permissionHelper.getToken();
+
+        if (!permissionValidator.can(Permissions.USER, Operation.UPDATE, context, token)) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_DELETE_PROFILE_PICTURE);
+        }
+
+        User user = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
+
+        String oldFullUrl = user.getLinkProfilePicture();
+        String oldMiniUrl = user.getLinkProfilePictureMini();
+
+        if (oldFullUrl == null && oldMiniUrl == null) {
+            return;
+        }
+
+        user.setLinkProfilePicture(null);
+        user.setLinkProfilePictureMini(null);
+        userRepository.save(user);
+
+        String bucket = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE).getBucket();
+        imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);
+
+        log.info("Profile picture deleted for user guid={}", guid);
     }
 }

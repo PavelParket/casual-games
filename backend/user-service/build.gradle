@@ -53,6 +53,7 @@ dependencies {
     implementation "com.casualgames:security-starter:1.0.0"
     implementation 'com.casualgames:grpc-utils:1.0.0'
     implementation 'com.casualgames:kafka-starter:1.0.0'
+    implementation 'com.casualgames:file-management-starter:1.0.0'
 
     //Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -64,6 +65,9 @@ dependencies {
     //  gRPC
     implementation "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
     implementation "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"
+
+    // Files processing
+    implementation 'org.apache.tika:tika-core:3.3.0'
 
     // Postgresql
     runtimeOnly 'org.postgresql:postgresql:42.7.11'

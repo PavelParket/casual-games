@@ -20,6 +20,10 @@ public record UserInternalResponse(
 
         Role role,
 
-        Status status
+        Status status,
+
+        String linkProfilePicture,
+
+        String linkProfilePictureMini
 ) {
 }
