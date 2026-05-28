@@ -66,6 +66,8 @@ server:
   port: 8080
   forward-headers-strategy: framework
 
+server-url: http://localhost:8888/security-service
+
 kafka:
   enabled: true
   consumer-enabled: true
@@ -83,13 +85,11 @@ logging:
     com.grpc_utils: DEBUG
 
 springdoc:
+  preLoadingEnabled: true
   api-docs:
     enabled: ${SWAGGER_ENABLED:true}
     path: /v3/api-docs
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
     path: /swagger-ui.html
-
-app:
-  swagger:
-    server-url: ${GATEWAY_URL:http://localhost:8888}/security-service
+    operationsSorter: alpha

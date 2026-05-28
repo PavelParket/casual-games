@@ -91,6 +91,8 @@ server:
   port: 8888
   max-http-request-header-size: 16384
 
+server-url: http://localhost:8888/api-gateway
+
 logging:
   level:
     org.springframework.web: DEBUG
@@ -104,14 +106,15 @@ springdoc:
     enabled: ${SWAGGER_ENABLED:true}
     path: /swagger-ui.html
     operationsSorter: alpha
+    #urls-primary-name: security-service
     urls:
       - url: /security-service/v3/api-docs
-        name: security-service
+        name: Security-service API
       - url: /user-service/v3/api-docs
-        name: user-service
+        name: User-service API
       - url: /bank-service/v3/api-docs
-        name: bank-service
+        name: Bank-service API
       - url: /game-service/v3/api-docs
-        name: game-service
+        name: Game-service API
       - url: /websocket-hub-service/v3/api-docs
-        name: websocket-hub-service
+        name: Websocket-hub-service API
