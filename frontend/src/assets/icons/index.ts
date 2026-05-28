@@ -3,7 +3,9 @@ import userLight from './user_light.svg';
 import apersantLight from './apersant_light.svg';
 import safeLockLight from './safe_lock_light.svg';
 import addLight from './add_light.svg';
-import checkLigth from './check_light.svg';
+import minusLight from './minus_light.svg';
+import checkLight from './check_light.svg';
+import closeLight from './close_light.svg';
 import moonStarsLight from "./moon_stars_light.svg";
 import sunLight from "./sun_light.svg";
 import editLight from './edit_light.svg';
@@ -25,7 +27,9 @@ import userDark from './user_dark.svg';
 import apersantDark from './apersant_dark.svg';
 import safeLockDark from './safe_lock_dark.svg';
 import addDark from './add_dark.svg';
+import minusDark from './minus_dark.svg';
 import checkDark from './check_dark.svg';
+import closeDark from './close_dark.svg';
 import moonStarsDark from "./moon_stars_dark.svg";
 import sunDark from "./sun_dark.svg";
 import editDark from './edit_dark.svg';
@@ -47,7 +51,9 @@ export const Icons = {
         apersant: apersantLight,
         safeLock: safeLockLight,
         add: addLight,
-        check: checkLigth,
+        minus: minusLight,
+        check: checkLight,
+        close: closeLight,
         moonStars: moonStarsLight,
         sun: sunLight,
         edit: editLight,
@@ -69,7 +75,9 @@ export const Icons = {
         apersant: apersantDark,
         safeLock: safeLockDark,
         add: addDark,
+        minus: minusDark,
         check: checkDark,
+        close: closeDark,
         moonStars: moonStarsDark,
         sun: sunDark,
         edit: editDark,

@@ -38,7 +38,9 @@ export interface User {
     status: string;
     createdAt: string;
 
-    avatarUrl?: string | null;
+    linkProfilePicture?: string | null;
+    linkProfilePictureMini?: string | null;
+
     achievements?: string[];
     history?: UserGameHistory[];
 }

@@ -1,17 +1,19 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import { findByGuid, update, getMatches } from "../../store/slices/UserSlice";
+import { findByGuid, update, getMatches, uploadProfilePicture, deleteProfilePicture } from "../../store/slices/UserSlice";
 import { deposit, getByUserGuid } from "../../store/slices/BankSlice";
 import type { Icons } from "../../assets/icons";
-import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, Toast, FormField, Avatar, ComboBox } from "../../ui";
+import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, Toast, FormField, Avatar, ComboBox, Menu, MenuList, MenuItem } from "../../ui";
 import { useThemedIcon } from "../../ui";
 import { validateUsername } from "../../utils/SecurityUtils";
 import { Skeleton } from "../../ui/components/common/Skeleton";
 import { ROOM_TYPE_LABELS, type RoomType } from "../../models/Room";
 import { PageablePanel } from "./components/PageablePanel";
 import { HistoryItem } from "./components/HistoryItem";
+import { AvatarEditorModal } from "./components/AvatarEditorModal.tsx";
+import { ImageViewerModal } from "./components/ImageViewerModal";
 
 const AVAILABLE_ROOM_TYPES = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
 
@@ -40,7 +42,6 @@ export default function Profile() {
 
     const [selectedGameType, setSelectedGameType] = useState<RoomType>('DURAK');
 
-    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isAvatarHovered, setIsAvatarHovered] = useState(false);
 
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -48,7 +49,12 @@ export default function Profile() {
     const [depositModalOpen, setDepositModalOpen] = useState(false);
     const [depositAmount, setDepositAmount] = useState("");
 
-    const [loadingAvatar, setLoadingAvatar] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [isViewerOpen, setIsViewerOpen] = useState(false);
 
     const userGuid = authUser?.guid;
 
@@ -79,6 +85,15 @@ export default function Profile() {
     const handleEditClick = () => {
         setValidationError(null);
         setIsEditingUsername(true);
+    };
+
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const confirmDelete = async () => {
+        await handleDeleteProfilePicture();
+        setIsDeleteConfirmOpen(false);
     };
 
     const handleSaveUsername = async () => {
@@ -123,8 +138,37 @@ export default function Profile() {
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) {
-            setAvatarPreview(URL.createObjectURL(e.target.files[0]));
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.addEventListener("load", () => {
+                setSelectedImage(reader.result as string);
+                setIsEditorOpen(true);
+            });
+            reader.readAsDataURL(file);
+        }
+        e.target.value = "";
+    };
+
+    const handleUploadProfilePicture = async (files: { full: File; mini: File }) => {
+        if (!userGuid) return;
+        try {
+            await dispatch(uploadProfilePicture({ guid: userGuid, files })).unwrap();
+            setToast({ text: "Profile picture updated!", type: "success" });
+            setIsEditorOpen(false);
+            setSelectedImage(null);
+        } catch (err) {
+            setToast({ text: `Upload failed: ${err}`, type: "error" });
+        }
+    };
+
+    const handleDeleteProfilePicture = async () => {
+        if (!userGuid) return;
+        try {
+            await dispatch(deleteProfilePicture(userGuid)).unwrap();
+            setToast({ text: "Profile picture deleted!", type: "success" });
+        } catch (err) {
+            setToast({ text: `Failed to delete profile picture: ${err}`, type: "error" });
         }
     };
 
@@ -210,53 +254,67 @@ export default function Profile() {
                                 onMouseEnter={() => setIsAvatarHovered(true)}
                                 onMouseLeave={() => setIsAvatarHovered(false)}
                             >
-                                {loadingAvatar ? (
-                                    <Skeleton variant="circular" height={150} width={150} />
-                                ) : (
-                                    <>
-                                        <Avatar
-                                            src={avatarPreview || user?.avatarUrl}
-                                            fallback={username}
-                                            size={150}
-                                            isLoading={loadingAvatar}
-                                        />
+                                <Box
+                                    onClick={() => user?.linkProfilePicture && setIsViewerOpen(true)}
+                                    style={{ cursor: user?.linkProfilePicture ? "pointer" : "default" }}
+                                    title={user?.linkProfilePicture ? "View full picture" : undefined}
+                                >
+                                    <Avatar
+                                        src={user?.linkProfilePictureMini}
+                                        fallback={username}
+                                        size={150}
+                                        isLoading={isLoading}
+                                    />
+                                </Box>
 
-
-                                        <label htmlFor="avatar-upload">
-                                            <Box
-                                                style={{
-                                                    position: "absolute",
-                                                    bottom: 5, right: 5,
-                                                    borderRadius: "50%",
-                                                    width: "40px", height: "40px",
-                                                    background: "var(--color-bg)",
-                                                    border: "1px solid var(--glass-border)",
-                                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                                    zIndex: 2, boxShadow: "var(--shadow-sm)",
-                                                    opacity: isAvatarHovered ? 1 : 0,
-                                                    transform: isAvatarHovered ? "scale(1)" : "scale(0.8)",
-                                                    transition: "all 0.2s ease",
-                                                    cursor: "pointer"
-                                                }}
-                                            >
+                                <Box style={{
+                                    position: "absolute",
+                                    bottom: 5, right: 5,
+                                    opacity: isAvatarHovered ? 1 : 0,
+                                    transform: isAvatarHovered ? "scale(1)" : "scale(0.8)",
+                                    transition: "all 0.2s ease",
+                                    zIndex: 2,
+                                }}>
+                                    <Menu
+                                        key={isAvatarHovered ? 'visible' : 'hidden'}
+                                        className="menu-align-left"
+                                        trigger={
+                                            <Box style={{
+                                                borderRadius: "50%",
+                                                width: "40px", height: "40px",
+                                                background: "var(--color-bg)",
+                                                border: "1px solid var(--color-border)",
+                                                display: "flex", alignItems: "center", justifyContent: "center",
+                                                boxShadow: "var(--shadow-sm)",
+                                                cursor: "pointer"
+                                            }} title="Edit Settings">
                                                 <Icon src={getIcon("edit")} alt="edit avatar" size={20} />
                                             </Box>
-                                        </label>
+                                        }
+                                    >
+                                        <MenuList>
+                                            <MenuItem onClick={handleUploadClick}>
+                                                Upload picture
+                                            </MenuItem>
+                                            {user?.linkProfilePicture && (
+                                                <MenuItem onClick={() => setIsDeleteConfirmOpen(true)}>
+                                                    <span style={{ color: "var(--color-expense-text)" }}>
+                                                        Delete picture
+                                                    </span>
+                                                </MenuItem>
+                                            )}
+                                        </MenuList>
+                                    </Menu>
+                                </Box>
 
-                                        <Input
-                                            id="avatar-upload"
-                                            type="file"
-                                            style={{
-                                                width: 0,
-                                                height: 0,
-                                                opacity: 0,
-                                                position: "absolute",
-                                                zIndex: -1,
-                                            }}
-                                            accept="image/*"
-                                            onChange={handleFileChange}
-                                        />
-                                    </>)}
+                                <Input
+                                    id="avatar-upload"
+                                    type="file"
+                                    ref={fileInputRef}
+                                    style={{ display: "none" }}
+                                    accept="image/jpeg, image/jpg"
+                                    onChange={handleFileChange}
+                                />
                             </Box>
 
                             {isLoading ? (
@@ -507,6 +565,17 @@ export default function Profile() {
             )
             }
 
+            <AvatarEditorModal
+                isOpen={isEditorOpen}
+                imageSrc={selectedImage}
+                onClose={() => {
+                    setIsEditorOpen(false);
+                    setSelectedImage(null);
+                }}
+                onUpload={handleUploadProfilePicture}
+                isLoading={isLoading}
+            />
+
             <Modal isOpen={historyModalOpen} onClose={() => setHistoryModalOpen(false)} title="Match History">
                 <Stack gap="0.8rem" style={{ padding: "0.5rem 0" }}>
                     {history.map((item, i) => (
@@ -554,6 +623,29 @@ export default function Profile() {
                     >
                         {isDepositing ? "Processing..." : "Confirm Deposit"}
                     </Button>
+                </Stack>
+            </Modal>
+
+            <ImageViewerModal
+                isOpen={isViewerOpen}
+                src={user?.linkProfilePicture || ""}
+                alt="Profile Picture"
+                onClose={() => setIsViewerOpen(false)}
+            />
+
+            <Modal isOpen={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)} title="Delete Profile Picture">
+                <Stack gap="1rem">
+                    <Typography variant="body">
+                        Are you sure you want to delete your profile picture? This action cannot be undone.
+                    </Typography>
+                    <Stack direction="row" gap="1rem" justify="flex-end" style={{ marginTop: "1rem" }}>
+                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)} disabled={isLoading}>
+                            Cancel
+                        </Button>
+                        <Button variant="solid" onClick={confirmDelete} disabled={isLoading} style={{ background: "var(--color-expense-text)" }}>
+                            {isLoading ? "Deleting..." : "Delete"}
+                        </Button>
+                    </Stack>
                 </Stack>
             </Modal>
         </Box >
