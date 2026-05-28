@@ -1,21 +1,40 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { AxiosError } from "axios";
 import { UserAPI } from "../../api/UserApi";
-import type { UpdateUserRequest, User } from "../../models/User";
+import { GameAPI } from "../../api/GameApi";
+import type { UpdateUserRequest, User, SubscriptionRequest, SubscriptionResponse, SubscriptionPlanResponse } from "../../models/User";
+import type { GameMatchRequestFilter, GameMatchResponse } from "../../models/GameMatch";
+import type { PageResponse } from "../../models/Bank";
 import { deposit } from './BankSlice';
 
 export interface UserState {
     user?: User;
+    subscription?: SubscriptionResponse;
+    subscriptionPlans: SubscriptionPlanResponse[];
     isLoading: boolean;
+    isLoadingSubscription: boolean;
+    isLoadingPlans: boolean;
+    isPurchasing: boolean;
     error?: string;
-    isLoadingPlayersMiniProfiles: Record<string, boolean>;
+    gameHistory: GameMatchResponse[];
+    isLoadingGameHistory: boolean;
+    gameHistoryPage: number;
+    gameHistoryTotalPages: number;
 }
 
 const initialState: UserState = {
     user: undefined,
+    subscription: undefined,
+    subscriptionPlans: [],
     isLoading: false,
+    isLoadingSubscription: false,
+    isLoadingPlans: false,
+    isPurchasing: false,
     error: undefined,
-    isLoadingPlayersMiniProfiles: {},
+    gameHistory: [],
+    isLoadingGameHistory: false,
+    gameHistoryPage: 0,
+    gameHistoryTotalPages: 0,
 };
 
 // ------------------ Thunks ------------------
@@ -73,6 +92,62 @@ export const getBalance = createAsyncThunk<number, string, { rejectValue: string
     }
 );
 
+export const getCurrentSubscription = createAsyncThunk<SubscriptionResponse, void, { rejectValue: string }>(
+    "user/getSubscription",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await UserAPI.getSubscription();
+            return response.data;
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message?: string }>;
+            return rejectWithValue(error.response?.data?.message ?? "Failed to fetch subscription");
+        }
+    }
+);
+
+export const getSubscriptionPlans = createAsyncThunk<SubscriptionPlanResponse[], void, { rejectValue: string }>(
+    "user/getSubscriptionPlans",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await UserAPI.getSubscriptionPlans();
+            return response.data;
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message?: string }>;
+            return rejectWithValue(error.response?.data?.message ?? "Failed to fetch subscription plans");
+        }
+    }
+);
+
+export const purchase = createAsyncThunk<SubscriptionResponse, SubscriptionRequest, { rejectValue: string }>(
+    "user/purchaseSubscription",
+    async (requestData, { rejectWithValue }) => {
+        try {
+            const response = await UserAPI.purchase(requestData);
+            return response.data;
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message?: string }>;
+            return rejectWithValue(error.response?.data?.message ?? "Failed to purchase subscription");
+        }
+    }
+);
+
+export const getMatches = createAsyncThunk<
+    PageResponse<GameMatchResponse>,
+    { guid: string; filter: GameMatchRequestFilter; page?: number; size?: number },
+    { rejectValue: string }
+>(
+    "user/getGameHistory",
+    async ({ guid, filter, page = 0, size = 4 }, { rejectWithValue }) => {
+        try {
+            const response = await GameAPI.getMatches(guid, filter, page, size);
+            return response.data;
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message?: string }>;
+            return rejectWithValue(error.response?.data?.message ?? "Failed to fetch game history");
+        }
+    }
+);
+
 // ------------------ Slice ------------------
 
 const userSlice = createSlice({
@@ -81,8 +156,16 @@ const userSlice = createSlice({
     reducers: {
         clearUser: (state) => {
             state.user = undefined;
+            state.subscription = undefined;
+            state.subscriptionPlans = [];
             state.error = undefined;
             state.isLoading = false;
+            state.isLoadingSubscription = false;
+            state.isLoadingPlans = false;
+            state.isPurchasing = false;
+            state.gameHistory = [];
+            state.gameHistoryPage = 0;
+            state.gameHistoryTotalPages = 0;
         },
     },
     extraReducers: (builder) => {
@@ -120,6 +203,75 @@ const userSlice = createSlice({
                 if (state.user) {
                     state.user.balance = action.payload;
                 }
+            })
+
+            /* === Get Subscription === */
+            .addCase(getCurrentSubscription.pending, (state) => {
+                state.isLoadingSubscription = true;
+                state.error = undefined;
+            })
+            .addCase(getCurrentSubscription.fulfilled, (state, action) => {
+                state.isLoadingSubscription = false;
+                state.subscription = action.payload;
+                if (state.user) {
+                    state.user.status = action.payload.status;
+                }
+            })
+            .addCase(getCurrentSubscription.rejected, (state, action) => {
+                state.isLoadingSubscription = false;
+                state.error = action.payload ?? "Failed to fetch subscription";
+            })
+
+            /* === Get Subscription Plans=== */
+            .addCase(getSubscriptionPlans.pending, (state) => {
+                state.isLoadingPlans = true;
+                state.error = undefined;
+            })
+            .addCase(getSubscriptionPlans.fulfilled, (state, action) => {
+                state.isLoadingPlans = false;
+                state.subscriptionPlans = action.payload;
+            })
+            .addCase(getSubscriptionPlans.rejected, (state, action) => {
+                state.isLoadingPlans = false;
+                state.error = action.payload ?? "Failed to fetch subscription plans";
+            })
+
+            /* === Purchase Subscription === */
+            .addCase(purchase.pending, (state) => {
+                state.isPurchasing = true;
+                state.error = undefined;
+            })
+            .addCase(purchase.fulfilled, (state, action) => {
+                state.isPurchasing = false;
+                if (state.user) {
+                    state.user.status = action.payload.status;
+                }
+            })
+            .addCase(purchase.rejected, (state, action) => {
+                state.isPurchasing = false;
+                state.error = action.payload ?? "Purchase failed";
+            })
+
+            /* === Get Matches === */
+            .addCase(getMatches.pending, (state) => {
+                state.isLoadingGameHistory = true;
+                state.error = undefined;
+                state.gameHistory = [];
+                state.gameHistoryPage = 0;
+                state.gameHistoryTotalPages = 0;
+            })
+            .addCase(getMatches.fulfilled, (state, action) => {
+                state.isLoadingGameHistory = false;
+                state.gameHistory = action.payload.content || [];
+                state.gameHistoryPage = action.payload.page;
+                state.gameHistoryTotalPages = action.payload.totalPages || 0;
+            })
+            .addCase(getMatches.rejected, (state, action) => {
+                state.isLoadingGameHistory = false;
+                state.error = action.payload ?? "Failed to fetch game history";
+                state.gameHistory = [];
+                state.gameHistoryPage = 0;
+                state.gameHistoryTotalPages = 0;
             })
 
             /* === Deposit === */

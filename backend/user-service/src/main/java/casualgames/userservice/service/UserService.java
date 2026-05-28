@@ -80,7 +80,7 @@ public class UserService {
 
         User saved = userRepository.save(target);
 
-        kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildMessage(saved));
+        kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildSynchronizedUserMessage(saved));
 
         return buildResponse(saved, context, token);
     }
@@ -143,7 +143,7 @@ public class UserService {
 
         User saved = userRepository.save(target);
 
-        kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildMessage(saved));
+        kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildSynchronizedUserMessage(saved));
 
         return buildResponse(saved, permissionHelper.getContext(saved.getGuid()), permissionHelper.getToken());
     }

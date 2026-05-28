@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, type HTMLAttributes } from "react";
 import "../styles/combobox.css";
 import { classNames } from "../../utils/classNames";
+import { Icon } from "../common/Icon";
+import { useThemedIcon } from "../../hooks/useThemedIcon";
 
 type ComboBoxOption = {
     value: string;
@@ -34,6 +36,9 @@ export function ComboBox({
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const selectRef = useRef<HTMLDivElement>(null);
+
+    const { getInverseIcon } = useThemedIcon();
+
 
     const selectedOption = options.find((opt) => opt.value === value);
     const displayValue = selectedOption ? selectedOption.label : placeholder;
@@ -92,7 +97,7 @@ export function ComboBox({
                         onClick={(e) => e.stopPropagation()}
                         autoFocus
                     />
-                    <span className="select-arrow">▼</span>
+                    <Icon src={getInverseIcon("expandMore")} alt="arrow" className="select-arrow" size={16} />
                 </div>
             ) : (
                 <div
@@ -104,7 +109,7 @@ export function ComboBox({
                     >
                         {displayValue}
                     </span>
-                    <span className="select-arrow">▼</span>
+                    <Icon src={getInverseIcon("expandMore")} alt="arrow" className="select-arrow" size={16} />
                 </div>
             )}
 

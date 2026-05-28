@@ -28,8 +28,8 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;

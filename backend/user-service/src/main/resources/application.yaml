@@ -75,8 +75,12 @@ kafka:
   bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   topics:
     user: ${KAFKA_USER_TOPIC:user}
+    update-subscription: ${KAFKA_UPDATE_SUBSCRIPTION_TOPIC:update-subscription}
   transactional-outbox:
     enabled: true
+
+cron:
+  update-user-subscriptions: ${CRON_UPDATE_USER_SUBSCRIPTIONS:0 0 2 * * *}
 
 aws:
   s3:
