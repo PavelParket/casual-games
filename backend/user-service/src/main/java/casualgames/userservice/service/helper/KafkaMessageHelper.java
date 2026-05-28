@@ -1,6 +1,6 @@
 package casualgames.userservice.service.helper;
 
-import casualgames.userservice.entity.User;
+import casualgames.userservice.domain.entity.User;
 import com.kafka_starter.config.KafkaTopics;
 import com.kafka_starter.dto.event.UpdateSubscriptionEvent;
 import com.kafka_starter.dto.event.sync.SynchronizedUser;

@@ -38,6 +38,8 @@ public class ClientFactory implements ObjectFactory<ClientSession> {
                 .status(user.status())
                 .session(session)
                 .connectedAt(connectedAt)
+                .linkProfilePicture(user.linkProfilePicture())
+                .linkProfilePictureMini(user.linkProfilePictureMini())
                 .build();
     }
 }

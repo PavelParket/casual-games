@@ -23,6 +23,8 @@ message UserResponse {
   string role = 6;
   string status = 7;
   google.protobuf.Timestamp created_at = 8;
+  string link_profile_picture = 9;
+  string link_profile_picture_mini = 10;
 }
 
 message UpdateUserRequest {

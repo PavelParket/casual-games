@@ -13,6 +13,12 @@ public class ResourceMessageConstants {
     public static final String REQUIRED_TRANSACTION_LIST = "Transaction list must not be empty";
     public static final String REQUIRED_PENDING_STATUS_FOR_TRANSACTIONS = "All transactions must have PENDING status";
     public static final String REQUIRED_POSITIVE_TRANSACTION_AMOUNTS = "All transaction amounts must be positive";
+    public static final String TOO_LARGE_UPLOADING_FILE = "File size exceeds the maximum allowed limit";
+    public static final String INVALID_FILE_TYPE = "Invalid file type";
+    public static final String UNSUPPORTED_FILE_TYPE = "Unsupported file type: %s. Allowed: %s";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_UPDATE_PROFILE_PICTURE = "You do not have permission to update profile picture";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_DELETE_PROFILE_PICTURE = "You do not have permission to delete profile picture";
+    public static final String FILES_ARE_MISSING = "All files are not present";
     public static final String NOT_FOUND_SUBSCRIPTION_PLAN = "Subscription plan not found for status: %s";
     public static final String NOT_FOUND_SUBSCRIPTION = "Subscription not found for user: %s";
     public static final String CONFLICT_SAME_TIER_SUBSCRIPTION = "You already have an active %s subscription";
