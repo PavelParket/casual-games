@@ -10,7 +10,7 @@ import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useGameSocket } from "../../hooks/useGameSocket";
 import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
-import { MiniProfile } from "../../components/MiniProfile";
+import { MiniProfile } from "../profile/components/MiniProfile";
 import { Avatar, Box, Button, Card, Container, Icon, Input, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
 
 export default function TicTacToeRoom() {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Box, Typography, Icon, useThemedIcon, Divider, Avatar } from "../ui";
-import type { Icons } from "../assets/icons";
+import { Box, Typography, Icon, useThemedIcon, Divider, Avatar } from "../../../ui";
+import type { Icons } from "../../../assets/icons";
 
 interface MiniProfileProps {
     guid: string;

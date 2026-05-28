@@ -50,12 +50,14 @@ dependencies {
     implementation 'com.casualgames:common-utils:1.0.0'
     implementation "com.casualgames:security-starter:1.0.0"
     implementation 'com.casualgames:grpc-utils:1.0.0'
+    implementation 'com.casualgames:kafka-starter:1.0.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.kafka:spring-kafka'
 
     implementation "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
     implementation "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"

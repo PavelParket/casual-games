@@ -3,5 +3,6 @@ package com.bank_service.domain.enums;
 public enum TransactionType {
 
     ADDITION,
-    SUBTRACTION
+    SUBTRACTION,
+    SUBSCRIPTION_UPGRADE
 }
