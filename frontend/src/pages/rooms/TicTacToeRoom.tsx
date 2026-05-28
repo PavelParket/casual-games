@@ -266,7 +266,7 @@ export default function TicTacToeRoom() {
                                 const symbol = isGame && playersWithSymbols ? playersWithSymbols[player.username] : null;
 
                                 return (
-                                    <MiniProfile key={playerGuid} guid={playerGuid} username={player.username} status={player.status} avatarUrl={player.linkProfilePicture}>
+                                    <MiniProfile key={playerGuid} guid={playerGuid} username={player.username} status={player.status} avatarUrl={player.linkProfilePictureMini}>
                                         <Stack
                                             direction="row"
                                             align="center"

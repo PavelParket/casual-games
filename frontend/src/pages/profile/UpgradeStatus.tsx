@@ -252,7 +252,7 @@ export default function Upgrade() {
                                                     alignItems: "center",
                                                     gap: "1rem"
                                                 }}>
-                                                    <Avatar src={user?.avatarUrl} fallback={user?.username || "?"} size={40} />
+                                                    <Avatar src={user?.linkProfilePictureMini} fallback={user?.username || "?"} size={40} />
                                                     <Typography
                                                         variant="body"
                                                         style={{
