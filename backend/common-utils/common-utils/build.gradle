@@ -13,11 +13,15 @@ jar {
     enabled = true
 }
 
+def springDoc = '2.8.17'
+
 dependencies {
     implementation 'org.springframework:spring-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     compileOnly 'org.springframework.boot:spring-boot-starter-web'
+
+    compileOnly "org.springdoc:springdoc-openapi-starter-common:${springDoc}"
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 }

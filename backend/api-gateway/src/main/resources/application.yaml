@@ -77,6 +77,15 @@ spring:
         - /security-service/auth/**
         - /actuator/health
         - /actuator/info
+        - /swagger-ui.html
+        - /swagger-ui/**
+        - /webjars/**
+        - /v3/api-docs/**
+        - /security-service/v3/api-docs/**
+        - /user-service/v3/api-docs/**
+        - /bank-service/v3/api-docs/**
+        - /game-service/v3/api-docs/**
+        - /websocket-hub-service/v3/api-docs/**
 
 server:
   port: 8888
@@ -86,3 +95,23 @@ logging:
   level:
     org.springframework.web: DEBUG
     org.springframework.cloud.gateway: DEBUG
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /swagger-ui.html
+    operationsSorter: alpha
+    urls:
+      - url: /security-service/v3/api-docs
+        name: security-service
+      - url: /user-service/v3/api-docs
+        name: user-service
+      - url: /bank-service/v3/api-docs
+        name: bank-service
+      - url: /game-service/v3/api-docs
+        name: game-service
+      - url: /websocket-hub-service/v3/api-docs
+        name: websocket-hub-service

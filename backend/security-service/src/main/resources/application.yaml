@@ -64,6 +64,7 @@ grpc:
 
 server:
   port: 8080
+  forward-headers-strategy: framework
 
 kafka:
   enabled: true
@@ -80,3 +81,15 @@ logging:
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
     com.grpc_utils: DEBUG
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /swagger-ui.html
+
+app:
+  swagger:
+    server-url: ${GATEWAY_URL:http://localhost:8888}/security-service
