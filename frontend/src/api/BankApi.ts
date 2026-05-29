@@ -1,4 +1,4 @@
-import type { DepositRequest, PageResponse, TransactionResponse, TopWinnersResponse, } from "../models/Bank";
+import type { DepositRequest, PageResponse, TransactionResponse, TopWinsResponse, } from "../models/Bank";
 import { BANK_SERVICE_URL } from "./ApiDictionary";
 import { client } from "./AxiosConfig";
 
@@ -10,8 +10,8 @@ export const BankAPI = {
             params: { page, size }
         }),
 
-    getTopWinners: (limit: number = 10) =>
-        client.get<TopWinnersResponse[]>(`${BANK_SERVICE_URL}/transactions/top-winners/`, {
+    getTopWins: (limit: number = 10) =>
+        client.get<TopWinsResponse[]>(`${BANK_SERVICE_URL}/transactions/top-wins`, {
             params: { limit }
         }),
 };

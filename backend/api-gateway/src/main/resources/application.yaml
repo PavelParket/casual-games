@@ -90,6 +90,7 @@ spring:
         - /bank-service/v3/api-docs/**
         - /game-service/v3/api-docs/**
         - /websocket-hub-service/v3/api-docs/**
+        - /bank-service/transactions/top-wins
 
 server:
   port: 8888

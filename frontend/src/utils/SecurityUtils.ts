@@ -121,6 +121,39 @@ const validateValue = (value: unknown): unknown => {
     return value;
 };
 
+export const validateAndReadJpeg = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const fileName = file.name.toLowerCase();
+
+        if (!fileName.endsWith(".jpg") && !fileName.endsWith(".jpeg")) {
+            return reject("Please select a valid JPEG image (.jpg or .jpeg).");
+        }
+
+        const headerReader = new FileReader();
+
+        headerReader.onloadend = (event) => {
+            if (event.target?.readyState === FileReader.DONE) {
+                const arr = new Uint8Array(event.target.result as ArrayBuffer);
+
+                const hasJpegMagicNumbers = arr.length >= 2 && arr[0] === 0xFF && arr[1] === 0xD8;
+
+                if (!hasJpegMagicNumbers) {
+                    return reject("The file content does not match a valid JPEG image.");
+                }
+
+                const dataReader = new FileReader();
+                dataReader.onload = () => resolve(dataReader.result as string);
+                dataReader.onerror = () => reject("Failed to read the file data.");
+                dataReader.readAsDataURL(file);
+            }
+        };
+
+        headerReader.onerror = () => reject("Failed to analyze the file structure.");
+
+        headerReader.readAsArrayBuffer(file.slice(0, 4));
+    });
+};
+
 export const getSecureLocalStorage = <T>(key: string): T | null => {
     try {
         const item = localStorage.getItem(key);

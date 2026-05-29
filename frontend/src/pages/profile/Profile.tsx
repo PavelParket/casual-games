@@ -5,15 +5,16 @@ import type { AppDispatch, RootState } from "../../store/store";
 import { findByGuid, update, getMatches, uploadProfilePicture, deleteProfilePicture } from "../../store/slices/UserSlice";
 import { deposit, getByUserGuid } from "../../store/slices/BankSlice";
 import type { Icons } from "../../assets/icons";
-import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, Toast, FormField, Avatar, ComboBox, Menu, MenuList, MenuItem } from "../../ui";
+import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, FormField, Avatar, ComboBox, Menu, MenuList, MenuItem } from "../../ui";
 import { useThemedIcon } from "../../ui";
-import { validateUsername } from "../../utils/SecurityUtils";
+import { validateAndReadJpeg, validateUsername } from "../../utils/SecurityUtils";
 import { Skeleton } from "../../ui/components/common/Skeleton";
 import { ROOM_TYPE_LABELS, type RoomType } from "../../models/Room";
 import { PageablePanel } from "./components/PageablePanel";
 import { HistoryItem } from "./components/HistoryItem";
 import { AvatarEditorModal } from "./components/AvatarEditorModal.tsx";
 import { ImageViewerModal } from "./components/ImageViewerModal";
+import { useSystemToastContext } from "../../providers/SystemToastContext";
 
 const AVAILABLE_ROOM_TYPES = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
 
@@ -28,26 +29,26 @@ export default function Profile() {
     const { user, isLoading, gameHistory, isLoadingGameHistory, gameHistoryPage, gameHistoryTotalPages } =
         useSelector((state: RootState) => state.user);
     const authUser = useSelector((state: RootState) => state.auth.user);
-    const { isDepositing, error: bankError, transactions, isLoadingTransactions, currentPage, totalPages } =
+    const { isDepositing, transactions, isLoadingTransactions, currentPage, totalPages } =
         useSelector((state: RootState) => state.bank);
 
     const { getIcon } = useThemedIcon();
+    const { showSystemToast } = useSystemToastContext();
 
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [tempUsername, setTempUsername] = useState("");
 
     const [validationError, setValidationError] = useState<string | null>(null);
-    const [toast, setToast] = useState<{ text: string, type: "success" | "error" } | null>(null);
+    const [depositError, setDepositError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'games' | 'balanceHistory'>('games');
 
     const [selectedGameType, setSelectedGameType] = useState<RoomType>('DURAK');
 
     const [isAvatarHovered, setIsAvatarHovered] = useState(false);
 
-    const [historyModalOpen, setHistoryModalOpen] = useState(false);
-
     const [depositModalOpen, setDepositModalOpen] = useState(false);
     const [depositAmount, setDepositAmount] = useState("");
+
 
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -100,7 +101,7 @@ export default function Profile() {
         const sanitizedUsername = validateUsername(tempUsername);
 
         if (sanitizedUsername.length < 3) {
-            setToast({ text: "Username must be at least 3 characters long.", type: "error" });
+            setValidationError("Username must be at least 3 characters long.");
             return;
         }
 
@@ -110,7 +111,7 @@ export default function Profile() {
         }
 
         if (!userGuid) {
-            setToast({ text: "User not authenticated", type: "error" });
+            showSystemToast("User not authenticated", "system-error");
             return;
         }
 
@@ -119,9 +120,9 @@ export default function Profile() {
                 guid: authUser.guid,
                 updateData: { username: sanitizedUsername }
             })).unwrap();
-            setToast({ text: "Username updated successfully!", type: "success" });
+            showSystemToast("Username updated successfully!", "system-info");
         } catch (error) {
-            setToast({ text: `Update failed: ${error}`, type: "error" });
+            showSystemToast(typeof error === "string" ? error : "Update failed", "system-error");
         } finally {
             setIsEditingUsername(false);
             setValidationError(null);
@@ -137,28 +138,33 @@ export default function Profile() {
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.addEventListener("load", () => {
-                setSelectedImage(reader.result as string);
+
+            e.target.value = "";
+
+            try {
+                const dataUrl = await validateAndReadJpeg(file);
+                setSelectedImage(dataUrl);
                 setIsEditorOpen(true);
-            });
-            reader.readAsDataURL(file);
+            } catch (error) {
+                showSystemToast(error as string, "system-error");
+            }
+        } else {
+            e.target.value = "";
         }
-        e.target.value = "";
     };
 
     const handleUploadProfilePicture = async (files: { full: File; mini: File }) => {
         if (!userGuid) return;
         try {
             await dispatch(uploadProfilePicture({ guid: userGuid, files })).unwrap();
-            setToast({ text: "Profile picture updated!", type: "success" });
+            showSystemToast("Profile picture updated!", "system-info");
             setIsEditorOpen(false);
             setSelectedImage(null);
         } catch (err) {
-            setToast({ text: `Upload failed: ${err}`, type: "error" });
+            showSystemToast(typeof err === "string" ? err : "Upload failed", "system-error");
         }
     };
 
@@ -166,14 +172,15 @@ export default function Profile() {
         if (!userGuid) return;
         try {
             await dispatch(deleteProfilePicture(userGuid)).unwrap();
-            setToast({ text: "Profile picture deleted!", type: "success" });
+            showSystemToast("Profile picture deleted!", "system-info");
         } catch (err) {
-            setToast({ text: `Failed to delete profile picture: ${err}`, type: "error" });
+            showSystemToast(typeof err === "string" ? err : "Failed to delete profile picture", "system-error");
         }
     };
 
     const handleDepositAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value.replace(',', '.');
+        setDepositError(null);
 
         if (val === '') {
             setDepositAmount('');
@@ -188,24 +195,26 @@ export default function Profile() {
     };
 
     const handleDeposit = async () => {
+        setDepositError(null);
         const amount = parseFloat(depositAmount);
 
         if (isNaN(amount) || amount <= 0) {
+            setDepositError("Please enter a valid amount greater than 0.");
             return;
         }
 
         if (!userGuid) {
-            setToast({ text: "User not identified", type: "error" });
+            showSystemToast("User not identified", "system-error");
             return;
         }
 
         try {
             await dispatch(deposit({ userGuid: authUser.guid, amount })).unwrap();
-            setToast({ text: "Deposit successful!", type: "success" });
+            showSystemToast("Deposit successful!", "system-info");
             setDepositModalOpen(false);
             setDepositAmount("");
         } catch (err) {
-            setToast({ text: `Deposit failed: ${err}`, type: "error" });
+            showSystemToast(typeof err === "string" ? err : "Deposit failed", "system-error");
         }
     };
 
@@ -219,7 +228,6 @@ export default function Profile() {
     const email = user?.email || "";
     const balance = user?.balance ?? 0;
     const status = user?.status || "default";
-    const history = user?.history || [];
 
     const formattedDate = user?.createdAt
         ? new Date(user.createdAt).toLocaleDateString()
@@ -557,14 +565,6 @@ export default function Profile() {
                 </Card>
             </Container>
 
-            {toast && (
-                <Toast
-                    message={toast.text}
-                    onClose={() => setToast(null)}
-                />
-            )
-            }
-
             <AvatarEditorModal
                 isOpen={isEditorOpen}
                 imageSrc={selectedImage}
@@ -576,25 +576,12 @@ export default function Profile() {
                 isLoading={isLoading}
             />
 
-            <Modal isOpen={historyModalOpen} onClose={() => setHistoryModalOpen(false)} title="Match History">
-                <Stack gap="0.8rem" style={{ padding: "0.5rem 0" }}>
-                    {history.map((item, i) => (
-                        <Card key={i} style={{ padding: "10px 15px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--color-bg)" }}>
-                            <Box>
-                                <Typography variant="h3" style={{ fontSize: "1.1rem" }}>{item.game}</Typography>
-                                <Typography variant="caption" style={{ opacity: 0.6 }}>{new Date(item.date).toLocaleString()}</Typography>
-                            </Box>
-                            <Typography variant="h3" style={{ color: item.result === "Win" ? "green" : item.result === "Loss" ? "red" : "gray" }}>{item.result}</Typography>
-                        </Card>
-                    ))}
-                </Stack>
-            </Modal>
-
             <Modal
                 isOpen={depositModalOpen}
                 onClose={() => {
                     setDepositModalOpen(false)
                     setDepositAmount('');
+                    setDepositError(null);
                 }}
                 title="Deposit Funds"
             >
@@ -611,11 +598,13 @@ export default function Profile() {
                         placeholder="Amount"
                         rounded
                     />
-                    {bankError && (
-                        <Typography variant="caption" style={{ color: 'red' }}>
-                            {bankError}
+
+                    {depositError && (
+                        <Typography variant="caption" style={{ color: 'var(--color-expense-text)' }}>
+                            {depositError}
                         </Typography>
                     )}
+
                     <Button
                         variant="solid"
                         onClick={handleDeposit}
