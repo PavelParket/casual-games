@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store/store";
-import { getTopWinners } from "../store/slices/BankSlice";
+import { getTopWins } from "../store/slices/BankSlice";
 import { ROOM_TYPE_LABELS } from "../models/Room";
 import { Box, Button, Container, Card, Typography, Grid, Stack, Img, Icon } from "../ui";
 import { Skeleton } from "../ui/components/common/Skeleton";
@@ -19,12 +19,10 @@ export default function Home() {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth,);
-    const { topWinners, isLoadingTopWinners } = useSelector((state: RootState) => state.bank);
+    const { topWins, isLoadingTopWins } = useSelector((state: RootState) => state.bank);
 
     useEffect(() => {
-        if (isAuthenticated) {
-            dispatch(getTopWinners(10));
-        }
+        dispatch(getTopWins(10));
     }, [dispatch, isAuthenticated]);
 
     return (
@@ -89,19 +87,19 @@ export default function Home() {
                             }}
                         >
                             <Typography variant="h3" style={{ marginBottom: "1rem", textAlign: "center" }}>
-                                Top winners
+                                Top wins today
                             </Typography>
 
                             <Stack
                                 gap="0.5rem"
                                 style={{ flex: 1, overflowY: "auto", paddingRight: "4px" }}
                             >
-                                {isLoadingTopWinners ? (
+                                {isLoadingTopWins ? (
                                     <Skeleton variant="rectangular" height={41.58} count={10} />
-                                ) : topWinners.length > 0 ? (
-                                    topWinners.map((winner) => (
+                                ) : topWins.length > 0 ? (
+                                    topWins.map((topWin) => (
                                         <Stack
-                                            key={winner.id}
+                                            key={topWin.id}
                                             direction="row"
                                             justify="space-between"
                                             align="center"
@@ -115,14 +113,11 @@ export default function Home() {
                                         >
                                             <Stack gap="0">
                                                 <Typography variant="body" style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                                                    {winner.username}
-                                                </Typography>
-                                                <Typography variant="caption" style={{ fontSize: "0.7rem", opacity: 0.7 }}>
-                                                    {ROOM_TYPE_LABELS[winner.roomType] || winner.roomType}
+                                                    {ROOM_TYPE_LABELS[topWin.roomType] || topWin.roomType}
                                                 </Typography>
                                             </Stack>
                                             <Typography variant="body" style={{ color: "var(--color-income-text)", fontWeight: 700 }}>
-                                                +{winner.amount}
+                                                +{topWin.amount}
                                             </Typography>
                                         </Stack>
                                     ))
