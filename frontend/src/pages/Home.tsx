@@ -87,7 +87,7 @@ export default function Home() {
                             }}
                         >
                             <Typography variant="h3" style={{ marginBottom: "1rem", textAlign: "center" }}>
-                                Top winners
+                                Top wins today
                             </Typography>
 
                             <Stack

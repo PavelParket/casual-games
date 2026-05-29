@@ -103,8 +103,6 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public List<TransactionResponse> getTopWins(int limit) {
-        //todo: permission??
-
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         Instant startOfDay = today.atStartOfDay(ZoneOffset.UTC).toInstant();
         Instant endOfDay = today.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
@@ -116,8 +114,6 @@ public class TransactionService {
                 endOfDay,
                 limit
         );
-
-        log.info("Found {} top winners for today", topTransactions.size());
 
         return transactionMapper.toResponseList(topTransactions);
     }
