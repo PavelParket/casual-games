@@ -1,6 +1,6 @@
 package casualgames.userservice.controller;
 
-import casualgames.userservice.dto.SubscriptionPlanResponse;
+import casualgames.userservice.domain.dto.SubscriptionPlanResponse;
 import casualgames.userservice.service.UserSubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

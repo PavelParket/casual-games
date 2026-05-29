@@ -1,7 +1,7 @@
 package casualgames.userservice.service.helper;
 
-import casualgames.userservice.entity.SubscriptionPlan;
-import casualgames.userservice.entity.UserSubscription;
+import casualgames.userservice.domain.entity.SubscriptionPlan;
+import casualgames.userservice.domain.entity.UserSubscription;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;

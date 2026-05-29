@@ -1,11 +1,11 @@
 package casualgames.userservice.service;
 
-import casualgames.userservice.dto.SubscriptionPlanResponse;
-import casualgames.userservice.dto.SubscriptionRequest;
-import casualgames.userservice.dto.SubscriptionResponse;
-import casualgames.userservice.entity.SubscriptionPlan;
-import casualgames.userservice.entity.User;
-import casualgames.userservice.entity.UserSubscription;
+import casualgames.userservice.domain.dto.SubscriptionPlanResponse;
+import casualgames.userservice.domain.dto.SubscriptionRequest;
+import casualgames.userservice.domain.dto.SubscriptionResponse;
+import casualgames.userservice.domain.entity.SubscriptionPlan;
+import casualgames.userservice.domain.entity.User;
+import casualgames.userservice.domain.entity.UserSubscription;
 import casualgames.userservice.mapper.SubscriptionMapper;
 import casualgames.userservice.mapper.SubscriptionPlanMapper;
 import casualgames.userservice.repository.SubscriptionPlanRepository;
