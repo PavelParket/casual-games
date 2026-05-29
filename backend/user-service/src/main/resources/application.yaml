@@ -44,12 +44,20 @@ spring:
       secret: ${JWT_SECRET}
       access-expiration: ${JWT_ACCESS_EXPIRATION:900000}      # 15 minutes default
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
+      public-paths:
+        - /v3/api-docs/**
+        - /swagger-ui.html
+        - /swagger-ui/**
+        - /webjars/**
     service-whitelist:
       enabled: true
       hosts: [ "127.0.0.1" ]
 
 server:
   port: 8083
+  forward-headers-strategy: framework
+
+server-url: http://localhost:8083
 
 grpc:
   server:
@@ -113,3 +121,12 @@ logging:
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
     com.grpc_utils: DEBUG
+
+springdoc:
+  preLoadingEnabled: true
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /swagger-ui.html

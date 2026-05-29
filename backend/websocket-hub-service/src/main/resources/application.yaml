@@ -31,6 +31,9 @@ spring:
 
 server:
   port: 8081
+  forward-headers-strategy: framework
+
+server-url: http://localhost:8081
 
 grpc:
   client:
@@ -77,3 +80,12 @@ logging:
     org.springframework.web: DEBUG
     org.springframework.web.websocket: DEBUG
     com.grpc_utils: DEBUG
+
+springdoc:
+  preLoadingEnabled: true
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /swagger-ui.html

@@ -8,6 +8,8 @@ plugins {
 }
 
 subprojects {
+    ext['commons-lang3.version'] = '3.20.0'
+
     apply plugin: 'java-library'
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'maven-publish'

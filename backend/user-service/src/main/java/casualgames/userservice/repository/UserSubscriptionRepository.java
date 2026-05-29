@@ -1,6 +1,6 @@
 package casualgames.userservice.repository;
 
-import casualgames.userservice.entity.UserSubscription;
+import casualgames.userservice.domain.entity.UserSubscription;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

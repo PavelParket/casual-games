@@ -1,7 +1,7 @@
 package casualgames.userservice.controller;
 
-import casualgames.userservice.dto.SubscriptionRequest;
-import casualgames.userservice.dto.SubscriptionResponse;
+import casualgames.userservice.domain.dto.SubscriptionRequest;
+import casualgames.userservice.domain.dto.SubscriptionResponse;
 import casualgames.userservice.service.UserSubscriptionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

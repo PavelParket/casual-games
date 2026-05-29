@@ -1,1 +1,2 @@
 com.common_utils.config.CommonUtilsAutoConfiguration
+com.common_utils.config.OpenApiAutoConfiguration

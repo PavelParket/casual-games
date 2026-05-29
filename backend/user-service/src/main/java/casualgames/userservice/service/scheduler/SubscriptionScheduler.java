@@ -1,6 +1,6 @@
 package casualgames.userservice.service.scheduler;
 
-import casualgames.userservice.entity.UserSubscription;
+import casualgames.userservice.domain.entity.UserSubscription;
 import casualgames.userservice.service.UserSubscriptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

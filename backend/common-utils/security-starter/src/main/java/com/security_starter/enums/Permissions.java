@@ -13,5 +13,7 @@ public enum Permissions {
     USER,
 
     TRANSACTION,
-    TRANSACTION_SUMMARY
+    TRANSACTION_SUMMARY,
+
+    SUBSCRIPTION
 }

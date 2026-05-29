@@ -1,7 +1,7 @@
 package casualgames.userservice.controller;
 
-import casualgames.userservice.dto.SubscriptionPlanResponse;
-import casualgames.userservice.service.UserSubscriptionService;
+import casualgames.userservice.domain.dto.SubscriptionPlanResponse;
+import casualgames.userservice.service.SubscriptionPlanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,10 +14,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SubscriptionPlanController {
 
-    private final UserSubscriptionService userSubscriptionService;
+    private final SubscriptionPlanService subscriptionPlanService;
 
-    @GetMapping("/all")
-    public List<SubscriptionPlanResponse> getAll() {
-        return userSubscriptionService.getPlans();
+    @GetMapping
+    public List<SubscriptionPlanResponse> get() {
+        return subscriptionPlanService.get();
     }
 }

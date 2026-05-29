@@ -34,6 +34,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
 
+    implementation 'org.apache.commons:commons-lang3:3.20.0'
+
     //JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
@@ -45,6 +47,8 @@ dependencies {
 
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.17'
 
     //Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

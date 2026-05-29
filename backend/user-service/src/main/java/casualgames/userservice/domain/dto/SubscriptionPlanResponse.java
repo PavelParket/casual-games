@@ -1,4 +1,4 @@
-package casualgames.userservice.dto;
+package casualgames.userservice.domain.dto;
 
 import com.security_starter.enums.Status;
 import lombok.Builder;
@@ -13,6 +13,8 @@ public record SubscriptionPlanResponse(
         Status status,
 
         BigDecimal price,
+
+        BigDecimal upgradePrice,
 
         Integer tier
 ) {
