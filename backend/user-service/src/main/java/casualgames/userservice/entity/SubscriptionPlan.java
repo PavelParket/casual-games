@@ -1,4 +1,4 @@
-package casualgames.userservice.entity;
+package casualgames.userservice.domain.entity;
 
 import com.security_starter.enums.Status;
 import jakarta.persistence.Column;
