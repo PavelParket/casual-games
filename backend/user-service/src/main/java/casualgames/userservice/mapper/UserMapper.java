@@ -1,7 +1,7 @@
 package casualgames.userservice.mapper;
 
-import casualgames.userservice.dto.UserResponse;
-import casualgames.userservice.entity.User;
+import casualgames.userservice.domain.dto.UserResponse;
+import casualgames.userservice.domain.entity.User;
 import org.mapstruct.Mapper;
 
 import java.util.List;

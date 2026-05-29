@@ -224,7 +224,14 @@ export default function DeCoderRoom() {
                             >
                                 {players &&
                                     Object.entries(players ?? {}).map(([playerGuid, player]) => (
-                                        <MiniProfile key={playerGuid} guid={playerGuid} username={player.username} status={player.status}>
+                                        <MiniProfile
+                                            key={playerGuid}
+                                            guid={playerGuid}
+                                            username={player.username}
+                                            status={player.status}
+                                            avatarUrl={player.linkProfilePictureMini}
+                                            avatarUrlFull={player.linkProfilePicture}
+                                        >
                                             <Stack
                                                 direction="row"
                                                 align="center"
@@ -248,7 +255,7 @@ export default function DeCoderRoom() {
                                                     e.currentTarget.style.boxShadow = "var(--shadow-sm)";
                                                 }}
                                             >
-                                                <Avatar fallback={player.username} size={40} />
+                                                <Avatar src={player.linkProfilePictureMini} fallback={player.username} size={40} />
 
                                                 <Typography variant="body" style={{ fontWeight: "bold" }}>
                                                     {player.username}

@@ -17,6 +17,11 @@
     z-index: 1000;
 }
 
+.menu-align-left .menu-dropdown {
+    right: auto;
+    left: 0;
+}
+
 .menu-list {
     display: flex;
     flex-direction: column;

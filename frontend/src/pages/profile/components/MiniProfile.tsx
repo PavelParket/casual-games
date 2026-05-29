@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Box, Typography, Icon, useThemedIcon, Divider, Avatar } from "../../../ui";
 import type { Icons } from "../../../assets/icons";
+import { ImageViewerModal } from "./ImageViewerModal";
 
 interface MiniProfileProps {
     guid: string;
     username: string;
     status?: string;
     avatarUrl?: string | null;
+    avatarUrlFull?: string | null;
     children: React.ReactNode;
 }
 
@@ -15,11 +17,13 @@ const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
 };
 
-export function MiniProfile({ guid, username, status = "DEFAULT", avatarUrl, children }: MiniProfileProps) {
+export function MiniProfile({ username, status = "DEFAULT", avatarUrl, avatarUrlFull, children }: MiniProfileProps) {
     const { getIcon } = useThemedIcon();
 
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState({ top: 0, left: 0 });
+
+    const [isViewerOpen, setIsViewerOpen] = useState(false);
 
     const triggerRef = useRef<HTMLDivElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -94,7 +98,13 @@ export function MiniProfile({ guid, username, status = "DEFAULT", avatarUrl, chi
                 alignItems: "center",
                 gap: "1rem"
             }}>
-                <Avatar src={avatarUrl} fallback={username} size={40} />
+                <Box
+                    onClick={() => avatarUrlFull && setIsViewerOpen(true)}
+                    style={{ cursor: avatarUrlFull ? "pointer" : "default" }}
+                    title={avatarUrlFull ? "View full picture" : undefined}
+                >
+                    <Avatar src={avatarUrl} fallback={username} size={52} />
+                </Box>
                 <Typography
                     variant="body"
                     style={{
@@ -150,6 +160,15 @@ export function MiniProfile({ guid, username, status = "DEFAULT", avatarUrl, chi
                 {children}
             </div>
             {menuContent}
+
+            {isViewerOpen && avatarUrlFull && (
+                <ImageViewerModal
+                    isOpen={isViewerOpen}
+                    src={avatarUrlFull}
+                    alt={`${username}'s avatar`}
+                    onClose={() => setIsViewerOpen(false)}
+                />
+            )}
         </>
     );
 }

@@ -1,6 +1,6 @@
 package casualgames.userservice.service.grpc;
 
-import casualgames.userservice.entity.User;
+import casualgames.userservice.domain.entity.User;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.validator.UserValidator;
 import com.casualgames.grpc.user.CreateUserRequest;
@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_USER;
@@ -65,6 +66,8 @@ public class GrpcUserService extends UserServiceGrpc.UserServiceImplBase {
                 .setRole(user.getRole().toString())
                 .setStatus(user.getStatus().toString())
                 .setCreatedAt(GrpcTimestampMapper.toTimestamp(user.getCreatedAt()))
+                .setLinkProfilePicture(Optional.ofNullable(user.getLinkProfilePicture()).orElse(""))
+                .setLinkProfilePictureMini(Optional.ofNullable(user.getLinkProfilePictureMini()).orElse(""))
                 .build();
     }
 }

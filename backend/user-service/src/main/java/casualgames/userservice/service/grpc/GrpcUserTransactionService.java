@@ -1,7 +1,7 @@
 package casualgames.userservice.service.grpc;
 
-import casualgames.userservice.entity.User;
-import casualgames.userservice.enums.TransactionType;
+import casualgames.userservice.domain.entity.User;
+import casualgames.userservice.domain.enums.TransactionType;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.validator.TransactionValidator;
 import com.casualgames.grpc.transaction.UpdateBalancesRequest;

@@ -52,6 +52,8 @@ export interface PlayerResponse {
     guid: string;
     username: string;
     status: string;
+    linkProfilePicture?: string | null;
+    linkProfilePictureMini?: string | null;
 }
 
 /* ============================ */

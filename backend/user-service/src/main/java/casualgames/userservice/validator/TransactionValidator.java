@@ -1,6 +1,6 @@
 package casualgames.userservice.validator;
 
-import casualgames.userservice.enums.TransactionStatus;
+import casualgames.userservice.domain.enums.TransactionStatus;
 import com.casualgames.grpc.transaction.UserTransaction;
 import com.common_utils.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
