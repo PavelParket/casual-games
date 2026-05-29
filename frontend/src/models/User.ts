@@ -19,6 +19,7 @@ export interface SubscriptionPlanResponse {
     id: number;
     status: UserStatus;
     price: number;
+    upgradePrice?: number | null;
     tier: number;
 }
 

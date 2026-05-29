@@ -2,19 +2,20 @@ import { useState } from "react";
 import { Box, Button, Card, Container, Divider, Form, FormField, Typography, useThemedIcon } from "../../ui";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../store/slices/AuthSlice";
-import type { AppDispatch, RootState } from "../../store/store";
-import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store/store";
+import { useDispatch } from "react-redux";
 import { isValidEmail, validateEmail, validateUsername } from "../../utils/SecurityUtils";
+import { useSystemToastContext } from "../../providers/SystemToastContext";
 
 export default function Register() {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
 
-    const { error } = useSelector((state: RootState) => state.auth);
     const [form, setForm] = useState({ username: "", email: "", password: "", });
     const [validationError, setValidationError] = useState<string>("");
 
     const { getIcon } = useThemedIcon();
+    const { showSystemToast } = useSystemToastContext();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -62,8 +63,12 @@ export default function Register() {
             return;
         }
 
-        await dispatch(register(form)).unwrap();
-        navigate('/');
+        try {
+            await dispatch(register(form)).unwrap();
+            navigate('/');
+        } catch (err) {
+            showSystemToast(typeof err === "string" ? err : "Registration failed", "system-error");
+        }
     };
 
     return (
@@ -106,9 +111,9 @@ export default function Register() {
                             <Button type="submit" variant="solid">Sign Up</Button>
                         </Form>
 
-                        {(error || validationError) && (
+                        {(validationError) && (
                             <Typography variant="caption" style={{ color: "red", marginTop: "1rem", display: "block" }}>
-                                {error || validationError}
+                                {validationError}
                             </Typography>
                         )}
 

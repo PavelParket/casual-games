@@ -6,13 +6,15 @@ import type { AppDispatch, RootState } from "../../store/store";
 import { login } from "../../store/slices/AuthSlice";
 import { useThemedIcon } from "../../ui/hooks/useThemedIcon";
 import { isValidEmail, validateEmail } from "../../utils/SecurityUtils";
+import { useSystemToastContext } from "../../providers/SystemToastContext";
 
 export default function Login() {
     const [form, setForm] = useState({ email: "", password: "" });
     const [validationError, setValidationError] = useState<string>("");
-    const { isAuthenticated, error } = useSelector((state: RootState) => state.auth);
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
     const { getIcon } = useThemedIcon();
+    const { showSystemToast } = useSystemToastContext();
 
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
@@ -53,7 +55,11 @@ export default function Login() {
             return;
         }
 
-        await dispatch(login(form)).unwrap();
+        try {
+            await dispatch(login(form)).unwrap();
+        } catch (err) {
+            showSystemToast(err as string, "system-error");
+        }
     };
 
     return (
@@ -88,9 +94,9 @@ export default function Login() {
                             </Button>
                         </Form>
 
-                        {(error || validationError) && (
+                        {(validationError) && (
                             <Typography variant="caption" style={{ color: "red", marginTop: "1rem", display: "block" }}>
-                                {error || validationError}
+                                {validationError}
                             </Typography>
                         )}
 

@@ -27,5 +27,5 @@ export const UserAPI = {
 
     getSubscription: () => client.get<SubscriptionResponse>(`${USER_SERVICE_URL}/user-subscriptions`),
 
-    getSubscriptionPlans: () => client.get<SubscriptionPlanResponse[]>(`${USER_SERVICE_URL}/subscription-plans/all`),
+    getSubscriptionPlans: () => client.get<SubscriptionPlanResponse[]>(`${USER_SERVICE_URL}/subscription-plans`),
 };

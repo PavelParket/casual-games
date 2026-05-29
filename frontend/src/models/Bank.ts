@@ -19,9 +19,8 @@ export interface TransactionResponse {
     createdAtTime: string;
 }
 
-export interface TopWinnersResponse {
+export interface TopWinsResponse {
     id: number;
-    username: string;
     amount: number;
     roomType: string;
 }

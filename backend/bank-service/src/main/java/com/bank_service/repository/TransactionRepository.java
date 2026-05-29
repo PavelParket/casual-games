@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -71,4 +72,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             AND t.created_at < :end
             """, nativeQuery = true)
     Optional<TransactionSummaryProjection> findUserAggregatedSummary(UUID userGuid, String status, Instant start, Instant end);
+
+    @Query(value = """
+            SELECT DISTINCT * FROM transactions t
+            WHERE t.type = :type
+            AND t.status = :status
+            AND t.created_at >= :startOfDay
+            AND t.created_at < :endOfDay
+            ORDER BY t.amount DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Transaction> findTopWinsForDay(String type, String status, Instant startOfDay, Instant endOfDay, int limit);
 }

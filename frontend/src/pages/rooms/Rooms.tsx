@@ -129,9 +129,12 @@ export default function Rooms() {
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
-        await dispatch(searchRooms(appliedFilters)).unwrap().catch(() => { });
-        showSystemToast("Rooms list updated successfully", "system-info");
-        setIsRefreshing(false);
+        try {
+            await dispatch(searchRooms(appliedFilters)).unwrap();
+            showSystemToast("Rooms list updated successfully", "system-info");
+        } catch { /* empty */ } finally {
+            setIsRefreshing(false);
+        }
     };
 
     const handleApplyFilters = () => {
@@ -211,13 +214,13 @@ export default function Rooms() {
             return;
         }
 
-        const roomResponse = await dispatch(createRoom({ roomName: validatedName, roomType })).unwrap().catch(() => null);
-        if (!roomResponse) return;
-
-        setRoomName("");
-        setRoomType(undefined);
-        setIsCreateRoomModalOpen(false);
-        navigateToRoom(roomResponse);
+        try {
+            const roomResponse = await dispatch(createRoom({ roomName: validatedName, roomType })).unwrap();
+            setRoomName("");
+            setRoomType(undefined);
+            setIsCreateRoomModalOpen(false);
+            navigateToRoom(roomResponse);
+        } catch { /* empty */ }
     };
 
     const navigateToRoom = (room: Room) => {

@@ -1,17 +1,17 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { AxiosError } from "axios";
 import { BankAPI } from "../../api/BankApi";
-import type { TransactionResponse, TopWinnersResponse, PageResponse } from "../../models/Bank";
+import type { TransactionResponse, TopWinsResponse, PageResponse } from "../../models/Bank";
 
 export interface BankState {
     isDepositing: boolean;
     error?: string;
     transactions: TransactionResponse[];
     isLoadingTransactions: boolean;
-    topWinners: TopWinnersResponse[];
-    isLoadingTopWinners: boolean;
     currentPage: number;
     totalPages: number;
+    topWins: TopWinsResponse[];
+    isLoadingTopWins: boolean;
 }
 
 const initialState: BankState = {
@@ -19,10 +19,10 @@ const initialState: BankState = {
     error: undefined,
     transactions: [],
     isLoadingTransactions: false,
-    topWinners: [],
-    isLoadingTopWinners: false,
     currentPage: 0,
     totalPages: 0,
+    topWins: [],
+    isLoadingTopWins: false,
 };
 
 // ------------------ Thunks ------------------
@@ -59,11 +59,11 @@ export const getByUserGuid = createAsyncThunk<PageResponse<TransactionResponse>,
     }
 );
 
-export const getTopWinners = createAsyncThunk<TopWinnersResponse[], number | void, { rejectValue: string }>(
+export const getTopWins = createAsyncThunk<TopWinsResponse[], number | void, { rejectValue: string }>(
     "bank/getTopWinners",
     async (limit = 10, { rejectWithValue }) => {
         try {
-            const response = await BankAPI.getTopWinners(limit as number);
+            const response = await BankAPI.getTopWins(limit as number);
             return response.data;
         } catch (err: unknown) {
             const error = err as AxiosError<{ message?: string }>;
@@ -113,17 +113,17 @@ const bankSlice = createSlice({
                 state.error = action.payload ?? "Failed to fetch history";
             })
 
-            /* === GetTopWinners === */
-            .addCase(getTopWinners.pending, (state) => {
-                state.isLoadingTopWinners = true;
+            /* === GetTopWins === */
+            .addCase(getTopWins.pending, (state) => {
+                state.isLoadingTopWins = true;
                 state.error = undefined;
             })
-            .addCase(getTopWinners.fulfilled, (state, action) => {
-                state.isLoadingTopWinners = false;
-                state.topWinners = action.payload;
+            .addCase(getTopWins.fulfilled, (state, action) => {
+                state.isLoadingTopWins = false;
+                state.topWins = action.payload;
             })
-            .addCase(getTopWinners.rejected, (state, action) => {
-                state.isLoadingTopWinners = false;
+            .addCase(getTopWins.rejected, (state, action) => {
+                state.isLoadingTopWins = false;
                 state.error = action.payload ?? "Failed to fetch top winners";
             });
     },

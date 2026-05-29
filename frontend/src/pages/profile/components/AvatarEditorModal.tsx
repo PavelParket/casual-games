@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import { Box, Button, Icon, Input, Modal, Stack, Typography, useThemedIcon } from "../../../ui";
 import { processAvatarImages } from "../../../utils/CropUtils";
@@ -15,20 +15,34 @@ export function AvatarEditorModal({ isOpen, imageSrc, onClose, onUpload, isLoadi
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+    const [localError, setLocalError] = useState<string | null>(null);
 
     const { getIcon } = useThemedIcon();
+
+    useEffect(() => {
+        if (!isOpen) {
+            setLocalError(null);
+        }
+    }, [isOpen]);
 
     const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels);
     }, []);
 
     const handleSave = async () => {
-        if (!imageSrc || !croppedAreaPixels) return;
+        if (!imageSrc || !croppedAreaPixels) {
+            setLocalError("Please select a valid image area.");
+            return;
+        }
+
+        setLocalError(null);
+
         try {
             const croppedFiles = await processAvatarImages(imageSrc, croppedAreaPixels);
             await onUpload(croppedFiles);
         } catch (e) {
             console.error("Cropping failed", e);
+            setLocalError("Failed to process image locally. Please try another file.");
         }
     };
 
@@ -98,6 +112,12 @@ export function AvatarEditorModal({ isOpen, imageSrc, onClose, onUpload, isLoadi
                             </Button>
                         </Stack>
                     </Stack>
+                )}
+
+                {localError && (
+                    <Typography variant="caption" style={{ color: "var(--color-expense-text)", textAlign: "center" }}>
+                        {localError}
+                    </Typography>
                 )}
 
                 <Stack direction="row" gap="1rem" justify="space-between" align="center">

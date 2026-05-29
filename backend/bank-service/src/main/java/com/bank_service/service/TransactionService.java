@@ -5,6 +5,7 @@ import com.bank_service.domain.dto.PageResponse;
 import com.bank_service.domain.dto.TransactionResponse;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.TransactionStatus;
+import com.bank_service.domain.enums.TransactionType;
 import com.bank_service.factory.DefaultTransactionFactory;
 import com.bank_service.mapper.TransactionMapper;
 import com.bank_service.repository.TransactionRepository;
@@ -21,6 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -95,5 +99,26 @@ public class TransactionService {
 
             throw e;
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> getTopWins(int limit) {
+        //todo: permission??
+
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        Instant startOfDay = today.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant endOfDay = today.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+
+        List<Transaction> topTransactions = transactionRepository.findTopWinsForDay(
+                TransactionType.ADDITION.name(),
+                TransactionStatus.SUCCESS.name(),
+                startOfDay,
+                endOfDay,
+                limit
+        );
+
+        log.info("Found {} top winners for today", topTransactions.size());
+
+        return transactionMapper.toResponseList(topTransactions);
     }
 }

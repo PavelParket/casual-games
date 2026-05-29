@@ -6,7 +6,7 @@ import { Skeleton } from "../../ui/components/common/Skeleton";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { purchase, getBalance, getCurrentSubscription, getSubscriptionPlans, findByGuid } from "../../store/slices/UserSlice";
 import type { AppDispatch, RootState } from "../../store/store";
-import type { SubscriptionResponse, UserStatus } from "../../models/User";
+import type { UserStatus } from "../../models/User";
 import type { Icons } from "../../assets/icons";
 import { UPGRADE_FAQ } from "../../models/constants/UpgradeFAQ";
 
@@ -24,43 +24,8 @@ const PLAN_FEATURES: Record<string, string[]> = {
     ]
 };
 
-const P_MIN = 0.1;
-const P_MAX = 0.9;
-
 const getStatusIconName = (status: UserStatus): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
-};
-
-const ceilDays = (fromMs: number, toMs: number): number => {
-    const seconds = Math.floor((toMs - fromMs) / 1000);
-    return Math.max(1, Math.ceil(seconds / 86400));
-};
-
-const calculateVipPrice = (subscription?: SubscriptionResponse): number => {
-    if (!subscription || subscription.status !== "PRO") return 10000;
-    if (!subscription.startedAt || !subscription.expiresAt) return 10000;
-
-    const now = Date.now();
-    const startedAt = new Date(subscription.startedAt).getTime();
-    const expiresAt = new Date(subscription.expiresAt).getTime();
-
-    const totalPeriodDays = ceilDays(startedAt, expiresAt);
-    const remainingDays = Math.max(0, ceilDays(now, expiresAt));
-    const daysUsed = totalPeriodDays - remainingDays;
-
-    const fractionUsed = daysUsed / totalPeriodDays;
-
-    const p = P_MAX - ((P_MAX - P_MIN) * fractionUsed);
-
-    const pricePro = 5000;
-    const priceVip = 10000;
-
-    const dailyRate = pricePro / totalPeriodDays;
-    const credit = dailyRate * remainingDays * p;
-
-    const finalPrice = Math.max(0, priceVip - credit);
-
-    return Number(finalPrice.toFixed(2));
 };
 
 export default function Upgrade() {
@@ -177,9 +142,7 @@ export default function Upgrade() {
                             const isScheduled = subscription?.newStatus === plan.status && !isCurrent;
                             const isDowngrade = plan.tier < currentPlanObj.tier;
 
-                            const displayPrice = plan.status === "VIP"
-                                ? calculateVipPrice(subscription)
-                                : plan.price;
+                            const displayPrice = (plan.upgradePrice !== null && plan.upgradePrice !== undefined) ? plan.upgradePrice : plan.price;
 
                             const statusIconSrc = getIcon(getStatusIconName(plan.status));
                             const features = PLAN_FEATURES[plan.status] || [];
