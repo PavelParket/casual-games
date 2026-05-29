@@ -1,13 +1,11 @@
 package casualgames.userservice.service;
 
-import casualgames.userservice.domain.dto.SubscriptionPlanResponse;
 import casualgames.userservice.domain.dto.SubscriptionRequest;
 import casualgames.userservice.domain.dto.SubscriptionResponse;
 import casualgames.userservice.domain.entity.SubscriptionPlan;
 import casualgames.userservice.domain.entity.User;
 import casualgames.userservice.domain.entity.UserSubscription;
 import casualgames.userservice.mapper.SubscriptionMapper;
-import casualgames.userservice.mapper.SubscriptionPlanMapper;
 import casualgames.userservice.repository.SubscriptionPlanRepository;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.repository.UserSubscriptionRepository;
@@ -16,8 +14,13 @@ import casualgames.userservice.service.helper.PermissionHelper;
 import casualgames.userservice.service.helper.SubscriptionHelper;
 import com.common_utils.exception.BadRequestException;
 import com.common_utils.exception.ConflictException;
+import com.common_utils.exception.ForbiddenException;
 import com.common_utils.exception.NotFoundException;
+import com.security_starter.config.AuthenticationToken;
+import com.security_starter.enums.Operation;
+import com.security_starter.enums.Permissions;
 import com.security_starter.enums.Status;
+import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,11 +31,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.UUID;
 
 import static casualgames.userservice.config.ResourceMessageConstants.BAD_REQUEST_NO_NECESSARY_BALANCE_AMOUNT;
 import static casualgames.userservice.config.ResourceMessageConstants.CONFLICT_SAME_TIER_SUBSCRIPTION;
+import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_READ_SUBSCRIPTION;
+import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_UPDATE_SUBSCRIPTION;
 import static casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_SUBSCRIPTION;
 import static casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_SUBSCRIPTION_PLAN;
 import static casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_USER;
@@ -52,20 +56,29 @@ public class UserSubscriptionService {
 
     private final SubscriptionMapper subscriptionMapper;
 
-    private final SubscriptionPlanMapper subscriptionPlanMapper;
-
     private final SubscriptionHelper subscriptionHelper;
 
     private final KafkaMessageHelper kafkaMessageHelper;
 
     private final PermissionHelper permissionHelper;
 
+    private final PermissionValidator permissionValidator;
+
     @Transactional
     public SubscriptionResponse purchase(SubscriptionRequest request) {
-        UUID userGuid = permissionHelper.getToken().getGuid();
+        AuthenticationToken token = permissionHelper.getToken();
 
-        User user = userRepository.findByGuidForUpdate(userGuid)
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, userGuid)));
+        if (!permissionValidator.can(
+                Permissions.SUBSCRIPTION,
+                Operation.UPDATE,
+                permissionHelper.getContext(token.getGuid()),
+                token
+        )) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_SUBSCRIPTION);
+        }
+
+        User user = userRepository.findByGuidForUpdate(token.getGuid())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, token.getGuid())));
 
         SubscriptionPlan currentPlan = subscriptionPlanRepository.findByStatus(user.getStatus())
                 .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION_PLAN, user.getStatus())));
@@ -77,10 +90,10 @@ public class UserSubscriptionService {
             throw new ConflictException(String.format(CONFLICT_SAME_TIER_SUBSCRIPTION, request.status()));
         }
 
-        UserSubscription currentSubscription = userSubscriptionRepository.findByUserGuid(userGuid)
+        UserSubscription currentSubscription = userSubscriptionRepository.findByUserGuid(token.getGuid())
                 .orElse(
                         UserSubscription.builder()
-                                .userGuid(userGuid)
+                                .userGuid(token.getGuid())
                                 .build()
                 );
 
@@ -142,29 +155,47 @@ public class UserSubscriptionService {
 
     @Transactional(readOnly = true)
     public SubscriptionResponse get() {
-        UUID userGuid = permissionHelper.getToken().getGuid();
+        AuthenticationToken token = permissionHelper.getToken();
 
-        User user = userRepository.findByGuid(userGuid)
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, userGuid)));
+        if (!permissionValidator.can(
+                Permissions.SUBSCRIPTION,
+                Operation.READ,
+                permissionHelper.getContext(token.getGuid()),
+                token
+        )) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_READ_SUBSCRIPTION);
+        }
 
-        UserSubscription subscription = userSubscriptionRepository.findByUserGuid(userGuid)
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION, userGuid)));
+        User user = userRepository.findByGuid(token.getGuid())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, token.getGuid())));
+
+        UserSubscription subscription = userSubscriptionRepository.findByUserGuid(token.getGuid())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION, token.getGuid())));
 
         return subscriptionMapper.toResponse(subscription, user.getStatus());
     }
 
     @Transactional
     public SubscriptionResponse updateAutoRenew(Boolean enable) {
-        UUID userGuid = permissionHelper.getToken().getGuid();
+        AuthenticationToken token = permissionHelper.getToken();
 
-        UserSubscription subscription = userSubscriptionRepository.findByUserGuid(userGuid)
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION, userGuid)));
+        if (!permissionValidator.can(
+                Permissions.SUBSCRIPTION,
+                Operation.UPDATE,
+                permissionHelper.getContext(token.getGuid()),
+                token
+        )) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_SUBSCRIPTION);
+        }
+
+        UserSubscription subscription = userSubscriptionRepository.findByUserGuid(token.getGuid())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION, token.getGuid())));
 
         subscription.setAutoRenew(enable);
         userSubscriptionRepository.save(subscription);
 
-        User user = userRepository.findByGuid(userGuid)
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, userGuid)));
+        User user = userRepository.findByGuid(token.getGuid())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, token.getGuid())));
 
         return subscriptionMapper.toResponse(subscription, user.getStatus());
     }
@@ -263,9 +294,5 @@ public class UserSubscriptionService {
     @Transactional(readOnly = true)
     public Page<UserSubscription> findExpiringOrScheduled(Instant now, PageRequest pageRequest) {
         return userSubscriptionRepository.findExpiringOrScheduled(now, pageRequest);
-    }
-
-    public List<SubscriptionPlanResponse> getPlans() {
-        return subscriptionPlanMapper.toResponseList(subscriptionPlanRepository.findAll());
     }
 }

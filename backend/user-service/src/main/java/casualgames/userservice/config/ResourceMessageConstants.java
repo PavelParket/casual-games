@@ -23,4 +23,6 @@ public class ResourceMessageConstants {
     public static final String NOT_FOUND_SUBSCRIPTION = "Subscription not found for user: %s";
     public static final String CONFLICT_SAME_TIER_SUBSCRIPTION = "You already have an active %s subscription";
     public static final String BAD_REQUEST_NO_NECESSARY_BALANCE_AMOUNT = "You balance have no necessary balance amount";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_READ_SUBSCRIPTION = "You do not have permission to read subscription";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_UPDATE_SUBSCRIPTION = "You do not have permission to update subscription";
 }

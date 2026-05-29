@@ -14,6 +14,8 @@ public record SubscriptionPlanResponse(
 
         BigDecimal price,
 
+        BigDecimal upgradePrice,
+
         Integer tier
 ) {
 }
