@@ -117,6 +117,7 @@ public class RoomService {
                         type -> types.contains(type)
                                 ? getManager(type).getRoomsList().stream()
                                 .filter(this::isJoinable)
+                                .filter(room -> room.size() < type.getMaxParticipants())
                                 .filter(room -> matchesName(room, request.name()))
                                 .sorted(comparator)
                                 .map(roomMapper::toResponse)

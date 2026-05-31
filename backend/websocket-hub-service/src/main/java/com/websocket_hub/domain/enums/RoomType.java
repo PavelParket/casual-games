@@ -7,14 +7,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum RoomType {
 
-    TIC_TAC_TOE("Tic Tac Toe", "t-t-t", false),
-    DE_CODER("De-Coder", "de-coder", true),
-    HORSE_RACE("Horse Race", "horse-race", false),
-    DURAK("Durak", "durak", false);
+    TIC_TAC_TOE("Tic Tac Toe", "t-t-t", false, 2),
+    DE_CODER("De-Coder", "de-coder", true, 50),
+    HORSE_RACE("Horse Race", "horse-race", false, 50),
+    DURAK("Durak", "durak", false, 2);
 
     private final String label;
 
     private final String handlerUrl;
 
     private final boolean allowsLateJoin;
+
+    private final Integer maxParticipants;
 }
