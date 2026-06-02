@@ -97,7 +97,12 @@ export function ComboBox({
                         onClick={(e) => e.stopPropagation()}
                         autoFocus
                     />
-                    <Icon src={getInverseIcon("expandMore")} alt="arrow" className="select-arrow" size={16} />
+                    <Icon
+                        src={getInverseIcon("expandMore")}
+                        alt="arrow"
+                        className="select-arrow"
+                        size={16}
+                        style={{ transform: "rotate(180deg)", transition: "transform 0.15s" }} />
                 </div>
             ) : (
                 <div

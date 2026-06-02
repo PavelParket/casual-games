@@ -61,18 +61,22 @@ html.dark .modal-content {
 
 .modal-close {
     position: absolute;
-    top: 10px;
+    top: 15px;
     right: 15px;
     background: transparent;
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: var(--color-text);
-    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    padding: 0;
 }
 
 .modal-close:hover {
-    color: var(--color-primary);
+    opacity: 1;
+    transform: scale(1.1);
 }
 
 @keyframes modalFadeIn {

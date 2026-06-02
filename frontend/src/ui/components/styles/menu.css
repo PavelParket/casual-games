@@ -62,3 +62,11 @@
     cursor: default;
     pointer-events: none;
 }
+
+.menu-trigger .menu-chevron-icon {
+    transition: transform 0.2s ease;
+}
+
+.menu-trigger.open .menu-chevron-icon {
+    transform: rotate(180deg);
+}
