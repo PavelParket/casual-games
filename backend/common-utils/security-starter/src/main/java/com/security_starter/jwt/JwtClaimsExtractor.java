@@ -61,6 +61,12 @@ public class JwtClaimsExtractor {
         }
     }
 
+    public UUID extractSid(String token) {
+        Claims claims = jwtDecoder.decode(token);
+        String sidStr = claims.get("sid", String.class);
+        return UUID.fromString(sidStr);
+    }
+
     public Claims extractClaims(String token) {
         return jwtDecoder.decode(token);
     }

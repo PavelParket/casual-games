@@ -14,11 +14,11 @@ public class TokenFactory {
 
     private final JwtGenerator tokenFactory;
 
-    public String createAccessToken(UUID guid, String email, List<String> roles, Status status) {
-        return tokenFactory.generateAccessToken(guid, email, roles, status);
+    public String createAccessToken(UUID guid, String email, List<String> roles, Status status, UUID sid) {
+        return tokenFactory.generateAccessToken(guid, email, roles, status, sid);
     }
 
-    public String createRefreshToken(UUID guid) {
-        return tokenFactory.generateRefreshToken(guid);
+    public String createRefreshToken(UUID guid, UUID sid) {
+        return tokenFactory.generateRefreshToken(guid, sid);
     }
 }

@@ -4,11 +4,11 @@ public class ResourceMessageConstants {
 
     public static final String NOT_FOUND_USER_WITH_EMAIL = "User not found with email: %s";
     public static final String NOT_FOUND_USER_WITH_GUID = "User not found with guid: %s";
-    public static final String NOT_FOUND_REFRESH_TOKEN = "Refresh token not found";
     public static final String NOT_FOUND_USER = "User not found";
     public static final String NOT_FOUND_PERMISSION = "Permission not found";
     public static final String NOT_FOUND_USER_PERMISSION = "User permission not found";
     public static final String NOT_FOUND_ROLE = "Role not found: %s";
+    public static final String NOT_FOUND_SESSION = "Session not found or expired";
 
     public static final String CONFLICT_USER_EMAIL = "User with email %s already exists";
     public static final String CONFLICT_USER_PERMISSION = "Permission already exists for this user";
@@ -18,6 +18,9 @@ public class ResourceMessageConstants {
 
     public static final String EXPIRED_TOKEN = "Token is expired";
     public static final String REQUIRED_PASSWORD = "Password cannot be null";
+    public static final String MISSING_REFRESH_TOKEN = "Refresh token is missing";
+    public static final String INVALID_REFRESH_TOKEN = "Refresh token is invalid or expired";
+    public static final String REFRESH_TOKEN_REUSE = "Refresh token reuse detected";
 
     public static final String FORBIDDEN_PASSWORD_UPDATE = "No permission to change password for this user";
 }

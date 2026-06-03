@@ -33,12 +33,12 @@ public class TokenService {
 
     private final JwtValidator jwtValidator;
 
-    public String generateAccessToken(UUID guid, String email, List<String> roles, Status status) {
-        return tokenFactory.createAccessToken(guid, email, roles, status);
+    public String generateAccessToken(UUID guid, String email, List<String> roles, Status status, UUID sid) {
+        return tokenFactory.createAccessToken(guid, email, roles, status, sid);
     }
 
-    public String generateRefreshToken(UUID guid) {
-        return tokenFactory.createRefreshToken(guid);
+    public String generateRefreshToken(UUID guid, UUID sid) {
+        return tokenFactory.createRefreshToken(guid, sid);
     }
 
     public UUID extractGuid(String token) {
@@ -55,6 +55,10 @@ public class TokenService {
         }
 
         return jwtClaimsExtractor.extractEmail(token);
+    }
+
+    public UUID extractSid(String token) {
+        return jwtClaimsExtractor.extractSid(token);
     }
 
     public Duration extractExpiration(String token) {
