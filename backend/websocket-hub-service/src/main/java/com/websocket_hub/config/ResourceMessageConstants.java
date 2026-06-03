@@ -12,4 +12,5 @@ public class ResourceMessageConstants {
     public static final String UNREADABLE_REQUEST_BODY = "Malformed or unreadable request body";
     public static final String VALIDATION_FAILED = "Validation failed";
     public static final String MUST_PLACE_BET_BEFORE_READY = "You must place a bet before becoming ready";
+    public static final String ROOM_IS_FULL = "Room is already full";
 }

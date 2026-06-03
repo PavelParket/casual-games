@@ -33,6 +33,7 @@ import java.util.UUID;
 
 import static com.websocket_hub.config.ResourceMessageConstants.ROOM_ALREADY_FINISHED;
 import static com.websocket_hub.config.ResourceMessageConstants.ROOM_ALREADY_IN_PROGRESS;
+import static com.websocket_hub.config.ResourceMessageConstants.ROOM_IS_FULL;
 import static com.websocket_hub.config.ResourceMessageConstants.ROOM_NOT_FOUND;
 import static com.websocket_hub.config.ResourceMessageConstants.SERVICE_UNAVAILABLE;
 
@@ -56,7 +57,7 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
             UUID roomId = identityProvider.resolveRoomId(request);
             UserInternalResponse user = grpcUserClient.getByGuid(guid);
 
-            validateRoomStatus(roomId);
+            validateRoom(roomId);
 
             attributes.put("guid", guid);
             attributes.put("user", user);
@@ -101,7 +102,7 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
         }
     }
 
-    private void validateRoomStatus(UUID roomId) {
+    private void validateRoom(UUID roomId) {
         RoomMetadata metadata = findMetadataByRoomId(roomId);
 
         if (metadata == null) {
@@ -114,6 +115,10 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
             throw new ForbiddenException(ROOM_ALREADY_FINISHED);
         } else if (RoomStatus.IN_PROGRESS.equals(status) && !metadata.getType().isAllowsLateJoin()) {
             throw new ForbiddenException(ROOM_ALREADY_IN_PROGRESS);
+        }
+
+        if (metadata.getParticipantCount() >= metadata.getType().getMaxParticipants()) {
+            throw new ForbiddenException(ROOM_IS_FULL);
         }
     }
 
