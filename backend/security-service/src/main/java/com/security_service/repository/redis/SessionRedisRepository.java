@@ -71,6 +71,10 @@ public class SessionRedisRepository {
         return redisSetRepository.get(indexKey(guid));
     }
 
+    public void indexClear(UUID guid) {
+        redisRepository.delete(indexKey(guid));
+    }
+
     private String sessionKey(UUID guid, UUID sid) {
         return String.format(SESSION_KEY_FORMAT, SESSION_PREFIX, guid, sid);
     }

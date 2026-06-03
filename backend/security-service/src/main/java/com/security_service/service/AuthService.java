@@ -77,7 +77,16 @@ public class AuthService {
         return mapper.toResponse(user, newAccessToken);
     }
 
-    public void logout(HttpServletResponse response) {
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            String refreshToken = cookieService.extractRefreshToken(request);
+            UUID guid = tokenService.extractGuid(refreshToken);
+            UUID sid = tokenService.extractSid(refreshToken);
+            sessionService.revoke(guid, sid);
+        } catch (Exception e) {
+            log.debug("Logout: session revoke skipped: {}", e.getMessage());
+        }
+
         cookieService.deleteRefreshToken(response);
     }
 

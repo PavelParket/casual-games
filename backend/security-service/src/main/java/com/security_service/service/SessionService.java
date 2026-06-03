@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.security_service.config.ResourceMessageConstants.NOT_FOUND_SESSION;
@@ -68,5 +69,28 @@ public class SessionService {
         sessionRedisRepository.save(guid, sid, updated, ttl);
 
         log.debug("Session rotated: guid={}, sid={}", guid, sid);
+    }
+
+    public void revoke(UUID guid, UUID sid) {
+        sessionRedisRepository.delete(guid, sid);
+        sessionRedisRepository.indexRemove(guid, sid);
+
+        log.debug("Session revoked: guid={}, sid={}", guid, sid);
+    }
+
+    public void revokeAll(UUID guid) {
+        Set<String> sids = sessionRedisRepository.indexGetAll(guid);
+
+        for (String sid : sids) {
+            try {
+                sessionRedisRepository.delete(guid, UUID.fromString(sid));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid sid in session index: guid={}, sid={}", guid, sid);
+            }
+        }
+
+        sessionRedisRepository.indexClear(guid);
+
+        log.debug("All sessions revoked: guid={}, count={}", guid, sids.size());
     }
 }
