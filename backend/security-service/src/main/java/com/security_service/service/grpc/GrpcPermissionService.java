@@ -10,7 +10,7 @@ import com.casualgames.grpc.permission.SyncUserPermissionsResponse;
 import com.casualgames.grpc.permission.UserPermissionsRequest;
 import com.casualgames.grpc.permission.UserPermissionsResponse;
 import com.common_utils.exception.BadRequestException;
-import com.security_service.repository.UserPermissionRedisRepository;
+import com.security_service.repository.redis.UserPermissionRedisRepository;
 import com.security_service.service.SyncPermissionService;
 import com.security_starter.provider.PermissionProvider;
 import io.grpc.stub.StreamObserver;

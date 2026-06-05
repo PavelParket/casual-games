@@ -4,9 +4,13 @@ import com.security_service.domain.dto.AuthResponse;
 import com.security_service.domain.dto.LoginRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UserResponse;
+import com.security_service.domain.dto.WsTicketRequest;
+import com.security_service.domain.dto.WsTicketResponse;
 import com.security_service.mapper.AuthMapper;
 import com.security_service.validator.RefreshTokenValidator;
+import com.security_starter.config.AuthenticationToken;
 import com.security_starter.enums.Status;
+import com.security_starter.helper.PermissionContextHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +35,15 @@ public class AuthService {
 
     private final SessionService sessionService;
 
+    private final WsTicketService wsTicketService;
+
     private final RefreshTokenValidator refreshTokenValidator;
 
     private final AuthMapper mapper;
 
     private final AuthenticationManager authenticationManager;
+
+    private final PermissionContextHelper permissionContextHelper;
 
     public AuthResponse register(RegisterRequest request, HttpServletResponse response) {
         UserResponse user = userService.create(request);
@@ -88,6 +96,16 @@ public class AuthService {
         }
 
         cookieService.deleteRefreshToken(response);
+    }
+
+    public WsTicketResponse createWsTicket(WsTicketRequest ticketRequest) {
+        AuthenticationToken token = permissionContextHelper.getCurrentAuthentication();
+
+        return WsTicketResponse.builder()
+                .ticket(
+                        wsTicketService.create(token.getGuid(), token.getSid(), ticketRequest.roomId())
+                )
+                .build();
     }
 
     private void authenticate(String email, String password) {
