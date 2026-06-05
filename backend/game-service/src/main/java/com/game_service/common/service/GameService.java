@@ -51,8 +51,6 @@ public class GameService {
             throw new NotFoundException(String.format(GAME_TYPE_NOT_FOUND, gameMatchRequestFilter.gameType()));
         }
 
-        log.info("Fetching stats for gameType={}, userGuid={}, isWinner={}", gameMatchRequestFilter.gameType(), userGuid, gameMatchRequestFilter.isWinner());
-
         return provider.findMatches(userGuid, gameMatchRequestFilter, pageable);
     }
 

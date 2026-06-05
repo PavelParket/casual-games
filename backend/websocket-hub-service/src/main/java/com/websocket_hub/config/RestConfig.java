@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Configuration
 @RequiredArgsConstructor
-public class WebConfig {
+public class RestConfig {
 
     private final RestErrorHandler restErrorHandler;
 

@@ -23,6 +23,8 @@ spring:
     properties:
       hibernate:
         default_schema: game_service
+        jdbc:
+          time_zone: UTC
 
 server:
   port: 8082
