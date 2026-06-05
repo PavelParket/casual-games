@@ -30,6 +30,8 @@ spring:
     properties:
       hibernate:
         default_schema: user_service
+        jdbc:
+          time_zone: UTC
 
   data:
     redis:
