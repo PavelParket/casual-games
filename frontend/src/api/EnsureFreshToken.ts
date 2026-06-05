@@ -42,6 +42,8 @@ const doRefresh = async (): Promise<string> => {
 };
 
 export const ensureFreshToken = (): Promise<string> => {
+    const tokenBeforeLock = _store?.getState().auth.user?.accessToken;
+
     if (!navigator?.locks) {
         return doRefresh();
     }
@@ -49,6 +51,13 @@ export const ensureFreshToken = (): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
         navigator.locks.request(LOCK_NAME, async () => {
             try {
+                const current = _store!.getState().auth.user?.accessToken;
+
+                if (current && current !== tokenBeforeLock) {
+                    resolve(current);
+                    return;
+                }
+
                 resolve(await doRefresh());
             } catch (err) {
                 reject(err);

@@ -34,8 +34,6 @@ export const startTokenTimer = (token?: string) => {
 
     stopTokenTimer();
 
-    checkToken(token);
-
     refreshInterval = setInterval(() => {
         const current = accessToken;
 

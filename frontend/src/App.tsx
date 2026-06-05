@@ -16,7 +16,7 @@ import Profile from './pages/profile/Profile'
 import ExperimentalPage from './pages/ExperimentalPage'
 import LoadingPage from './pages/LoadingPage'
 import { useScrollbarVisibility } from './hooks/useScrollbarVisibility'
-import { SystemToastProvider } from './providers/SystemToastContext'
+import { SystemToastProvider, useSystemToastContext } from './providers/SystemToastContext'
 import TicTacToeRoomShell from './pages/rooms/shell/TicTacToeRoomShell'
 import HorseRaceRoomShell from './pages/rooms/shell/HorseRaceRoomShell'
 import DeCoderRoomShell from './pages/rooms/shell/DeCoderRoomShell'
@@ -25,6 +25,17 @@ import UpgradeStatus from './pages/profile/UpgradeStatus'
 import { setOnRefreshRequired } from './utils/TokenManager'
 import { ensureFreshToken } from './api/EnsureFreshToken'
 import { AuthBroadcast } from './api/AuthBroadcast'
+import { initAuthToast } from './api/AxiosInterceptorsConfig'
+
+function AuthToastInitializer() {
+    const { showSystemToast } = useSystemToastContext();
+
+    useEffect(() => {
+        initAuthToast(showSystemToast);
+    }, [showSystemToast]);
+
+    return null;
+}
 
 export default function App() {
     const dispatch = useDispatch<AppDispatch>();
@@ -34,13 +45,13 @@ export default function App() {
 
     useEffect(() => {
         setOnRefreshRequired(() => {
-            ensureFreshToken().catch(err => console.debug('Proactive refresh failed:', err));
+            ensureFreshToken().catch(err => console.debug("Proactive refresh failed:", err));
         });
 
         const unsubscribeBroadcast = AuthBroadcast.onMessage((event) => {
-            if (event.type === 'LOGGED_OUT') {
+            if (event.type === "LOGGED_OUT") {
                 dispatch(localLogout());
-            } else if (event.type === 'REFRESHED') {
+            } else if (event.type === "REFRESHED") {
                 dispatch(setAccessToken(event.token));
             }
         });
@@ -66,6 +77,8 @@ export default function App() {
         <BrowserRouter>
             <ThemeProvider>
                 <SystemToastProvider>
+                    <AuthToastInitializer />
+
                     {!isInitialized ? (
                         <Routes>
                             <Route element={<Layout centered />}>
