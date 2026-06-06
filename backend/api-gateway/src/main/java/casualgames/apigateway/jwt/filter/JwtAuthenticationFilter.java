@@ -168,9 +168,4 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
     public int getOrder() {
         return 0;
     }
-
-    /*@Override
-    public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
-    }*/
 }
