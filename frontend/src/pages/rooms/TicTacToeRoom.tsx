@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 import type { TicTacToeGameMessage } from "../../models/WsMessage";
-import { validateToastMessage } from "../../utils/SecurityUtils";
+import { validateToastMessage, validateAmountInput } from "../../utils/SecurityUtils";
 import { clearError } from "../../store/slices/TicTacToeRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
@@ -11,7 +11,7 @@ import { useGameSocket } from "../../hooks/useGameSocket";
 import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
 import { MiniProfile } from "../profile/components/MiniProfile";
-import { Avatar, Box, Button, Card, Container, Icon, Input, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
+import { Avatar, Box, Button, Card, Container, Icon, FormField, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
 
 export default function TicTacToeRoom() {
     const { getInverseIcon } = useThemedIcon();
@@ -206,6 +206,13 @@ export default function TicTacToeRoom() {
             roomId: room.id,
             bet: betAmount,
         });
+    };
+
+    const handleBetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const validated = validateAmountInput(e.target.value);
+        if (validated !== null) {
+            setBetInput(validated);
+        }
     };
 
     const handleLeave = () => {
@@ -413,17 +420,15 @@ export default function TicTacToeRoom() {
                             )}
 
                             <Box style={{ width: "100%" }}>
-                                <Input
-                                    type="number"
+                                <FormField
+                                    type="text"
+                                    inputMode="decimal"
                                     value={betInput}
-                                    onChange={(e) => setBetInput(e.target.value)}
+                                    onChange={handleBetChange}
                                     placeholder="Enter bet amount"
                                     disabled={betPlaced || isGame}
                                     style={{
                                         width: "100%",
-                                        padding: "0.75rem",
-                                        borderRadius: "var(--radius-sm)",
-                                        border: "1px solid var(--color-border)",
                                         background: betPlaced || isGame ? "var(--color-bg-disabled)" : "var(--color-bg)",
                                         color: "var(--color-text)",
                                         fontSize: "1rem",

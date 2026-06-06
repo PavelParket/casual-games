@@ -7,7 +7,7 @@ import { deposit, getByUserGuid } from "../../store/slices/BankSlice";
 import type { Icons } from "../../assets/icons";
 import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, FormField, Avatar, ComboBox, Menu, MenuList, MenuItem } from "../../ui";
 import { useThemedIcon } from "../../ui";
-import { validateAndReadJpeg, validateUsername } from "../../utils/SecurityUtils";
+import { validateAndReadJpeg, validateUsername, validateAmountInput } from "../../utils/SecurityUtils";
 import { Skeleton } from "../../ui/components/common/Skeleton";
 import { ROOM_TYPE_LABELS, type RoomType } from "../../models/Room";
 import { PageablePanel } from "./components/PageablePanel";
@@ -179,18 +179,10 @@ export default function Profile() {
     };
 
     const handleDepositAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value.replace(',', '.');
-        setDepositError(null);
-
-        if (val === '') {
-            setDepositAmount('');
-            return;
-        }
-
-        const regex = /^\d{0,5}(\.\d{0,2})?$/;
-
-        if (regex.test(val)) {
-            setDepositAmount(val);
+        const validated = validateAmountInput(e.target.value);
+        if (validated !== null) {
+            setDepositAmount(validated);
+            setDepositError(null);
         }
     };
 
