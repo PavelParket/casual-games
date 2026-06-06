@@ -31,6 +31,7 @@ import org.springframework.web.socket.WebSocketSession;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -160,10 +161,16 @@ public class HorseRaceGameRoomHandler extends AppWebSocketHandler<HorseRaceGameR
         try {
             Map<UUID, String> participants = roomManager.getParticipants(roomId);
 
+            Map<UUID, Integer> players = roomManager.getPlayerBets(roomId).stream()
+                    .collect(Collectors.toMap(
+                            HorseRacePlayerBet::getGuid,
+                            HorseRacePlayerBet::getHorseIndex
+                    ));
+
             HorseRaceGameInternalRequest startRequest = horseRaceMessageMapper.toStartRequest(
                     HorseRaceEvent.START,
                     roomId,
-                    participants,
+                    players,
                     horseRaceGamePreset.horseCount()
             );
 

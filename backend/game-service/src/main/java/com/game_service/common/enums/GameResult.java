@@ -4,5 +4,6 @@ public enum GameResult {
 
     WIN,
     LOSS,
-    DRAW
+    DRAW,
+    NO_DATA
 }

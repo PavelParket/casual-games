@@ -17,7 +17,7 @@ public interface HorseRaceGameMessageMapper extends MessageMapper {
 
     HorseRaceGameInternalRequest toStartRequest(HorseRaceEvent event,
                                                 UUID roomId,
-                                                Map<UUID, String> participants,
+                                                Map<UUID, Integer> participants,
                                                 Integer horseCount);
 
     @Mapping(target = "participants", ignore = true)

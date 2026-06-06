@@ -91,14 +91,17 @@ public class HorseRaceGameService implements GameCleanupProvider {
                 segmentsCount
         );
 
-        HorseRace horseRace = horseRaceRepository.save(horseRaceFactory.create(
-                request.roomId(),
-                serverSeed,
-                seedHash,
-                horseCount,
-                winnerHorseIndex,
-                segmentsCount
-        ));
+        HorseRace horseRace = horseRaceRepository.save(
+                horseRaceFactory.create(
+                        request.roomId(),
+                        serverSeed,
+                        seedHash,
+                        horseCount,
+                        winnerHorseIndex,
+                        segmentsCount,
+                        request.participants()
+                )
+        );
 
         log.info("Race running for room={}: winner=horse#{}, segments={}, seed={}", request.roomId(), winnerHorseIndex, segmentsCount, seedHash);
 
