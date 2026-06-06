@@ -63,3 +63,14 @@ export interface PlayerBet {
     guid: string;
     bet: number;
 };
+
+/* ============================= */
+/* ====== TICKET FOR ROOM ====== */
+/* ============================= */
+export interface WsTicketRequest {
+    roomId: string;
+};
+
+export interface WsTicket {
+    ticketId: string;
+};

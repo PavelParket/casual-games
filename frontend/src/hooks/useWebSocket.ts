@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
-import { type RootState } from "../store/store";
 import type { WSMessage } from "../models/WsMessage";
-import { ROOM_TYPE_HANDLERS } from "../models/Room";
+import { ROOM_TYPE_HANDLERS, type WsTicket, type WsTicketRequest } from "../models/Room";
 import { WEBSOCKET_HUB_SERVICE_URL_WS } from "../api/ApiDictionary";
+import { AuthAPI } from '../api/AuthApi';
 
 export type ConnectionState =
     | "connecting"
@@ -65,11 +64,8 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
     const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
     const [message, setMessage] = useState<T>();
 
-    const accessToken = useSelector((state: RootState) => state.auth.user?.accessToken);
-
     const client = useRef<WebSocket | null>(null);
     const isUnmounting = useRef<boolean>(false);
-    const wsUrlRef = useRef<string | null>(null);
 
     const generationRef = useRef<number>(0);
     const reconnectUsedRef = useRef<boolean>(false);
@@ -111,7 +107,7 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
         clearPongTimeout();
     }, [clearPongTimeout]);
 
-    const connect = useCallback((url: string) => {
+    const connect = useCallback(async () => {
         if (isUnmounting.current) {
             return;
         }
@@ -120,6 +116,32 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
         const isReconnect = reconnectUsedRef.current;
 
         setConnectionState(isReconnect ? "reconnecting" : "connecting");
+
+        let ticket: WsTicket;
+
+        const ticketRequest: WsTicketRequest = {
+            roomId: roomId!,
+        };
+
+        try {
+            const response = await AuthAPI.getWsTicket(ticketRequest);
+            ticket = response.data;
+        } catch (e) {
+            if (generation !== generationRef.current) {
+                return;
+            }
+            console.error("[WS] failed to fetch ticket", e);
+            setConnectionState("closed_fatal");
+            onConnectionLostRef.current?.();
+            return;
+        }
+
+        if (generation !== generationRef.current) {
+            return;
+        }
+
+        const handlerUrl = ROOM_TYPE_HANDLERS[roomType!];
+        const url = `${WEBSOCKET_HUB_SERVICE_URL_WS}/ws/${handlerUrl}?roomId=${roomId}&ticket=${ticket.ticketId}`;
 
         const socket = new WebSocket(url);
         client.current = socket;
@@ -206,7 +228,7 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
                 setConnectionState("reconnecting");
 
                 reconnectTimerRef.current = setTimeout(() => {
-                    connect(url);
+                    connect();
                 }, RECONNECT_DELAY_MS);
             } else {
                 console.warn("[WS] reconnect exhausted — connection lost");
@@ -252,11 +274,11 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
                 }
             }, PONG_TIMEOUT_MS);
         }
-    }, [clearPingTimer, clearPongTimeout, roomId]);
+    }, [clearPingTimer, clearPongTimeout, roomId, roomType]);
 
     useEffect(() => {
-        if (!roomId || !roomType || !accessToken) {
-            console.warn(`[WS] missing params: roomId=${!!roomId} roomType=${!!roomType} token=${!!accessToken}`);
+        if (!roomId || !roomType) {
+            console.warn(`[WS] missing params: roomId=${!!roomId} roomType=${!!roomType}`);
             setConnectionState("closed_fatal");
             return;
         }
@@ -268,13 +290,11 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
             return;
         }
 
-        const url = `${WEBSOCKET_HUB_SERVICE_URL_WS}/ws/${handlerUrl}?roomId=${roomId}&token=${accessToken}`;
-        wsUrlRef.current = url;
         isUnmounting.current = false;
         reconnectUsedRef.current = false;
         wasEverOpenRef.current = false;
 
-        connect(url);
+        connect();
 
         const handleVisibilityChange = () => {
             if (document.visibilityState !== "visible") {
@@ -287,10 +307,10 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
                 socket.readyState === WebSocket.CLOSED ||
                 socket.readyState === WebSocket.CLOSING;
 
-            if (isSocketDead && !isUnmounting.current && wsUrlRef.current) {
+            if (isSocketDead && !isUnmounting.current) {
                 reconnectUsedRef.current = false;
                 clearReconnectTimer();
-                connect(wsUrlRef.current);
+                connect();
             }
         };
 
@@ -311,7 +331,7 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
             }
             client.current = null;
         };
-    }, [accessToken, roomId, roomType, connect, clearReconnectTimer, clearPingTimer]);
+    }, [roomId, roomType, connect, clearReconnectTimer, clearPingTimer]);
 
     const send = useCallback((message: T): boolean => {
         const socket = client.current;

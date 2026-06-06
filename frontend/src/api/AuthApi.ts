@@ -1,4 +1,5 @@
 import type { AuthUser, LoginRequest, RegisterRequest } from "../models/AuthenticationUser";
+import type { WsTicket, WsTicketRequest } from "../models/Room";
 import { SECURITY_SERVICE_URL } from "./ApiDictionary";
 import { client } from "./AxiosConfig";
 
@@ -10,4 +11,6 @@ export const AuthAPI = {
     logout: () => client.post(`${SECURITY_SERVICE_URL}/auth/logout`),
 
     refresh: () => client.post<AuthUser>(`${SECURITY_SERVICE_URL}/auth/refresh`),
+
+    getWsTicket: (data: WsTicketRequest) => client.post<WsTicket>(`${SECURITY_SERVICE_URL}/auth/ws-ticket`, data),
 };

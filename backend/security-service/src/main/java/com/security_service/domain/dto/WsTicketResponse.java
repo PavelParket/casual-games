@@ -5,6 +5,6 @@ import lombok.Builder;
 @Builder
 public record WsTicketResponse(
 
-        String ticket
+        String ticketId
 ) {
 }

@@ -102,7 +102,7 @@ public class AuthService {
         AuthenticationToken token = permissionContextHelper.getCurrentAuthentication();
 
         return WsTicketResponse.builder()
-                .ticket(
+                .ticketId(
                         wsTicketService.create(token.getGuid(), token.getSid(), ticketRequest.roomId())
                 )
                 .build();
