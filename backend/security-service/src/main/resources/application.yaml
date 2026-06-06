@@ -80,6 +80,9 @@ kafka:
   topics:
     user: ${KAFKA_USER_TOPIC:user}
 
+ws-ticket:
+  ttl-seconds: ${WS_TICKET_TTL_SECONDS:30}
+
 logging:
   level:
     org.springframework.web: DEBUG

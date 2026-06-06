@@ -18,6 +18,27 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 public class ServiceExceptionHandler {
 
+    @ExceptionHandler(MissingRefreshTokenException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleMissingRefreshToken(MissingRefreshTokenException e, HttpServletRequest request) {
+        log.warn("Missing refresh token: path={}", request.getRequestURI());
+        return ErrorResponse.of(ErrorCode.NO_SESSION, HttpStatus.UNAUTHORIZED, e.getMessage(), null, request.getRequestURI());
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleInvalidToken(InvalidTokenException e, HttpServletRequest request) {
+        log.warn("Invalid refresh token: {}", e.getMessage());
+        return ErrorResponse.of(ErrorCode.INVALID_TOKEN, HttpStatus.UNAUTHORIZED, e.getMessage(), null, request.getRequestURI());
+    }
+
+    @ExceptionHandler(SessionRevokedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleSessionRevoked(SessionRevokedException e, HttpServletRequest request) {
+        log.warn("Session revoked: {}", e.getMessage());
+        return ErrorResponse.of(ErrorCode.SESSION_REVOKED, HttpStatus.UNAUTHORIZED, e.getMessage(), null, request.getRequestURI());
+    }
+
     @ExceptionHandler(CredentialsExpiredException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleExpiredCredentials(CredentialsExpiredException e, HttpServletRequest request) {

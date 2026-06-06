@@ -1,10 +1,11 @@
 import type { AxiosError } from 'axios';
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { AuthAPI } from '../../api/AuthApi';
 import { setTokenForManager, startTokenTimer, stopTokenTimer } from '../../utils/TokenManager';
 import type { AuthUser, LoginRequest, RegisterRequest } from '../../models/AuthenticationUser';
 import { ApiHelper } from '../../helpers/ApiHelper';
 import { update } from './UserSlice';
+import { AuthBroadcast } from '../../api/AuthBroadcast';
 
 export interface AuthState {
     user?: AuthUser;
@@ -51,6 +52,7 @@ export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
         } finally {
             setTokenForManager();
             stopTokenTimer();
+            AuthBroadcast.postLoggedOut();
         }
     }
 );
@@ -81,6 +83,20 @@ const authSlice = createSlice({
     reducers: {
         clearError: (state) => {
             state.error = undefined;
+        },
+        localLogout: (state) => {
+            state.user = undefined;
+            state.isAuthenticated = false;
+            state.error = undefined;
+            setTokenForManager(undefined);
+            stopTokenTimer();
+        },
+        setAccessToken: (state, action: PayloadAction<string>) => {
+            if (state.user) {
+                state.user.accessToken = action.payload;
+                setTokenForManager(action.payload);
+                startTokenTimer(action.payload);
+            }
         },
     },
     extraReducers: (builder) => {
@@ -140,6 +156,8 @@ const authSlice = createSlice({
                 state.user = undefined;
                 state.isAuthenticated = false;
                 state.error = action.payload ?? "Session expired";
+                setTokenForManager(undefined);
+                stopTokenTimer();
             })
 
             /* === On Update Username === */
@@ -151,6 +169,6 @@ const authSlice = createSlice({
     },
 });
 
-export const { clearError } = authSlice.actions;
+export const { clearError, localLogout, setAccessToken } = authSlice.actions;
 
 export default authSlice.reducer;

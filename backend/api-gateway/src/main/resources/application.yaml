@@ -78,7 +78,10 @@ spring:
       secret: ${JWT_SECRET}
       algorithm: ${JWT_ALGORITHM:HS256}
       public-paths:
-        - /security-service/auth/**
+        - /security-service/auth/login
+        - /security-service/auth/register
+        - /security-service/auth/refresh
+        - /security-service/auth/logout
         - /actuator/health
         - /actuator/info
         - /swagger-ui.html

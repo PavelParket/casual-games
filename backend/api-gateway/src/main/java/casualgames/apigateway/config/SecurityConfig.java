@@ -4,7 +4,7 @@ import casualgames.apigateway.jwt.JwtClaimsExtractor;
 import casualgames.apigateway.jwt.JwtProperties;
 import casualgames.apigateway.jwt.JwtValidator;
 import casualgames.apigateway.jwt.filter.JwtAuthenticationFilter;
-import casualgames.apigateway.repository.BlockedTokenRedisRepository;
+import casualgames.apigateway.repository.SessionRedisRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -27,7 +27,7 @@ public class SecurityConfig {
     private final JwtClaimsExtractor jwtClaimsExtractor;
     private final JwtProperties jwtProperties;
     private final ObjectMapper objectMapper;
-    private final BlockedTokenRedisRepository blockedTokenRepository;
+    private final SessionRedisRepository sessionRedisRepository;
     private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
@@ -37,7 +37,7 @@ public class SecurityConfig {
                 jwtProperties,
                 jwtValidator,
                 jwtClaimsExtractor,
-                blockedTokenRepository
+                sessionRedisRepository
         );
     }
 

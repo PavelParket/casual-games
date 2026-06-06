@@ -19,28 +19,30 @@ public class JwtGenerator {
 
     private final JwtProperties jwtProperties;
 
-    public String generateAccessToken(UUID guid, String email, List<String> roles, Status status) {
+    public String generateAccessToken(UUID guid, String email, List<String> roles, Status status, UUID sid) {
         return Jwts.builder()
                 .subject(guid.toString())
                 .claim("email", email)
                 .claim("roles", roles)
                 .claim("status", status)
+                .claim("sid", sid.toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.accessExpiration()))
                 .signWith(key)
                 .compact();
     }
 
-    public String generateRefreshToken(UUID guid) {
+    public String generateRefreshToken(UUID guid, UUID sid) {
         return Jwts.builder()
                 .subject(guid.toString())
+                .claim("sid", sid.toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.refreshExpiration()))
                 .signWith(key)
                 .compact();
     }
 
-    public String generateSimpleAccessToken(UUID guid, String email, String role) {
-        return generateAccessToken(guid, email, List.of(role), Status.DEFAULT);
+    public String generateSimpleAccessToken(UUID guid, String email, String role, UUID sid) {
+        return generateAccessToken(guid, email, List.of(role), Status.DEFAULT, sid);
     }
 }

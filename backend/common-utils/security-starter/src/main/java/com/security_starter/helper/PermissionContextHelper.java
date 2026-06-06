@@ -79,6 +79,11 @@ public class PermissionContextHelper {
         return auth != null ? auth.getGuid() : null;
     }
 
+    public UUID getCurrentUserTokenSid() {
+        AuthenticationToken auth = getCurrentAuthentication();
+        return auth != null ? auth.getSid() : null;
+    }
+
     public String getCurrentUserEmail() {
         AuthenticationToken auth = getCurrentAuthentication();
         return auth != null ? auth.getEmail() : null;

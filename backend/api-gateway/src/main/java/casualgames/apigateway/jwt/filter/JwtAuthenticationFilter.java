@@ -3,7 +3,7 @@ package casualgames.apigateway.jwt.filter;
 import casualgames.apigateway.jwt.JwtClaimsExtractor;
 import casualgames.apigateway.jwt.JwtProperties;
 import casualgames.apigateway.jwt.JwtValidator;
-import casualgames.apigateway.repository.BlockedTokenRedisRepository;
+import casualgames.apigateway.repository.SessionRedisRepository;
 import com.common_utils.dto.ErrorResponse;
 import com.common_utils.enums.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,13 +44,13 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
     private final JwtValidator jwtValidator;
     private final JwtClaimsExtractor jwtClaimsExtractor;
     private final List<PathPattern> pathPatterns;
-    private final BlockedTokenRedisRepository blockedTokenRepository;
+    private final SessionRedisRepository sessionRedisRepository;
 
     public JwtAuthenticationFilter(ObjectMapper objectMapper,
                                    JwtProperties jwtProperties,
                                    JwtValidator jwtValidator,
                                    JwtClaimsExtractor jwtClaimsExtractor,
-                                   BlockedTokenRedisRepository blockedTokenRepository) {
+                                   SessionRedisRepository sessionRedisRepository) {
         this.objectMapper = objectMapper;
         this.jwtValidator = jwtValidator;
         this.jwtClaimsExtractor = jwtClaimsExtractor;
@@ -59,7 +59,7 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
                 : jwtProperties.publicPaths().stream()
                 .map(PathPatternParser.defaultInstance::parse)
                 .toList();
-        this.blockedTokenRepository = blockedTokenRepository;
+        this.sessionRedisRepository = sessionRedisRepository;
     }
 
     @Override
@@ -85,14 +85,16 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
 
         try {
             UUID guid = jwtClaimsExtractor.extractGuid(token);
+            UUID sid = jwtClaimsExtractor.extractSid(token);
             String email = jwtClaimsExtractor.extractEmail(token);
             List<String> roles = jwtClaimsExtractor.extractRole(token);
-            return blockedTokenRepository.isBlocked(email, token)
-                    .flatMap(blockedToken -> {
-                        if (blockedToken) {
-                            log.warn("Blocked token used for email={}, path={}", email, path);
 
-                            return unauthorized(exchange, path, ErrorCode.UNAUTHORIZED.getMessage());
+            return sessionRedisRepository.isActive(guid, sid)
+                    .flatMap(active -> {
+                        if (!active) {
+                            log.warn("Session not active: guid={}, sid={}, path={}", guid, sid, path);
+
+                            return rejectWith(exchange, path, ErrorCode.SESSION_REVOKED, ErrorCode.SESSION_REVOKED.getMessage());
                         }
 
                         List<SimpleGrantedAuthority> authorities = roles.stream()
@@ -133,9 +135,13 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
     }
 
     private Mono<Void> unauthorized(ServerWebExchange exchange, String path, String message) {
+        return rejectWith(exchange, path, ErrorCode.UNAUTHORIZED, message);
+    }
+
+    private Mono<Void> rejectWith(ServerWebExchange exchange, String path, ErrorCode errorCode, String message) {
         try {
             ErrorResponse errorResponse = ErrorResponse.of(
-                    ErrorCode.UNAUTHORIZED,
+                    errorCode,
                     HttpStatus.UNAUTHORIZED,
                     message,
                     null,
@@ -162,9 +168,4 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
     public int getOrder() {
         return 0;
     }
-
-    /*@Override
-    public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
-    }*/
 }

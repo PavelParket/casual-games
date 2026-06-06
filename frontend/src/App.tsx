@@ -9,19 +9,33 @@ import NotFound from './pages/error/NotFound'
 import type { AppDispatch } from './store/store'
 import { useDispatch } from 'react-redux'
 import { useEffect, useState } from 'react'
-import { refresh } from './store/slices/AuthSlice'
+import { localLogout, refresh, setAccessToken } from './store/slices/AuthSlice'
 import { ProtectedRoute } from './router/ProtectedRoute'
 import Rooms from './pages/rooms/Rooms'
 import Profile from './pages/profile/Profile'
 import ExperimentalPage from './pages/ExperimentalPage'
 import LoadingPage from './pages/LoadingPage'
 import { useScrollbarVisibility } from './hooks/useScrollbarVisibility'
-import { SystemToastProvider } from './providers/SystemToastContext'
+import { SystemToastProvider, useSystemToastContext } from './providers/SystemToastContext'
 import TicTacToeRoomShell from './pages/rooms/shell/TicTacToeRoomShell'
 import HorseRaceRoomShell from './pages/rooms/shell/HorseRaceRoomShell'
 import DeCoderRoomShell from './pages/rooms/shell/DeCoderRoomShell'
 import DurakRoomShell from './pages/rooms/shell/DurakRoomShell'
 import UpgradeStatus from './pages/profile/UpgradeStatus'
+import { setOnRefreshRequired } from './utils/TokenManager'
+import { ensureFreshToken } from './api/EnsureFreshToken'
+import { AuthBroadcast } from './api/AuthBroadcast'
+import { initAuthToast } from './api/AxiosInterceptorsConfig'
+
+function AuthToastInitializer() {
+    const { showSystemToast } = useSystemToastContext();
+
+    useEffect(() => {
+        initAuthToast(showSystemToast);
+    }, [showSystemToast]);
+
+    return null;
+}
 
 export default function App() {
     const dispatch = useDispatch<AppDispatch>();
@@ -30,10 +44,17 @@ export default function App() {
     useScrollbarVisibility();
 
     useEffect(() => {
-        // todo: Переделать обновление токена и его прокид при вебсокетном подключении
-        /* setOnRefreshRequired(() => {
-             dispatch(refresh());
-          }); */
+        setOnRefreshRequired(() => {
+            ensureFreshToken().catch(err => console.debug("Proactive refresh failed:", err));
+        });
+
+        const unsubscribeBroadcast = AuthBroadcast.onMessage((event) => {
+            if (event.type === "LOGGED_OUT") {
+                dispatch(localLogout());
+            } else if (event.type === "REFRESHED") {
+                dispatch(setAccessToken(event.token));
+            }
+        });
 
         const initialize = async () => {
             try {
@@ -46,12 +67,18 @@ export default function App() {
         };
 
         initialize();
+
+        return () => {
+            unsubscribeBroadcast();
+        };
     }, [dispatch]);
 
     return (
         <BrowserRouter>
             <ThemeProvider>
                 <SystemToastProvider>
+                    <AuthToastInitializer />
+
                     {!isInitialized ? (
                         <Routes>
                             <Route element={<Layout centered />}>
@@ -66,7 +93,9 @@ export default function App() {
                             </Route>
 
                             {/* ===== Experiment Room ===== */}
-                            <Route path="/ws" element={<ExperimentalPage />} />
+                            <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
+                                <Route path="/ws" element={<ExperimentalPage />} />
+                            </Route>
 
                             {/* Protected Routes */}
                             <Route element={<ProtectedRoute roles={["ADMIN", "USER"]} />}>

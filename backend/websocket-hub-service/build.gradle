@@ -81,3 +81,7 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-parameters"
+}
