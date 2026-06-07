@@ -41,10 +41,10 @@ spring:
   security:
     jwt:
       secret: ${JWT_SECRET}
-      access-expiration: ${JWT_ACCESS_EXPIRATION:900000}      # 15 minutes default
+      access-expiration: ${JWT_ACCESS_EXPIRATION:600000}      # 10 minutes default
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
     service-whitelist:
-      enabled: true
+      enabled: ${SERVICE_WHITELIST_ENABLED:true}
       hosts: [ "127.0.0.1" ]
 
 grpc:
@@ -54,7 +54,7 @@ grpc:
       enabled: false
   client:
     user-service:
-      address: static://localhost:7093
+      address: ${GRPC_USER_SERVICE_ADDRESS:static://localhost:7093}
       negotiation-type: plaintext
       keep-alive-time: 30s
       keep-alive-timeout: 5s
@@ -68,7 +68,7 @@ server:
   port: 8080
   forward-headers-strategy: framework
 
-server-url: http://localhost:8080
+server-url: ${SERVER_URL:http://localhost:8080}
 
 kafka:
   enabled: true
@@ -85,9 +85,9 @@ ws-ticket:
 
 logging:
   level:
-    org.springframework.web: DEBUG
-    org.springframework.security: DEBUG
-    com.grpc_utils: DEBUG
+    org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
+    org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY:INFO}
+    com.grpc_utils: ${LOG_LEVEL_GRPC:INFO}
 
 springdoc:
   preLoadingEnabled: true

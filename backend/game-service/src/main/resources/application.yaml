@@ -30,7 +30,7 @@ server:
   port: 8082
   forward-headers-strategy: framework
 
-server-url: http://localhost:8082
+server-url: ${SERVER_URL:http://localhost:8082}
 
 kafka:
   enabled: ${KAFKA_ENABLED:true}
@@ -44,7 +44,7 @@ kafka:
 
 logging:
   level:
-    org.springframework.web: DEBUG
+    org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
 
 springdoc:
   preLoadingEnabled: true

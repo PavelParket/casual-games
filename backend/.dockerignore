@@ -1,0 +1,19 @@
+# Build artifacts
+*/build/
+*/.gradle/
+*/out/
+
+# IDE
+*/.idea/
+*/.vscode/
+*/*.iml
+
+# Logs
+*/logs/
+*/*.log
+
+# OS
+*/.DS_Store
+Thumbs.db
+
+# common-utils — НЕ исключать, нужно для билда

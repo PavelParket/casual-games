@@ -44,7 +44,7 @@ spring:
   security:
     jwt:
       secret: ${JWT_SECRET}
-      access-expiration: ${JWT_ACCESS_EXPIRATION:900000}      # 15 minutes default
+      access-expiration: ${JWT_ACCESS_EXPIRATION:600000}      # 10 minutes default
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
       public-paths:
         - /v3/api-docs/**
@@ -52,14 +52,14 @@ spring:
         - /swagger-ui/**
         - /webjars/**
     service-whitelist:
-      enabled: true
+      enabled: ${SERVICE_WHITELIST_ENABLED:true}
       hosts: [ "127.0.0.1" ]
 
 server:
   port: 8083
   forward-headers-strategy: framework
 
-server-url: http://localhost:8083
+server-url: ${SERVER_URL:http://localhost:8083}
 
 grpc:
   server:
@@ -68,7 +68,7 @@ grpc:
       enabled: false
   client:
     security-service:
-      address: static://localhost:7080
+      address: ${GRPC_SECURITY_SERVICE_ADDRESS:static://localhost:7090}
       negotiation-type: plaintext
       enable-keep-alive: true
       keep-alive-time: 30s
@@ -103,8 +103,8 @@ aws:
 attachments:
   by-type:
     PROFILE_PICTURE:
-      bucket: ${MINIO_PROFILE_PICTURE_BUCKET:user-profile-picture}
-      folder: ${MINIO_PROFILE_PICTURE_FOLDER:user-profile-pictures/}
+      bucket: ${PROFILE_PICTURE_BUCKET:user-profile-picture}
+      folder: ${PROFILE_PICTURE_FOLDER:user-profile-pictures/}
       public-base-url: ${MINIO_PUBLIC_BASE_URL:http://localhost:9001}
       cache-control: "public, max-age=31536000, immutable"
       allowed-mime-types:
@@ -120,9 +120,9 @@ attachments:
 
 logging:
   level:
-    org.springframework.web: DEBUG
-    org.springframework.security: DEBUG
-    com.grpc_utils: DEBUG
+    org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
+    org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY:INFO}
+    com.grpc_utils: ${LOG_LEVEL_GRPC:INFO}
 
 springdoc:
   preLoadingEnabled: true

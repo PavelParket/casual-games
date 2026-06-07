@@ -123,6 +123,7 @@ tmp/
 
 **/.env
 .env
+deploy/prod.env
 .local
 *.properties.local
 
@@ -205,3 +206,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Generated for Docker builds — never commit
+backend/.m2-common-utils/

@@ -37,17 +37,17 @@ server:
   port: 8081
   forward-headers-strategy: framework
 
-server-url: http://localhost:8081
+server-url: ${SERVER_URL:http://localhost:8081}
 
 grpc:
   client:
     user-service:
-      address: static://localhost:7093
+      address: ${GRPC_USER_SERVICE_ADDRESS:static://localhost:7093}
       negotiation-type: plaintext
       keep-alive-time: 30s
       keep-alive-timeout: 5s
     bank-service:
-      address: static://localhost:7094
+      address: ${GRPC_BANK_SERVICE_ADDRESS:static://localhost:7094}
       negotiation-type: plaintext
       keep-alive-time: 30s
       keep-alive-timeout: 5s
@@ -59,7 +59,7 @@ grpc:
 
 app:
   game-service:
-    url: http://localhost:8082
+    url: ${GAME_SERVICE_URL:http://localhost:8082}
 
 cron:
   room-cleanup:
@@ -81,9 +81,9 @@ kafka:
 
 logging:
   level:
-    org.springframework.web: DEBUG
-    org.springframework.web.websocket: DEBUG
-    com.grpc_utils: DEBUG
+    org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
+    org.springframework.web.websocket: ${LOG_LEVEL_WEBSOCKET:INFO}
+    com.grpc_utils: ${LOG_LEVEL_GRPC:INFO}
 
 springdoc:
   preLoadingEnabled: true
