@@ -10,6 +10,7 @@ import type { CardRank, CardSuit, DurakAction, DurakCard, DurakPhase, DurakTable
 import { PlayingCard } from "./rooms/durak/components/PlayingCard";
 import { CARD_BACK } from "./rooms/durak/utils/CardUtils";
 import { DurakBoard } from "./rooms/durak/components/DurakBoard";
+import type { TableExitMode } from "./rooms/DurakRoom";
 
 interface User {
     guid: string;
@@ -79,9 +80,14 @@ function getBoardProps(scenario: BoardScenario) {
         discardCount: 4,
         remainingSeconds: 28,
         disabled: false,
+        isOpponentAttacker: false,
+        tableExitMode: null as TableExitMode,
+        isDealAnimation: false,
+        onDealComplete: () => { },
         onPlayCard: (c: DurakCard) => console.log("playCard", c),
         onPass: () => console.log("pass"),
         onTakeCards: () => console.log("takeCards"),
+
     };
 
     switch (scenario) {

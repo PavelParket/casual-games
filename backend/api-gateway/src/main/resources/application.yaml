@@ -36,35 +36,35 @@ spring:
                 key-resolver: "#{@keyResolver}"
           routes:
             - id: user-service
-              uri: http://localhost:8083
+              uri: ${USER_SERVICE_URL:http://localhost:8083}
               predicates:
                 - Path=/user-service/**
               filters:
                 - StripPrefix=1
 
             - id: security-service
-              uri: http://localhost:8080
+              uri: ${SECURITY_SERVICE_URL:http://localhost:8080}
               predicates:
                 - Path=/security-service/**
               filters:
                 - StripPrefix=1
 
             - id: game-service
-              uri: http://localhost:8082
+              uri: ${GAME_SERVICE_URL:http://localhost:8082}
               predicates:
                 - Path=/game-service/**
               filters:
                 - StripPrefix=1
 
             - id: websocket-hub-service
-              uri: http://localhost:8081
+              uri: ${WEBSOCKET_HUB_URL:http://localhost:8081}
               predicates:
                 - Path=/websocket-hub-service/**
               filters:
                 - StripPrefix=1
 
             - id: bank-service
-              uri: http://localhost:8084
+              uri: ${BANK_SERVICE_URL:http://localhost:8084}
               predicates:
                 - Path=/bank-service/**
               filters:
@@ -99,12 +99,12 @@ server:
   port: 8888
   max-http-request-header-size: 16384
 
-server-url: http://localhost:8888
+server-url: ${SERVER_URL:http://localhost:8888}
 
 logging:
   level:
-    org.springframework.web: DEBUG
-    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
+    org.springframework.cloud.gateway: ${LOG_LEVEL_GATEWAY:INFO}
 
 springdoc:
   api-docs:

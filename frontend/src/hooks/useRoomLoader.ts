@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import type { AsyncThunkAction } from "@reduxjs/toolkit";
 import type { Room } from "../models/Room";
 import type { AppDispatch, RootState } from "../store/store";
 import { findByGuid } from "../store/slices/UserSlice";
 
 interface UseRoomLoaderOptions {
-    fetchRoom: (roomId: string) => { unwrap: () => Promise<Room> };
+    fetchRoom: (roomId: string) => AsyncThunkAction<Room, unknown, object>;
     selectRoom: (state: RootState) => Room | undefined;
     selectError: (state: RootState) => string | null | undefined;
 }
@@ -16,6 +17,22 @@ interface UseRoomLoaderResult {
     error: string | null;
     roomId: string | undefined;
     guid: string | undefined;
+}
+
+function extractMessage(err: unknown): string {
+    if (typeof err === "string") {
+        return err;
+    }
+
+    if (typeof err === "object" && err !== null && "message" in err) {
+        const m = (err as Record<string, unknown>)["message"];
+
+        if (typeof m === "string") {
+            return m;
+        }
+    }
+
+    return "Failed to load room";
 }
 
 export function useRoomLoader({
@@ -52,7 +69,7 @@ export function useRoomLoader({
         console.debug(`[RoomLoader] loading roomId=${roomId}`);
 
         Promise.all([
-            dispatch(fetchRoomRef.current(roomId) as never).unwrap(),
+            dispatch(fetchRoomRef.current(roomId)).unwrap(),
             dispatch(findByGuid(guid)).unwrap(),
         ])
             .then(() => {
@@ -64,10 +81,7 @@ export function useRoomLoader({
                 if (cancelled) {
                     return;
                 }
-                const message =
-                    typeof err === "string"
-                        ? err
-                        : (err as { message?: string })?.message ?? "Failed to load room";
+                const message = extractMessage(err);
                 console.warn(`[RoomLoader] failed roomId=${roomId}:`, message);
                 setLoadError(message);
             })

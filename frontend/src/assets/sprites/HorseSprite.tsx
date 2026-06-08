@@ -2,7 +2,6 @@ import type { CSSProperties } from "react";
 import "./styles/horsesprite.css"
 
 const FRAME_W = 64;
-const FRAME_H = 64;
 const FRAME_COUNT = 4;
 const GALLOP_EAST_Y = 192;
 

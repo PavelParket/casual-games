@@ -141,7 +141,9 @@ export function useWebSocket<T extends WSMessage = WSMessage>(
         }
 
         const handlerUrl = ROOM_TYPE_HANDLERS[roomType!];
-        const url = `${WEBSOCKET_HUB_SERVICE_URL_WS}/ws/${handlerUrl}?roomId=${roomId}&ticket=${ticket.ticketId}`;
+
+        const wsBase = WEBSOCKET_HUB_SERVICE_URL_WS || `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}`;
+        const url = `${wsBase}/ws/${handlerUrl}?roomId=${roomId}&ticket=${ticket.ticketId}`;
 
         const socket = new WebSocket(url);
         client.current = socket;

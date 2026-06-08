@@ -31,11 +31,10 @@ export function TableArea({ table, tableRef, isOpponentAttacker, tableExitMode, 
             }}
         >
             <AnimatePresence mode="popLayout">
-                {table.map((pair, index) => (
+                {table.map((pair) => (
                     <TablePairSlot
                         key={cardId(pair.attackCard)}
                         pair={pair}
-                        index={index}
                         isOpponentAttacker={isOpponentAttacker}
                         tableExitMode={tableExitMode}
                         discardPileRef={discardPileRef}

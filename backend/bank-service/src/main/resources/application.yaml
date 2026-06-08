@@ -37,7 +37,7 @@ spring:
   security:
     jwt:
       secret: ${JWT_SECRET}
-      access-expiration: ${JWT_ACCESS_EXPIRATION:900000}      # 15 minutes default
+      access-expiration: ${JWT_ACCESS_EXPIRATION:600000}      # 10 minutes default
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
       public-paths:
         - /v3/api-docs/**
@@ -45,14 +45,14 @@ spring:
         - /swagger-ui/**
         - /webjars/**
     service-whitelist:
-      enabled: true
+      enabled: ${SERVICE_WHITELIST_ENABLED:true}
       hosts: [ "127.0.0.1" ]
 
 server:
   port: 8084
   forward-headers-strategy: framework
 
-server-url: http://localhost:8084
+server-url: ${SERVER_URL:http://localhost:8084}
 
 grpc:
   server:
@@ -61,7 +61,7 @@ grpc:
       enabled: false
   client:
     user-service:
-      address: static://localhost:7093
+      address: ${GRPC_USER_SERVICE_ADDRESS:static://localhost:7093}
       negotiation-type: plaintext
       keep-alive-time: 30s
       keep-alive-timeout: 5s
@@ -86,7 +86,9 @@ cron:
 
 logging:
   level:
-    org.springframework.web: DEBUG
+    org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
+    org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY:INFO}
+    com.grpc_utils: ${LOG_LEVEL_GRPC:INFO}
 
 springdoc:
   preLoadingEnabled: true
