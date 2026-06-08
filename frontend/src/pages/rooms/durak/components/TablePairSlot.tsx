@@ -8,13 +8,12 @@ import type { TableExitMode } from "../../DurakRoom";
 
 interface TablePairSlotProps {
     pair: DurakTablePair;
-    index: number;
     isOpponentAttacker: boolean;
     tableExitMode: TableExitMode;
     discardPileRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function TablePairSlot({ pair, index, isOpponentAttacker, tableExitMode, discardPileRef }: TablePairSlotProps) {
+export function TablePairSlot({ pair, isOpponentAttacker, tableExitMode, discardPileRef }: TablePairSlotProps) {
     const slotRef = useRef<HTMLDivElement>(null);
 
     const slotInitial = isOpponentAttacker
@@ -44,7 +43,7 @@ export function TablePairSlot({ pair, index, isOpponentAttacker, tableExitMode, 
                 opacity: 0,
                 scale: 0.6,
                 transition: { duration: 0.3, ease: "easeIn" },
-            };
+            } as const;
         }
 
         if (tableExitMode === "bita" && slotRef.current && discardPileRef.current) {
@@ -61,7 +60,7 @@ export function TablePairSlot({ pair, index, isOpponentAttacker, tableExitMode, 
                 opacity: 0,
                 scale: 0.5,
                 transition: { duration: 0.4, ease: "easeIn" },
-            };
+            } as const;
         }
 
         return { scale: 0.5, opacity: 0 };

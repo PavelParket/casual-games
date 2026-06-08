@@ -14,7 +14,6 @@
     "axios": "^1.12.2",
     "framer-motion": "^12.38.0",
     "jwt-decode": "^4.0.0",
-    "npm": "^11.11.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-easy-crop": "^5.5.7",
