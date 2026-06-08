@@ -42,7 +42,6 @@ export interface User {
     linkProfilePicture?: string | null;
     linkProfilePictureMini?: string | null;
 
-    achievements?: string[];
     history?: UserGameHistory[];
 }
 

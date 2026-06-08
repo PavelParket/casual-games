@@ -125,6 +125,7 @@ const ticTacToeRoomSlice = createSlice({
         clearAllErrors: (state) => {
             state.errors = {};
         },
+        clearTicTacToeRoomState: () => initialState,
     },
     extraReducers: (builder) => {
         builder
@@ -196,6 +197,6 @@ const ticTacToeRoomSlice = createSlice({
     },
 });
 
-export const { clearError, clearAllErrors } = ticTacToeRoomSlice.actions;
+export const { clearError, clearAllErrors, clearTicTacToeRoomState } = ticTacToeRoomSlice.actions;
 
 export default ticTacToeRoomSlice.reducer;

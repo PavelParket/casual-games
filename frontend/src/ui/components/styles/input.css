@@ -20,3 +20,14 @@
     outline: none;
     box-shadow: inset 0 0 0 2px var(--color-primary), var(--shadow-sm);
 }
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none !important;
+}
+
+input[type="password"]::-webkit-search-cancel-button,
+input[type="password"]::-webkit-search-decoration,
+input[type="password"]::-webkit-clear-button {
+    display: none !important;
+}

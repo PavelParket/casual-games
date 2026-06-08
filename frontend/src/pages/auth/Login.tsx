@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Card, Container, Divider, Form, FormField, Typography } from "../../ui";
+import { Box, Button, Card, Container, Divider, Form, FormField, PasswordField, Typography } from "../../ui";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
@@ -80,9 +80,8 @@ export default function Login() {
                                 endAdornmentSrc={getIcon("apersant")}
                                 endAdornmentAlt="email"
                             />
-                            <FormField
+                            <PasswordField
                                 placeholder="Password"
-                                type="password"
                                 name="password"
                                 value={form.password}
                                 onChange={handleChange}

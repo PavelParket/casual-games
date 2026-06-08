@@ -138,15 +138,20 @@ html.is-scrolling.dark {
     --color-primary-hover: #000000;
     --on-primary: #ffffff;
 
-    --color-income-text: #1e7d41cb;
-    --color-income-bg: rgba(34, 176, 93, 0.08);
-    --color-income-border: rgba(34, 176, 93, 0.2);
-    --color-income-icon-bg: rgba(34, 176, 93, 0.25);
+    --color-income-text: #166534;
+    --color-income-bg: rgba(22, 163, 74, 0.08);
+    --color-income-border: rgba(22, 163, 74, 0.2);
+    --color-income-icon-bg: rgba(22, 163, 74, 0.25);
 
-    --color-expense-text: #b32d2dcb;
-    --color-expense-bg: rgba(212, 56, 56, 0.08);
-    --color-expense-border: rgba(212, 56, 56, 0.2);
-    --color-expense-icon-bg: rgba(212, 56, 56, 0.25);
+    --color-expense-text: #991b1b;
+    --color-expense-bg: rgba(220, 38, 38, 0.08);
+    --color-expense-border: rgba(220, 38, 38, 0.2);
+    --color-expense-icon-bg: rgba(220, 38, 38, 0.25);
+
+    --color-neutral-text: #475569;
+    --color-neutral-bg: rgba(100, 116, 139, 0.08);
+    --color-neutral-border: rgba(100, 116, 139, 0.2);
+    --color-neutral-icon-bg: rgba(100, 116, 139, 0.25);
 
     --radius-sm: 6px;
     --radius-md: 12px;
@@ -207,15 +212,20 @@ html.dark {
     --color-primary-hover: #ffffff;
     --on-primary: #000000;
 
-    --color-income-text: #22b05d;
-    --color-income-bg: rgba(46, 204, 113, 0.08);
-    --color-income-border: rgba(46, 204, 113, 0.2);
-    --color-income-icon-bg: rgba(46, 204, 113, 0.25);
+    --color-income-text: #4ade80;
+    --color-income-bg: rgba(74, 222, 128, 0.08);
+    --color-income-border: rgba(74, 222, 128, 0.2);
+    --color-income-icon-bg: rgba(74, 222, 128, 0.25);
 
-    --color-expense-text: #d43838;
-    --color-expense-bg: rgba(255, 82, 82, 0.08);
-    --color-expense-border: rgba(255, 82, 82, 0.2);
-    --color-expense-icon-bg: rgba(255, 82, 82, 0.25);
+    --color-expense-text: #f87171;
+    --color-expense-bg: rgba(248, 113, 113, 0.08);
+    --color-expense-border: rgba(248, 113, 113, 0.2);
+    --color-expense-icon-bg: rgba(248, 113, 113, 0.25);
+
+    --color-neutral-text: #94a3b8;
+    --color-neutral-bg: rgba(148, 163, 184, 0.08);
+    --color-neutral-border: rgba(148, 163, 184, 0.2);
+    --color-neutral-icon-bg: rgba(148, 163, 184, 0.25);
 
     /* Background image for dark theme (set as needed) */
     --bg-image: url("../assets/images/bg-dark.jpeg");

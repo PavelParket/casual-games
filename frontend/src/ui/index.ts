@@ -12,6 +12,7 @@ export { Stack } from "./components/layout/Stack";
 export { AppBar } from "./components/navigation/AppBar";
 export { Form } from "./components/forms/Form";
 export { FormField } from "./components/forms/FormField";
+export { PasswordField } from "./components/forms/PasswordField";
 export { Icon } from "./components/common/Icon";
 export { Textfield } from "./components/forms/Textfield";
 export { ComboBox } from "./components/forms/ComboBox";

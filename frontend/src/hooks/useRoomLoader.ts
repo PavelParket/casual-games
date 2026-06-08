@@ -9,6 +9,7 @@ interface UseRoomLoaderOptions {
     fetchRoom: (roomId: string) => { unwrap: () => Promise<Room> };
     selectRoom: (state: RootState) => Room | undefined;
     selectError: (state: RootState) => string | null | undefined;
+    clearRoomState: () => { type: string };
 }
 
 interface UseRoomLoaderResult {
@@ -22,6 +23,7 @@ export function useRoomLoader({
     fetchRoom,
     selectRoom,
     selectError,
+    clearRoomState,
 }: UseRoomLoaderOptions): UseRoomLoaderResult {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
@@ -38,6 +40,9 @@ export function useRoomLoader({
     const fetchRoomRef = useRef(fetchRoom);
     useEffect(() => { fetchRoomRef.current = fetchRoom; }, [fetchRoom]);
 
+    const clearRoomStateRef = useRef(clearRoomState);
+    useEffect(() => { clearRoomStateRef.current = clearRoomState; }, [clearRoomState]);
+
     useEffect(() => {
         if (!roomId || !guid) {
             console.warn(`[RoomLoader] missing params: roomId=${!!roomId} guid=${!!guid}`);
@@ -48,6 +53,8 @@ export function useRoomLoader({
         let cancelled = false;
         setIsLoading(true);
         setLoadError(null);
+
+        dispatch(clearRoomStateRef.current());
 
         console.debug(`[RoomLoader] loading roomId=${roomId}`);
 
@@ -80,6 +87,7 @@ export function useRoomLoader({
         return () => {
             console.debug(`[RoomLoader] cleanup roomId=${roomId}`);
             cancelled = true;
+            dispatch(clearRoomStateRef.current());
         };
     }, [dispatch, guid, navigate, roomId]);
 

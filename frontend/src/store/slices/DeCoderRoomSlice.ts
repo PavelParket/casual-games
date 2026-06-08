@@ -52,6 +52,7 @@ const deCoderRoomSlice = createSlice({
         clearError: (state) => {
             state.error = undefined;
         },
+        clearDeCoderRoomState: () => initialState,
     },
     extraReducers: (builder) => {
         builder
@@ -78,5 +79,5 @@ const deCoderRoomSlice = createSlice({
     },
 });
 
-export const { clearError } = deCoderRoomSlice.actions;
+export const { clearError, clearDeCoderRoomState } = deCoderRoomSlice.actions;
 export default deCoderRoomSlice.reducer;

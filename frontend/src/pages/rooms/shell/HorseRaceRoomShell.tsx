@@ -1,5 +1,5 @@
 import { useRoomLoader } from "../../../hooks/useRoomLoader";
-import { getRoomById } from "../../../store/slices/HorseRaceRoomSlice";
+import { getRoomById, clearHorseRaceRoomState } from "../../../store/slices/HorseRaceRoomSlice";
 import HorseRaceRoom from "../HorseRaceRoom";
 import RoomShell from "./RoomShell";
 
@@ -8,6 +8,7 @@ export default function HorseRaceRoomShell() {
         fetchRoom: (roomId) => getRoomById({ roomId }) as never,
         selectRoom: (state) => state.horseRaceRoom.room,
         selectError: (state) => state.horseRaceRoom.error,
+        clearRoomState: clearHorseRaceRoomState,
     });
 
     return (

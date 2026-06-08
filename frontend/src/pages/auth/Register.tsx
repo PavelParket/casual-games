@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Button, Card, Container, Divider, Form, FormField, Typography, useThemedIcon } from "../../ui";
+import { Box, Button, Card, Container, Divider, Form, FormField, PasswordField, Typography, useThemedIcon } from "../../ui";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../store/slices/AuthSlice";
 import type { AppDispatch } from "../../store/store";
@@ -99,9 +99,8 @@ export default function Register() {
                                 endAdornmentSrc={getIcon("apersant")}
                                 endAdornmentAlt="email"
                             />
-                            <FormField
+                            <PasswordField
                                 placeholder="Password"
-                                type="password"
                                 name="password"
                                 value={form.password}
                                 onChange={handleChange}

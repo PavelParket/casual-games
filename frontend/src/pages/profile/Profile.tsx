@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store/store";
-import { findByGuid, update, getMatches, uploadProfilePicture, deleteProfilePicture } from "../../store/slices/UserSlice";
+import { findByGuid, update, getMatches, uploadProfilePicture, deleteProfilePicture, clearGameHistoryState } from "../../store/slices/UserSlice";
 import { deposit, getByUserGuid } from "../../store/slices/BankSlice";
 import type { Icons } from "../../assets/icons";
 import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, FormField, Avatar, ComboBox, Menu, MenuList, MenuItem } from "../../ui";
@@ -15,8 +15,15 @@ import { HistoryItem } from "./components/HistoryItem";
 import { AvatarEditorModal } from "./components/AvatarEditorModal.tsx";
 import { ImageViewerModal } from "./components/ImageViewerModal";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
+import { type GameMatchRequestFilter, type ResultFilter, RESULT_FILTER_LABELS } from "../../models/GameMatch.ts";
 
-const AVAILABLE_ROOM_TYPES = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
+const AVAILABLE_ROOM_TYPES = (Object.keys(ROOM_TYPE_LABELS) as RoomType[])
+    .filter(type => type !== "DE_CODER");
+
+const RESULT_FILTER_OPTIONS = (Object.keys(RESULT_FILTER_LABELS) as ResultFilter[]).map(key => ({
+    value: key,
+    label: RESULT_FILTER_LABELS[key]
+}));
 
 const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
@@ -43,6 +50,7 @@ export default function Profile() {
     const [activeTab, setActiveTab] = useState<'games' | 'balanceHistory'>('games');
 
     const [selectedGameType, setSelectedGameType] = useState<RoomType>('DURAK');
+    const [resultFilter, setResultFilter] = useState<ResultFilter>("ALL");
 
     const [isAvatarHovered, setIsAvatarHovered] = useState(false);
 
@@ -59,6 +67,13 @@ export default function Profile() {
 
     const userGuid = authUser?.guid;
 
+    const getFilterParams = useCallback((resFilter: ResultFilter): GameMatchRequestFilter => {
+        const filter: GameMatchRequestFilter = { gameType: selectedGameType };
+        if (resFilter === "WINS") filter.isWinner = true;
+        if (resFilter === "LOSSES") filter.isWinner = false;
+        return filter;
+    }, [selectedGameType]);
+
     useEffect(() => {
         if (userGuid) {
             dispatch(findByGuid(userGuid));
@@ -73,13 +88,14 @@ export default function Profile() {
 
     useEffect(() => {
         if (userGuid && activeTab === 'games') {
-            dispatch(getMatches({ guid: userGuid, filter: { gameType: selectedGameType }, size: 4 }));
+            dispatch(clearGameHistoryState());
+            dispatch(getMatches({ guid: userGuid, filter: getFilterParams(resultFilter), size: 4 }));
         }
-    }, [dispatch, userGuid, activeTab, selectedGameType]);
+    }, [dispatch, userGuid, activeTab, getFilterParams, resultFilter]);
 
     const handleGameHistoryPageChange = (newPage: number) => {
         if (userGuid) {
-            dispatch(getMatches({ guid: userGuid, filter: { gameType: selectedGameType }, page: newPage, size: 4 }));
+            dispatch(getMatches({ guid: userGuid, filter: getFilterParams(resultFilter), page: newPage, size: 4 }));
         }
     };
 
@@ -503,27 +519,38 @@ export default function Profile() {
                                     headerActions={
                                         <>
                                             <ComboBox
+                                                options={RESULT_FILTER_OPTIONS}
+                                                value={resultFilter}
+                                                onValueChange={(val) => setResultFilter(val as ResultFilter)}
+                                                style={{ width: '110px' }}
+                                            />
+                                            <ComboBox
                                                 options={AVAILABLE_ROOM_TYPES.map(t => ({ value: t, label: ROOM_TYPE_LABELS[t] }))}
                                                 value={selectedGameType}
                                                 onValueChange={(val) => setSelectedGameType(val as RoomType)}
                                                 style={{ width: '190px' }}
                                             />
-                                            <Button variant="ghost" onClick={() => dispatch(getMatches({ guid: userGuid!, filter: { gameType: selectedGameType } }))}>
+                                            <Button variant="ghost" onClick={() => dispatch(getMatches({ guid: userGuid!, filter: getFilterParams(resultFilter) }))}>
                                                 <Icon src={getIcon("refresh")} size={16} />
                                             </Button>
                                         </>
                                     }
                                 >
-                                    {gameHistory.map(m => (
-                                        <HistoryItem
-                                            key={m.id}
-                                            variant={m.winnerId === userGuid ? 'income' : !m.winnerId ? 'neutral' : 'expense'}
-                                            iconText={m.winnerId === userGuid ? '+' : !m.winnerId ? '=' : '-'}
-                                            title={ROOM_TYPE_LABELS[m.gameType]}
-                                            date={`${m.createdAt.substring(0, 10)} • ${m.createdAt.substring(11, 16)} UTC`}
-                                            rightText={m.winnerId === userGuid ? 'Victory' : !m.winnerId ? 'Draw' : 'Defeat'}
-                                        />
-                                    ))}
+                                    {gameHistory.map(m => {
+                                        const isWin = m.gameResult === 'WIN';
+                                        const isLoss = m.gameResult === 'LOSS';
+
+                                        return (
+                                            <HistoryItem
+                                                key={m.id}
+                                                variant={isWin ? 'income' : isLoss ? 'expense' : 'neutral'}
+                                                iconText={isWin ? '+' : isLoss ? '-' : '='}
+                                                title={ROOM_TYPE_LABELS[m.gameType]}
+                                                date={`${m.createdAt.substring(0, 10)} • ${m.createdAt.substring(11, 16)} UTC`}
+                                                rightText={isWin ? 'Victory' : isLoss ? 'Defeat' : 'Draw'}
+                                            />
+                                        );
+                                    })}
                                 </PageablePanel>
                             ) : (
                                 <PageablePanel

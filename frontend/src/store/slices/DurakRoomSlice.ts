@@ -133,6 +133,7 @@ const durakRoomSlice = createSlice({
         clearAllErrors: (state) => {
             state.errors = {};
         },
+        clearDurakRoomState: () => initialState,
     },
     extraReducers: (builder) => {
         builder
@@ -199,6 +200,6 @@ const durakRoomSlice = createSlice({
     },
 });
 
-export const { clearError, clearAllErrors } = durakRoomSlice.actions;
+export const { clearError, clearAllErrors, clearDurakRoomState } = durakRoomSlice.actions;
 
 export default durakRoomSlice.reducer;

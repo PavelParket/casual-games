@@ -1,6 +1,8 @@
 // Light theme icons
 import userLight from './user_light.svg';
 import apersantLight from './apersant_light.svg';
+import showLight from './show_light.svg';
+import hideLight from './hide_light.svg';
 import safeLockLight from './safe_lock_light.svg';
 import addLight from './add_light.svg';
 import minusLight from './minus_light.svg';
@@ -25,6 +27,8 @@ import searchLight from './search_light.svg'
 // Dark theme icons
 import userDark from './user_dark.svg';
 import apersantDark from './apersant_dark.svg';
+import showDark from './show_dark.svg';
+import hideDark from './hide_dark.svg';
 import safeLockDark from './safe_lock_dark.svg';
 import addDark from './add_dark.svg';
 import minusDark from './minus_dark.svg';
@@ -49,6 +53,8 @@ export const Icons = {
     light: {
         user: userLight,
         apersant: apersantLight,
+        show: showLight,
+        hide: hideLight,
         safeLock: safeLockLight,
         add: addLight,
         minus: minusLight,
@@ -73,6 +79,8 @@ export const Icons = {
     dark: {
         user: userDark,
         apersant: apersantDark,
+        show: showDark,
+        hide: hideDark,
         safeLock: safeLockDark,
         add: addDark,
         minus: minusDark,

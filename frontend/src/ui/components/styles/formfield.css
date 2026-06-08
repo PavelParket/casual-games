@@ -93,3 +93,29 @@
     color: var(--color-text);
     opacity: 0.7;
 }
+
+.field-icon.interactive {
+    pointer-events: auto;
+}
+
+.password-toggle-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    opacity: 0.6;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+    font-size: 1.1rem;
+}
+
+.password-toggle-btn:hover {
+    opacity: 1;
+}
+
+.password-toggle-btn:active {
+    transform: scale(0.9);
+}
