@@ -27,6 +27,8 @@ spring:
     properties:
       hibernate:
         default_schema: security_service
+        jdbc:
+          time_zone: UTC
 
   data:
     redis:
@@ -77,6 +79,9 @@ kafka:
     "[auto.offset.reset]": earliest
   topics:
     user: ${KAFKA_USER_TOPIC:user}
+
+ws-ticket:
+  ttl-seconds: ${WS_TICKET_TTL_SECONDS:30}
 
 logging:
   level:

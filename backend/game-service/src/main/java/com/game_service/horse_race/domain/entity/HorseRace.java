@@ -15,10 +15,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -57,6 +60,10 @@ public class HorseRace {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private HorseRaceStatus status;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false, columnDefinition = "jsonb")
+    private Map<UUID, Integer> players;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

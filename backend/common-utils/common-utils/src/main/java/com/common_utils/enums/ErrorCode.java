@@ -14,7 +14,11 @@ public enum ErrorCode {
     CONFLICT("Conflict"),
     TOO_MANY_REQUESTS("Too many requests. Please slow down."),
     SERVICE_UNAVAILABLE("Service is unavailable now. Please try later"),
-    INTERNAL_SERVER_ERROR("An unexpected error occurred. Please try again");
+    INTERNAL_SERVER_ERROR("An unexpected error occurred. Please try again"),
+
+    NO_SESSION("No active session found"),
+    INVALID_TOKEN("Token is invalid or expired"),
+    SESSION_REVOKED("Session has been revoked");
 
     private final String message;
 }

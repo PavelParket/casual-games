@@ -61,6 +61,20 @@ public class RedisRepository {
         }
     }
 
+    public String getAndDelete(String key) {
+        if (key == null) {
+            log.warn("Attempted to get and delete with null key");
+            return null;
+        }
+
+        try {
+            return redisOperations.opsForValue().getAndDelete(key);
+        } catch (Exception e) {
+            log.error("Error during get and delete: key={}", key, e);
+            return null;
+        }
+    }
+
     public boolean exists(String key) {
         if (key == null) {
             log.warn("Attempted to check existence with null key");

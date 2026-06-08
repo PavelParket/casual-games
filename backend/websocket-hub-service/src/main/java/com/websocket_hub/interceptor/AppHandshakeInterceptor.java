@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.websocket_hub.domain.dto.ErrorResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.entity.RoomMetadata;
+import com.websocket_hub.domain.entity.WsTicketData;
 import com.websocket_hub.domain.enums.RoomStatus;
 import com.websocket_hub.domain.enums.redis.RoomTypeRedisKey;
 import com.websocket_hub.domain.repository.RoomRedisRepository;
@@ -33,6 +34,7 @@ import java.util.UUID;
 
 import static com.websocket_hub.config.ResourceMessageConstants.ROOM_ALREADY_FINISHED;
 import static com.websocket_hub.config.ResourceMessageConstants.ROOM_ALREADY_IN_PROGRESS;
+import static com.websocket_hub.config.ResourceMessageConstants.ROOM_IS_FULL;
 import static com.websocket_hub.config.ResourceMessageConstants.ROOM_NOT_FOUND;
 import static com.websocket_hub.config.ResourceMessageConstants.SERVICE_UNAVAILABLE;
 
@@ -47,23 +49,26 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
     private final ObjectMapper objectMapper;
 
     @Override
-    public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+    public boolean beforeHandshake(@NonNull ServerHttpRequest request,
+                                   @NonNull ServerHttpResponse response,
+                                   @NonNull WebSocketHandler wsHandler,
+                                   @NonNull Map<String, Object> attributes) throws Exception {
         String ip = request.getRemoteAddress().getHostString();
 
         try {
-            identityProvider.resolveToken(request);
-            UUID guid = identityProvider.resolveGuid(request);
-            UUID roomId = identityProvider.resolveRoomId(request);
-            UserInternalResponse user = grpcUserClient.getByGuid(guid);
+            WsTicketData ticket = identityProvider.resolveTicket(request);
+            UserInternalResponse user = grpcUserClient.getByGuid(ticket.getUserGuid());
 
-            validateRoomStatus(roomId);
+            validateRoom(ticket.getRoomId());
 
-            attributes.put("guid", guid);
+            attributes.put("guid", ticket.getUserGuid());
             attributes.put("user", user);
-            attributes.put("roomId", roomId);
+            attributes.put("roomId", ticket.getRoomId());
+            attributes.put("tokenSid", ticket.getTokenSid());
             attributes.put("connectedAt", Instant.now());
 
-            log.info("Handshake OK: user={}, room={}, ip={}", user.email(), roomId, ip);
+            log.debug("Handshake OK: user={}, room={}", user.email(), ticket.getRoomId());
+
             return true;
 
         } catch (JwtException e) {
@@ -94,14 +99,17 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     @Override
-    public void afterHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler, Exception exception) {
+    public void afterHandshake(@NonNull ServerHttpRequest request,
+                               @NonNull ServerHttpResponse response,
+                               @NonNull WebSocketHandler wsHandler,
+                               Exception exception) {
         if (exception != null) {
             String ip = request.getRemoteAddress().getHostString();
             log.warn("Handshake failed from ip={}: {}", ip, exception.getMessage());
         }
     }
 
-    private void validateRoomStatus(UUID roomId) {
+    private void validateRoom(UUID roomId) {
         RoomMetadata metadata = findMetadataByRoomId(roomId);
 
         if (metadata == null) {
@@ -114,6 +122,10 @@ public class AppHandshakeInterceptor implements HandshakeInterceptor {
             throw new ForbiddenException(ROOM_ALREADY_FINISHED);
         } else if (RoomStatus.IN_PROGRESS.equals(status) && !metadata.getType().isAllowsLateJoin()) {
             throw new ForbiddenException(ROOM_ALREADY_IN_PROGRESS);
+        }
+
+        if (metadata.getParticipantCount() >= metadata.getType().getMaxParticipants()) {
+            throw new ForbiddenException(ROOM_IS_FULL);
         }
     }
 

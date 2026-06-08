@@ -13,6 +13,8 @@ export const errorCodeMessages: Record<string, string> = {
     SERVICE_UNAVAILABLE: "Service is temporarily unavailable",
     INTERNAL_SERVER_ERROR: "An unexpected error occurred",
 
+    SESSION_REVOKED: "Your session has been revoked. Please sign in again",
+
     START_FAILED: "Failed to start the game. Please try again",
     BET_REJECT: "Your bet was rejected",
 

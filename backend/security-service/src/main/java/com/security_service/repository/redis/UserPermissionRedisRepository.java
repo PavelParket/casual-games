@@ -1,4 +1,4 @@
-package com.security_service.repository;
+package com.security_service.repository.redis;
 
 import com.redis_starter.repository.RedisHashRepository;
 import com.security_starter.enums.PermissionRedisKey;

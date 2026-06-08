@@ -3,6 +3,8 @@ package com.security_service.controller;
 import com.security_service.domain.dto.AuthResponse;
 import com.security_service.domain.dto.LoginRequest;
 import com.security_service.domain.dto.RegisterRequest;
+import com.security_service.domain.dto.WsTicketRequest;
+import com.security_service.domain.dto.WsTicketResponse;
 import com.security_service.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,26 +22,31 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService service;
+    private final AuthService authService;
 
     @PostMapping("/register")
     public AuthResponse register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
-        return service.register(request, response);
+        return authService.register(request, response);
     }
 
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
-        return service.login(request, response);
+        return authService.login(request, response);
     }
 
     @PostMapping("/refresh")
     public AuthResponse refresh(HttpServletRequest request, HttpServletResponse response) {
-        return service.refresh(request, response);
+        return authService.refresh(request, response);
     }
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        service.logout(request, response);
+        authService.logout(request, response);
+    }
+
+    @PostMapping("/ws-ticket")
+    public WsTicketResponse createWsTicket(@Valid @RequestBody WsTicketRequest ticketRequest) {
+        return authService.createWsTicket(ticketRequest);
     }
 }

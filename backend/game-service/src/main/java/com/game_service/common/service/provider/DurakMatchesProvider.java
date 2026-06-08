@@ -5,7 +5,6 @@ import com.game_service.common.dto.GameMatchResponse;
 import com.game_service.common.enums.GameResult;
 import com.game_service.common.enums.GameType;
 import com.game_service.durak.domain.entity.Durak;
-import com.game_service.durak.domain.enums.DurakStatus;
 import com.game_service.durak.mapper.DurakGameMapper;
 import com.game_service.durak.repository.DurakRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,10 +44,18 @@ public class DurakMatchesProvider implements GameMatchesProvider {
     }
 
     private GameResult resolveGameResult(Durak durak, UUID userGuid) {
-        if (DurakStatus.DRAW.equals(durak.getStatus())) {
-            return GameResult.DRAW;
-        }
+        switch (durak.getStatus()) {
+            case DRAW -> {
+                return GameResult.DRAW;
+            }
 
-        return userGuid.equals(durak.getWinnerId()) ? GameResult.WIN : GameResult.LOSS;
+            case WINNER -> {
+                return userGuid.equals(durak.getWinnerId()) ? GameResult.WIN : GameResult.LOSS;
+            }
+
+            default -> {
+                return GameResult.NO_DATA;
+            }
+        }
     }
 }

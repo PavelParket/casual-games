@@ -22,6 +22,8 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
 
     private final UUID guid;
 
+    private final UUID sid;
+
     private final String email;
 
     private final Status status;
@@ -34,6 +36,7 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
 
     public AuthenticationToken(
             UUID guid,
+            UUID sid,
             String email,
             Status status,
             Set<String> permissions,
@@ -42,6 +45,7 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
     ) {
         super(authorities);
         this.guid = guid;
+        this.sid = sid;
         this.email = email;
         this.status = status;
         this.permissions = permissions;
@@ -99,11 +103,12 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
     }
 
     public static AuthenticationToken unauthenticated() {
-        return new AuthenticationToken(null, null, null, Set.of(), Map.of(), Set.of());
+        return new AuthenticationToken(null, null, null, null, Set.of(), Map.of(), Set.of());
     }
 
     public static AuthenticationToken authenticated(
             UUID guid,
+            UUID sid,
             String email,
             Status status,
             Set<String> roles,
@@ -114,6 +119,6 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toSet());
 
-        return new AuthenticationToken(guid, email, status, permissions, roleAndPermissionsMap, authorities);
+        return new AuthenticationToken(guid, sid, email, status, permissions, roleAndPermissionsMap, authorities);
     }
 }

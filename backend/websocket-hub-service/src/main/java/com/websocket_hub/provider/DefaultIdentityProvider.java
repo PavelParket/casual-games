@@ -1,72 +1,69 @@
 package com.websocket_hub.provider;
 
 import com.common_utils.exception.JwtException;
-import com.common_utils.exception.NotFoundException;
-import com.security_starter.jwt.JwtClaimsExtractor;
-import com.security_starter.validator.JwtValidator;
+import com.websocket_hub.domain.entity.WsTicketData;
+import com.websocket_hub.domain.repository.WsTicketRedisRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.UUID;
 
 import static com.websocket_hub.config.ResourceMessageConstants.AUTHENTICATION_FAILED;
-import static com.websocket_hub.config.ResourceMessageConstants.ROOM_NOT_FOUND;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class DefaultIdentityProvider implements IdentityProvider {
 
-    private final JwtValidator jwtValidator;
+    private static final String TICKET_PARAM = "ticket";
+    private static final String ROOM_ID_PARAM = "roomId";
 
-    private final JwtClaimsExtractor jwtClaimsExtractor;
+    private final WsTicketRedisRepository wsTicketRedisRepository;
 
     @Override
-    public UUID resolveGuid(ServerHttpRequest request) {
-        String token = resolveToken(request);
+    public WsTicketData resolveTicket(ServerHttpRequest request) {
+        var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
+
+        String ticketIdParam = params.getFirst(TICKET_PARAM);
+
+        if (ticketIdParam == null || ticketIdParam.isBlank()) {
+            throw new JwtException(AUTHENTICATION_FAILED);
+        }
 
         try {
-            return jwtClaimsExtractor.extractGuid(token);
-        } catch (Exception e) {
+            UUID ticketId = UUID.fromString(ticketIdParam);
+            UUID roomId = resolveRoomId(params);
+
+            WsTicketData ticket = wsTicketRedisRepository.getTicket(ticketId)
+                    .orElseThrow(() -> new JwtException(AUTHENTICATION_FAILED));
+
+            if (!ticket.getRoomId().equals(roomId)) {
+                log.warn("WS ticket roomId mismatch: ticketRoomId={}, urlRoomId={}", ticket.getRoomId(), roomId);
+                throw new JwtException(AUTHENTICATION_FAILED);
+            }
+
+            if (!wsTicketRedisRepository.isSessionActive(ticket.getUserGuid(), ticket.getTokenSid())) {
+                log.warn("WS ticket rejected — session not active: userGuid={}", ticket.getUserGuid());
+                throw new JwtException(AUTHENTICATION_FAILED);
+            }
+
+            return ticket;
+        } catch (IllegalArgumentException e) {
             throw new JwtException(AUTHENTICATION_FAILED);
         }
     }
 
-    @Override
-    public UUID resolveRoomId(ServerHttpRequest request) {
-        var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
-
-        String roomId = params.getFirst("roomId");
+    private UUID resolveRoomId(MultiValueMap<String, String> params) {
+        String roomId = params.getFirst(ROOM_ID_PARAM);
 
         if (roomId == null || roomId.isBlank()) {
-            throw new NotFoundException(ROOM_NOT_FOUND);
-        }
-
-        try {
-            return UUID.fromString(roomId);
-        } catch (IllegalArgumentException e) {
-            throw new NotFoundException(ROOM_NOT_FOUND);
-        }
-    }
-
-    @Override
-    public String resolveToken(ServerHttpRequest request) {
-        var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
-
-        String token = params.getFirst("token");
-
-        if (!jwtValidator.isValid(token)) {
             throw new JwtException(AUTHENTICATION_FAILED);
         }
 
-        return token;
-    }
-
-    @Override
-    public String extractToken(ServerHttpRequest request) {
-        return request.getHeaders().getFirst("Authorization");
+        return UUID.fromString(roomId);
     }
 }

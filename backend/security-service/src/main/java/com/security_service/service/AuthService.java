@@ -4,27 +4,28 @@ import com.security_service.domain.dto.AuthResponse;
 import com.security_service.domain.dto.LoginRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.UserResponse;
+import com.security_service.domain.dto.WsTicketRequest;
+import com.security_service.domain.dto.WsTicketResponse;
 import com.security_service.mapper.AuthMapper;
-import com.security_service.repository.BlockedTokenRedisRepository;
+import com.security_service.validator.RefreshTokenValidator;
+import com.security_starter.config.AuthenticationToken;
 import com.security_starter.enums.Status;
+import com.security_starter.helper.PermissionContextHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
-
-    private final static String BEARER_PREFIX = "Bearer ";
 
     private final UserService userService;
 
@@ -32,11 +33,17 @@ public class AuthService {
 
     private final CookieService cookieService;
 
+    private final SessionService sessionService;
+
+    private final WsTicketService wsTicketService;
+
+    private final RefreshTokenValidator refreshTokenValidator;
+
     private final AuthMapper mapper;
 
     private final AuthenticationManager authenticationManager;
 
-    private final BlockedTokenRedisRepository blockedTokenRedisRepository;
+    private final PermissionContextHelper permissionContextHelper;
 
     public AuthResponse register(RegisterRequest request, HttpServletResponse response) {
         UserResponse user = userService.create(request);
@@ -53,31 +60,52 @@ public class AuthService {
     }
 
     public AuthResponse refresh(HttpServletRequest request, HttpServletResponse response) {
-        String token = cookieService.extractRefreshToken(request);
+        String oldRefreshToken = cookieService.extractRefreshToken(request);
 
-        UserResponse user = userService.getByGuid(tokenService.extractGuid(token));
+        RefreshTokenValidator.RefreshClaims claims = refreshTokenValidator.validate(oldRefreshToken);
 
-        return generateTokens(user, response);
+        UUID guid = claims.guid();
+        UUID sid = claims.sid();
+
+        UserResponse user = userService.getByGuid(guid);
+
+        String newRefreshToken = tokenService.generateRefreshToken(guid, sid);
+        String newAccessToken = tokenService.generateAccessToken(
+                guid,
+                user.getEmail(),
+                List.of(user.getRole().toString()),
+                Status.DEFAULT,
+                sid
+        );
+
+        sessionService.rotate(guid, sid, oldRefreshToken, newRefreshToken);
+
+        cookieService.addRefreshToken(response, newRefreshToken);
+
+        return mapper.toResponse(user, newAccessToken);
     }
 
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        cookieService.deleteRefreshToken(response);
-
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
-            return;
-        }
-
-        String accessToken = authHeader.substring(BEARER_PREFIX.length());
-
         try {
-            String email = tokenService.extractEmail(accessToken);
-            Duration ttl = tokenService.extractExpiration(accessToken);
-            blockedTokenRedisRepository.block(email, accessToken, ttl);
+            String refreshToken = cookieService.extractRefreshToken(request);
+            UUID guid = tokenService.extractGuid(refreshToken);
+            UUID sid = tokenService.extractSid(refreshToken);
+            sessionService.revoke(guid, sid);
         } catch (Exception e) {
-            log.warn("Failed to block token on logout: {}", e.getMessage());
+            log.debug("Logout: session revoke skipped: {}", e.getMessage());
         }
+
+        cookieService.deleteRefreshToken(response);
+    }
+
+    public WsTicketResponse createWsTicket(WsTicketRequest ticketRequest) {
+        AuthenticationToken token = permissionContextHelper.getCurrentAuthentication();
+
+        return WsTicketResponse.builder()
+                .ticketId(
+                        wsTicketService.create(token.getGuid(), token.getSid(), ticketRequest.roomId())
+                )
+                .build();
     }
 
     private void authenticate(String email, String password) {
@@ -85,16 +113,20 @@ public class AuthService {
     }
 
     private AuthResponse generateTokens(UserResponse user, HttpServletResponse response) {
+        UUID sid = UUID.randomUUID();
+
         String accessToken = tokenService.generateAccessToken(
                 user.getGuid(),
                 user.getEmail(),
                 List.of(user.getRole().toString()),
-                Status.DEFAULT
+                Status.DEFAULT,
+                sid
         );
 
-        String refreshToken = tokenService.generateRefreshToken(user.getGuid());
+        String refreshToken = tokenService.generateRefreshToken(user.getGuid(), sid);
 
         cookieService.addRefreshToken(response, refreshToken);
+        sessionService.createSession(user.getGuid(), sid, refreshToken);
 
         return mapper.toResponse(user, accessToken);
     }

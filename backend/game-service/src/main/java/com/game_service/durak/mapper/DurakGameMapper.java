@@ -1,6 +1,6 @@
 package com.game_service.durak.mapper;
 
-import com.game_service.common.dto.GameMatchResponse;
+import com.game_service.common.dto.DurakGameMatchResponse;
 import com.game_service.common.enums.GameResult;
 import com.game_service.common.enums.GameType;
 import com.game_service.durak.domain.dto.DurakGameResponse;
@@ -41,5 +41,5 @@ public interface DurakGameMapper {
         return deck == null ? 0 : deck.size();
     }
 
-    GameMatchResponse toMatchResponse(Durak durak, UUID userGuid, GameType gameType, GameResult gameResult);
+    DurakGameMatchResponse toMatchResponse(Durak durak, UUID userGuid, GameType gameType, GameResult gameResult);
 }

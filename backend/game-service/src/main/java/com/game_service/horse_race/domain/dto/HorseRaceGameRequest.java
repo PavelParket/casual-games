@@ -13,7 +13,7 @@ public record HorseRaceGameRequest(
 
         UUID roomId,
 
-        Map<UUID, String> participants,
+        Map<UUID, Integer> participants,
 
         Integer horseCount
 ) {
