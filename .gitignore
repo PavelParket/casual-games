@@ -209,5 +209,4 @@ dist-ssr
 
 # Generated for Docker builds — never commit
 backend/.m2-common-utils/
-/deploy/origin.crt
-/deploy/origin.key
+/deploy/certs
