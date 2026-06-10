@@ -1,4 +1,5 @@
-import { Stack, Typography } from "../ui"
+import { Link } from "react-router-dom";
+import { Box, Container, Stack, Typography } from "../ui";
 
 export default function Footer() {
     return (
@@ -7,11 +8,50 @@ export default function Footer() {
             background: "var(--glass-surface)",
             backdropFilter: `blur(var(--glass-blur))`,
             boxShadow: "var(--shadow-sm)",
+            paddingTop: "1.5rem",
         }}>
-            <Stack direction="row" align="center" justify="space-between" style={{ padding: "1rem 2rem", minHeight: "50px" }}>
-                <Typography variant="caption">© {new Date().getFullYear()} Casual Games</Typography>
-                <Typography variant="caption">Built with custom UI: Pavel & Timofei</Typography>
-            </Stack>
-        </footer>
-    )
+            <Container>
+                <Stack gap="1rem">
+                    <Box style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "1rem"
+                    }}>
+                        <Stack direction="row" gap="1.5rem" align="center" wrap="wrap">
+                            <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.75rem" }}>
+                                Copyright © {new Date().getFullYear()} Casual Games. All rights reserved.
+                            </Typography>
+
+                            <Stack direction="row" gap="0.75rem" align="center" style={{ fontSize: "0.75rem" }}>
+                                <Link to="/privacy" className="link" style={{
+                                    textDecoration: "none",
+                                    fontSize: "0.75rem",
+                                    opacity: 0.6,
+                                    transition: "opacity 0.2s ease"
+                                }}>
+                                    Privacy Policy
+                                </Link>
+                                <span style={{ opacity: 0.3, color: "var(--color-text)" }}>|</span>
+                                <Link to="/terms" className="link" style={{
+                                    textDecoration: "none",
+                                    fontSize: "0.75rem",
+                                    opacity: 0.6,
+                                    transition: "opacity 0.2s ease"
+                                }}>
+                                    Terms of Use
+                                </Link>
+                            </Stack>
+                        </Stack>
+
+                        <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.75rem" }}>
+                            Built with custom UI: Pavel & Timofei
+                        </Typography>
+                    </Box>
+
+                </Stack>
+            </Container >
+        </footer >
+    );
 }
