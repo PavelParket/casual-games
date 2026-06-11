@@ -105,19 +105,7 @@ export default function Upgrade() {
     const sortedPlans = [...subscriptionPlans].sort((a, b) => a.tier - b.tier);
 
     return (
-        <Box
-            className="custom-scrollbar"
-            style={{
-                height: "calc(100vh - 60px - 50px)",
-                overflowY: "auto",
-                margin: "0 10rem",
-                padding: "2rem 1rem",
-                background: "var(--color-bg-glass)",
-                backdropFilter: "blur(2px)",
-                borderRadius: "var(--radius-md)",
-                boxShadow: "var(--shadow-lg)"
-            }}
-        >
+        <Box className="custom-scrollbar page-wrapper" style={{ overflowY: "auto", padding: "2rem 1rem" }}>
             <Container>
                 <Stack direction="row" align="center" justify="space-between" style={{ marginBottom: "3rem" }}>
                     <Typography variant="h2">Upgrade Status</Typography>

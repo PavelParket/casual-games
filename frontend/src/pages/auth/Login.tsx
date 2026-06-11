@@ -63,9 +63,9 @@ export default function Login() {
     };
 
     return (
-        <Box style={{ padding: "56px 0" }}>
+        <Box style={{ padding: "56px 0.25rem" }}>
             <Container>
-                <Box style={{ display: "grid", placeItems: "center", minWidth: "500px" }}>
+                <Box style={{ display: "grid", placeItems: "center", width: "100%" }}>
                     <Card style={{ width: "min(420px, 100%)", textAlign: "center", padding: "30px 40px" }}>
                         <Typography variant="h2">Sign In</Typography>
                         <Form onSubmit={handleSubmit} gap="16px" style={{ marginTop: 16 }}>

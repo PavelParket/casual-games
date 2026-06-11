@@ -21,7 +21,7 @@ export default function Footer() {
                     }}>
                         <Stack direction="row" gap="1.5rem" align="center" wrap="wrap">
                             <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.75rem" }}>
-                                Copyright © {new Date().getFullYear()} Casual Games. All rights reserved.
+                                Copyright © {new Date().getFullYear()} Casual Games.
                             </Typography>
 
                             <Stack direction="row" gap="0.75rem" align="center" style={{ fontSize: "0.75rem" }}>

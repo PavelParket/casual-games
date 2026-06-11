@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { ThemeProvider } from './ui'
-import Home from './pages/Home'
+import Home from './pages/home/Home'
 import Layout from './components/Layout'
 import Register from './pages/auth/Register'
 import Login from './pages/auth/Login'

@@ -1,0 +1,40 @@
+.rooms-page .rooms-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+    align-items: start;
+    height: calc(100vh - 60px - 50px - 8.5rem);
+}
+
+.rooms-page .rooms-sidebar {
+    display: block;
+    height: 100%;
+}
+
+.rooms-page .rooms-main-content {
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--color-bg-glass);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 900px) {
+    .rooms-page .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rooms-page .rooms-sidebar {
+        display: none;
+    }
+
+    .rooms-page .rooms-main-content {
+        padding: 1rem;
+    }
+}

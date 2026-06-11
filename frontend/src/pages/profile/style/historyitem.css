@@ -1,0 +1,136 @@
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition: transform 0.2s ease;
+}
+
+.history-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.history-item-details {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 60px;
+    gap: 12px;
+    align-items: center;
+    min-width: 0;
+}
+
+.history-item.has-subtext .history-item-details {
+    grid-template-columns: 1fr 70px 60px;
+}
+
+.history-item-center-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.history-item-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-item-date-time {
+    opacity: 0.6;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.history-item-amount {
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.history-item.has-subtext .history-item-amount {
+    text-align: right;
+}
+
+.history-item-subtext-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 90px;
+}
+
+.history-item-subtext {
+    opacity: 0.8;
+    font-size: 0.7rem;
+    font-family: monospace;
+    text-align: left;
+    white-space: pre-line;
+}
+
+@media (max-width: 480px) {
+    .history-item {
+        align-items: center;
+        padding: 12px 14px;
+    }
+
+    .history-item-icon {
+        margin-top: 0;
+        width: 36px;
+        height: 36px;
+    }
+
+    .history-item-details {
+        display: flex !important;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .history-item-center-stack {
+        gap: 6px;
+    }
+
+    .history-item-date-time {
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .history-item-separator {
+        display: none;
+    }
+
+    .history-item-amount {
+        text-align: left !important;
+        font-size: 1.05rem;
+        margin-top: 2px;
+    }
+
+    .history-item-subtext-stack {
+        align-items: flex-start;
+        min-width: auto;
+        padding-top: 4px;
+        border-top: 1px dashed var(--color-border);
+        width: 100%;
+    }
+
+    .history-item-subtext {
+        font-size: 0.75rem;
+        line-height: 1.4;
+    }
+}

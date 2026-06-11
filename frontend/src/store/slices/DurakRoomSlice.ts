@@ -23,7 +23,7 @@ export interface DurakRoomState {
     errors: Record<string, string | null>;
 }
 
-// ── Thunks ──
+// ------------------ Thunks ------------------
 
 export const getRoomById = createAsyncThunk<Room, { roomId: string }, { rejectValue: ErrorResponse }>(
     "durakRoom/getRoom",
@@ -110,7 +110,7 @@ export const syncReadiness = createAsyncThunk<void, { roomId: string; roomType: 
     }
 );
 
-// ── Slice ──
+// ------------------ Slice ------------------
 
 const initialState: DurakRoomState = {
     room: undefined,

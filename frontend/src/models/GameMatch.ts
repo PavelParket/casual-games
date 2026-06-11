@@ -5,8 +5,8 @@ export type ResultFilter = "ALL" | "WINS" | "LOSSES";
 
 export const RESULT_FILTER_LABELS: Record<ResultFilter, string> = {
     ALL: "All",
-    WINS: "Wins",
-    LOSSES: "Losses",
+    WINS: "Win",
+    LOSSES: "Loss",
 } as const;
 
 export interface GameMatchRequestFilter {

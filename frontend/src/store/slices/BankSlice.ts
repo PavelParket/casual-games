@@ -51,7 +51,6 @@ export const getByUserGuid = createAsyncThunk<PageResponse<TransactionResponse>,
     async ({ guid, page = 0, size = 4 }, { rejectWithValue }) => {
         try {
             const response = await BankAPI.getByUserGuid(guid, page, size);
-            console.log(response.data)
             return response.data;
         } catch (err: unknown) {
             const error = err as AxiosError<{ message?: string }>;

@@ -5,7 +5,7 @@ import type { AppDispatch, RootState } from "../../store/store";
 import { findByGuid, update, getMatches, uploadProfilePicture, deleteProfilePicture, clearGameHistoryState } from "../../store/slices/UserSlice";
 import { deposit, getByUserGuid } from "../../store/slices/BankSlice";
 import type { Icons } from "../../assets/icons";
-import { Box, Container, Card, Typography, Button, Stack, Divider, Grid, Icon, Textfield, Modal, Input, FormField, Avatar, ComboBox, Menu, MenuList, MenuItem } from "../../ui";
+import { Box, Container, Card, Typography, Button, Stack, Divider, Icon, Textfield, Modal, Input, FormField, Avatar, ComboBox, Menu, MenuList, MenuItem } from "../../ui";
 import { useThemedIcon } from "../../ui";
 import { validateAndReadJpeg, validateUsername, validateAmountInput } from "../../utils/SecurityUtils";
 import { Skeleton } from "../../ui/components/common/Skeleton";
@@ -16,6 +16,7 @@ import { AvatarEditorModal } from "./components/AvatarEditorModal.tsx";
 import { ImageViewerModal } from "./components/ImageViewerModal";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { type GameMatchRequestFilter, type ResultFilter, RESULT_FILTER_LABELS } from "../../models/GameMatch.ts";
+import "./style/Profile.css";
 
 const AVAILABLE_ROOM_TYPES = (Object.keys(ROOM_TYPE_LABELS) as RoomType[])
     .filter(type => type !== "DE_CODER");
@@ -24,6 +25,12 @@ const RESULT_FILTER_OPTIONS = (Object.keys(RESULT_FILTER_LABELS) as ResultFilter
     value: key,
     label: RESULT_FILTER_LABELS[key]
 }));
+
+const ROOM_ICON_NAMES: Record<RoomType, keyof typeof Icons.light> = {
+    DURAK: "durak",
+    TIC_TAC_TOE: "ticTacToe",
+    HORSE_RACE: "horse",
+};
 
 const getStatusIconName = (status: string): keyof typeof Icons.light => {
     return `${status.toLowerCase()}Status` as keyof typeof Icons.light;
@@ -39,7 +46,7 @@ export default function Profile() {
     const { isDepositing, transactions, isLoadingTransactions, currentPage, totalPages } =
         useSelector((state: RootState) => state.bank);
 
-    const { getIcon } = useThemedIcon();
+    const { getIcon, getInverseIcon } = useThemedIcon();
     const { showSystemToast } = useSystemToastContext();
 
     const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -66,6 +73,15 @@ export default function Profile() {
     const [isViewerOpen, setIsViewerOpen] = useState(false);
 
     const userGuid = authUser?.guid;
+
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    const isMobile = windowWidth <= 840;
 
     const getFilterParams = useCallback((resFilter: ResultFilter): GameMatchRequestFilter => {
         const filter: GameMatchRequestFilter = { gameType: selectedGameType };
@@ -253,18 +269,13 @@ export default function Profile() {
     };
 
     return (
-        <Box style={{ padding: "2rem 0" }}>
-            <Container >
-                <Card style={{ minHeight: "100%" }}>
+        <Box className="page-wrapper profile-page" style={{ padding: "2rem 0" }}>
+            <Container>
+                <Card className="profile-main-card">
 
-                    <Grid
-                        columns="280px 1px 1fr"
-                        gap="0"
-                        style={{ height: "100%" }}
-                        className="profile-grid"
-                    >
-                        <Stack align="center" gap="1.5rem" style={{ paddingRight: "1rem" }}>
+                    <Box className="profile-grid">
 
+                        <Stack className="profile-left-panel" align="center" gap="1.5rem">
                             <Box
                                 style={{ position: "relative" }}
                                 onMouseEnter={() => setIsAvatarHovered(true)}
@@ -275,48 +286,33 @@ export default function Profile() {
                                     style={{ cursor: user?.linkProfilePicture ? "pointer" : "default" }}
                                     title={user?.linkProfilePicture ? "View full picture" : undefined}
                                 >
-                                    <Avatar
-                                        src={user?.linkProfilePictureMini}
-                                        fallback={username}
-                                        size={150}
-                                        isLoading={isLoading}
-                                    />
+                                    <Avatar src={user?.linkProfilePictureMini} fallback={username} size={150} isLoading={isLoading} />
                                 </Box>
 
                                 <Box style={{
-                                    position: "absolute",
-                                    bottom: 5, right: 5,
-                                    opacity: isAvatarHovered ? 1 : 0,
-                                    transform: isAvatarHovered ? "scale(1)" : "scale(0.8)",
-                                    transition: "all 0.2s ease",
-                                    zIndex: 2,
+                                    position: "absolute", bottom: 5, right: 5,
+                                    opacity: isAvatarHovered || isMobile ? 1 : 0,
+                                    transform: isAvatarHovered || isMobile ? "scale(1)" : "scale(0.8)",
+                                    transition: "all 0.2s ease", zIndex: 2,
                                 }}>
                                     <Menu
-                                        key={isAvatarHovered ? 'visible' : 'hidden'}
                                         className="menu-align-left"
                                         trigger={
                                             <Box style={{
-                                                borderRadius: "50%",
-                                                width: "40px", height: "40px",
-                                                background: "var(--color-bg)",
-                                                border: "1px solid var(--color-border)",
+                                                borderRadius: "50%", width: "40px", height: "40px",
+                                                background: "var(--color-bg)", border: "1px solid var(--color-border)",
                                                 display: "flex", alignItems: "center", justifyContent: "center",
-                                                boxShadow: "var(--shadow-sm)",
-                                                cursor: "pointer"
+                                                boxShadow: "var(--shadow-sm)", cursor: "pointer"
                                             }} title="Edit Settings">
                                                 <Icon src={getIcon("edit")} alt="edit avatar" size={20} />
                                             </Box>
                                         }
                                     >
                                         <MenuList>
-                                            <MenuItem onClick={handleUploadClick}>
-                                                Upload picture
-                                            </MenuItem>
+                                            <MenuItem onClick={handleUploadClick}>Upload picture</MenuItem>
                                             {user?.linkProfilePicture && (
                                                 <MenuItem onClick={() => setIsDeleteConfirmOpen(true)}>
-                                                    <span style={{ color: "var(--color-expense-text)" }}>
-                                                        Delete picture
-                                                    </span>
+                                                    <span style={{ color: "var(--color-expense-text)" }}>Delete picture</span>
                                                 </MenuItem>
                                             )}
                                         </MenuList>
@@ -324,12 +320,8 @@ export default function Profile() {
                                 </Box>
 
                                 <Input
-                                    id="avatar-upload"
-                                    type="file"
-                                    ref={fileInputRef}
-                                    style={{ display: "none" }}
-                                    accept="image/jpeg, image/jpg"
-                                    onChange={handleFileChange}
+                                    type="file" ref={fileInputRef} style={{ display: "none" }}
+                                    accept="image/jpeg, image/jpg" onChange={handleFileChange}
                                 />
                             </Box>
 
@@ -350,12 +342,12 @@ export default function Profile() {
                             {isLoading ? (
                                 <Skeleton variant="rectangular" width="100%" height={38} />
                             ) : (
-                                <Button variant="solid" style={{ width: "100%" }} onClick={() => navigate('/upgrade')}>
+                                <Button variant="solid" style={{ width: "100%", maxWidth: "280px" }} onClick={() => navigate('/upgrade')}>
                                     Upgrade
                                 </Button>
                             )}
 
-                            <Box style={{ marginTop: "auto", paddingTop: "2rem" }}>
+                            <Box style={{ marginTop: isMobile ? "0" : "auto", paddingTop: isMobile ? "0" : "2rem" }}>
                                 {isLoading ? (
                                     <Skeleton variant="text" width={80} height={16} />
                                 ) : (
@@ -366,15 +358,15 @@ export default function Profile() {
                             </Box>
                         </Stack>
 
-                        <Box style={{ display: "flex", justifyContent: "center", height: "100%" }}>
+                        <Box className="profile-divider">
                             <Divider orientation="vertical" />
                         </Box>
 
-                        <Stack gap="2rem" style={{ width: "100%", paddingLeft: "1rem" }}>
+                        <Stack gap="2rem" className="profile-right-panel">
 
                             <Box style={infoBlockStyle}>
                                 <Stack gap="1rem">
-                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: "45px" }}>
+                                    <Box className="username-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: "45px" }}>
                                         {isLoading ? (
                                             <Skeleton variant="text" width={150} height={28} />
                                         ) : (
@@ -383,28 +375,15 @@ export default function Profile() {
 
                                                 {isEditingUsername ? (
                                                     <>
-                                                        <Textfield
-                                                            value={tempUsername}
-                                                            onChange={handleUsernameChange}
-                                                            placeholder="Enter username"
-                                                        />
+                                                        <Textfield value={tempUsername} onChange={handleUsernameChange} placeholder="Enter username" />
                                                         {validationError && (
-                                                            <Typography variant="caption" style={{ color: 'red', marginTop: '4px' }}>
+                                                            <Typography variant="caption" style={{ color: 'red', marginTop: '4px', display: 'block' }}>
                                                                 {validationError}
                                                             </Typography>
                                                         )}
                                                     </>
                                                 ) : (
-                                                    <Typography
-                                                        variant="h3"
-                                                        title={username}
-                                                        style={{
-                                                            overflow: "hidden",
-                                                            textOverflow: "ellipsis",
-                                                            display: 'block',
-                                                            maxWidth: '150px'
-                                                        }}
-                                                    >
+                                                    <Typography variant="h3" title={username} style={{ overflow: "hidden", textOverflow: "ellipsis", display: 'block', maxWidth: isMobile ? '100%' : '150px' }}>
                                                         {username}
                                                     </Typography>
                                                 )}
@@ -412,25 +391,11 @@ export default function Profile() {
                                         )}
 
                                         {isEditingUsername ? (
-                                            <Stack
-                                                direction="row">
-                                                <Button
-                                                    variant="solid"
-                                                    onClick={handleSaveUsername}
-                                                    disabled={isLoading}
-                                                    style={{ display: "flex", alignItems: "center", gap: "5px" }}
-                                                >
+                                            <Stack direction="row">
+                                                <Button variant="solid" onClick={handleSaveUsername} disabled={isLoading} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                                     {isLoading ? "Saving..." : "Save"}
                                                 </Button>
-
-                                                <Button
-                                                    variant="outline"
-                                                    disabled={isLoading}
-                                                    onClick={() => {
-                                                        setIsEditingUsername(false);
-                                                        setValidationError(null);
-                                                    }}
-                                                >
+                                                <Button variant="outline" disabled={isLoading} onClick={() => { setIsEditingUsername(false); setValidationError(null); }}>
                                                     Cancel
                                                 </Button>
                                             </Stack>
@@ -438,13 +403,8 @@ export default function Profile() {
                                             isLoading ? (
                                                 <Skeleton variant="rectangular" width={75} height={34} />
                                             ) : (
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={handleEditClick}
-                                                    style={{ display: "flex", gap: "8px", alignItems: "center" }}
-                                                >
-                                                    Edit
-                                                    <Icon src={getIcon("edit")} alt="edit" size={16} />
+                                                <Button variant="outline" onClick={handleEditClick} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                                    Edit <Icon src={getIcon("edit")} alt="edit" size={16} />
                                                 </Button>
                                             )
                                         )}
@@ -464,7 +424,7 @@ export default function Profile() {
                                     {isLoading ? (
                                         <Skeleton variant="text" width={150} height={36} />
                                     ) : (
-                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <Box className="balance-section">
                                             <Box>
                                                 <Typography variant="caption" style={{ opacity: 0.7 }}>Balance:</Typography>
                                                 <Typography variant="h2" style={{ color: "var(--color-primary)" }}>
@@ -473,25 +433,16 @@ export default function Profile() {
                                                 </Typography>
                                             </Box>
 
-                                            <Stack direction="row" gap="10px" align="center">
-
-                                                <Button
-                                                    variant="ghost"
-                                                    onClick={() => setDepositModalOpen(true)}
-                                                >
+                                            <div className="balance-buttons">
+                                                <Button variant="ghost" onClick={() => setDepositModalOpen(true)}>
                                                     Deposit
                                                 </Button>
-
-                                                {/*todo: рассмотреть вариант с кэшированием, на данный момент кнопка подвергает DoS-атаке bank-service*/}
                                                 <Button
                                                     variant={activeTab === 'balanceHistory' ? "solid" : "outline"}
                                                     onClick={() => {
-                                                        if (activeTab === 'balanceHistory') {
-                                                            setActiveTab('games');
-                                                        } else {
-                                                            if (userGuid) {
-                                                                dispatch(getByUserGuid({ guid: authUser.guid, size: 4 }));
-                                                            }
+                                                        if (activeTab === 'balanceHistory') setActiveTab('games');
+                                                        else {
+                                                            if (userGuid) dispatch(getByUserGuid({ guid: authUser.guid, size: 4 }));
                                                             setActiveTab('balanceHistory');
                                                         }
                                                     }}
@@ -499,9 +450,7 @@ export default function Profile() {
                                                 >
                                                     {activeTab === 'balanceHistory' ? 'Close History' : 'History'}
                                                 </Button>
-
-                                            </Stack>
-
+                                            </div>
                                         </Box>
                                     )}
                                 </Stack>
@@ -517,23 +466,36 @@ export default function Profile() {
                                     totalPages={gameHistoryTotalPages}
                                     onPageChange={handleGameHistoryPageChange}
                                     headerActions={
-                                        <>
+                                        <div className="profile-filter-controls">
                                             <ComboBox
-                                                options={RESULT_FILTER_OPTIONS}
+                                                className="filter-result"
+                                                options={RESULT_FILTER_OPTIONS.map(opt => ({
+                                                    value: opt.value,
+                                                    label: opt.label,
+                                                    searchLabel: opt.label
+                                                }))}
                                                 value={resultFilter}
                                                 onValueChange={(val) => setResultFilter(val as ResultFilter)}
-                                                style={{ width: '110px' }}
                                             />
                                             <ComboBox
-                                                options={AVAILABLE_ROOM_TYPES.map(t => ({ value: t, label: ROOM_TYPE_LABELS[t] }))}
+                                                className="filter-room"
+                                                options={AVAILABLE_ROOM_TYPES.map(t => ({
+                                                    value: t,
+                                                    label: (selected: boolean) => isMobile ? (
+                                                        <Icon
+                                                            src={selected ? getInverseIcon(ROOM_ICON_NAMES[t]) : getIcon(ROOM_ICON_NAMES[t])}
+                                                            size={20}
+                                                        />
+                                                    ) : ROOM_TYPE_LABELS[t],
+                                                    searchLabel: ROOM_TYPE_LABELS[t]
+                                                }))}
                                                 value={selectedGameType}
                                                 onValueChange={(val) => setSelectedGameType(val as RoomType)}
-                                                style={{ width: '190px' }}
                                             />
-                                            <Button variant="ghost" onClick={() => dispatch(getMatches({ guid: userGuid!, filter: getFilterParams(resultFilter) }))}>
+                                            <Button variant="ghost" style={{ padding: "0.35rem" }} onClick={() => dispatch(getMatches({ guid: userGuid!, filter: getFilterParams(resultFilter) }))}>
                                                 <Icon src={getIcon("refresh")} size={16} />
                                             </Button>
-                                        </>
+                                        </div>
                                     }
                                 >
                                     {gameHistory.map(m => {
@@ -546,7 +508,8 @@ export default function Profile() {
                                                 variant={isWin ? 'income' : isLoss ? 'expense' : 'neutral'}
                                                 iconText={isWin ? '+' : isLoss ? '-' : '='}
                                                 title={ROOM_TYPE_LABELS[m.gameType]}
-                                                date={`${m.createdAt.substring(0, 10)} • ${m.createdAt.substring(11, 16)} UTC`}
+                                                date={`${m.createdAt.substring(0, 10)}`}
+                                                time={`${m.createdAt.substring(11, 16)} UTC`}
                                                 rightText={isWin ? 'Victory' : isLoss ? 'Defeat' : 'Draw'}
                                             />
                                         );
@@ -572,7 +535,8 @@ export default function Profile() {
                                             variant={t.type === 'ADDITION' ? 'income' : 'expense'}
                                             iconText={t.type === 'ADDITION' ? '+' : '-'}
                                             title={t.roomType ? ROOM_TYPE_LABELS[t.roomType] : 'Deposit'}
-                                            date={`${t.createdAtDate} • ${t.createdAtTime.substring(0, 5)} UTC`}
+                                            date={`${t.createdAtDate}`}
+                                            time={`${t.createdAtTime.substring(0, 5)} UTC`}
                                             rightText={String(t.amount)}
                                             rightSubText={`Before: ${t.balanceBefore} \n After: ${t.balanceAfter}`}
                                         />
@@ -580,82 +544,29 @@ export default function Profile() {
                                 </PageablePanel>
                             )}
                         </Stack>
-                    </Grid>
+                    </Box>
                 </Card>
             </Container>
 
-            <AvatarEditorModal
-                isOpen={isEditorOpen}
-                imageSrc={selectedImage}
-                onClose={() => {
-                    setIsEditorOpen(false);
-                    setSelectedImage(null);
-                }}
-                onUpload={handleUploadProfilePicture}
-                isLoading={isLoading}
-            />
-
-            <Modal
-                isOpen={depositModalOpen}
-                onClose={() => {
-                    setDepositModalOpen(false)
-                    setDepositAmount('');
-                    setDepositError(null);
-                }}
-                title="Deposit Funds"
-            >
+            <AvatarEditorModal isOpen={isEditorOpen} imageSrc={selectedImage} onClose={() => { setIsEditorOpen(false); setSelectedImage(null); }} onUpload={handleUploadProfilePicture} isLoading={isLoading} />
+            <Modal isOpen={depositModalOpen} onClose={() => { setDepositModalOpen(false); setDepositAmount(''); setDepositError(null); }} title="Deposit Funds">
                 <Stack gap="1rem">
-                    <Typography variant="body">
-                        Enter the amount you wish to add to your balance.
-                    </Typography>
-                    <FormField
-                        type="text"
-                        inputMode="decimal"
-                        value={depositAmount}
-                        onChange={handleDepositAmountChange}
-                        onFocus={(e) => e.target.select()}
-                        placeholder="Amount"
-                        rounded
-                    />
-
-                    {depositError && (
-                        <Typography variant="caption" style={{ color: 'var(--color-expense-text)' }}>
-                            {depositError}
-                        </Typography>
-                    )}
-
-                    <Button
-                        variant="solid"
-                        onClick={handleDeposit}
-                        disabled={isDepositing || !depositAmount || depositAmount === '.'}
-                    >
-                        {isDepositing ? "Processing..." : "Confirm Deposit"}
-                    </Button>
+                    <Typography variant="body">Enter the amount you wish to add to your balance.</Typography>
+                    <FormField type="text" inputMode="decimal" value={depositAmount} onChange={handleDepositAmountChange} onFocus={(e) => e.target.select()} placeholder="Amount" rounded />
+                    {depositError && <Typography variant="caption" style={{ color: 'var(--color-expense-text)' }}>{depositError}</Typography>}
+                    <Button variant="solid" onClick={handleDeposit} disabled={isDepositing || !depositAmount || depositAmount === '.'}>{isDepositing ? "Processing..." : "Confirm Deposit"}</Button>
                 </Stack>
             </Modal>
-
-            <ImageViewerModal
-                isOpen={isViewerOpen}
-                src={user?.linkProfilePicture || ""}
-                alt="Profile Picture"
-                onClose={() => setIsViewerOpen(false)}
-            />
-
+            <ImageViewerModal isOpen={isViewerOpen} src={user?.linkProfilePicture || ""} alt="Profile Picture" onClose={() => setIsViewerOpen(false)} />
             <Modal isOpen={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)} title="Delete Profile Picture">
                 <Stack gap="1rem">
-                    <Typography variant="body">
-                        Are you sure you want to delete your profile picture? This action cannot be undone.
-                    </Typography>
+                    <Typography variant="body">Are you sure you want to delete your profile picture? This action cannot be undone.</Typography>
                     <Stack direction="row" gap="1rem" justify="flex-end" style={{ marginTop: "1rem" }}>
-                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)} disabled={isLoading}>
-                            Cancel
-                        </Button>
-                        <Button variant="solid" onClick={confirmDelete} disabled={isLoading} style={{ background: "var(--color-expense-text)" }}>
-                            {isLoading ? "Deleting..." : "Delete"}
-                        </Button>
+                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)} disabled={isLoading}>Cancel</Button>
+                        <Button variant="solid" onClick={confirmDelete} disabled={isLoading} style={{ background: "var(--color-expense-text)" }}>{isLoading ? "Deleting..." : "Delete"}</Button>
                     </Stack>
                 </Stack>
             </Modal>
-        </Box >
+        </Box>
     );
 }

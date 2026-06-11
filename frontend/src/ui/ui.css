@@ -192,6 +192,11 @@ html.is-scrolling.dark {
     /* Skeleton component tokens */
     --skeleton-bg: rgba(200, 200, 200, 0.35);
     --skeleton-shimmer: rgba(255, 255, 255, 0.6);
+
+    --page-margin-x: 0;
+    --page-margin-y: 0;
+    --page-padding-x: 0.5rem;
+    --page-border-radius: 0;
 }
 
 /* Dark theme */
@@ -262,6 +267,52 @@ html.dark {
     /* Skeleton component tokens */
     --skeleton-bg: rgba(60, 60, 60, 0.6);
     --skeleton-shimmer: rgba(255, 255, 255, 0.25);
+}
+
+@media (min-width: 768px) {
+    :root {
+        --page-margin-x: 2rem;
+        --page-margin-y: 0rem;
+        --page-padding-x: 1rem;
+        --page-border-radius: var(--radius-md);
+    }
+}
+
+@media (min-width: 1280px) {
+    :root {
+        --page-margin-x: 10rem;
+        --page-margin-y: 0;
+    }
+}
+
+.page-wrapper {
+    min-height: calc(100vh - 60px);
+    margin: var(--page-margin-y) var(--page-margin-x);
+    padding: 0 var(--page-padding-x);
+    background: var(--color-bg-glass);
+    backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--page-border-radius);
+    box-shadow: var(--shadow-lg);
+    transition: margin 0.3s ease, padding 0.3s ease, border-radius 0.3s ease;
+}
+
+.container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem 1.5rem 1rem;
+    transition: padding 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 0.5rem 1rem 0.5rem;
+    }
+}
+
+@media (max-width: 530px) {
+    .hidden-mobile {
+        display: none !important;
+    }
 }
 
 /* Generic link styling */

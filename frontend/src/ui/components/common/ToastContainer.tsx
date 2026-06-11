@@ -45,7 +45,7 @@ function ToastItemEl({ toast, onDismiss }: ToastItemProps) {
     );
 }
 
-// ─── ToastContainer ──────────────────────────────────────────────────────────
+// -------------- ToastContainer --------------
 
 interface ToastContainerProps {
     layer: ToastLayer;

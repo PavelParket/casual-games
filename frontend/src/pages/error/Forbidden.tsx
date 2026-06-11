@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export default function Forbidden() {
     return (
         <Container>
-            <Card style={{ width: "min(420px, 100%)", textAlign: "center" }}>
+            <Card style={{ margin: "0 auto", width: "min(420px, 100%)", textAlign: "center", padding: "30px 20px" }}>
                 <Typography variant="h2" style={{ marginBottom: "20px" }}>403 — Access Forbidden</Typography>
                 <Typography variant="body" style={{ marginBottom: "20px" }}>
                     You don&apos;t have permission to access this page.
