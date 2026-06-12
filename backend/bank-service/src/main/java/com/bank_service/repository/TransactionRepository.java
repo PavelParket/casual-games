@@ -83,4 +83,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             LIMIT :limit
             """, nativeQuery = true)
     List<Transaction> findTopWinsForDay(String type, String status, Instant startOfDay, Instant endOfDay, int limit);
+
+    @Query(value = """
+            SELECT * FROM transactions
+            WHERE user_guid = :userGuid
+            AND type = 'ADDITION'
+            AND room_id IS NULL
+            AND status = :status
+            ORDER BY created_at DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    Optional<Transaction> findLastDeposit(UUID userGuid, String status);
 }

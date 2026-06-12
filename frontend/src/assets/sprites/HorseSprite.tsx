@@ -1,20 +1,11 @@
 import type { CSSProperties } from "react";
 import "./styles/horsesprite.css"
+import horseSpriteUrl from "../images/horse-white.png";
+import { HORSE_FILTERS } from "../../models/HorseRace";
 
 const FRAME_W = 64;
 const FRAME_COUNT = 4;
 const GALLOP_EAST_Y = 192;
-
-export const HORSE_FILTERS: Record<string, string> = {
-    "#e74c3c": "sepia(1) saturate(5) hue-rotate(327deg) brightness(1.1)",
-    "#e67e22": "sepia(1) saturate(5) hue-rotate(349deg) brightness(1.1)",
-    "#2ecc71": "sepia(1) saturate(5) hue-rotate(98deg)  brightness(1.0)",
-    "#3498db": "sepia(1) saturate(5) hue-rotate(169deg) brightness(1.0)",
-    "#9b59b6": "sepia(1) saturate(5) hue-rotate(245deg) brightness(1.0)",
-    "#f1c40f": "sepia(1) saturate(5) hue-rotate(11deg)  brightness(1.2)",
-    "#e91e63": "sepia(1) saturate(5) hue-rotate(299deg) brightness(1.1)",
-    "#1abc9c": "sepia(1) saturate(5) hue-rotate(130deg) brightness(1.0)",
-};
 
 type HorseSpriteProps = {
     color: string;
@@ -61,7 +52,7 @@ export default function HorseSprite({
                 style={{
                     width: size,
                     height: size,
-                    backgroundImage: `url(/src/assets/images/horse-white.png)`,
+                    backgroundImage: `url(${horseSpriteUrl})`,
                     backgroundSize: bgSize,
                     backgroundPosition: bgPosition,
                     backgroundRepeat: "no-repeat",

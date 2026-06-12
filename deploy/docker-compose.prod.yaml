@@ -126,6 +126,10 @@ services:
 
   api-gateway:
     image: casual-games/api-gateway:1.0.0
+    build:
+      context: ../backend
+      args:
+        SERVICE_NAME: api-gateway
     container_name: api-gateway
     restart: unless-stopped
     env_file: prod.env
@@ -138,6 +142,10 @@ services:
 
   security-service:
     image: casual-games/security-service:1.0.0
+    build:
+      context: ../backend
+      args:
+        SERVICE_NAME: security-service
     container_name: security-service
     restart: unless-stopped
     env_file: prod.env
@@ -160,6 +168,10 @@ services:
 
   user-service:
     image: casual-games/user-service:1.0.0
+    build:
+      context: ../backend
+      args:
+        SERVICE_NAME: user-service
     container_name: user-service
     restart: unless-stopped
     env_file: prod.env
@@ -184,6 +196,10 @@ services:
 
   bank-service:
     image: casual-games/bank-service:1.0.0
+    build:
+      context: ../backend
+      args:
+        SERVICE_NAME: bank-service
     container_name: bank-service
     restart: unless-stopped
     env_file: prod.env
@@ -206,6 +222,10 @@ services:
 
   game-service:
     image: casual-games/game-service:1.0.0
+    build:
+      context: ../backend
+      args:
+        SERVICE_NAME: game-service
     container_name: game-service
     restart: unless-stopped
     env_file: prod.env
@@ -226,6 +246,10 @@ services:
 
   websocket-hub-service:
     image: casual-games/websocket-hub-service:1.0.0
+    build:
+      context: ../backend
+      args:
+        SERVICE_NAME: websocket-hub-service
     container_name: websocket-hub-service
     restart: unless-stopped
     env_file: prod.env
@@ -249,6 +273,8 @@ services:
   # ─────────────────────────────────────────────────────────
   frontend:
     image: casual-games/frontend:1.0.0
+    build:
+      context: ../frontend
     container_name: frontend
     restart: unless-stopped
     depends_on:
@@ -264,9 +290,11 @@ services:
     container_name: nginx
     restart: unless-stopped
     ports:
-      - "127.0.0.1:80:80"     # TEMP: для локального теста
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
     depends_on:
       - frontend
       - api-gateway
