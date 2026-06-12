@@ -24,12 +24,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
+import static com.bank_service.config.ResourceMessageConstants.BAD_REQUEST_DEPOSIT_COOLDOWN;
 import static com.bank_service.config.ResourceMessageConstants.DEPOSIT_EXCEEDS_MAX_BALANCE;
 import static com.bank_service.config.ResourceMessageConstants.FORBIDDEN_DEPOSIT;
 import static com.bank_service.config.ResourceMessageConstants.FORBIDDEN_READ_TRANSACTIONS;
@@ -40,6 +42,9 @@ import static com.bank_service.config.ResourceMessageConstants.FORBIDDEN_READ_TR
 public class TransactionService {
 
     private static final BigDecimal MAX_DEPOSIT_BALANCE = new BigDecimal("5000");
+    private static final Duration DEPOSIT_COOLDOWN = Duration.ofHours(1);
+    private static final int SIXTY_SECONDS = 60;
+    private static final int ONE_DAY = 1;
 
     private final TransactionLifecycleService transactionLifecycleService;
 
@@ -63,8 +68,6 @@ public class TransactionService {
 
         Page<Transaction> transactions = transactionRepository.findByUserGuidAndStatus(userGuid, TransactionStatus.SUCCESS, pageable);
 
-        log.info("Found {} transactions for user: {} (page {}/{})", transactions.getNumberOfElements(), userGuid, pageable.getPageNumber() + 1, transactions.getTotalPages());
-
         return PageResponse.of(transactions.map(transactionMapper::toResponse));
     }
 
@@ -78,6 +81,22 @@ public class TransactionService {
         )) {
             throw new ForbiddenException(String.format(FORBIDDEN_DEPOSIT, request.userGuid()));
         }
+
+        transactionRepository.findLastDeposit(request.userGuid(), TransactionStatus.SUCCESS.name())
+                .ifPresent(transaction -> {
+                    Instant nextAllowedAt = transaction.getCreatedAt().plus(DEPOSIT_COOLDOWN);
+                    if (nextAllowedAt.isAfter(Instant.now())) {
+                        long remainingSeconds = Duration.between(Instant.now(), nextAllowedAt).getSeconds();
+
+                        throw new BadRequestException(
+                                String.format(
+                                        BAD_REQUEST_DEPOSIT_COOLDOWN,
+                                        remainingSeconds / SIXTY_SECONDS,
+                                        remainingSeconds % SIXTY_SECONDS
+                                )
+                        );
+                    }
+                });
 
         BigDecimal balanceBefore = transactionRepository.findFirstByUserGuidAndStatusOrderByCreatedAtDesc(request.userGuid(), TransactionStatus.SUCCESS.name())
                 .map(Transaction::getBalanceAfter)
@@ -111,7 +130,7 @@ public class TransactionService {
     public List<TransactionResponse> getTopWins(int limit) {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         Instant startOfDay = today.atStartOfDay(ZoneOffset.UTC).toInstant();
-        Instant endOfDay = today.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant endOfDay = today.plusDays(ONE_DAY).atStartOfDay(ZoneOffset.UTC).toInstant();
 
         List<Transaction> topTransactions = transactionRepository.findTopWinsForDay(
                 TransactionType.ADDITION.name(),

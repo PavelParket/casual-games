@@ -12,6 +12,7 @@ public class ResourceMessageConstants {
     public static final String INSUFFICIENT_FUNDS = "Insufficient funds. Balance: %s, Required: %s";
     public static final String WINNER_GUID_MISMATCH = "Winner GUID does not match player GUID in payload";
     public static final String DEPOSIT_EXCEEDS_MAX_BALANCE = "Deposit rejected: balance must not be greater than %s after deposit";
+    public static final String BAD_REQUEST_DEPOSIT_COOLDOWN = "Deposit rejected: please wait %02d:%02d before next deposit";
 
     public static final String ROOM_ALREADY_PROCESSED = "Room %s has already been processed";
 
