@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Box, Container, Card, Typography, Button, Stack, Divider, Accordion, List } from "../../ui";
 
 export default function TermsOfUse() {
@@ -35,325 +35,304 @@ export default function TermsOfUse() {
 
                     <Typography variant="body" style={{ opacity: 0.8, marginBottom: "2rem" }}>
                         Please read these Terms of Use carefully before using the Casual Games platform.
-                        By accessing or using our services, you agree to be bound by these rules.
+                        By creating an account or using the Platform, you agree to be bound by these Terms.
+                        If you do not agree, do not use the Platform.
                     </Typography>
 
                     <Divider style={{ margin: "2rem 0" }} />
 
                     <Box>
                         <Accordion
-                            title="1. General provisions and status of the project"
+                            title="1. About the project and acceptance of these Terms"
                             isOpen={openIndex === 0}
                             onToggle={() => handleToggle(0)}
                         >
                             <Stack gap="0.75rem">
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    1.1. This User Agreement (hereinafter referred to as the "Agreement")
-                                    regulates the relationship between the Administration (developers)
-                                    of the Casual Games web platform (hereinafter referred to as the "Platform")
-                                    and any individual using the Platform (hereinafter referred to as the "User").
+                                    1.1. These Terms of Use (the "Terms") govern the relationship between
+                                    the development team of the Casual Games web platform (the "Administration", "we")
+                                    and any person using the Platform (the "User", "you").
                                 </Typography>
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    1.2. The Casual Games platform is a non-commercial, demonstration and educational
-                                    project created to demonstrate the skills of web development,
-                                    interface design and programming of real-time systems.
+                                    1.2. Casual Games is a commercial project.
                                 </Typography>
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    1.3. The Platform and all its services are provided solely for entertainment and informational purposes.
-                                    The Platform is not a gambling establishment, casino, or gambling organizer.
+                                    1.3. The Platform is provided solely for entertainment and demonstration purposes.
+                                    <strong>The Platform is not a gambling service, casino, or betting operator.</strong>
+                                    No real money is involved at any point: nothing can be paid in,
+                                    and nothing can be paid out (see Section 6).
                                 </Typography>
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    1.4. The registration procedure on the Platform or the actual use of any of its functions means
-                                    the User's full, unconditional and informed consent to the terms of this Agreement.
-                                    If the User does not agree with the terms, he is obliged to immediately stop using the Platform.
+                                    1.4. By registering an account or using any feature of the Platform,
+                                    you confirm that you have read, understood, and accepted these Terms.
                                 </Typography>
                             </Stack>
                         </Accordion>
 
                         <Accordion
-                            title="2. Terms and definitions"
+                            title="2. Definitions"
                             isOpen={openIndex === 1}
                             onToggle={() => handleToggle(1)}
                         >
                             <List gap="0.75rem" items={[
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    <strong>2.1. Game Account</strong> is a unique entry in the Platform's database containing
-                                    the User's username, email address, encrypted password, avatar, game balance, and User activity history.
+                                    <strong>Account</strong> — a unique record
+                                    in the Platform's database containing your username, email address,
+                                    password hash, avatar, virtual balance, and activity history.
                                 </Typography>,
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    <strong>2.2. CG Coins (CG Coins)</strong> is an in-game virtual currency (points)
-                                    used by the Platform to simulate gaming bets, pay for gaming sessions, and purchase premium statuses.
+                                    <strong>CG Coins</strong> — the Platform's virtual in-game currency (points),
+                                    used to simulate bets, participate in games, and purchase premium statuses.
+                                    CG Coins have no monetary value (see Section 6).
                                 </Typography>,
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    <strong>2.3. Game Rooms</strong> are virtual lobbies for conducting
-                                    gaming sessions between Users or the User and the server.
+                                    <strong>Game Rooms</strong> — virtual lobbies in which
+                                    game sessions between Users take place.
                                 </Typography>,
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    <strong>2.4. Premium statuses (Subscriptions)</strong> are virtual account
-                                    levels (PRO, VIP) that temporarily expand the cosmetic capabilities of the account.
+                                    <strong>Premium statuses (Subscriptions)</strong> — optional account
+                                    tiers (PRO, VIP) purchased with CG Coins that temporarily extend account features.
                                 </Typography>
                             ]} />
                         </Accordion>
 
                         <Accordion
-                            title="3. Registration, security, and session preemption"
+                            title="3. Eligibility"
                             isOpen={openIndex === 2}
                             onToggle={() => handleToggle(2)}
                         >
                             <Stack gap="0.75rem">
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    3.1. For the full use of the Platform, the User creates a unique Gaming account.
-                                    The username must contain from 3 to 50 characters, and the password must contain at least 4 characters.
+                                    3.1. You must be at least 16 years old to use the Platform.
                                 </Typography>
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    3.2. The User is solely responsible for the security of his password
-                                    and the protection of access to his email. The Administration
-                                    is not responsible for hacking the User's account by third parties.
-                                </Typography>
-                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    3.3. The Platform has a one-time session policy (Session Displacement).
-                                    When authorization is detected under one account from another device
-                                    or in another browser tab, the current WebSocket session is automatically
-                                    closed with the closing code 4001, and the User is redirected to the authorization page.
+                                    3.2. You may create only one Account.
+                                    Creating multiple accounts to abuse Platform mechanics is prohibited.
                                 </Typography>
                             </Stack>
                         </Accordion>
 
                         <Accordion
-                            title="4. The rules of the gameplay in the rooms"
+                            title="4. Account and security"
                             isOpen={openIndex === 3}
                             onToggle={() => handleToggle(3)}
                         >
-                            <Stack gap="1rem">
-                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6, fontWeight: 500 }}>
-                                    Each Game room works according to individual scenarios and WebSockets protocols:
+                            <Stack gap="0.75rem">
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    4.1. Registration requires a valid email address, a username, and a password.
+                                    You are responsible for providing accurate information and keeping it up to date.
                                 </Typography>
-
-                                <Stack gap="0.5rem">
-                                    <Typography variant="body" style={{ fontWeight: 600 }}>4.1. Tic-Tac-Toe:</Typography>
-                                    <List gap="0.25rem" items={[
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The game is designed for 2 players.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            Before the game starts, both participants must place the same bet in CG Coins.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The playing field is 3x3 in size. The moves are made one at a time.
-                                            Time is allocated for each turn, controlled by a countdown timer.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The winner takes the total pot of bets minus the commission (if applicable).
-                                            In case of a tie, the bets are returned to the players' balance.</Typography>
-                                    ]} />
-                                </Stack>
-
-                                <Stack gap="0.5rem">
-                                    <Typography variant="body" style={{ fontWeight: 600 }}>4.2. Durak ("Fool" Card Game):</Typography>
-                                    <List gap="0.25rem" items={[
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The game uses a deck of 36 cards and is designed for 2 players.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The gameplay is divided into phases: ATTACKING, DEFENDING, THROWING_MORE, PICKING_UP, BOUT_END, and GAME_OVER.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The sequence of moves and available actions (Play Card, Pass, Take)
-                                            are determined dynamically by the server and broadcast via sockets.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            When an opponent exits during an active game, the match is
-                                            declared interrupted, and the remaining player's bet is refunded.</Typography>
-                                    ]} />
-                                </Stack>
-
-                                <Stack gap="0.5rem">
-                                    <Typography variant="body" style={{ fontWeight: 600 }}>4.3. De-Coder (Decoder):</Typography>
-                                    <List gap="0.25rem" items={[
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            A single-player or multiplayer guessing game of a secret 4-letter code (symbols A-Z).</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            Each code entry attempt costs a fixed amount of 10 CG Coins.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The cost of each attempt partially forms the cumulative virtual Jackpot of the room.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The server returns the number of exact matches ("Exact Match")
-                                            and partial matches ("Partial Match"). The first user to solve
-                                            the code (4 Exact Match) wins the accumulated Jackpot.</Typography>
-                                    ]} />
-                                </Stack>
-
-                                <Stack gap="0.5rem">
-                                    <Typography variant="body" style={{ fontWeight: 600 }}>4.4. Horse Race (Racetrack / Horse Racing):</Typography>
-                                    <List gap="0.25rem" items={[
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            Users place bets on virtual horses with pre-determined Odds.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            Runs are generated on the server using secure hashing (Server Seed/RNG).
-                                            The movement paths (Keyframes) are calculated by the server before the start of the race.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The race animation lasts for a fixed time (12,000 ms) and is played in the browser.
-                                            The result is determined by the server and is final.</Typography>
-                                    ]} />
-                                </Stack>
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    4.2. You are solely responsible for keeping your password confidential
+                                    and for securing access to your email account.
+                                    All actions performed under your Account are deemed to be performed by you.
+                                    The Administration is not liable for unauthorized access resulting from your
+                                    failure to protect your credentials.
+                                </Typography>
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    4.3. For security reasons, the Platform may limit the number of simultaneous
+                                    active sessions per Account; an active game connection may be closed when
+                                    the same Account connects from elsewhere.
+                                </Typography>
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    4.4. The Platform does not provide self-service account deletion.
+                                    To delete your Account, contact <a href="mailto:support@casual-games.win" className="link">support@casual-games.win</a> (see also the Privacy Policy, Section 8).
+                                </Typography>
                             </Stack>
                         </Accordion>
 
                         <Accordion
-                            title="5. Features of virtual balance and cg coins"
+                            title="5. Games"
                             isOpen={openIndex === 4}
                             onToggle={() => handleToggle(4)}
                         >
                             <Stack gap="0.75rem">
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    5.1. Balance replenishment (Deposit): The "Deposit" function on the Platform
-                                    is exclusively a simulator. No payment gateways, bank cards, or e-wallets
-                                    are connected to the Platform. The "deposit" takes place instantly and
-                                    for free at the User's request in order to test the functionality.
+                                    5.1. The Platform offers a set of multiplayer and single-player games.
+                                    The current list of games, their rules, betting mechanics, time limits,
+                                    and payout logic are displayed directly in the Platform
+                                    interface — on the game pages and inside Game Rooms.
                                 </Typography>
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    5.2. Lack of real value: The virtual currency CG Coins is not a means of payment,
-                                    cannot be exchanged for real fiat money, cryptocurrency or other tangible assets.
-                                    Withdrawal of funds from the Platform is technically and legally impossible.
+                                    5.2. All game outcomes are computed and validated on the server.
+                                    The result determined by the server is final and is not subject to revision,
+                                    except where the Administration identifies a technical fault on the Platform side.
                                 </Typography>
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    5.3. Resetting the balance: The Administration reserves the right to reset
-                                    the CG Coins balances of all Users at any time as part of technical work,
-                                    database resetting or Platform updates without compensation.
+                                    5.3. Game mechanics, rules, costs, and rewards are expressed exclusively
+                                    in CG Coins and may be changed by the Administration as the project evolves.
+                                </Typography>
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    5.4. If a game session is interrupted due to an opponent leaving an active match,
+                                    the Platform aims to settle the session fairly (for example, by refunding the remaining player's bet)
+                                    according to the rules of the specific game shown in its interface.
                                 </Typography>
                             </Stack>
                         </Accordion>
 
                         <Accordion
-                            title="6. Subscriptions and premium statuses (default, pro, vip)"
+                            title="6. Virtual currency (CG Coins)"
                             isOpen={openIndex === 5}
                             onToggle={() => handleToggle(5)}
                         >
-                            <Stack gap="1rem">
-                                <Stack gap="0.5rem">
-                                    <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                        6.1. The Platform offers three account statuses:
-                                    </Typography>
-                                    <List gap="0.25rem" items={[
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            Default (Default Free status).</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            PRO (Advanced status, acquired with CG Coins).</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            VIP (The maximum status acquired for CG Coins).</Typography>
-                                    ]} />
-                                </Stack>
-
-                                <Stack gap="0.5rem">
-                                    <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                        6.2. Pricing and debit rules:
-                                    </Typography>
-                                    <List gap="0.25rem" items={[
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            All statuses are acquired for a billing period of 30 calendar days.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            If there is a sufficient amount of CG Coins in the balance on the 31st day,
-                                            the status is automatically extended. If there is a shortage of balance,
-                                            the User's status is automatically and safely lowered to Default.</Typography>
-                                    ]} />
-                                </Stack>
-
-                                <Stack gap="0.5rem">
-                                    <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                        6.3. Rules for changing the status (Upgrade / Downgrade):
-                                    </Typography>
-                                    <List gap="0.25rem" items={[
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The transition from PRO to VIP (Upgrade) occurs with the dynamic
-                                            calculation of the discount. The discount is calculated based on
-                                            the number of unused days of active PRO status.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            The transition to a lower status (Downgrade) is queued (Scheduled).
-                                            The current benefits are valid until the end of the paid 30-day cycle,
-                                            after which a new, cheaper status is activated.</Typography>
-                                    ]} />
-                                </Stack>
+                            <Stack gap="0.75rem">
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    6.1. <strong>The "Deposit" function is a simulator.</strong> No payment gateways,
+                                    bank cards, or wallets are connected to the Platform. Topping up the balance is instant,
+                                    free, and exists purely to demonstrate the Platform's functionality.
+                                </Typography>
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    6.2. <strong>CG Coins have no real-world value.</strong> They are not money, electronic money,
+                                    or a financial instrument; they cannot be exchanged for fiat currency, cryptocurrency,
+                                    goods, or services; they cannot be transferred between Users or withdrawn from the Platform in any form.
+                                    Any "winnings" are virtual and carry no monetary entitlement.
+                                </Typography>
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    6.3. The Administration may reset CG Coin balances of all Users
+                                    at any time as part of technical maintenance, database resets,
+                                    or Platform updates, without compensation.
+                                </Typography>
                             </Stack>
                         </Accordion>
 
                         <Accordion
-                            title="7. Rules of conduct and user content"
+                            title="7. Subscriptions and premium statuses"
                             isOpen={openIndex === 6}
                             onToggle={() => handleToggle(6)}
                         >
                             <Stack gap="0.75rem">
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    7.1. It is prohibited to use obscene language, insults or discriminatory
-                                    statements in the names of users (usernames) and the names of created Game Rooms.
+                                    7.1. The Platform offers three account statuses: Default (free), PRO, and VIP.
+                                    PRO and VIP are purchased with CG Coins for a billing period of 30 calendar days.
                                 </Typography>
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    7.2. Uploaded user avatars must comply with ethical standards. It is prohibited
-                                    to upload pornographic images, violent scenes, calls for violence,
-                                    images with symbols of banned organizations, and copyrighted content.
+                                    7.2. Subscriptions renew automatically: at the end of the billing period,
+                                    the renewal price is charged from your CG Coin balance. If the balance is insufficient,
+                                    your status reverts to Default. Auto-renewal can be disabled in your profile.
                                 </Typography>
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    7.3. The User is prohibited from interfering with the operation of the Platform code,
-                                    carrying out DoS attacks on microservices (`user-service`, `game-service`, `bank-service`, `websocket-hub-service`),
-                                    using vulnerabilities (bugs) to cheat the CG Coins balance or interfere
-                                    with WebSocket traffic in order to change the results of the games.
-                                    If such activity is detected, the account is blocked without warning.
+                                    7.3. Upgrading to a higher tier mid-cycle is charged with a proportional discount
+                                    for the unused days of the current status. Downgrading to a lower tier is scheduled:
+                                    the current status remains active until the end of the paid period,
+                                    after which the new status takes effect.
+                                </Typography>
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    7.4. Current prices, benefits, and exact upgrade/downgrade conditions are displayed
+                                    in the Platform interface and may change as the project evolves. Since subscriptions
+                                    are paid in CG Coins, which have no monetary value, no refunds in any real-world form are possible.
                                 </Typography>
                             </Stack>
                         </Accordion>
 
                         <Accordion
-                            title="8. Limitation of liability and technical risks"
+                            title="8. User content and rules of conduct"
                             isOpen={openIndex === 7}
                             onToggle={() => handleToggle(7)}
                         >
-                            <Stack gap="1rem">
+                            <Stack gap="0.75rem">
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    8.1. The Platform is provided on an "AS IS" basis. The developers do not
-                                    guarantee the continuous, uninterrupted and error-free operation of the services.
+                                    8.1. <strong>Usernames and room names</strong> must not contain obscene language,
+                                    insults, discriminatory or hateful statements,
+                                    or impersonation of other people or of the Administration.
                                 </Typography>
-
-                                <Stack gap="0.5rem">
-                                    <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                        8.2. The platform uses complex network mechanisms
-                                        (WebSockets, BroadcastChannel, JWT Refresh Locks).
-                                        The Administration is not responsible for:
-                                    </Typography>
-                                    <List gap="0.25rem" items={[
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            Loss of game progress or bets in CG Coins due to sudden disconnection
-                                            from the User (Connection Lost) or from the server.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            Problems caused by network latency (ping), due to which the User's
-                                            move in games ("Tic-Tac-Toe", "Fool") could be skipped by the timer.</Typography>,
-                                        <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                            Animation rendering errors in the Hippodrome game on the side of
-                                            older mobile device models or outdated browsers.</Typography>
-                                    ]} />
-                                </Stack>
-
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    8.3. Due to the educational nature of the project,
-                                    the Administration has the right at any time, without prior notice,
-                                    to completely close the project, reset the database, or temporarily
-                                    disable the Platform for technical work.
+                                    8.2. Avatars must not contain pornographic or sexualized content,
+                                    depictions of violence, hate symbols or symbols of prohibited organizations,
+                                    content that violates third-party rights (including copyrighted characters and images),
+                                    or any other unlawful content.
+                                </Typography>
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    8.3. By uploading an avatar, you confirm that you hold the necessary rights
+                                    to the image and grant the Administration a non-exclusive,
+                                    royalty-free license to store, process (including resizing),
+                                    and display it within the Platform for as long as it remains on your Account.
+                                </Typography>
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    8.4. The following is strictly prohibited:
+                                </Typography>
+                                <List gap="0.75rem" items={[
+                                    <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                        interfering with the operation of the Platform, its servers, or network infrastructure;
+                                    </Typography>,
+                                    <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                        attempting denial-of-service attacks or otherwise degrading the service for other Users;
+                                    </Typography>,
+                                    <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                        exploiting bugs or vulnerabilities to manipulate balances, game outcomes,
+                                        or any other Platform state — discovered issues should be reported to <a href="mailto:support@casual-games.win" className="link">support@casual-games.win</a>;
+                                    </Typography>,
+                                    <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                        intercepting, modifying, or forging the Platform's network traffic;
+                                    </Typography>,
+                                    <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                        using bots, scripts, or other automated means to play games or interact with the Platform.
+                                    </Typography>,
+                                ]} />
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    8.5. The Administration may remove violating content, restrict features,
+                                    or suspend or terminate Accounts that breach these Terms — in serious cases without prior warning.
+                                    A User who believes a restriction was applied in error may appeal by writing to <a href="mailto:support@casual-games.win" className="link">support@casual-games.win</a>.
                                 </Typography>
                             </Stack>
                         </Accordion>
 
                         <Accordion
-                            title="9. Final provisions"
+                            title="9. Intellectual property"
                             isOpen={openIndex === 8}
                             onToggle={() => handleToggle(8)}
                         >
                             <Stack gap="0.75rem">
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    9.1. This Agreement may be changed unilaterally by the Administration at any time.
-                                    The new version takes effect from the moment it is published on the `/terms` page.
+                                    9.1. The Platform — including its software, design, interface, game implementations,
+                                    logos, and the "CG Coins" system — belongs to the Administration.
+                                    These Terms grant you a limited, non-exclusive, non-transferable right to use
+                                    the Platform for personal, non-commercial purposes.
                                 </Typography>
                                 <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                                    9.2. Any disputes arising within the framework of using the Platform
-                                    are resolved through negotiations and are of an informal nature.
+                                    9.2. You retain all rights to content you upload (your avatar),
+                                    subject to the license in Section 8.3.
+                                </Typography>
+                            </Stack>
+                        </Accordion>
+                        <Accordion
+                            title="10. Changes to these Terms"
+                            isOpen={openIndex === 9}
+                            onToggle={() => handleToggle(9)}
+                        >
+                            <Stack gap="0.75rem">
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    The Administration may amend these Terms at any time.
+                                    The current version is always available at <Link to="/terms" className="link" style={{ fontWeight: 700, }}>/terms</Link>,
+                                    with the "Last updated" date at the top.
+                                    Continued use of the Platform after changes
+                                    are published constitutes acceptance of the updated Terms.
+                                    If you do not agree with the changes, stop using the Platform and,
+                                    if desired, request account deletion.
+                                </Typography>
+                            </Stack>
+                        </Accordion>
+                        <Accordion
+                            title="11. Disputes and contact"
+                            isOpen={openIndex === 10}
+                            onToggle={() => handleToggle(10)}
+                        >
+                            <Stack gap="0.75rem">
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    11.1. Any question, complaint, or dispute related to the Platform should first
+                                    be addressed to <a href="mailto:support@casual-games.win" className="link">support@casual-games.win</a>.
+                                    We aim to resolve all issues informally and in good faith.
+                                </Typography>
+                                <Typography variant="body" style={{ opacity: 0.8, lineHeight: 1.6 }}>
+                                    11.2. These Terms and your use of the Platform are governed by applicable law
+                                    of the jurisdiction in which the Platform's Administration operates,
+                                    without prejudice to mandatory consumer protections of your country of residence.
                                 </Typography>
                             </Stack>
                         </Accordion>
                     </Box>
 
                     <Typography variant="caption" style={{ display: "block", marginTop: "3rem", opacity: 0.5, textAlign: "center" }}>
-                        Last updated: June 07, 2026
+                        Last updated: June 12, 2026
                     </Typography>
                 </Card>
             </Container>
