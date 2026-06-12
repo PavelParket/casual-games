@@ -10,7 +10,8 @@ import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useHorseRaceMessages } from "../../hooks/useHorseRaceMessages";
 import { useGameSocket } from "../../hooks/useGameSocket";
-import { Box, Button, Card, Container, Input, ToastContainer, Typography } from "../../ui";
+import { Box, Button, Card, Container, FormField, ToastContainer, Typography } from "../../ui";
+import { validateAmountInput } from "../../utils/SecurityUtils";
 
 const RACE_DURATION_MS = 12_000;
 
@@ -260,6 +261,13 @@ export default function HorseRaceRoom() {
         setPhase("WAITING");
     };
 
+    const handleBetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const validated = validateAmountInput(e.target.value);
+        if (validated !== null) {
+            setBetInput(validated);
+        }
+    };
+
     const handleLeave = () => {
         stopAnimation();
         clearCountdown();
@@ -280,17 +288,7 @@ export default function HorseRaceRoom() {
     const isBetButtonDisabled = betPlaced || selectedHorse === null || !betInput || parseFloat(betInput) <= 0;
 
     return (
-        <Box
-            style={{
-                minHeight: "calc(100vh - 60px - 50px)",
-                margin: "0 10rem",
-                padding: "0 1rem",
-                background: "var(--color-bg-glass)",
-                backdropFilter: "blur(2px)",
-                borderRadius: "var(--radius-md)",
-                boxShadow: "var(--shadow-lg)",
-            }}
-        >
+        <Box className="page-wrapper">
             <Container>
                 <Box style={{ padding: "2rem 0" }}>
                     <Typography variant="h2" style={{ textAlign: "center" }}>
@@ -551,17 +549,15 @@ export default function HorseRaceRoom() {
                                                 : "Select a horse above"}
                                         </Typography>
 
-                                        <Input
-                                            type="number"
+                                        <FormField
+                                            type="text"
+                                            inputMode="decimal"
                                             value={betInput}
-                                            onChange={(e) => setBetInput(e.target.value)}
+                                            onChange={handleBetChange}
                                             placeholder="Amount"
                                             disabled={betPlaced}
                                             style={{
                                                 width: "100%",
-                                                padding: "0.5rem 0.6rem",
-                                                borderRadius: "var(--radius-sm)",
-                                                border: "1px solid var(--color-border)",
                                                 background: "var(--color-bg)",
                                                 color: "var(--color-text)",
                                                 fontSize: "0.875rem",

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Button, Card, Container, Divider, Form, FormField, Typography, useThemedIcon } from "../../ui";
+import { Box, Button, Card, Container, Divider, Form, FormField, PasswordField, Typography, useThemedIcon } from "../../ui";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../store/slices/AuthSlice";
 import type { AppDispatch } from "../../store/store";
@@ -74,7 +74,7 @@ export default function Register() {
     return (
         <Box style={{ padding: "56px 0" }}>
             <Container>
-                <Box style={{ display: "grid", placeItems: "center", minWidth: "500px" }}>
+                <Box style={{ display: "grid", placeItems: "center", width: "100%" }}>
                     <Card style={{ width: "min(420px, 100%)", textAlign: "center", padding: "30px 40px" }}>
                         <Typography variant="h2">Sign Up</Typography>
                         <Form onSubmit={handleSubmit} gap="16px" style={{ marginTop: 16 }}>
@@ -99,9 +99,8 @@ export default function Register() {
                                 endAdornmentSrc={getIcon("apersant")}
                                 endAdornmentAlt="email"
                             />
-                            <FormField
+                            <PasswordField
                                 placeholder="Password"
-                                type="password"
                                 name="password"
                                 value={form.password}
                                 onChange={handleChange}

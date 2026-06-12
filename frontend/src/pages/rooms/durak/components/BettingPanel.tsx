@@ -1,5 +1,6 @@
-import { Box, Button, Input, Stack, Typography } from "../../../../ui";
+import { Box, Button, FormField, Stack, Typography } from "../../../../ui";
 import type { PlayerResponse } from "../../../../models/Room";
+import { validateAmountInput } from "../../../../utils/SecurityUtils";
 
 interface BettingPanelProps {
     balance: number | undefined;
@@ -27,6 +28,13 @@ export function BettingPanel({
     onReady,
 }: BettingPanelProps) {
     const hasBets = playerBetMap && Object.keys(playerBetMap).length > 0;
+
+    const handleBetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const validated = validateAmountInput(e.target.value);
+        if (validated !== null) {
+            onBetInputChange(validated);
+        }
+    };
 
     return (
         <Stack gap="0.75rem" style={{
@@ -62,10 +70,11 @@ export function BettingPanel({
                 </Typography>
             )}
 
-            <Input
-                type="number"
+            <FormField
+                type="text"
+                inputMode="decimal"
                 value={betInput}
-                onChange={e => onBetInputChange(e.target.value)}
+                onChange={handleBetChange}
                 placeholder="Enter bet amount"
                 disabled={betPlaced || !isConnected}
             />

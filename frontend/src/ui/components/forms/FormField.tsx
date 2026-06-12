@@ -12,6 +12,7 @@ type FormFieldProps = InputHTMLAttributes<HTMLInputElement> & {
     endAdornmentSrc?: string;
     endAdornmentAlt?: string;
     endAdornmentSize?: number;
+    interactiveEndAdornment?: boolean;
 };
 
 export function FormField({
@@ -25,6 +26,7 @@ export function FormField({
     endAdornmentSrc,
     endAdornmentAlt,
     endAdornmentSize = 20,
+    interactiveEndAdornment = false,
     ...rest
 }: FormFieldProps) {
     const hasEndIcon = Boolean(endAdornmentSrc || endAdornment);
@@ -58,7 +60,7 @@ export function FormField({
                 )}
 
                 {hasEndIcon && (
-                    <div className="field-icon field-icon-end">
+                    <div className={classNames("field-icon", "field-icon-end", interactiveEndAdornment && "interactive")}>
                         {endAdornmentSrc ? (
                             <Icon src={endAdornmentSrc} alt={endAdornmentAlt} size={endAdornmentSize} />
                         ) : (

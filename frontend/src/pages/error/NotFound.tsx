@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export default function NotFound() {
     return (
         <Container>
-            <Card style={{ width: "min(420px, 100%)", textAlign: "center" }}>
+            <Card style={{ margin: "0 auto", width: "min(420px, 100%)", textAlign: "center" }}>
                 <Typography variant="h2" style={{ marginBottom: "20px" }}>404 — Page Not Found</Typography>
                 <Typography variant="body" style={{ marginBottom: "20px" }}>The page you are looking for does not exist.</Typography>
                 <Link to="/" style={{ textDecoration: "none" }}>

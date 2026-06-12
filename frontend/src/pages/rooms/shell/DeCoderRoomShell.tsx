@@ -1,5 +1,5 @@
 import { useRoomLoader } from "../../../hooks/useRoomLoader";
-import { getRoomById } from "../../../store/slices/DeCoderRoomSlice";
+import { getRoomById, clearDeCoderRoomState } from "../../../store/slices/DeCoderRoomSlice";
 import DeCoderRoom from "../DeCoderRoom";
 import RoomShell from "./RoomShell";
 
@@ -8,6 +8,7 @@ export default function DeCoderRoomShell() {
         fetchRoom: (roomId) => getRoomById({ roomId }) as never,
         selectRoom: (state) => state.deCoderRoom.room,
         selectError: (state) => state.deCoderRoom.error,
+        clearRoomState: clearDeCoderRoomState,
     });
 
     return (

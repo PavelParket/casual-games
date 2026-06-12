@@ -77,6 +77,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             SELECT DISTINCT * FROM transactions t
             WHERE t.type = :type
             AND t.status = :status
+            AND t.room_type IS NOT NULL
             AND t.created_at >= :startOfDay
             AND t.created_at < :endOfDay
             ORDER BY t.amount DESC

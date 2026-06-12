@@ -23,7 +23,7 @@ export interface DurakRoomState {
     errors: Record<string, string | null>;
 }
 
-// ── Thunks ──
+// ------------------ Thunks ------------------
 
 export const getRoomById = createAsyncThunk<Room, { roomId: string }, { rejectValue: ErrorResponse }>(
     "durakRoom/getRoom",
@@ -110,7 +110,7 @@ export const syncReadiness = createAsyncThunk<void, { roomId: string; roomType: 
     }
 );
 
-// ── Slice ──
+// ------------------ Slice ------------------
 
 const initialState: DurakRoomState = {
     room: undefined,
@@ -133,6 +133,7 @@ const durakRoomSlice = createSlice({
         clearAllErrors: (state) => {
             state.errors = {};
         },
+        clearDurakRoomState: () => initialState,
     },
     extraReducers: (builder) => {
         builder
@@ -199,6 +200,6 @@ const durakRoomSlice = createSlice({
     },
 });
 
-export const { clearError, clearAllErrors } = durakRoomSlice.actions;
+export const { clearError, clearAllErrors, clearDurakRoomState } = durakRoomSlice.actions;
 
 export default durakRoomSlice.reducer;

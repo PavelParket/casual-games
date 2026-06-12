@@ -138,15 +138,20 @@ html.is-scrolling.dark {
     --color-primary-hover: #000000;
     --on-primary: #ffffff;
 
-    --color-income-text: #1e7d41cb;
-    --color-income-bg: rgba(34, 176, 93, 0.08);
-    --color-income-border: rgba(34, 176, 93, 0.2);
-    --color-income-icon-bg: rgba(34, 176, 93, 0.25);
+    --color-income-text: #166534;
+    --color-income-bg: rgba(22, 163, 74, 0.08);
+    --color-income-border: rgba(22, 163, 74, 0.2);
+    --color-income-icon-bg: rgba(22, 163, 74, 0.25);
 
-    --color-expense-text: #b32d2dcb;
-    --color-expense-bg: rgba(212, 56, 56, 0.08);
-    --color-expense-border: rgba(212, 56, 56, 0.2);
-    --color-expense-icon-bg: rgba(212, 56, 56, 0.25);
+    --color-expense-text: #991b1b;
+    --color-expense-bg: rgba(220, 38, 38, 0.08);
+    --color-expense-border: rgba(220, 38, 38, 0.2);
+    --color-expense-icon-bg: rgba(220, 38, 38, 0.25);
+
+    --color-neutral-text: #475569;
+    --color-neutral-bg: rgba(100, 116, 139, 0.08);
+    --color-neutral-border: rgba(100, 116, 139, 0.2);
+    --color-neutral-icon-bg: rgba(100, 116, 139, 0.25);
 
     --radius-sm: 6px;
     --radius-md: 12px;
@@ -187,6 +192,11 @@ html.is-scrolling.dark {
     /* Skeleton component tokens */
     --skeleton-bg: rgba(200, 200, 200, 0.35);
     --skeleton-shimmer: rgba(255, 255, 255, 0.6);
+
+    --page-margin-x: 0;
+    --page-margin-y: 0;
+    --page-padding-x: 0.5rem;
+    --page-border-radius: 0;
 }
 
 /* Dark theme */
@@ -207,15 +217,20 @@ html.dark {
     --color-primary-hover: #ffffff;
     --on-primary: #000000;
 
-    --color-income-text: #22b05d;
-    --color-income-bg: rgba(46, 204, 113, 0.08);
-    --color-income-border: rgba(46, 204, 113, 0.2);
-    --color-income-icon-bg: rgba(46, 204, 113, 0.25);
+    --color-income-text: #4ade80;
+    --color-income-bg: rgba(74, 222, 128, 0.08);
+    --color-income-border: rgba(74, 222, 128, 0.2);
+    --color-income-icon-bg: rgba(74, 222, 128, 0.25);
 
-    --color-expense-text: #d43838;
-    --color-expense-bg: rgba(255, 82, 82, 0.08);
-    --color-expense-border: rgba(255, 82, 82, 0.2);
-    --color-expense-icon-bg: rgba(255, 82, 82, 0.25);
+    --color-expense-text: #f87171;
+    --color-expense-bg: rgba(248, 113, 113, 0.08);
+    --color-expense-border: rgba(248, 113, 113, 0.2);
+    --color-expense-icon-bg: rgba(248, 113, 113, 0.25);
+
+    --color-neutral-text: #94a3b8;
+    --color-neutral-bg: rgba(148, 163, 184, 0.08);
+    --color-neutral-border: rgba(148, 163, 184, 0.2);
+    --color-neutral-icon-bg: rgba(148, 163, 184, 0.25);
 
     /* Background image for dark theme (set as needed) */
     --bg-image: url("../assets/images/bg-dark.jpeg");
@@ -252,6 +267,52 @@ html.dark {
     /* Skeleton component tokens */
     --skeleton-bg: rgba(60, 60, 60, 0.6);
     --skeleton-shimmer: rgba(255, 255, 255, 0.25);
+}
+
+@media (min-width: 768px) {
+    :root {
+        --page-margin-x: 2rem;
+        --page-margin-y: 0rem;
+        --page-padding-x: 1rem;
+        --page-border-radius: var(--radius-md);
+    }
+}
+
+@media (min-width: 1280px) {
+    :root {
+        --page-margin-x: 10rem;
+        --page-margin-y: 0;
+    }
+}
+
+.page-wrapper {
+    min-height: calc(100vh - 60px);
+    margin: var(--page-margin-y) var(--page-margin-x);
+    padding: 0 var(--page-padding-x);
+    background: var(--color-bg-glass);
+    backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--page-border-radius);
+    box-shadow: var(--shadow-lg);
+    transition: margin 0.3s ease, padding 0.3s ease, border-radius 0.3s ease;
+}
+
+.container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem 1.5rem 1rem;
+    transition: padding 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 0.5rem 1rem 0.5rem;
+    }
+}
+
+@media (max-width: 530px) {
+    .hidden-mobile {
+        display: none !important;
+    }
 }
 
 /* Generic link styling */

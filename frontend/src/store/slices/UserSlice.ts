@@ -3,8 +3,7 @@ import type { AxiosError } from "axios";
 import { UserAPI } from "../../api/UserApi";
 import { GameAPI } from "../../api/GameApi";
 import type { UpdateUserRequest, User, SubscriptionRequest, SubscriptionResponse, SubscriptionPlanResponse } from "../../models/User";
-import type { GameMatchRequestFilter, GameMatchResponse } from "../../models/GameMatch";
-import type { PageResponse } from "../../models/Bank";
+import type { GameMatchRequestFilter, GameMatchResponse, GamePageResponse } from "../../models/GameMatch";
 import { deposit } from './BankSlice';
 
 export interface UserState {
@@ -132,7 +131,7 @@ export const purchase = createAsyncThunk<SubscriptionResponse, SubscriptionReque
 );
 
 export const getMatches = createAsyncThunk<
-    PageResponse<GameMatchResponse>,
+    GamePageResponse<GameMatchResponse>,
     { guid: string; filter: GameMatchRequestFilter; page?: number; size?: number },
     { rejectValue: string }
 >(
@@ -150,7 +149,7 @@ export const getMatches = createAsyncThunk<
 
 export const uploadProfilePicture = createAsyncThunk<User, { guid: string; files: { full: File; mini: File } }, { rejectValue: string }>(
     "user/uploadProfilePicture",
-     async ({ guid, files }, { rejectWithValue }) => {
+    async ({ guid, files }, { rejectWithValue }) => {
         try {
             const response = await UserAPI.uploadProfilePicture(guid, files);
             return response.data;
@@ -192,6 +191,11 @@ const userSlice = createSlice({
             state.gameHistoryPage = 0;
             state.gameHistoryTotalPages = 0;
         },
+        clearGameHistoryState: (state) => {
+            state.gameHistory = [];
+            state.gameHistoryPage = 0;
+            state.gameHistoryTotalPages = 0;
+        }
     },
     extraReducers: (builder) => {
         builder
@@ -281,15 +285,12 @@ const userSlice = createSlice({
             .addCase(getMatches.pending, (state) => {
                 state.isLoadingGameHistory = true;
                 state.error = undefined;
-                state.gameHistory = [];
-                state.gameHistoryPage = 0;
-                state.gameHistoryTotalPages = 0;
             })
             .addCase(getMatches.fulfilled, (state, action) => {
                 state.isLoadingGameHistory = false;
                 state.gameHistory = action.payload.content || [];
-                state.gameHistoryPage = action.payload.page;
-                state.gameHistoryTotalPages = action.payload.totalPages || 0;
+                state.gameHistoryPage = action.payload.page.number;
+                state.gameHistoryTotalPages = action.payload.page.totalPages;
             })
             .addCase(getMatches.rejected, (state, action) => {
                 state.isLoadingGameHistory = false;
@@ -341,6 +342,6 @@ const userSlice = createSlice({
     },
 });
 
-export const { clearUser } = userSlice.actions;
+export const { clearUser, clearGameHistoryState } = userSlice.actions;
 
 export default userSlice.reducer;

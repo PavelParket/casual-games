@@ -4,6 +4,8 @@ import { Box } from "../layout/Box";
 import { Typography } from "./Typography";
 import { Button } from "./Button";
 import { classNames } from "../../utils/classNames";
+import { Icon } from "./Icon";
+import { useThemedIcon } from "../../hooks/useThemedIcon";
 
 export interface ToastProps {
     message: string;
@@ -13,6 +15,8 @@ export interface ToastProps {
 }
 
 export function Toast({ message, duration = 3000, onClose, className }: ToastProps) {
+    const { getIcon } = useThemedIcon();
+
     useEffect(() => {
         const timer = setTimeout(onClose, duration);
         return () => clearTimeout(timer);
@@ -39,8 +43,8 @@ export function Toast({ message, duration = 3000, onClose, className }: ToastPro
             <Typography variant="body">
                 {message}
             </Typography>
-            <Button variant="ghost" onClick={onClose} style={{ padding: "0.25rem", boxShadow: "none" }}>
-                X
+            <Button variant="ghost" onClick={onClose} style={{ padding: "0.25rem", boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon src={getIcon("close")} size={16} alt="close" />
             </Button>
         </Box>
     );

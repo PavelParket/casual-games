@@ -234,15 +234,7 @@ export default function DurakRoom() {
     const isGameOver = winnerId !== undefined;
 
     return (
-        <Box style={{
-            minHeight: "calc(100vh - 60px - 50px)",
-            margin: "0 10rem",
-            padding: "0 1rem",
-            background: "var(--color-bg-glass)",
-            backdropFilter: "blur(2px)",
-            borderRadius: "var(--radius-md)",
-            boxShadow: "var(--shadow-lg)",
-        }}>
+        <Box className="page-wrapper">
             <Container>
                 <Box style={{ padding: "2rem 0 1rem" }}>
                     <Typography variant="h2" style={{ textAlign: "center" }}>

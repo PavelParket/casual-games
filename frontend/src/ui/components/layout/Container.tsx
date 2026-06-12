@@ -6,14 +6,13 @@ type ContainerProps = HTMLAttributes<HTMLDivElement> & {
     maxWidth?: string;
 };
 
-export function Container({ children, maxWidth = "1200px", className, ...rest }: ContainerProps) {
+export function Container({ children, maxWidth = "1200px", className, style, ...rest }: ContainerProps) {
     return (
         <div
-            className={classNames(className)}
+            className={classNames("container", className)}
             style={{
                 maxWidth,
-                margin: "0 auto",
-                padding: "0 1rem 1.5rem 1rem",
+                ...style,
             }}
             {...rest}
         >

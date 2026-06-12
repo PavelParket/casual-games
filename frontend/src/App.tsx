@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { ThemeProvider } from './ui'
-import Home from './pages/Home'
+import Home from './pages/home/Home'
 import Layout from './components/Layout'
 import Register from './pages/auth/Register'
 import Login from './pages/auth/Login'
@@ -15,6 +15,8 @@ import Rooms from './pages/rooms/Rooms'
 import Profile from './pages/profile/Profile'
 import ExperimentalPage from './pages/ExperimentalPage'
 import LoadingPage from './pages/LoadingPage'
+import TermsOfUse from './pages/info/TermsOfUse'
+import PrivacyPolicy from './pages/info/PrivacyPolicy'
 import { useScrollbarVisibility } from './hooks/useScrollbarVisibility'
 import { SystemToastProvider, useSystemToastContext } from './providers/SystemToastContext'
 import TicTacToeRoomShell from './pages/rooms/shell/TicTacToeRoomShell'
@@ -91,6 +93,9 @@ export default function App() {
                             <Route element={<Layout />}>
                                 <Route path="/" element={<Home />} />
                             </Route>
+
+                            <Route path="/terms" element={<TermsOfUse />} />
+                            <Route path="/privacy" element={<PrivacyPolicy />} />
 
                             {/* ===== Experiment Room ===== */}
                             <Route element={<ProtectedRoute roles={["ADMIN"]} />}>

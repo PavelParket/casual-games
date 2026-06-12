@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 import type { TicTacToeGameMessage } from "../../models/WsMessage";
-import { validateToastMessage } from "../../utils/SecurityUtils";
+import { validateToastMessage, validateAmountInput } from "../../utils/SecurityUtils";
 import { clearError } from "../../store/slices/TicTacToeRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
@@ -11,7 +11,7 @@ import { useGameSocket } from "../../hooks/useGameSocket";
 import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
 import { MiniProfile } from "../profile/components/MiniProfile";
-import { Avatar, Box, Button, Card, Container, Icon, Input, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
+import { Avatar, Box, Button, Card, Container, Icon, FormField, Stack, ToastContainer, Typography, useThemedIcon } from "../../ui";
 
 export default function TicTacToeRoom() {
     const { getInverseIcon } = useThemedIcon();
@@ -208,20 +208,19 @@ export default function TicTacToeRoom() {
         });
     };
 
+    const handleBetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const validated = validateAmountInput(e.target.value);
+        if (validated !== null) {
+            setBetInput(validated);
+        }
+    };
+
     const handleLeave = () => {
         navigate("/rooms");
     };
 
     return (
-        <Box style={{
-            minHeight: "calc(100vh - 60px - 50px)",
-            margin: "0 10rem",
-            padding: "0 1rem",
-            background: "var(--color-bg-glass)",
-            backdropFilter: "blur(2px)",
-            borderRadius: "var(--radius-md)",
-            boxShadow: "var(--shadow-lg)"
-        }}>
+        <Box className="page-wrapper">
             <Container>
                 <Box style={{ padding: "2rem 0" }}>
                     <Typography variant="h2" style={{ textAlign: "center" }}>
@@ -413,17 +412,15 @@ export default function TicTacToeRoom() {
                             )}
 
                             <Box style={{ width: "100%" }}>
-                                <Input
-                                    type="number"
+                                <FormField
+                                    type="text"
+                                    inputMode="decimal"
                                     value={betInput}
-                                    onChange={(e) => setBetInput(e.target.value)}
+                                    onChange={handleBetChange}
                                     placeholder="Enter bet amount"
                                     disabled={betPlaced || isGame}
                                     style={{
                                         width: "100%",
-                                        padding: "0.75rem",
-                                        borderRadius: "var(--radius-sm)",
-                                        border: "1px solid var(--color-border)",
                                         background: betPlaced || isGame ? "var(--color-bg-disabled)" : "var(--color-bg)",
                                         color: "var(--color-text)",
                                         fontSize: "1rem",

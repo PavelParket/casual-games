@@ -33,11 +33,12 @@ export const validateEmail = (email: string): string => {
     return email
         .trim()
         .replace(/\s+/g, "")
+        .toLowerCase()
         .slice(0, 200);
 };
 
 export const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
 };
 
@@ -50,6 +51,26 @@ export const validateUsername = (username: string): string => {
         .replace(/[^a-zA-Zа-яА-Я0-9_]/g, '')
         .trim()
         .slice(0, 50)
+};
+
+export const validateAmountInput = (input: string): string | null => {
+    let val = input.replace(',', '.');
+
+    if (val === '') {
+        return '';
+    }
+
+    if (val.startsWith('.')) {
+        val = '0' + val;
+    }
+
+    const regex = /^\d{0,5}(\.\d{0,2})?$/;
+
+    if (regex.test(val)) {
+        return val;
+    }
+
+    return null;
 };
 
 export const escapeHtml = (text: string): string => {

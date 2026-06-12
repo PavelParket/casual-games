@@ -1,63 +1,67 @@
-import { Box, Stack, Typography } from "../../../ui";
+import { Box, Typography } from "../../../ui";
+import "../style/historyItem.css";
 
 interface HistoryItemProps {
     variant: 'income' | 'expense' | 'neutral';
     iconText: string;
     title: string;
     date: string;
+    time?: string;
     rightText: string;
     rightSubText?: string;
 }
 
-export function HistoryItem({ variant, iconText, title, date, rightText, rightSubText }: HistoryItemProps) {
-    const colorType = variant === 'neutral' ? 'border' : variant;
+export function HistoryItem({ variant, iconText, title, date, time, rightText, rightSubText }: HistoryItemProps) {
+    const colorType = variant;
 
     return (
-        <Box style={{
-            padding: "8px 12px",
-            display: "grid",
-            gridTemplateColumns: rightSubText ? "32px 1fr auto 90px" : "32px 1fr auto",
-            gap: "12px",
-            alignItems: "center",
-            background: variant === 'neutral' ? 'var(--color-bg)' : `var(--color-${colorType}-bg)`,
-            border: `1px solid var(--color-${colorType}-border)`,
-            borderRadius: "var(--radius-sm)",
-            transition: "transform 0.2s ease"
-        }}>
-            <Box style={{
-                width: "32px", height: "32px", borderRadius: "50%",
-                background: variant === 'neutral' ? 'var(--color-border)' : `var(--color-${colorType}-icon-bg)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: variant === 'neutral' ? 'var(--color-text)' : "#ffffff",
-                fontWeight: "bold", fontSize: "1.1rem"
-            }}>
+        <Box
+            className={`history-item ${rightSubText ? 'has-subtext' : ''}`}
+            style={{
+                background: `var(--color-${colorType}-bg)`,
+                borderColor: `var(--color-${colorType}-border)`
+            }}
+        >
+            <Box
+                className="history-item-icon"
+                style={{
+                    alignItems: "center",
+                    background: `var(--color-${colorType}-icon-bg)`,
+                    color: `var(--color-${colorType}-text)`
+                }}
+            >
                 {iconText}
             </Box>
 
-            <Stack gap="2px" justify="center" style={{ overflow: "hidden" }}>
-                <Typography variant="body" style={{ fontWeight: 600, fontSize: "0.95rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {title}
-                </Typography>
-                <Typography variant="caption" style={{ opacity: 0.6, fontSize: "0.75rem" }}>
-                    {date}
-                </Typography>
-            </Stack>
-
-            <Typography variant="body" style={{
-                fontWeight: "600",
-                color: variant === 'neutral' ? 'var(--color-text)' : `var(--color-${colorType}-text)`,
-                fontSize: "1rem", textAlign: "right"
-            }}>
-                {rightText}
-            </Typography>
-
-            {rightSubText && (
-                <Stack gap="0px" style={{ alignItems: "flex-start", minWidth: "90px" }}>
-                    <Typography variant="caption" style={{ opacity: 0.8, fontSize: "0.7rem", fontFamily: "monospace" }}>
-                        {rightSubText}
+            <Box className="history-item-details">
+                <Box className="history-item-center-stack">
+                    <Typography variant="body" className="history-item-title">
+                        {title}
                     </Typography>
-                </Stack>
-            )}
+
+                    <Box className="history-item-date-time">
+                        <span className="history-item-date">{date}</span>
+                        {time && (
+                            <>
+                                <span className="history-item-separator">&nbsp;•&nbsp;</span>
+                                <span className="history-item-time">{time}</span>
+                            </>
+                        )}
+                    </Box>
+                </Box>
+
+                <Typography variant="body" className="history-item-amount" style={{ color: `var(--color-${colorType}-text)` }}>
+                    {rightText}
+                </Typography>
+
+                {rightSubText && (
+                    <Box className="history-item-subtext-stack">
+                        <Typography variant="caption" className="history-item-subtext">
+                            {rightSubText}
+                        </Typography>
+                    </Box>
+                )}
+            </Box>
         </Box>
     );
 }

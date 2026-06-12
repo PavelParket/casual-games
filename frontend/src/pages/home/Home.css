@@ -1,0 +1,94 @@
+.home-page .main-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+    align-items: flex-start;
+    align-items: stretch;
+    flex: 1;
+}
+
+.home-page .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+}
+
+.home-page .games-container {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.home-page .game-card-wrapper {
+    width: 100%;
+    aspect-ratio: 1.618 / 1;
+    transition: transform 0.2s ease;
+}
+
+.home-page .game-card-wrapper:hover {
+    transform: scale(1.02);
+}
+
+@media (max-width: 1024px) {
+    .home-page .main-layout {
+        flex-direction: column;
+    }
+
+    .home-page .sidebar {
+        width: 100%;
+        order: 2;
+    }
+
+    .home-page .top-wins-desktop {
+        max-height: 350px;
+    }
+
+    .home-page .game-desc {
+        display: none;
+    }
+
+    .home-page .games-container {
+        order: 1;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 1.5rem;
+        justify-content: flex-start;
+        width: 100%;
+
+        scrollbar-width: thin;
+        scrollbar-color: rgba(128, 128, 128, 0.4) transparent;
+    }
+
+    .home-page .game-card-wrapper {
+        scroll-snap-align: start;
+        flex-shrink: 0;
+        width: 288px;
+        aspect-ratio: 1.618 / 1;
+    }
+
+    .home-page .games-container::-webkit-scrollbar {
+        height: 8px;
+        display: block;
+    }
+
+    .home-page .games-container::-webkit-scrollbar-track {
+        background: rgba(128, 128, 128, 0.1);
+        border-radius: 4px;
+    }
+
+    .home-page .games-container::-webkit-scrollbar-thumb {
+        background: rgba(128, 128, 128, 0.4);
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+
+    html.dark .home-page .games-container::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .home-page .games-container::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary);
+    }
+}

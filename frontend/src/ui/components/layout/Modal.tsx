@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import "../styles/modal.css";
+import { Icon } from "../common/Icon";
+import { useThemedIcon } from "../../hooks/useThemedIcon";
 
 type ModalProps = {
     isOpen: boolean;
@@ -10,6 +12,8 @@ type ModalProps = {
 }
 
 export function Modal({ isOpen, onClose, title, children, disableOutsideClick }: ModalProps) {
+    const { getIcon } = useThemedIcon();
+
     if (!isOpen) {
         return null;
     }
@@ -20,7 +24,7 @@ export function Modal({ isOpen, onClose, title, children, disableOutsideClick }:
                 {title && <h2 className="modal-title">{title}</h2>}
                 <div className="modal-body">{children}</div>
                 <button className="modal-close" onClick={onClose}>
-                    &times;
+                    <Icon src={getIcon("close")} size={24} alt="close" />
                 </button>
             </div>
         </div>

@@ -12,6 +12,28 @@
     justify-content: space-between;
     height: 60px;
     padding: 0 2rem;
+    transition: padding 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .app-bar-content {
+        padding: 0 1rem;
+    }
+}
+
+.header-logo {
+    height: 50px;
+    transition: height 0.3s ease;
+}
+
+@media (max-width: 425px) {
+    .app-bar-content {
+        padding: 0 0.5rem;
+    }
+
+    .header-logo {
+        height: 30px;
+    }
 }
 
 .app-bar-left {

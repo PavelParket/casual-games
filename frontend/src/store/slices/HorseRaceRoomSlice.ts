@@ -101,6 +101,7 @@ const horseRaceRoomSlice = createSlice({
         clearError: (state) => {
             state.error = undefined;
         },
+        clearHorseRaceRoomState: () => initialState,
     },
     extraReducers: (builder) => {
         builder
@@ -152,6 +153,6 @@ const horseRaceRoomSlice = createSlice({
     },
 });
 
-export const { clearError } = horseRaceRoomSlice.actions;
+export const { clearError, clearHorseRaceRoomState } = horseRaceRoomSlice.actions;
 
 export default horseRaceRoomSlice.reducer;
