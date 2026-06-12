@@ -33,6 +33,10 @@ export default function TermsOfUse() {
                         Terms of Use
                     </Typography>
 
+                    <Typography variant="caption" style={{ display: "block", marginBottom: "3rem", opacity: 0.5 }}>
+                        Last updated: June 12, 2026
+                    </Typography>
+
                     <Typography variant="body" style={{ opacity: 0.8, marginBottom: "2rem" }}>
                         Please read these Terms of Use carefully before using the Casual Games platform.
                         By creating an account or using the Platform, you agree to be bound by these Terms.
@@ -330,10 +334,6 @@ export default function TermsOfUse() {
                             </Stack>
                         </Accordion>
                     </Box>
-
-                    <Typography variant="caption" style={{ display: "block", marginTop: "3rem", opacity: 0.5, textAlign: "center" }}>
-                        Last updated: June 12, 2026
-                    </Typography>
                 </Card>
             </Container>
         </Box>

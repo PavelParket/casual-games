@@ -33,6 +33,10 @@ export default function PrivacyPolicy() {
                         Privacy Policy
                     </Typography>
 
+                    <Typography variant="caption" style={{ display: "block", marginBottom: "3rem", opacity: 0.5 }}>
+                        Last updated: June 12, 2026
+                    </Typography>
+
                     <Typography variant="body" style={{ opacity: 0.8, marginBottom: "2rem" }}>
                         This Privacy Policy explains what information the Casual Games platform collects,
                         why we collect it, how long we keep it, and what rights you have over it.
@@ -345,10 +349,6 @@ export default function PrivacyPolicy() {
                             </Stack>
                         </Accordion>
                     </Box>
-
-                    <Typography variant="caption" style={{ display: "block", marginTop: "3rem", opacity: 0.5, textAlign: "center" }}>
-                        Last updated: June 12, 2026
-                    </Typography>
                 </Card>
             </Container>
         </Box>

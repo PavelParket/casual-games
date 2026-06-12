@@ -552,7 +552,13 @@ export default function Profile() {
             <Modal isOpen={depositModalOpen} onClose={() => { setDepositModalOpen(false); setDepositAmount(''); setDepositError(null); }} title="Deposit Funds">
                 <Stack gap="1rem">
                     <Typography variant="body">Enter the amount you wish to add to your balance.</Typography>
-                    <FormField type="text" inputMode="decimal" value={depositAmount} onChange={handleDepositAmountChange} onFocus={(e) => e.target.select()} placeholder="Amount" rounded />
+                    <FormField type="text" inputMode="decimal" value={depositAmount} onChange={(e) => {
+                        const val = e.target.value.replace(',', '.');
+                        if (val !== '' && !isNaN(Number(val)) && parseFloat(val) > 5000) {
+                            return;
+                        }
+                        handleDepositAmountChange(e);
+                    }} onFocus={(e) => e.target.select()} placeholder="Amount" rounded />
                     {depositError && <Typography variant="caption" style={{ color: 'var(--color-expense-text)' }}>{depositError}</Typography>}
                     <Button variant="solid" onClick={handleDeposit} disabled={isDepositing || !depositAmount || depositAmount === '.'}>{isDepositing ? "Processing..." : "Confirm Deposit"}</Button>
                 </Stack>
