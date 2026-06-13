@@ -92,10 +92,11 @@ export default function App() {
                             {/* Public Routes */}
                             <Route element={<Layout />}>
                                 <Route path="/" element={<Home />} />
+                                <Route path="/terms" element={<TermsOfUse />} />
+                                <Route path="/privacy" element={<PrivacyPolicy />} />
                             </Route>
 
-                            <Route path="/terms" element={<TermsOfUse />} />
-                            <Route path="/privacy" element={<PrivacyPolicy />} />
+
 
                             {/* ===== Experiment Room ===== */}
                             <Route element={<ProtectedRoute roles={["ADMIN"]} />}>

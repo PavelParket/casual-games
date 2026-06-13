@@ -40,7 +40,7 @@ export function Accordion({ title, children, isOpen: controlledIsOpen, onToggle 
                     alignItems: "center"
                 }}
             >
-                <Typography variant="body" style={{ fontWeight: 500, fontSize: "1.1rem" }}>
+                <Typography variant="body" style={{ fontWeight: 500, fontSize: "1.5rem" }}>
                     {title}
                 </Typography>
                 <Icon

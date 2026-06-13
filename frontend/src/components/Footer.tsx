@@ -21,12 +21,11 @@ export default function Footer() {
                     }}>
                         <Stack direction="row" gap="1.5rem" align="center" wrap="wrap">
                             <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.75rem" }}>
-                                Copyright © {new Date().getFullYear()} Casual Games.
+                                Copyright © {new Date().getFullYear()} Casual Games. All right reserved.
                             </Typography>
 
                             <Stack direction="row" gap="0.75rem" align="center" style={{ fontSize: "0.75rem" }}>
-                                <Link to="/privacy" className="link" style={{
-                                    textDecoration: "none",
+                                <Link to="/privacy" className="link footer-link" style={{
                                     fontSize: "0.75rem",
                                     opacity: 0.6,
                                     transition: "opacity 0.2s ease"
@@ -34,8 +33,7 @@ export default function Footer() {
                                     Privacy Policy
                                 </Link>
                                 <span style={{ opacity: 0.3, color: "var(--color-text)" }}>|</span>
-                                <Link to="/terms" className="link" style={{
-                                    textDecoration: "none",
+                                <Link to="/terms" className="link footer-link" style={{
                                     fontSize: "0.75rem",
                                     opacity: 0.6,
                                     transition: "opacity 0.2s ease"

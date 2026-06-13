@@ -69,24 +69,6 @@ export default function Header() {
                 <>
                     {isAuthenticated ? (
                         <Box style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-
-                            <Box
-                                title={`${profileUser?.balance} CG Coins`}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'baseline',
-                                    gap: '2px',
-                                    padding: '0 4px'
-                                }}
-                            >
-                                <Typography variant="body" style={{ fontWeight: 700, color: 'var(--color-primary)', lineHeight: 1 }}>
-                                    {formattedBalance}
-                                </Typography>
-                                <Typography variant="caption" style={{ marginLeft: '4px', opacity: 0.7, fontWeight: 600, lineHeight: 1 }}>
-                                    CG
-                                </Typography>
-                            </Box>
-
                             <Menu
                                 trigger={
                                     <Button variant="ghost" style={{ padding: "0.4rem 0.5rem" }}>
@@ -116,8 +98,25 @@ export default function Header() {
                                                 src={getInverseIcon("expandMore")}
                                                 alt="menu"
                                                 size={16}
-                                                className="menu-chevron-icon"
+                                                className="hidden-mobile menu-chevron-icon"
                                             />
+
+                                            <Box
+                                                title={`${profileUser?.balance} CG Coins`}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'baseline',
+                                                    gap: '2px',
+                                                    padding: '0 4px'
+                                                }}
+                                            >
+                                                <Typography variant="body" style={{ fontWeight: 700, color: 'var(--color-primary)', lineHeight: 1 }}>
+                                                    {formattedBalance}
+                                                </Typography>
+                                                <Typography variant="caption" style={{ opacity: 0.7, fontWeight: 600, lineHeight: 1 }}>
+                                                    CG
+                                                </Typography>
+                                            </Box>
                                         </Box>
                                     </Button>
                                 }

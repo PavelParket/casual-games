@@ -25,7 +25,7 @@ export const ROOM_TYPE_LABELS: Record<string, string> = {
     "TIC_TAC_TOE": "Tic Tac Toe",
     "HORSE_RACE": "Horse Race",
     "DE_CODER": "De-Coder",
-    "DURAK": "Durak (card game)",
+    "DURAK": "Durak",
 } as const;
 
 export type RoomType = keyof typeof ROOM_TYPE_HANDLERS;

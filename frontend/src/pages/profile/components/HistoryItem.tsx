@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Box, Typography } from "../../../ui";
 import "../style/historyItem.css";
 
@@ -8,7 +9,7 @@ interface HistoryItemProps {
     date: string;
     time?: string;
     rightText: string;
-    rightSubText?: string;
+    rightSubText?: ReactNode;
 }
 
 export function HistoryItem({ variant, iconText, title, date, time, rightText, rightSubText }: HistoryItemProps) {
@@ -25,7 +26,6 @@ export function HistoryItem({ variant, iconText, title, date, time, rightText, r
             <Box
                 className="history-item-icon"
                 style={{
-                    alignItems: "center",
                     background: `var(--color-${colorType}-icon-bg)`,
                     color: `var(--color-${colorType}-text)`
                 }}
@@ -33,35 +33,34 @@ export function HistoryItem({ variant, iconText, title, date, time, rightText, r
                 {iconText}
             </Box>
 
-            <Box className="history-item-details">
-                <Box className="history-item-center-stack">
-                    <Typography variant="body" className="history-item-title">
-                        {title}
-                    </Typography>
-
-                    <Box className="history-item-date-time">
-                        <span className="history-item-date">{date}</span>
-                        {time && (
-                            <>
-                                <span className="history-item-separator">&nbsp;•&nbsp;</span>
-                                <span className="history-item-time">{time}</span>
-                            </>
-                        )}
-                    </Box>
-                </Box>
-
-                <Typography variant="body" className="history-item-amount" style={{ color: `var(--color-${colorType}-text)` }}>
-                    {rightText}
+            <Box className="history-item-center">
+                <Typography variant="body" className="history-item-title">
+                    {title.trim()}
                 </Typography>
 
-                {rightSubText && (
-                    <Box className="history-item-subtext-stack">
-                        <Typography variant="caption" className="history-item-subtext">
-                            {rightSubText}
-                        </Typography>
-                    </Box>
-                )}
+                <Box className="history-item-date-time">
+                    <span className="history-item-date">{date}</span>
+                    {time && (
+                        <>
+                            <span className="history-item-separator">&nbsp;•&nbsp;</span>
+                            <span className="history-item-time">{time}</span>
+                        </>
+                    )}
+                </Box>
             </Box>
+
+            <Typography variant="body" className="history-item-amount" style={{ color: `var(--color-${colorType}-text)` }}>
+                <span className="mobile-sign">{iconText}</span>
+                {rightText}
+            </Typography>
+
+            {rightSubText && (
+                <Box className="history-item-subtext-stack">
+                    <Typography variant="caption" className="history-item-subtext">
+                        {rightSubText}
+                    </Typography>
+                </Box>
+            )}
         </Box>
     );
 }

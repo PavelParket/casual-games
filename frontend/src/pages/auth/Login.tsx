@@ -63,7 +63,7 @@ export default function Login() {
     };
 
     return (
-        <Box style={{ padding: "56px 0.25rem" }}>
+        <Box style={{ padding: "56px 0.25rem", width: "100%" }}>
             <Container>
                 <Box style={{ display: "grid", placeItems: "center", width: "100%" }}>
                     <Card style={{ width: "min(420px, 100%)", textAlign: "center", padding: "30px 40px" }}>

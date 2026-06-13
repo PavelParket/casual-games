@@ -30,6 +30,8 @@ export default function Home() {
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
     const { topWins, isLoadingTopWins } = useSelector((state: RootState) => state.bank);
 
+    const [isAccordionOpen, setIsAccordionOpen] = useState(true);
+
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
     useEffect(() => {
@@ -119,7 +121,11 @@ export default function Home() {
                         <Box className="sidebar">
                             {isMobile ? (
                                 <Box style={{ background: "var(--glass-surface)", borderRadius: "var(--radius-md)", padding: "0 1rem" }}>
-                                    <Accordion title="Top wins today">
+                                    <Accordion
+                                        title="Top wins today"
+                                        isOpen={isAccordionOpen}
+                                        onToggle={() => setIsAccordionOpen(!isAccordionOpen)}
+                                    >
                                         {renderTopWins()}
                                     </Accordion>
                                 </Box>
@@ -168,8 +174,8 @@ export default function Home() {
                                             />
 
                                             <Stack justify="space-between" style={{ flex: 1, zIndex: 1, position: "relative" }}>
-                                                <Stack gap="0.5rem" style={{ maxWidth: "49%" }}>
-                                                    <Typography variant="h2">{ROOM_TYPE_LABELS[type]}</Typography>
+                                                <Stack gap="0.5rem" style={{ maxWidth: "55%" }}>
+                                                    <Typography variant="h2" className="game-card-title">{ROOM_TYPE_LABELS[type]}</Typography>
                                                 </Stack>
 
                                                 <Box style={{ marginTop: "auto" }}>
