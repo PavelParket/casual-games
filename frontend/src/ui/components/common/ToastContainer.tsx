@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import "../styles/toastcontainer.css";
 import type { ToastItem, ToastLayer } from "../../models/ToastTypes";
 import { classNames } from "../../utils/classNames";
@@ -56,7 +57,7 @@ interface ToastContainerProps {
 export function ToastContainer({ layer, toasts, dismiss }: ToastContainerProps) {
     if (toasts.length === 0) return null;
 
-    return (
+    return createPortal(
         <div className={classNames("toast-container", `toast-container--${layer}`)}>
             {toasts.map(toast => (
                 <ToastItemEl
@@ -65,6 +66,7 @@ export function ToastContainer({ layer, toasts, dismiss }: ToastContainerProps) 
                     onDismiss={dismiss}
                 />
             ))}
-        </div>
+        </div>,
+        document.body
     );
 }

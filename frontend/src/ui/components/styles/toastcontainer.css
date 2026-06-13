@@ -1,4 +1,4 @@
-/* ─── Variables ─────────────────────────────────────────────────────────────── */
+/* Variables */
 
 :root {
     --toast-color-info: #3b82f6;
@@ -7,7 +7,7 @@
     --toast-animation-exit-duration: 0.3s;
 }
 
-/* ─── Container ─────────────────────────────────────────────────────────────── */
+/* Container */
 
 .toast-container {
     position: fixed;
@@ -19,17 +19,17 @@
 }
 
 .toast-container--system {
-    top: 1.5rem;
+    top: 4.5rem;
     right: 1.5rem;
 }
 
 .toast-container--game {
-    top: 1.5rem;
+    top: 4.5rem;
     left: 50%;
     transform: translateX(-50%);
 }
 
-/* ─── Toast Item: base ──────────────────────────────────────────────────────── */
+/* Toast Item: base */
 
 .toast-item {
     position: relative;
@@ -47,7 +47,7 @@
     min-height: 56px;
 }
 
-/* ─── Toast Item: variants ──────────────────────────────────────────────────── */
+/* Toast Item: variants */
 
 .toast-item--game-info,
 .toast-item--system-info {
@@ -59,7 +59,7 @@
     border-left-color: var(--toast-color-error);
 }
 
-/* ─── Toast Item: icon ──────────────────────────────────────────────────────── */
+/* Toast Item: icon */
 
 .toast-item__icon {
     flex-shrink: 0;
@@ -81,7 +81,7 @@
     color: var(--toast-color-error);
 }
 
-/* ─── Toast Item: message ───────────────────────────────────────────────────── */
+/* Toast Item: message */
 
 .toast-item__message {
     flex: 1;
@@ -89,7 +89,7 @@
     line-height: 1.4;
 }
 
-/* ─── Toast Item: close button ──────────────────────────────────────────────── */
+/* Toast Item: close button */
 
 .toast-item__close {
     flex-shrink: 0;
@@ -113,7 +113,7 @@
     opacity: 1;
 }
 
-/* ─── Toast Item: progress bar ──────────────────────────────────────────────── */
+/* Toast Item: progress bar */
 
 .toast-item__progress {
     position: absolute;
@@ -144,7 +144,7 @@
     }
 }
 
-/* ─── System animations: slide from left ────────────────────────────────────── */
+/* System animations: slide from left */
 
 .toast-container--system .toast-item--entering {
     animation: system-slide-in var(--toast-animation-enter-duration) ease forwards;
@@ -178,7 +178,7 @@
     }
 }
 
-/* ─── Game animations: slide from top ───────────────────────────────────────── */
+/* Game animations: slide from top */
 
 .toast-container--game .toast-item--entering {
     animation: game-slide-in var(--toast-animation-enter-duration) ease forwards;

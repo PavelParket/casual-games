@@ -1,5 +1,7 @@
 .history-item {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "icon center amount";
     align-items: center;
     gap: 12px;
     padding: 8px 12px;
@@ -8,7 +10,13 @@
     transition: transform 0.2s ease;
 }
 
+.history-item.has-subtext {
+    grid-template-columns: auto 1fr minmax(60px, auto) minmax(90px, auto);
+    grid-template-areas: "icon center amount subtext";
+}
+
 .history-item-icon {
+    grid-area: icon;
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -20,20 +28,8 @@
     flex-shrink: 0;
 }
 
-.history-item-details {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 60px;
-    gap: 12px;
-    align-items: center;
-    min-width: 0;
-}
-
-.history-item.has-subtext .history-item-details {
-    grid-template-columns: 1fr 70px 60px;
-}
-
-.history-item-center-stack {
+.history-item-center {
+    grid-area: center;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -58,20 +54,21 @@
 }
 
 .history-item-amount {
+    grid-area: amount;
     font-weight: 600;
     font-size: 1rem;
-    text-align: center;
-}
-
-.history-item.has-subtext .history-item-amount {
     text-align: right;
 }
 
+.mobile-sign {
+    display: none;
+}
+
 .history-item-subtext-stack {
+    grid-area: subtext;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    min-width: 90px;
+    align-items: stretch;
 }
 
 .history-item-subtext {
@@ -80,57 +77,95 @@
     font-family: monospace;
     text-align: left;
     white-space: pre-line;
+    width: 100%;
+}
+
+.history-subtext-grid {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: start;
+    column-gap: 8px;
+    width: 100%;
+}
+
+.history-subtext-grid span:nth-child(even) {
+    text-align: right;
 }
 
 @media (max-width: 480px) {
     .history-item {
-        align-items: center;
         padding: 12px 14px;
     }
 
     .history-item-icon {
-        margin-top: 0;
         width: 36px;
         height: 36px;
     }
 
-    .history-item-details {
-        display: flex !important;
-        flex-direction: column;
-        justify-content: center;
-        gap: 10px;
+    .history-item.has-subtext {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "title amount"
+            "subtext datetime";
+        gap: 8px 12px;
     }
 
-    .history-item-center-stack {
-        gap: 6px;
-    }
-
-    .history-item-date-time {
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .history-item-separator {
+    .history-item.has-subtext .history-item-icon {
         display: none;
     }
 
-    .history-item-amount {
-        text-align: left !important;
-        font-size: 1.05rem;
-        margin-top: 2px;
+    .history-item.has-subtext .mobile-sign {
+        display: inline;
+        margin-right: 2px;
     }
 
-    .history-item-subtext-stack {
+    .history-item.has-subtext .history-item-center {
+        display: contents;
+    }
+
+    .history-item.has-subtext .history-item-title {
+        grid-area: title;
+        align-self: end;
+    }
+
+    .history-item.has-subtext .history-item-amount {
+        grid-area: amount;
+        align-self: end;
+    }
+
+    .history-item.has-subtext .history-item-date-time {
+        grid-area: datetime;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: flex-start;
+        gap: 2px;
+        padding-top: 8px;
+        border-top: 1px dashed var(--color-border);
+    }
+
+    .history-item.has-subtext .history-item-subtext-stack {
+        grid-area: subtext;
         align-items: flex-start;
-        min-width: auto;
-        padding-top: 4px;
+        padding-top: 8px;
         border-top: 1px dashed var(--color-border);
         width: 100%;
     }
 
-    .history-item-subtext {
-        font-size: 0.75rem;
-        line-height: 1.4;
+    .history-item.has-subtext .history-item-subtext {
+        text-align: left;
+    }
+
+    .history-item.has-subtext .history-item-separator {
+        display: none;
+    }
+
+    .history-item:not(.has-subtext) .history-item-date-time {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .history-item:not(.has-subtext) .history-item-separator {
+        display: none;
     }
 }

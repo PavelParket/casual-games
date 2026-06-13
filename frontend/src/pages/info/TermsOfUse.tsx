@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Box, Container, Card, Typography, Button, Stack, Divider, Accordion, List } from "../../ui";
+import { Link } from "react-router-dom";
+import { Box, Card, Typography, Stack, Divider, Accordion, List } from "../../ui";
 
 export default function TermsOfUse() {
-    const navigate = useNavigate();
-
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     const handleToggle = (index: number) => {
@@ -12,32 +10,18 @@ export default function TermsOfUse() {
     };
 
     return (
-        <Box style={{
-            minHeight: "100vh",
-            background: "var(--color-bg)",
-            backgroundImage: "var(--bg-image)",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundAttachment: "fixed",
-            padding: "3rem 0"
-        }}>
-            <Container>
-                <Stack direction="row" align="center" justify="space-between" style={{ marginBottom: "2rem" }}>
-                    <Button variant="outline" onClick={() => navigate("/")}>
-                        ← Back to Home
-                    </Button>
-                </Stack>
-
+        <Box className="page-wrapper">
+            <Box style={{ padding: "2rem 0" }}>
                 <Card style={{ padding: "2.5rem", boxShadow: "var(--shadow-lg)" }}>
                     <Typography variant="h1" style={{ marginBottom: "1rem", fontWeight: 700 }}>
                         Terms of Use
                     </Typography>
 
-                    <Typography variant="caption" style={{ display: "block", marginBottom: "3rem", opacity: 0.5 }}>
+                    <Typography variant="caption" style={{ display: "block", marginBottom: "3rem" }}>
                         Last updated: June 12, 2026
                     </Typography>
 
-                    <Typography variant="body" style={{ opacity: 0.8, marginBottom: "2rem" }}>
+                    <Typography variant="body" style={{ opacity: 0.8, fontSize: "1.2rem", textAlign: "center", marginBottom: "2rem", padding: "0 auto" }}>
                         Please read these Terms of Use carefully before using the Casual Games platform.
                         By creating an account or using the Platform, you agree to be bound by these Terms.
                         If you do not agree, do not use the Platform.
@@ -335,7 +319,7 @@ export default function TermsOfUse() {
                         </Accordion>
                     </Box>
                 </Card>
-            </Container>
+            </Box>
         </Box>
     );
 }

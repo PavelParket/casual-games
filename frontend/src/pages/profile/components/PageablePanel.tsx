@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
-import { Box, Typography, Stack, Divider, Button, Icon, useThemedIcon } from "../../../ui";
+import { Box, Typography, Divider, Button, Icon, useThemedIcon } from "../../../ui";
 import { Skeleton } from "../../../ui/components/common/Skeleton";
 import "../style/pageablepanel.css";
 
 interface PageablePanelProps {
     title: string;
     headerActions?: ReactNode;
+    topRightAction?: ReactNode;
     isLoading: boolean;
     isEmpty: boolean;
     emptyMessage?: string | ReactNode;
@@ -18,6 +19,7 @@ interface PageablePanelProps {
 export function PageablePanel({
     title,
     headerActions,
+    topRightAction,
     isLoading,
     isEmpty,
     emptyMessage = "No records found.",
@@ -31,10 +33,19 @@ export function PageablePanel({
     return (
         <Box className="pageable-panel">
             <Box className="pageable-panel-header">
-                <Typography variant="h3">{title}</Typography>
-                <Stack className="pageable-panel-actions" direction="row" align="center">
-                    {headerActions}
-                </Stack>
+                <Typography variant="h3" className="pageable-panel-title">{title}</Typography>
+
+                {headerActions && (
+                    <Box className="pageable-panel-actions">
+                        {headerActions}
+                    </Box>
+                )}
+
+                {topRightAction && (
+                    <Box className="pageable-panel-top-right">
+                        {topRightAction}
+                    </Box>
+                )}
             </Box>
 
             <Box className="custom-scrollbar pageable-panel-content">

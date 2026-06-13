@@ -286,7 +286,7 @@ html.dark {
 }
 
 .page-wrapper {
-    min-height: calc(100vh - 60px);
+    min-height: calc(100vh - 60px - 50px);
     margin: var(--page-margin-y) var(--page-margin-x);
     padding: 0 var(--page-padding-x);
     background: var(--color-bg-glass);
@@ -327,6 +327,14 @@ html.dark {
 
 .link:active {
     color: var(--link-active-color);
+}
+
+.footer-link {
+    text-decoration: none;
+}
+
+.footer-link:hover {
+    text-decoration: underline;
 }
 
 /* High-contrast modifier (accessibility) */

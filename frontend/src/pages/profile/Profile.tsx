@@ -465,6 +465,11 @@ export default function Profile() {
                                     currentPage={gameHistoryPage}
                                     totalPages={gameHistoryTotalPages}
                                     onPageChange={handleGameHistoryPageChange}
+                                    topRightAction={
+                                        <Button variant="ghost" style={{ padding: "0.35rem" }} onClick={() => dispatch(getMatches({ guid: userGuid!, filter: getFilterParams(resultFilter) }))}>
+                                            <Icon src={getIcon("refresh")} size={16} />
+                                        </Button>
+                                    }
                                     headerActions={
                                         <div className="profile-filter-controls">
                                             <ComboBox
@@ -492,9 +497,6 @@ export default function Profile() {
                                                 value={selectedGameType}
                                                 onValueChange={(val) => setSelectedGameType(val as RoomType)}
                                             />
-                                            <Button variant="ghost" style={{ padding: "0.35rem" }} onClick={() => dispatch(getMatches({ guid: userGuid!, filter: getFilterParams(resultFilter) }))}>
-                                                <Icon src={getIcon("refresh")} size={16} />
-                                            </Button>
                                         </div>
                                     }
                                 >
@@ -524,10 +526,11 @@ export default function Profile() {
                                     currentPage={currentPage}
                                     totalPages={totalPages}
                                     onPageChange={handlePageChange}
-                                    headerActions={
-                                        <Button variant="ghost" onClick={() => dispatch(getByUserGuid({ guid: userGuid! }))}>
+                                    topRightAction={
+                                        <Button variant="ghost" style={{ padding: "0.35rem" }} onClick={() => dispatch(getByUserGuid({ guid: userGuid! }))}>
                                             <Icon src={getIcon("refresh")} size={16} />
-                                        </Button>}
+                                        </Button>
+                                    }
                                 >
                                     {transactions.map(t => (
                                         <HistoryItem
@@ -538,8 +541,12 @@ export default function Profile() {
                                             date={`${t.createdAtDate}`}
                                             time={`${t.createdAtTime.substring(0, 5)} UTC`}
                                             rightText={String(t.amount)}
-                                            rightSubText={`Before: ${t.balanceBefore} \n After: ${t.balanceAfter}`}
-                                        />
+                                            rightSubText={
+                                                <span className="history-subtext-grid">
+                                                    <span>Before:</span> <span>{t.balanceBefore}</span>
+                                                    <span>After:</span>  <span>{t.balanceAfter}</span>
+                                                </span>
+                                            } />
                                     ))}
                                 </PageablePanel>
                             )}
