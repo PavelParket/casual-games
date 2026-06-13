@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class DurakTurnTimerScheduler {
 
-    public static final int TURN_SECONDS = 600;
+    public static final int TURN_SECONDS = 30;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4);
 
