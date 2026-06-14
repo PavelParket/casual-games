@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Box, Typography } from "../../../ui";
-import "../style/historyItem.css";
+import "../style/historyitem.css";
 
 interface HistoryItemProps {
     variant: 'income' | 'expense' | 'neutral';
