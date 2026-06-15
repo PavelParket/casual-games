@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import type { DeCoderGameHistory } from "../models/DeCoderGameHistory";
 import type { DeCoderMessage } from "../models/WsMessage";
 import type { AppDispatch, RootState } from "../store/store";
+import { validateToastMessage } from "../utils/SecurityUtils";
 import { getPlayers } from "../store/slices/DeCoderRoomSlice";
 import { getBalance } from "../store/slices/UserSlice";
 import type { ToastVariant } from "../ui";
@@ -12,7 +13,7 @@ interface UseDeCoderMessagesProps {
     setGameActive: (value: boolean) => void;
     setHistory: React.Dispatch<React.SetStateAction<DeCoderGameHistory[]>>;
     setJackpot: (value: number) => void;
-    setGameOverModal: (modal: { isOpen: boolean; isWin: boolean; winnerName?: string }) => void;
+    setEndGameOverlay: (overlay: { isOpen: boolean; isWin: boolean; winnerName?: string }) => void;
     showGameToast: (message: string, variant: ToastVariant) => void;
 }
 
@@ -21,7 +22,7 @@ export function useDeCoderMessages({
     setGameActive,
     setHistory,
     setJackpot,
-    setGameOverModal,
+    setEndGameOverlay,
     showGameToast,
 }: UseDeCoderMessagesProps): (message: DeCoderMessage) => void {
     const dispatch = useDispatch<AppDispatch>();
@@ -41,6 +42,7 @@ export function useDeCoderMessages({
                 if (message.isGameStarted !== undefined) {
                     setGameActive(message.isGameStarted);
                 }
+                showGameToast(validateToastMessage(message.message ?? "Game state synchronized"), "game-info");
                 break;
 
             case "MOVE":
@@ -75,7 +77,7 @@ export function useDeCoderMessages({
                 const winnerName = (players ?? {})[message.winner!]?.username || "Unknown Player";
                 const isMe = message.winner === guid;
 
-                setGameOverModal({
+                setEndGameOverlay({
                     isOpen: true,
                     isWin: isMe,
                     winnerName: isMe ? "You" : winnerName,
@@ -88,12 +90,17 @@ export function useDeCoderMessages({
             }
 
             case "JOIN":
+                showGameToast(validateToastMessage(message.message ?? "Player joined the room"), "game-info");
+                dispatch(getPlayers({ roomId, roomType: room.type }));
+                break;
+
             case "LEAVE":
+                showGameToast(validateToastMessage(message.message ?? "Player left the room"), "game-info");
                 dispatch(getPlayers({ roomId, roomType: room.type }));
                 break;
 
             default:
                 break;
         }
-    }, [dispatch, guid, players, room, roomId, setGameActive, setGameOverModal, setHistory, setJackpot, showGameToast]);
+    }, [dispatch, guid, players, room, roomId, setGameActive, setEndGameOverlay, setHistory, setJackpot, showGameToast]);
 }

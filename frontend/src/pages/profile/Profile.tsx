@@ -269,9 +269,9 @@ export default function Profile() {
     };
 
     return (
-        <Box className="page-wrapper profile-page" style={{ padding: "2rem 0" }}>
+        <Box className="page-wrapper profile-page" style={{ paddingTop: "1rem" }}>
             <Container>
-                <Card className="profile-main-card">
+                <Card>
 
                     <Box className="profile-grid">
 
