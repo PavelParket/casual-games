@@ -47,6 +47,7 @@ services:
   kafka:
     image: apache/kafka:4.2.0
     container_name: kafka
+    init: true
     hostname: kafka
     restart: unless-stopped
     environment:
@@ -70,7 +71,7 @@ services:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
       test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1 || exit 1" ]
-      interval: 10s
+      interval: 30s
       timeout: 10s
       retries: 10
       start_period: 30s
