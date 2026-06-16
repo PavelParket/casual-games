@@ -49,11 +49,17 @@ message DurakTransactionRequest {
   optional string winner = 4;
 }
 
+message DeCoderPlayerTransaction{
+  string guid = 1;
+  string balance_before = 2;
+  string spent = 3;
+  optional string jackpot = 4;
+}
+
 message DeCoderTransactionRequest {
   string room_id = 1;
   string room_type = 2;
-  PlayerBetMessage player_bet = 3;
-  optional string winner = 4;
+  repeated DeCoderPlayerTransaction player_transactions = 3;
 }
 
 service GameTransactionService {
