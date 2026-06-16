@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box, Button, Typography, CooldownTimer } from "../../../../ui";
-import "../style/DeCoderRoom.css";
+import "../styles/DeCoderRoom.css";
 
 interface DeCoderBoardProps {
     gameActive: boolean;

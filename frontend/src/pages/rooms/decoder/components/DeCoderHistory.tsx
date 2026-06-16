@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Box, Button, Icon, Input, Stack, Typography, useThemedIcon } from "../../../../ui";
 import type { DeCoderGameHistory } from "../../../../models/DeCoderGameHistory";
-import "../style/DeCoderRoom.css";
+import "../styles/DeCoderRoom.css";
 
 interface DeCoderHistoryProps {
     history: DeCoderGameHistory[];

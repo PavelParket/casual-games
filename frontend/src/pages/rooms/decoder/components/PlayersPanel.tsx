@@ -1,7 +1,7 @@
 import { Box, Stack, Typography, Avatar } from "../../../../ui";
 import type { PlayerResponse } from "../../../../models/Room";
 import { MiniProfile } from "../../../profile/components/MiniProfile";
-import "../style/DeCoderRoom.css";
+import "../styles/DeCoderRoom.css";
 
 interface PlayersPanelProps {
     players?: Record<string, PlayerResponse>;

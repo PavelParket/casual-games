@@ -12,7 +12,7 @@
     grid-template-columns: minmax(240px, 1fr) 1fr minmax(240px, 1fr);
     grid-template-areas: "players board history";
     gap: 2rem;
-    min-height: 520px;
+    height: 100%;
     width: 100%;
 }
 
@@ -98,7 +98,7 @@
 
 @media (max-width: 1060px) {
     .decoder-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 240px 1fr;
         grid-template-rows: auto 400px;
         grid-template-areas:
             "board board"
@@ -116,7 +116,7 @@
     }
 }
 
-@media (max-width: 570px) {
+@media (max-width: 600px) {
     .decoder-main-content {
         padding: 1rem;
     }

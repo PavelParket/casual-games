@@ -15,7 +15,7 @@ import { PlayersPanel } from "./decoder/components/PlayersPanel";
 import { DeCoderHistory } from "./decoder/components/DeCoderHistory";
 import { DeCoderBoard } from "./decoder/components/DeCoderBoard";
 import { EndGameOverlay } from "./decoder/components/EndGameOverlay";
-import "./decoder/style/DeCoderRoom.css";
+import "./decoder/styles/DeCoderRoom.css";
 
 export default function DeCoderRoom() {
     const dispatch = useDispatch<AppDispatch>();
@@ -117,6 +117,7 @@ export default function DeCoderRoom() {
                     {!endGameState?.isOpen && (
                         <Box style={{
                             padding: "0.75rem 1.5rem",
+                            borderBottom: "1px solid var(--color-border)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
