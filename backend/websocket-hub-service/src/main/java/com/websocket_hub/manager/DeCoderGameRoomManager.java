@@ -25,9 +25,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -74,7 +76,19 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
 
     @Override
     protected void onAddSession(UserInternalResponse user, Room room, WebSocketSession session) {
-        log.info("Player {} joined DeCoder room {}", user.username(), room.getName());
+        log.debug("Player {} joined DeCoder room {}", user.username(), room.getName());
+
+        Map<UUID, DecoderPlayerSpending> playerMap = roomPlayerSpendingMap.get(room.getId());
+
+        if (playerMap != null) {
+            DecoderPlayerSpending existing = playerMap.get(user.guid());
+
+            if (existing != null && existing.getType() == SpendingType.PROCESSED) {
+                playerMap.remove(user.guid());
+
+                log.debug("Removed PROCESSED spending for rejoining player={}, room={}", user.guid(), room.getId());
+            }
+        }
 
         broadcast(room.getId(), deCoderGameMessageMapper.toResponse(
                 MessageType.SYSTEM,
@@ -90,7 +104,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
 
     @Override
     protected void onRemoveSession(UserInternalResponse user, Room room, WebSocketSession session) {
-        log.info("Player {} left DeCoder room {}", user.username(), room.getName());
+        log.debug("Player {} left DeCoder room {}", user.username(), room.getName());
 
         broadcast(room.getId(), deCoderGameMessageMapper.toResponse(
                 MessageType.SYSTEM,
@@ -105,7 +119,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
     @Override
     protected void onCreateRoom(Room room) {
         try {
-            log.info("Starting De-Coder game for room {}", room.getId());
+            log.debug("Starting De-Coder game for room {}", room.getId());
 
             DeCoderGameInternalRequest startRequest = deCoderGameMessageMapper.toStartRequest(DeCoderGameEvent.START, room.getId());
 
@@ -202,13 +216,46 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
             }
 
             DeCoderGameMessage stateMessage = deCoderGameMessageMapper.toMessage(
-                    stateResponse, MessageType.SYSTEM, null, user.guid()
+                    stateResponse,
+                    MessageType.SYSTEM,
+                    null,
+                    user.guid(),
+                    user.balance(),
+                    null
             );
 
             sessionManager.sendToSession(clientSession, stateMessage);
 
         } catch (Exception e) {
             log.error("Failed to re-send game state for user {}", user.username(), e);
+        }
+    }
+
+    public void broadcastMove(UUID roomId,
+                              UUID toUserGuid,
+                              DeCoderGameMessage moverMessage,
+                              DeCoderGameMessage othersMessage) {
+        Set<ClientSession> players = getPlayersInRoom(roomId);
+
+        if (players.isEmpty()) {
+            return;
+        }
+
+        List<Thread> threads = new ArrayList<>();
+
+        for (ClientSession client : players) {
+            DeCoderGameMessage message = client.getGuid().equals(toUserGuid) ? moverMessage : othersMessage;
+            Thread thread = Thread.ofVirtual().start(() -> sendToClient(client, message));
+            threads.add(thread);
+        }
+
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("broadcastMove interrupted for room {}", roomId);
+            }
         }
     }
 }

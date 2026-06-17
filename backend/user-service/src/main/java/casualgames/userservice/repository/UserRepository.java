@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -53,4 +54,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE guid = :guid
             """, nativeQuery = true)
     void updateStatus(UUID guid, String status);
+
+    @Query(value = """
+            SELECT balance
+            FROM users
+            WHERE guid = :guid
+            """, nativeQuery = true)
+    Optional<BigDecimal> getBalance(UUID guid);
 }

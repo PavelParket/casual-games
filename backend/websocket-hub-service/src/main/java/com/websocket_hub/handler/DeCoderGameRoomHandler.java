@@ -127,32 +127,58 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
         roomManager.incrementSpent(roomId, user.guid(), MOVE_COST);
 
-        DeCoderGameMessage broadcastMessage = deCoderGameMessageMapper.toMessage(
-                moveResponse, MessageType.SYSTEM, null, null
+        DecoderPlayerSpending spending = roomManager.getPlayerSpending(roomId, user.guid())
+                .orElse(null);
+
+        DeCoderGameMessage moverMessage = deCoderGameMessageMapper.toMessage(
+                moveResponse,
+                MessageType.SYSTEM,
+                null,
+                user.guid(),
+                spending != null ? spending.getBalanceBefore() : null,
+                spending != null ? spending.getSpent() : null
+        );
+
+        DeCoderGameMessage othersMessage = deCoderGameMessageMapper.toMessage(
+                moveResponse,
+                MessageType.SYSTEM,
+                null,
+                null,
+                null,
+                null
         );
 
         if (DeCoderGameEvent.WINNER.equals(moveResponse.event())) {
-            handleWin(roomId, user, moveResponse, broadcastMessage);
+            handleWin(roomId, user, moveResponse, moverMessage, othersMessage);
         } else {
-            roomManager.broadcast(roomId, broadcastMessage);
+            roomManager.broadcastMove(roomId, user.guid(), moverMessage, othersMessage);
         }
     }
 
-    private void handleWin(UUID roomId, UserInternalResponse user, DeCoderGameInternalResponse moveResponse, DeCoderGameMessage message) {
+    private void handleWin(UUID roomId,
+                           UserInternalResponse user,
+                           DeCoderGameInternalResponse moveResponse,
+                           DeCoderGameMessage moverMessage,
+                           DeCoderGameMessage othersMessage) {
         try {
             List<DecoderPlayerSpending> allSpending = roomManager.getActiveSpending(roomId);
 
             if (!allSpending.isEmpty()) {
                 DeCoderTransactionRequest request = gameTransactionMapper.toDeCoderRequest(
-                        roomId, roomManager.getRoomType(), allSpending, user.guid(), moveResponse.jackpot()
+                        roomId,
+                        roomManager.getRoomType(),
+                        allSpending,
+                        user.guid(),
+                        moveResponse.jackpot()
                 );
+
                 grpcGameTransactionClient.saveDeCoderGameResults(request);
                 allSpending.forEach(s -> roomManager.markProcessed(roomId, s.getUserGuid()));
             }
         } catch (Exception e) {
             log.error("Failed to process batch transaction: room={}, winner={}", roomId, user.guid(), e);
         } finally {
-            roomManager.broadcast(roomId, message);
+            roomManager.broadcastMove(roomId, user.guid(), moverMessage, othersMessage);
             roomManager.updateRoomStatus(roomId, RoomStatus.FINISHED);
         }
     }
