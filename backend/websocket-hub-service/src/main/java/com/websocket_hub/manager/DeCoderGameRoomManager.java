@@ -85,8 +85,6 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
 
             if (existing != null && existing.getType() == SpendingType.PROCESSED) {
                 playerMap.remove(user.guid());
-
-                log.debug("Removed PROCESSED spending for rejoining player={}, room={}", user.guid(), room.getId());
             }
         }
 
@@ -140,18 +138,26 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
     public boolean isValidSpending(UUID roomId, UUID guid, BigDecimal cost, BigDecimal currentBalance) {
         DecoderPlayerSpending spending = roomPlayerSpendingMap
                 .computeIfAbsent(roomId, k -> new ConcurrentHashMap<>())
-                .computeIfAbsent(guid, k -> DecoderPlayerSpending.builder()
-                        .userGuid(guid)
-                        .balanceBefore(currentBalance)
-                        .spent(BigDecimal.ZERO)
-                        .type(SpendingType.ACTIVE)
-                        .build());
+                .computeIfAbsent(guid, k ->
+                        DecoderPlayerSpending.builder()
+                                .userGuid(guid)
+                                .balanceBefore(currentBalance)
+                                .spent(BigDecimal.ZERO)
+                                .type(SpendingType.ACTIVE)
+                                .build()
+                );
 
         if (spending.getType() != SpendingType.ACTIVE) {
             return false;
         }
 
-        return spending.getSpent().add(cost).compareTo(spending.getBalanceBefore()) <= 0;
+        boolean canAfford = spending.getSpent().add(cost).compareTo(spending.getBalanceBefore()) <= 0;
+
+        if (!canAfford) {
+            log.warn("DENIED — balance exhausted: player={}, room={}, balanceBefore={}, spent={}, cost={}", guid, roomId, spending.getBalanceBefore(), spending.getSpent(), cost);
+        }
+
+        return canAfford;
     }
 
     public void incrementSpent(UUID roomId, UUID guid, BigDecimal cost) {
