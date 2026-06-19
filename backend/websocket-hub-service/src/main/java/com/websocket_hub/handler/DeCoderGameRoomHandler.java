@@ -1,13 +1,12 @@
 package com.websocket_hub.handler;
 
 import com.casualgames.grpc.transaction.DeCoderTransactionRequest;
-import com.casualgames.grpc.transaction.GameTransactionResponse;
 import com.websocket_hub.client.GameServiceClient;
 import com.websocket_hub.domain.dto.client.DeCoderGameInternalRequest;
 import com.websocket_hub.domain.dto.client.DeCoderGameInternalResponse;
 import com.websocket_hub.domain.dto.client.UserInternalResponse;
 import com.websocket_hub.domain.dto.message.DeCoderGameMessage;
-import com.websocket_hub.domain.entity.PlayerBet;
+import com.websocket_hub.domain.entity.DecoderPlayerSpending;
 import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.domain.enums.MessageType;
 import com.websocket_hub.domain.enums.RoomStatus;
@@ -28,6 +27,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -43,7 +43,6 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
     private final GameServiceClient gameServiceClient;
 
     private final GrpcGameTransactionClient grpcGameTransactionClient;
-
 
     public DeCoderGameRoomHandler(
             SessionManager sessionManager,
@@ -74,8 +73,6 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
         UUID roomId = WebSocketUtil.getRoomId(session);
         UserInternalResponse user = WebSocketUtil.getUser(session);
 
-        log.info("DeCoder action: {}", deCoderGameMessage);
-
         switch (deCoderGameMessage.event()) {
             case MOVE -> handleGameMove(roomId, user, deCoderGameMessage);
 
@@ -92,90 +89,96 @@ public class DeCoderGameRoomHandler extends AppWebSocketHandler<DeCoderGameRoomM
 
     @Override
     protected void onLeave(UUID roomId, UserInternalResponse user) {
+        roomManager.getActiveSpending(roomId).stream()
+                .filter(s -> s.getUserGuid().equals(user.guid()))
+                .filter(s -> s.getSpent().compareTo(BigDecimal.ZERO) > 0)
+                .findFirst()
+                .ifPresent(spending -> {
 
+                    try {
+                        DeCoderTransactionRequest request = gameTransactionMapper.toDeCoderRequest(
+                                roomId,
+                                roomManager.getRoomType(),
+                                List.of(spending),
+                                null,
+                                null
+                        );
 
+                        grpcGameTransactionClient.saveDeCoderGameResults(request);
+
+                        roomManager.markProcessed(roomId, user.guid());
+                    } catch (Exception e) {
+                        log.error("Failed to settle DeCoder spending on leave: player={}, room={}", user.guid(), roomId, e);
+                    }
+                });
     }
 
     private void handleGameMove(UUID roomId, UserInternalResponse user, DeCoderGameMessage message) {
-        PlayerBet movePlayerBet = roomManager.markPlayerBet(user, MOVE_COST);
-
-        //TODO: Проблема обновления баланса после каждого хода требует комплексного решения, затронет общие для всех TransactionInternalRequest файлы.
-        DeCoderTransactionRequest deCoderTransactionRequest = gameTransactionMapper.toDeCoderRequest(
-                roomId,
-                roomManager.getRoomType(),
-                movePlayerBet,
-                null
-        );
-
-        try {
-            GameTransactionResponse moveTransactionResponse = grpcGameTransactionClient.saveDeCoderGameTransaction(deCoderTransactionRequest);
-            if (moveTransactionResponse != null) {
-                log.info("Bank service debited {}", MOVE_COST);
-            }
-        } catch (Exception e) {
-            log.warn("Bank service rejected move for {}. Aborting.", user.username());
+        if (!roomManager.isValidSpending(roomId, user.guid(), MOVE_COST, user.balance())) {
             throw new GameException(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
-        try {
-            DeCoderGameInternalRequest moveRequest = deCoderGameMessageMapper.toMoveRequest(
-                    DeCoderGameEvent.MOVE,
-                    roomId,
-                    user.guid(),
-                    message.code()
-            );
+        DeCoderGameInternalRequest moveRequest = deCoderGameMessageMapper.toMoveRequest(
+                DeCoderGameEvent.MOVE, roomId, user.guid(), message.code()
+        );
 
-            DeCoderGameInternalResponse moveResponse = gameServiceClient.processDeCoderMove(moveRequest)
-                    .orElseThrow(() -> new RuntimeException("Empty response from game-service"));
+        DeCoderGameInternalResponse moveResponse = gameServiceClient.processDeCoderMove(moveRequest)
+                .orElseThrow(() -> new RuntimeException("Empty response from game-service"));
 
-            DeCoderGameMessage broadcastMessage = deCoderGameMessageMapper.toMessage(
-                    moveResponse, MessageType.SYSTEM, null, null
-            );
+        roomManager.incrementSpent(roomId, user.guid(), MOVE_COST);
 
-            if (DeCoderGameEvent.WINNER.equals(moveResponse.event())) {
-                handleWin(roomId, user, broadcastMessage);
-            } else {
-                roomManager.broadcast(roomId, broadcastMessage);
-            }
-        } catch (Exception e) {
-            log.warn("Game move failed. Refunding {} CGC to user {}", MOVE_COST, user.username());
-            try {
-                PlayerBet refundPlayerBet = roomManager.markPlayerBet(user, MOVE_COST);
-                DeCoderTransactionRequest refundRequest = gameTransactionMapper.toDeCoderRequest(
-                        roomId, roomManager.getRoomType(), refundPlayerBet, user.guid()
-                );
-                grpcGameTransactionClient.saveDeCoderGameTransaction(refundRequest);
-                log.info("Refund successful for user {}", user.username());
-            } catch (Exception refundEx) {
-                log.error("CRITICAL: Failed to refund user {} after game error!", user.username(), refundEx);
-            }
+        DecoderPlayerSpending spending = roomManager.getPlayerSpending(roomId, user.guid())
+                .orElse(null);
 
-            throw e;
+        DeCoderGameMessage moverMessage = deCoderGameMessageMapper.toMessage(
+                moveResponse,
+                MessageType.SYSTEM,
+                null,
+                user.guid(),
+                spending != null ? spending.getBalanceBefore() : null,
+                spending != null ? spending.getSpent() : null
+        );
+
+        DeCoderGameMessage othersMessage = deCoderGameMessageMapper.toMessage(
+                moveResponse,
+                MessageType.SYSTEM,
+                null,
+                null,
+                null,
+                null
+        );
+
+        if (DeCoderGameEvent.WINNER.equals(moveResponse.event())) {
+            handleWin(roomId, user, moveResponse, moverMessage, othersMessage);
+        } else {
+            roomManager.broadcastMove(roomId, user.guid(), moverMessage, othersMessage);
         }
     }
 
-    private void handleWin(UUID roomId, UserInternalResponse user, DeCoderGameMessage gameResponse) {
-        log.info("Player {} won in room {}!", user.username(), roomId);
-
+    private void handleWin(UUID roomId,
+                           UserInternalResponse user,
+                           DeCoderGameInternalResponse moveResponse,
+                           DeCoderGameMessage moverMessage,
+                           DeCoderGameMessage othersMessage) {
         try {
-            PlayerBet rewardBet = roomManager.markPlayerBet(user, gameResponse.jackpot());
+            List<DecoderPlayerSpending> allSpending = roomManager.getActiveSpending(roomId);
 
-            DeCoderTransactionRequest creditRequest = gameTransactionMapper.toDeCoderRequest(
-                    roomId,
-                    roomManager.getRoomType(),
-                    rewardBet,
-                    user.guid()
-            );
+            if (!allSpending.isEmpty()) {
+                DeCoderTransactionRequest request = gameTransactionMapper.toDeCoderRequest(
+                        roomId,
+                        roomManager.getRoomType(),
+                        allSpending,
+                        user.guid(),
+                        moveResponse.jackpot()
+                );
 
-            GameTransactionResponse transactionResponse = grpcGameTransactionClient.saveDeCoderGameTransaction(creditRequest);
-
-            if (transactionResponse != null) {
-                log.info("Bank service credited jackpot for user: {}", user.guid());
+                grpcGameTransactionClient.saveDeCoderGameResults(request);
+                allSpending.forEach(s -> roomManager.markProcessed(roomId, s.getUserGuid()));
             }
         } catch (Exception e) {
-            log.error("CRITICAL: Failed to process reward transaction for user {}", user.email(), e);
+            log.error("Failed to process batch transaction: room={}, winner={}", roomId, user.guid(), e);
         } finally {
-            roomManager.broadcast(roomId, gameResponse);
+            roomManager.broadcastMove(roomId, user.guid(), moverMessage, othersMessage);
             roomManager.updateRoomStatus(roomId, RoomStatus.FINISHED);
         }
     }

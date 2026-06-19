@@ -43,8 +43,8 @@ public class GrpcGameTransactionClient {
         return execute(request, gameTransactionServiceBlockingStub::processDurakTransaction);
     }
 
-    public GameTransactionResponse saveDeCoderGameTransaction(DeCoderTransactionRequest request) {
-        log.info("gRPC process De-Coder transaction: roomId={}, has Winner={}", request.getRoomId(), request.getWinner());
+    public GameTransactionResponse saveDeCoderGameResults(DeCoderTransactionRequest request) {
+        log.info("gRPC process De-Coder transaction: roomId={}, playerCount={}", request.getRoomId(), request.getPlayerTransactionsCount());
 
         return execute(request, gameTransactionServiceBlockingStub::processDeCoderTransaction);
     }
