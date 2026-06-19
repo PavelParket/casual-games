@@ -30,20 +30,39 @@ export function BettingPanel({
 }: BettingPanelProps) {
     const hasBets = playerBetMap && Object.keys(playerBetMap).length > 0;
 
+    const showForm = !ready && !isGame;
+
     return (
         <Stack gap="0.75rem" style={{
             padding: "1rem",
             background: "var(--color-bg-secondary)",
             borderRadius: "var(--radius-md)",
             border: "1px solid var(--color-border)",
-            flex: 1
+            flex: 1,
+            display: "flex",
+            flexDirection: "column"
         }}>
             {hasBets && (
-                <>
-                    <Typography variant="h3">Current Bets</Typography>
-                    <Stack gap="0.25rem" justify="center">
+                <Box style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: showForm ? "none" : 1,
+                    minHeight: 0
+                }}>
+                    <Typography variant="h3" style={{ marginBottom: "0.75rem" }}>Current Bets</Typography>
+
+                    <Stack gap="1rem" justify="center">
                         {Object.entries(playerBetMap).map(([username, bet]) => (
-                            <Box key={username} style={{ display: "flex", justifyContent: "space-between" }}>
+                            <Box
+                                key={username}
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    padding: "0.75rem",
+                                    background: "var(--color-bg-secondary)",
+                                    borderRadius: "var(--radius-sm)",
+                                    border: "1px solid var(--color-border)",
+                                }}>
                                 <Typography variant="body">{username}</Typography>
                                 <Typography variant="body" style={{ color: "var(--color-income-text)", fontWeight: 600 }}>
                                     ${bet}
@@ -51,11 +70,18 @@ export function BettingPanel({
                             </Box>
                         ))}
                     </Stack>
-                    {!isGame && <Box style={{ height: "1px", background: "var(--color-border)" }} />}
-                </>
+
+                    {showForm && <Box style={{ height: "1px", background: "var(--color-border)", marginTop: "0.75rem" }} />}
+                </Box>
             )}
 
-            {!isGame && (
+            {isGame && !hasBets && (
+                <Typography variant="caption" style={{ opacity: 0.6, textAlign: "center", margin: "auto 0" }}>
+                    No bets placed this round
+                </Typography>
+            )}
+
+            {!ready && (
                 <Box style={{ display: "flex", flexDirection: "column", gap: "0.75rem", flex: 1 }}>
 
                     <Typography variant="h3">Place Your Bet</Typography>
@@ -98,7 +124,12 @@ export function BettingPanel({
                         {ready ? "Waiting..." : "Get Ready"}
                     </Button>
                 </Box>
+            )}
 
+            {ready && !isGame && (
+                <Typography variant="caption" style={{ textAlign: "center", color: "var(--color-text-secondary)", marginTop: "auto" }}>
+                    Waiting for opponent...
+                </Typography>
             )}
         </Stack>
     );

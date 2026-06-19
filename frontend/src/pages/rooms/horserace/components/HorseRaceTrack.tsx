@@ -1,7 +1,7 @@
 import { motion, type Transition } from "framer-motion";
 import { Box, Typography } from "../../../../ui";
 import HorseSprite from "../../../../assets/sprites/HorseSprite";
-import { HORSE_COLORS, HORSE_SPRITE_SIZE } from "../../../../models/HorseRace";
+import { HORSE_COLORS } from "../../../../models/HorseRace";
 import type { HorseRaceHorseKeyframes } from "../../../../models/HorseRace";
 
 interface HorseRaceTrackProps {
@@ -10,17 +10,18 @@ interface HorseRaceTrackProps {
     winnerIndex?: number;
     raceKeyframes: HorseRaceHorseKeyframes[] | null;
     onRaceEnd: () => void;
+    horseSize: number;
 }
 
 const RACE_DURATION_S = 12;
 
-export function HorseRaceTrack({ phase, horseCount, winnerIndex, raceKeyframes, onRaceEnd }: HorseRaceTrackProps) {
+export function HorseRaceTrack({ phase, horseCount, winnerIndex, raceKeyframes, onRaceEnd, horseSize }: HorseRaceTrackProps) {
     if (horseCount === 0) {
         return <Typography variant="caption" style={{ color: "var(--color-text-secondary)" }}>Loading race...</Typography>;
     }
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", paddingLeft: "24px", position: "relative" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "clamp(1.5rem, 5vw, 5rem)", paddingLeft: "24px", position: "relative" }}>
             {Array.from({ length: horseCount }, (_, i) => {
                 const color = HORSE_COLORS[i % HORSE_COLORS.length];
                 const isWinner = phase === "FINISHED" && winnerIndex === i;
@@ -44,13 +45,13 @@ export function HorseRaceTrack({ phase, horseCount, winnerIndex, raceKeyframes, 
                 }
 
                 return (
-                    <Box key={i} style={{ position: "relative", height: `${HORSE_SPRITE_SIZE}px`, display: "flex", alignItems: "center", overflow: "visible" }}>
-                        <span style={{ position: "absolute", left: -24, width: 20, textAlign: "right", fontSize: "16px", fontWeight: 700, color, opacity: 0.85, userSelect: "none", lineHeight: `${HORSE_SPRITE_SIZE}px` }}>
+                    <Box key={i} style={{ position: "relative", height: `${horseSize}px`, display: "flex", alignItems: "center", overflow: "visible" }}>
+                        <span style={{ position: "absolute", left: -24, width: 20, textAlign: "right", fontSize: "16px", fontWeight: 700, color, opacity: 0.85, userSelect: "none", lineHeight: `${horseSize}px` }}>
                             #{i + 1}
                         </span>
                         <Box style={{ position: "absolute", left: 0, right: 0, height: "2px", background: "var(--color-border)", borderRadius: "1px" }} />
 
-                        <div style={{ position: "absolute", left: 0, width: `calc(100% - ${HORSE_SPRITE_SIZE}px)`, height: "100%", zIndex: 1 }}>
+                        <div style={{ position: "absolute", left: 0, width: `calc(100% - ${horseSize}px)`, height: "100%", zIndex: 1 }}>
                             <motion.div
                                 initial={{ left: "0%" }}
                                 animate={{ left: animateTarget }}
@@ -67,7 +68,7 @@ export function HorseRaceTrack({ phase, horseCount, winnerIndex, raceKeyframes, 
                                     willChange: "left",
                                 }}
                             >
-                                <HorseSprite color={color} size={HORSE_SPRITE_SIZE} isRunning={isRunning} isWinner={isWinner} />
+                                <HorseSprite color={color} size={horseSize} isRunning={isRunning} isWinner={isWinner} />
                             </motion.div>
                         </div>
                     </Box>

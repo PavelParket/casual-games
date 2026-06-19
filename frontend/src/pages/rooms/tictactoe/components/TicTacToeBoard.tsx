@@ -31,9 +31,9 @@ export function TicTacToeBoard({
             gap: "1.5rem"
         }}>
             {isGame && winnerId === undefined && !gameAborted ? (
-                <Typography variant="h3" style={{ fontWeight: 500, height: "30px", display: "flex", alignItems: "center", gap: "6px" }}>
-                    Turn: <Typography variant="h3" style={{ color: "var(--color-primary)", fontWeight: 700 }}>{currentPlayerSymbol}</Typography>
-                    {isMyTurn ? <span style={{ opacity: 0.7, fontSize: "1rem" }}>(You)</span> : ""}
+                <Typography variant="h3" style={{ fontWeight: 700, height: "30px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    Turn: {currentPlayerSymbol}
+                    {isMyTurn && (<span>(You)</span>)}
                 </Typography>
             ) : (
                 <Box style={{ height: "30px" }} />

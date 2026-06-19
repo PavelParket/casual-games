@@ -4,10 +4,12 @@ import "../styles/DeCoderRoom.css";
 
 interface DeCoderBoardProps {
     gameActive: boolean;
+    balanceBefore?: number;
+    spent: number;
     onSendMove: (code: string) => void;
 }
 
-export function DeCoderBoard({ gameActive, onSendMove }: DeCoderBoardProps) {
+export function DeCoderBoard({ gameActive, balanceBefore, spent, onSendMove }: DeCoderBoardProps) {
     const [chars, setChars] = useState<string[]>(["", "", "", ""]);
     const [cooldown, setCooldown] = useState(0);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -145,6 +147,21 @@ export function DeCoderBoard({ gameActive, onSendMove }: DeCoderBoardProps) {
                     />
                     <CooldownTimer timeLeft={cooldown} maxTime={2} />
                 </Button>
+
+                <Box style={{ display: "flex", gap: "2rem", justifyContent: "center" }}>
+                    <Box style={{ textAlign: "center" }}>
+                        <Typography variant="caption" style={{ opacity: 0.7 }}>Balance</Typography>
+                        <Typography variant="body" style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                            {balanceBefore !== undefined ? `${balanceBefore}` : "—"}
+                        </Typography>
+                    </Box>
+                    <Box style={{ textAlign: "center" }}>
+                        <Typography variant="caption" style={{ opacity: 0.7 }}>Spent</Typography>
+                        <Typography variant="body" style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: spent > 0 ? "var(--color-expense-text)" : "inherit" }}>
+                            {spent > 0 ? `-${spent}` : "0"}
+                        </Typography>
+                    </Box>
+                </Box>
             </Box>
         </Box>
     );

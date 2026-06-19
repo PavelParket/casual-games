@@ -64,6 +64,8 @@ export default function HorseRaceRoom() {
     const isMobile = windowWidth <= 1060;
     const [isMobileBettingOpen, setIsMobileBettingOpen] = useState(false);
 
+    const horseSize = windowWidth <= 600 ? 56 : (windowWidth <= 1060 ? 72 : 88);
+
     useEffect(() => {
         if (phase === "RACING" || phase === "FINISHED") {
             setIsMobileBettingOpen(false);
@@ -128,6 +130,7 @@ export default function HorseRaceRoom() {
         }
 
         clearCountdown();
+        setSecondsLeft(null);
         setRaceKeyframes(horseKeyframes);
         setWinnerIndex(winnerHorseIndex);
         setPhase("RACING");
@@ -320,6 +323,7 @@ export default function HorseRaceRoom() {
                                         winnerIndex={winnerIndex}
                                         raceKeyframes={raceKeyframes}
                                         onRaceEnd={handleRaceEnd}
+                                        horseSize={horseSize}
                                     />
                                 </Card>
                             </Box>

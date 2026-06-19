@@ -12,7 +12,7 @@
     grid-template-columns: minmax(240px, 1fr) 1fr minmax(240px, 1fr);
     grid-template-areas: "players board betting";
     gap: 2rem;
-    height: 100%;
+    height: 520px;
     width: 100%;
 }
 
@@ -82,9 +82,8 @@
 
     .ttt-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 300px auto;
+        grid-template-rows: auto auto;
         grid-template-areas:
-            "players"
             "board"
             "betting"
         ;
@@ -92,8 +91,7 @@
     }
 
     .ttt-players-panel {
-        padding-right: 0;
-        display: block;
+        display: none;
     }
 
     .ttt-betting-panel {
@@ -144,6 +142,10 @@
 }
 
 .ttt-cell.disabled-empty {
-    background: rgba(128, 128, 128, 0.08);
+    background: rgba(0, 0, 0, 0.1);
     cursor: default;
+}
+
+html.dark .ttt-cell.disabled-empty {
+    background: rgba(0, 0, 0, 0.25);
 }

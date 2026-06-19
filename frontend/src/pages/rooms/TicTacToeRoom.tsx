@@ -1,6 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
 import type { RootState } from "../../store/store";
 import type { TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage, validateAmountInput } from "../../utils/SecurityUtils";
@@ -10,7 +11,7 @@ import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useGameSocket } from "../../hooks/useGameSocket";
 import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
-import { Box, Button, Card, Container, ToastContainer, Typography } from "../../ui";
+import { Box, Button, Card, Container, Icon, ToastContainer, Typography, useThemedIcon } from "../../ui";
 import { TicTacToePlayersPanel } from "./tictactoe/components/TicTacToePlayersPanel";
 import { TicTacToeBoard } from "./tictactoe/components/TicTacToeBoard";
 import { BettingPanel } from "./tictactoe/components/BettingPanel";
@@ -23,6 +24,7 @@ export default function TicTacToeRoom() {
     const { room, players, readyPlayersCount, totalPlayersCount, playerBetMap } = useSelector((state: RootState) => state.ticTacToeRoom);
 
     const navigate = useNavigate();
+    const { getIcon } = useThemedIcon();
 
     const roomId: string | undefined = useParams<{ roomId?: string }>().roomId;
 
@@ -42,6 +44,15 @@ export default function TicTacToeRoom() {
 
     const { toasts, showGameToast, dismiss } = useGameToast();
     const { showSystemToast } = useSystemToastContext();
+
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+    const isMobile = windowWidth <= 600;
+    const [isMobilePlayersOpen, setIsMobilePlayersOpen] = useState(false);
 
     useSliceErrorToast((state: RootState) => state.ticTacToeRoom.errors, clearError);
 
@@ -244,9 +255,21 @@ export default function TicTacToeRoom() {
                             alignItems: "center",
                             justifyContent: "space-between",
                         }}>
-                            <Typography variant="caption" style={{ opacity: 0.7 }}>
-                                {`Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`}
-                            </Typography>
+                            <Box>
+                                {isMobile ? (
+                                    <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <Icon src={getIcon("user")} size={18} alt="players" />
+                                        <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
+                                            Players ({players ? Object.keys(players).length : 0})
+                                        </Typography>
+                                    </Button>
+                                ) : (
+                                    <Typography variant="caption" style={{ opacity: 0.7 }}>
+                                        {`Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`}
+                                    </Typography>
+                                )}
+                            </Box>
+
                             <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
                                 Leave
                             </Button>
@@ -303,6 +326,32 @@ export default function TicTacToeRoom() {
                     )}
                 </Card>
             </Container>
+
+            <AnimatePresence>
+                {isMobile && isMobilePlayersOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+                            style={{ position: "fixed", inset: 0, background: "rgba(0, 0, 0, 0.4)", zIndex: 1000, backdropFilter: "blur(4px)" }}
+                            onClick={() => setIsMobilePlayersOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                            style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "300px", maxWidth: "85vw", background: "var(--color-bg)", zIndex: 1001, boxShadow: "var(--shadow-lg)", display: "flex", flexDirection: "column" }}
+                        >
+                            <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid var(--color-border)" }}>
+                                <Typography variant="h2">Players</Typography>
+                                <Button variant="ghost" onClick={() => setIsMobilePlayersOpen(false)} style={{ padding: "0.25rem", boxShadow: "none" }}>
+                                    <Icon src={getIcon("close")} size={20} alt="close" />
+                                </Button>
+                            </Box>
+                            <Box className="custom-scrollbar" style={{ flex: 1, overflowY: "auto" }}>
+                                <TicTacToePlayersPanel players={players} playersWithSymbols={playersWithSymbols} isGame={isGame} inDrawer={true} />
+                            </Box>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
         </Box>

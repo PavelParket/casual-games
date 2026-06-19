@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
 import type { AppDispatch, RootState } from "../../store/store";
 import { getPlayers, } from "../../store/slices/DeCoderRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useSystemToastContext } from "../../providers/SystemToastContext";
-import { Box, Card, Container, Typography, ToastContainer, Button } from "../../ui";
+import { Box, Card, Container, Typography, ToastContainer, Button, Icon, useThemedIcon } from "../../ui";
 import { validateRoomName } from "../../utils/SecurityUtils";
 import type { DeCoderMessage } from "../../models/WsMessage";
 import type { DeCoderGameHistory } from "../../models/DeCoderGameHistory";
@@ -21,7 +22,10 @@ export default function DeCoderRoom() {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
 
+    const { getIcon } = useThemedIcon();
+
     const { players, room } = useSelector((state: RootState) => state.deCoderRoom);
+    const balance = useSelector((state: RootState) => state.user.user?.balance);
 
     const { roomName: rawRoomName, roomId } = useParams<{
         roomName?: string;
@@ -36,12 +40,24 @@ export default function DeCoderRoom() {
     const [gameActive, setGameActive] = useState<boolean>(false);
     const [history, setHistory] = useState<DeCoderGameHistory[]>([]);
     const [jackpot, setJackpot] = useState<number>(0);
+    const [spent, setSpent] = useState<number>(0);
 
     const [endGameState, setEndGameState] = useState<{
         isOpen: boolean;
         isWin: boolean;
         winnerName?: string;
     } | null>(null);
+
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    const isMobile = windowWidth <= 600;
+    const [isMobilePlayersOpen, setIsMobilePlayersOpen] = useState(false);
 
     const requestSyncRef = useRef<() => void>(() => { });
 
@@ -64,6 +80,7 @@ export default function DeCoderRoom() {
         setGameActive,
         setHistory,
         setJackpot,
+        setSpent,
         setEndGameOverlay: setEndGameState,
         showGameToast,
     });
@@ -122,7 +139,16 @@ export default function DeCoderRoom() {
                             alignItems: "center",
                             justifyContent: "space-between",
                         }}>
-                            <Box />
+                            <Box>
+                                {isMobile && (
+                                    <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <Icon src={getIcon("user")} size={18} alt="players" />
+                                        <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
+                                            Players ({players ? Object.keys(players).length : 0})
+                                        </Typography>
+                                    </Button>
+                                )}
+                            </Box>
                             <Button variant="outline" onClick={() => navigate("/rooms")} style={{ padding: "0.25rem 0.75rem" }}>
                                 Leave
                             </Button>
@@ -139,13 +165,19 @@ export default function DeCoderRoom() {
                     ) : (
                         <Box className="decoder-main-content">
                             <Box className="decoder-grid">
-                                <Box className="decoder-players-panel">
-                                    <PlayersPanel players={players} />
-                                </Box>
+                                {!isMobile && (
+                                    <Box className="decoder-players-panel">
+                                        <PlayersPanel players={players} inDrawer={false} />
+                                    </Box>
+                                )}
 
                                 <Box className="decoder-board-panel">
-                                    <DeCoderBoard gameActive={gameActive} onSendMove={handleSendMove} />
-                                </Box>
+                                    <DeCoderBoard
+                                        gameActive={gameActive}
+                                        balanceBefore={balance}
+                                        spent={spent}
+                                        onSendMove={handleSendMove}
+                                    />                                </Box>
 
                                 <Box className="decoder-history-panel">
                                     <DeCoderHistory history={history} onRequestSync={requestSync} />
@@ -155,6 +187,33 @@ export default function DeCoderRoom() {
                     )}
                 </Card>
             </Container>
+
+            <AnimatePresence>
+                {isMobile && isMobilePlayersOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+                            style={{ position: "fixed", inset: 0, background: "rgba(0, 0, 0, 0.4)", zIndex: 1000, backdropFilter: "blur(4px)" }}
+                            onClick={() => setIsMobilePlayersOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                            style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "300px", maxWidth: "85vw", background: "var(--color-bg)", zIndex: 1001, boxShadow: "var(--shadow-lg)", display: "flex", flexDirection: "column" }}
+                        >
+                            <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid var(--color-border)" }}>
+                                <Typography variant="h2">Players</Typography>
+                                <Button variant="ghost" onClick={() => setIsMobilePlayersOpen(false)} style={{ padding: "0.25rem", boxShadow: "none" }}>
+                                    <Icon src={getIcon("close")} size={20} alt="close" />
+                                </Button>
+                            </Box>
+                            <Box className="custom-scrollbar" style={{ flex: 1, overflowY: "auto" }}>
+                                <PlayersPanel players={players} inDrawer={true} />
+                            </Box>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
 
             <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
         </Box>

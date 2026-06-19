@@ -5,31 +5,35 @@ import "../styles/DeCoderRoom.css";
 
 interface PlayersPanelProps {
     players?: Record<string, PlayerResponse>;
+    inDrawer?: boolean;
 }
 
-export function PlayersPanel({ players }: PlayersPanelProps) {
+export function PlayersPanel({ players, inDrawer = false }: PlayersPanelProps) {
     return (
         <Box
             className="custom-scrollbar"
             style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, 200px)",
+                gridTemplateColumns: inDrawer ? "1fr" : "repeat(auto-fit, minmax(180px, 1fr))",
                 justifyContent: "center",
                 alignContent: "start",
                 gap: "8px",
-                padding: "0.75rem",
-                paddingRight: "0.9rem",
+                padding: inDrawer ? "1rem 1.5rem" : "0.75rem",
+                paddingRight: inDrawer ? "1.5rem" : "0.9rem",
                 flex: 1,
-                background: "var(--color-bg-secondary)",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--color-border)",
+                background: inDrawer ? "transparent" : "var(--color-bg-secondary)",
+                borderRadius: inDrawer ? "0" : "var(--radius-md)",
+                border: inDrawer ? "none" : "1px solid var(--color-border)",
                 overflowY: "auto",
             }}
         >
 
-            <Typography variant="h3" style={{ gridColumn: "1 / -1", textAlign: "center", marginBottom: "1rem" }}>
-                Players
-            </Typography>
+            {!inDrawer && (
+                <Typography variant="h3" style={{ gridColumn: "1 / -1", textAlign: "center", marginBottom: "1rem" }}>
+                    Players
+                </Typography>
+            )}
+            
             {players &&
                 Object.entries(players).map(([playerGuid, player]) => (
                     <MiniProfile

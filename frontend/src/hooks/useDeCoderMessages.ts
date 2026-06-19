@@ -13,6 +13,7 @@ interface UseDeCoderMessagesProps {
     setGameActive: (value: boolean) => void;
     setHistory: React.Dispatch<React.SetStateAction<DeCoderGameHistory[]>>;
     setJackpot: (value: number) => void;
+    setSpent: (value: number) => void;
     setEndGameOverlay: (overlay: { isOpen: boolean; isWin: boolean; winnerName?: string }) => void;
     showGameToast: (message: string, variant: ToastVariant) => void;
 }
@@ -22,6 +23,7 @@ export function useDeCoderMessages({
     setGameActive,
     setHistory,
     setJackpot,
+    setSpent,
     setEndGameOverlay,
     showGameToast,
 }: UseDeCoderMessagesProps): (message: DeCoderMessage) => void {
@@ -39,6 +41,7 @@ export function useDeCoderMessages({
             case "STATE":
                 setHistory(message.gameState || []);
                 setJackpot(message.jackpot || 0);
+                if (message.spent !== undefined) setSpent(message.spent);
                 if (message.isGameStarted !== undefined) {
                     setGameActive(message.isGameStarted);
                 }
@@ -52,7 +55,9 @@ export function useDeCoderMessages({
                 if (message.jackpot !== undefined) {
                     setJackpot(message.jackpot);
                 }
-
+                if (message.spent !== undefined) {
+                    setSpent(message.spent);
+                }
                 if (message.player !== guid) {
                     const playerName = (players ?? {})[message.player!]?.username || "Someone";
                     showGameToast(`${playerName} made a move`, "game-info");
@@ -72,6 +77,9 @@ export function useDeCoderMessages({
                 }
                 if (message.jackpot !== undefined) {
                     setJackpot(message.jackpot);
+                }
+                if (message.spent !== undefined) {
+                    setSpent(message.spent);
                 }
 
                 const winnerName = (players ?? {})[message.winner!]?.username || "Unknown Player";
@@ -102,5 +110,5 @@ export function useDeCoderMessages({
             default:
                 break;
         }
-    }, [dispatch, guid, players, room, roomId, setGameActive, setEndGameOverlay, setHistory, setJackpot, showGameToast]);
+    }, [dispatch, guid, players, room, roomId, setGameActive, setEndGameOverlay, setHistory, setJackpot, setSpent, showGameToast]);
 }

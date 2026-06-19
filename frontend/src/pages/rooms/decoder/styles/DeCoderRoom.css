@@ -12,7 +12,7 @@
     grid-template-columns: minmax(240px, 1fr) 1fr minmax(240px, 1fr);
     grid-template-areas: "players board history";
     gap: 2rem;
-    height: 100%;
+    height: 520px;
     width: 100%;
 }
 
@@ -108,6 +108,7 @@
     }
 
     .decoder-board-panel {
+        padding-top: 3rem;
         padding-bottom: 1.5rem;
     }
 
@@ -123,9 +124,8 @@
 
     .decoder-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 200px auto;
+        grid-template-rows: auto auto;
         grid-template-areas:
-            "players"
             "board"
             "history"
         ;
@@ -133,8 +133,7 @@
     }
 
     .decoder-players-panel {
-        padding-right: 0;
-        display: block;
+        display: none;
     }
 
     .decoder-history-panel {
@@ -143,6 +142,10 @@
 
     .decoder-board-stack {
         gap: 1.5rem;
+    }
+
+    .decoder-board-panel {
+        padding-top: 2rem;
     }
 }
 
