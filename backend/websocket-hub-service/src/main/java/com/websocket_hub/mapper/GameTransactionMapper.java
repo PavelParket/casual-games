@@ -1,16 +1,19 @@
 package com.websocket_hub.mapper;
 
+import com.casualgames.grpc.transaction.DeCoderPlayerTransaction;
 import com.casualgames.grpc.transaction.DeCoderTransactionRequest;
 import com.casualgames.grpc.transaction.DurakTransactionRequest;
 import com.casualgames.grpc.transaction.HorseRacePlayerBetMessage;
 import com.casualgames.grpc.transaction.HorseRaceTransactionRequest;
 import com.casualgames.grpc.transaction.PlayerBetMessage;
 import com.casualgames.grpc.transaction.TicTacToeTransactionRequest;
+import com.websocket_hub.domain.entity.DecoderPlayerSpending;
 import com.websocket_hub.domain.entity.HorseRacePlayerBet;
 import com.websocket_hub.domain.entity.PlayerBet;
 import com.websocket_hub.domain.enums.RoomType;
 import org.mapstruct.Mapper;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -94,17 +97,28 @@ public interface GameTransactionMapper {
 
     default DeCoderTransactionRequest toDeCoderRequest(UUID roomId,
                                                        RoomType roomType,
-                                                       PlayerBet playerBet,
-                                                       UUID winner) {
-        DeCoderTransactionRequest.Builder builder = DeCoderTransactionRequest.newBuilder()
+                                                       List<DecoderPlayerSpending> playerSpendingList,
+                                                       UUID winnerGuid,
+                                                       BigDecimal jackpot) {
+        List<DeCoderPlayerTransaction> entries = playerSpendingList.stream()
+                .map(spending -> {
+                    DeCoderPlayerTransaction.Builder builder = DeCoderPlayerTransaction.newBuilder()
+                            .setGuid(spending.getUserGuid().toString())
+                            .setBalanceBefore(spending.getBalanceBefore().toPlainString())
+                            .setSpent(spending.getSpent().toPlainString());
+
+                    if (spending.getUserGuid().equals(winnerGuid) && jackpot != null) {
+                        builder.setJackpot(jackpot.toPlainString());
+                    }
+
+                    return builder.build();
+                })
+                .toList();
+
+        return DeCoderTransactionRequest.newBuilder()
                 .setRoomId(roomId.toString())
                 .setRoomType(roomType.name())
-                .setPlayerBet(toPlayerBetMessage(playerBet));
-
-        if (winner != null) {
-            builder.setWinner(winner.toString());
-        }
-
-        return builder.build();
+                .addAllPlayerTransactions(entries)
+                .build();
     }
 }
