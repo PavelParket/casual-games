@@ -60,7 +60,7 @@ export function DeckArea({ deckCardsLeft, trumpCard, trumpSuit }: DeckAreaProps)
             {isDeckEmpty && trumpSuit && (
                 <Box className="empty-deck-placeholder">
                     <Typography variant="h2" style={{
-                        color: trumpSuit === "HEARTS" || trumpSuit === "DIAMONDS"
+                        color: trumpSuit === "HEARTS" || trumpSuit === "CLUBS"
                             ? "#e74c3c"
                             : "var(--color-text)",
                     }}>
