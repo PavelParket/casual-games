@@ -59,7 +59,7 @@ export function TurnTimer({ remainingSeconds, isMyTurn }: TurnTimerProps) {
     const isLow = display <= 10;
 
     return (
-        <Box style={{
+        <Box className="durak-turn-timer" style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -68,7 +68,8 @@ export function TurnTimer({ remainingSeconds, isMyTurn }: TurnTimerProps) {
             borderRadius: "var(--radius-md)",
             border: `1px solid ${isLow ? "rgba(231,76,60,0.5)" : "var(--color-border)"}`,
             background: isLow ? "rgba(231,76,60,0.08)" : "var(--color-bg-glass)",
-            minWidth: "80px",
+            width: "100%",
+            minWidth: "60px",
             transition: "border-color 0.3s, background 0.3s",
         }}>
             <Typography variant="caption" style={{

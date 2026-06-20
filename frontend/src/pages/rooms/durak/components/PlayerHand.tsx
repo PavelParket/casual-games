@@ -31,6 +31,10 @@ export function PlayerHand({
 
     const sortedCards = trumpSuit ? sortCards(cards, trumpSuit) : cards;
 
+    const baseOverlap = 16;
+    const extraOverlap = Math.max(0, cards.length - 5) * 2.5;
+    const overlap = Math.min(50, baseOverlap + extraOverlap);
+
     const playCardOnce = (card: DurakCard) => {
         if (playLock.current) {
             return;
@@ -77,14 +81,13 @@ export function PlayerHand({
             gap: "0.75rem",
             padding: "0.5rem 0",
         }}>
-            {/* Name + badge */}
-            <Box style={{
+            <Box className="player-hand-info" style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "flex-start",
                 gap: "0.25rem",
                 minWidth: "80px",
-                flexShrink: 0,
+                flexShrink: 0
             }}>
                 <Typography variant="caption" style={{
                     fontWeight: 600,
@@ -92,7 +95,7 @@ export function PlayerHand({
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    maxWidth: "80px",
+                    maxWidth: "80px"
                 }}>
                     {playerName}
                 </Typography>
@@ -102,7 +105,7 @@ export function PlayerHand({
                     borderRadius: "var(--radius-sm)",
                     padding: "0.1rem 0.4rem",
                     fontSize: "0.7rem",
-                    fontWeight: 600,
+                    fontWeight: 600
                 }}>
                     {cards.length} cards
                 </Typography>
@@ -142,7 +145,7 @@ export function PlayerHand({
                             animate={{ x: 0, y: 0, opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, transition: { duration: 0.08 } }}
                             transition={{ duration: 0.25, ease: "easeOut" }}
-                            style={{ marginLeft: i === 0 ? 0 : -20 }}
+                            style={{ marginLeft: i === 0 ? 0 : -overlap }}
                         >
                             <PlayingCard
                                 card={card}
