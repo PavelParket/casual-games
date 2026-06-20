@@ -55,11 +55,6 @@ export function EndGameOverlay({ winnerId, myGuid, players, onLeave }: EndGameOv
             }}
         >
             <Stack gap="1.5rem" align="center">
-                <motion.div variants={itemVariants}>
-                    <Typography variant="h1" style={{ fontSize: "3rem" }}>
-                        {isDraw ? "🤝" : iWon ? "🏆" : "😔"}
-                    </Typography>
-                </motion.div>
 
                 <motion.div variants={itemVariants}>
                     <Typography variant="h2" style={{

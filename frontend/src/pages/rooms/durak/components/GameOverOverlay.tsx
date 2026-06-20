@@ -54,12 +54,6 @@ export function GameOverOverlay({ winnerId, myGuid, players, onLeave }: GameOver
             }}
         >
             <Stack gap="1.5rem" align="center">
-                {/* Result icon */}
-                <motion.div variants={itemVariants}>
-                    <Typography variant="h1" style={{ fontSize: "3rem" }}>
-                        {isDraw ? "🤝" : iWon ? "🏆" : "😔"}
-                    </Typography>
-                </motion.div>
 
                 {/* Result title */}
                 <motion.div variants={itemVariants}>

@@ -4,9 +4,9 @@ import type { CardRank, CardSuit, DurakCard } from "../../../../models/Durak";
 export function suitSymbol(suit: CardSuit): string {
     switch (suit) {
         case 'HEARTS': return '♥';
-        case 'DIAMONDS': return '♠';
-        case 'CLUBS': return '♦';
-        case 'SPADES': return '♣';
+        case 'DIAMONDS': return '♦';
+        case 'CLUBS': return '♣';
+        case 'SPADES': return '♠';
     }
 }
 
