@@ -8,6 +8,7 @@ import com.websocket_hub.domain.enums.events.DeCoderGameEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Mapper(componentModel = "spring")
@@ -27,5 +28,7 @@ public interface DeCoderGameMessageMapper extends MessageMapper {
     DeCoderGameMessage toMessage(DeCoderGameInternalResponse deCoderGameInternalResponse,
                                  MessageType type,
                                  UUID fromUserId,
-                                 UUID toUserId);
+                                 UUID toUserId,
+                                 BigDecimal balanceBefore,
+                                 BigDecimal spent);
 }
