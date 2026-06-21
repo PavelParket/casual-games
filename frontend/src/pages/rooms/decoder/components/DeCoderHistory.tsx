@@ -71,7 +71,9 @@ export function DeCoderHistory({ history, onRequestSync }: DeCoderHistoryProps) 
                 style={{
                     flex: 1,
                     minHeight: 0,
+                    maxHeight: "390px",
                     overflowY: "auto",
+                    paddingRight: "8px",
                     background: "var(--color-bg-soft)",
                     display: "grid",
                     alignContent: "start",

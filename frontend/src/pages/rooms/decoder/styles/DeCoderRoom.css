@@ -90,6 +90,7 @@
     transition: border-color 0.2s ease;
     caret-color: transparent;
     text-transform: uppercase;
+    font-family: inherit;
 }
 
 .decoder-char-input:focus {

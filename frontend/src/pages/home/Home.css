@@ -9,6 +9,15 @@
 .home-page .sidebar {
     width: 280px;
     flex-shrink: 0;
+    position: relative;
+}
+
+.home-page .top-wins-desktop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 .home-page .games-container {
@@ -36,9 +45,11 @@
     .home-page .sidebar {
         width: 100%;
         order: 2;
+        position: static;
     }
 
     .home-page .top-wins-desktop {
+        position: relative;
         max-height: 350px;
     }
 

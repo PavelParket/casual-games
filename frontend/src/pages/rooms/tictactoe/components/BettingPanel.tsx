@@ -65,7 +65,7 @@ export function BettingPanel({
                                 }}>
                                 <Typography variant="body">{username}</Typography>
                                 <Typography variant="body" style={{ color: "var(--color-income-text)", fontWeight: 600 }}>
-                                    ${bet}
+                                    {bet} CG
                                 </Typography>
                             </Box>
                         ))}
@@ -88,7 +88,7 @@ export function BettingPanel({
 
                     {balance !== undefined && (
                         <Typography variant="caption" style={{ opacity: 0.7 }}>
-                            Balance: ${balance.toFixed(2)}
+                            Balance: {balance.toFixed(2)} CG Coins
                         </Typography>
                     )}
 

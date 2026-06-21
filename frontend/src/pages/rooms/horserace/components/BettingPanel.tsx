@@ -111,7 +111,7 @@ export function BettingPanel({
 
                     {balance !== undefined && (
                         <Typography variant="caption" style={{ color: "var(--color-text-secondary)", fontSize: "0.75rem" }}>
-                            Balance: ${balance.toFixed(2)}
+                            Balance: {balance.toFixed(2)} CG Coins
                         </Typography>)}
 
                     <Typography variant="caption" style={{ color: "var(--color-text-secondary)", fontWeight: 600 }}>
@@ -129,7 +129,7 @@ export function BettingPanel({
 
                     {potentialWin !== null && (
                         <Typography variant="caption" style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)" }}>
-                            Win: <span style={{ color: "var(--color-success, #2ecc71)", fontWeight: 600 }}>${potentialWin.toFixed(2)}</span>
+                            Win: <span style={{ color: "var(--color-success, #2ecc71)", fontWeight: 600 }}>{potentialWin.toFixed(2)} CG</span>
                         </Typography>
                     )}
 

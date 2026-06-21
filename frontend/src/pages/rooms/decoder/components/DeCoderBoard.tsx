@@ -157,8 +157,8 @@ export function DeCoderBoard({ gameActive, balanceBefore, spent, onSendMove }: D
                     </Box>
                     <Box style={{ textAlign: "center" }}>
                         <Typography variant="caption" style={{ opacity: 0.7 }}>Spent</Typography>
-                        <Typography variant="body" style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: spent > 0 ? "var(--color-expense-text)" : "inherit" }}>
-                            {spent > 0 ? `-${spent}` : "0"}
+                        <Typography variant="body" style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                            {spent > 0 ? `${spent}` : "0"}
                         </Typography>
                     </Box>
                 </Box>

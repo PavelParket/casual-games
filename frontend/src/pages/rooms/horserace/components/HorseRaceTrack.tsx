@@ -21,7 +21,7 @@ export function HorseRaceTrack({ phase, horseCount, winnerIndex, raceKeyframes, 
     }
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "clamp(1.5rem, 5vw, 5rem)", paddingLeft: "24px", position: "relative" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "clamp(0.5rem, 5vw, 1.5rem)", paddingLeft: "24px", position: "relative" }}>
             {Array.from({ length: horseCount }, (_, i) => {
                 const color = HORSE_COLORS[i % HORSE_COLORS.length];
                 const isWinner = phase === "FINISHED" && winnerIndex === i;
