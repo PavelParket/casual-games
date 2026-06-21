@@ -558,16 +558,17 @@ export default function Profile() {
             <AvatarEditorModal isOpen={isEditorOpen} imageSrc={selectedImage} onClose={() => { setIsEditorOpen(false); setSelectedImage(null); }} onUpload={handleUploadProfilePicture} isLoading={isLoading} />
             <Modal isOpen={depositModalOpen} onClose={() => { setDepositModalOpen(false); setDepositAmount(''); setDepositError(null); }} title="Deposit Funds">
                 <Stack gap="1rem">
-                    <Typography variant="body">Enter the amount you wish to add to your balance.</Typography>
+                    <Typography variant="body">You can deposit <strong>once per hour</strong> if your balance is under <strong>5000 CG Coins</strong>.
+                    </Typography>
                     <FormField type="text" inputMode="decimal" value={depositAmount} onChange={(e) => {
                         const val = e.target.value.replace(',', '.');
                         if (val !== '' && !isNaN(Number(val)) && parseFloat(val) > 5000) {
                             return;
                         }
                         handleDepositAmountChange(e);
-                    }} onFocus={(e) => e.target.select()} placeholder="Amount" rounded />
+                    }} onFocus={(e) => e.target.select()} placeholder="Amount" rounded disabled={balance >= 5000} />
                     {depositError && <Typography variant="caption" style={{ color: 'var(--color-expense-text)' }}>{depositError}</Typography>}
-                    <Button variant="solid" onClick={handleDeposit} disabled={isDepositing || !depositAmount || depositAmount === '.'}>{isDepositing ? "Processing..." : "Confirm Deposit"}</Button>
+                    <Button variant="solid" onClick={handleDeposit} disabled={isDepositing || !depositAmount || depositAmount === '.' || balance >= 5000}>{isDepositing ? "Processing..." : "Confirm Deposit"}</Button>
                 </Stack>
             </Modal>
             <ImageViewerModal isOpen={isViewerOpen} src={user?.linkProfilePicture || ""} alt="Profile Picture" onClose={() => setIsViewerOpen(false)} />

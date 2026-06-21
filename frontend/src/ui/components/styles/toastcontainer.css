@@ -21,11 +21,13 @@
 .toast-container--system {
     top: 4.5rem;
     right: 1.5rem;
+    max-width: calc(100vw - 2rem);
 }
 
 .toast-container--game {
     top: 4.5rem;
     left: 50%;
+    padding: 0 1rem;
     transform: translateX(-50%);
 }
 
