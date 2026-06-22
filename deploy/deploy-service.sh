@@ -11,6 +11,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.prod.yaml"
+ENV_FILE="$SCRIPT_DIR/prod.env"
 COMMON_UTILS_DIR="$PROJECT_ROOT/backend/common-utils"
 
 CYAN='\033[0;36m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
@@ -66,13 +67,13 @@ fi
 # --- Build -------------------------------------------------------------------
 step "Building: ${SERVICES[*]}"
 cd "$PROJECT_ROOT"
-docker compose -f "$COMPOSE_FILE" build "${SERVICES[@]}"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build "${SERVICES[@]}"
 ok "built"
 
 # --- Up ----------------------------------------------------------------------
 step "Restarting: ${SERVICES[*]}"
-docker compose -f "$COMPOSE_FILE" up -d "${SERVICES[@]}"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d "${SERVICES[@]}"
 ok "restarted"
 
 echo ""
-docker compose -f "$COMPOSE_FILE" ps "${SERVICES[@]}"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps "${SERVICES[@]}"

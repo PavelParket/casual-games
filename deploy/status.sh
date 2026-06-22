@@ -5,6 +5,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.prod.yaml"
+ENV_FILE="$SCRIPT_DIR/prod.env"
 
 CYAN='\033[0;36m'; YELLOW='\033[1;33m'; NC='\033[0m'
 section() { echo -e "\n${YELLOW}> $*${NC}"; }
@@ -12,7 +13,7 @@ section() { echo -e "\n${YELLOW}> $*${NC}"; }
 echo -e "\n${CYAN}  casual-games - system status  $(date '+%Y-%m-%d %H:%M:%S')${NC}"
 
 section "Containers"
-docker compose -f "$COMPOSE_FILE" ps
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps
 
 section "Resource usage (CPU / Memory)"
 docker stats --no-stream \
