@@ -5,7 +5,7 @@ import { register } from "../../store/slices/AuthSlice";
 import type { AppDispatch } from "../../store/store";
 import { useDispatch } from "react-redux";
 import { isValidEmail, validateEmail, validateUsername } from "../../utils/SecurityUtils";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
+import { useSystemToastContext } from "../../hooks/useSystemToastContext";
 
 export default function Register() {
     const dispatch = useDispatch<AppDispatch>();

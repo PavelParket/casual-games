@@ -6,7 +6,7 @@ import type { AppDispatch, RootState } from "../../store/store";
 import { login } from "../../store/slices/AuthSlice";
 import { useThemedIcon } from "../../ui/hooks/useThemedIcon";
 import { isValidEmail, validateEmail } from "../../utils/SecurityUtils";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
+import { useSystemToastContext } from "../../hooks/useSystemToastContext";
 
 export default function Login() {
     const [form, setForm] = useState({ email: "", password: "" });

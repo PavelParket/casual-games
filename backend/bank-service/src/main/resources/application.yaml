@@ -84,6 +84,11 @@ kafka:
 cron:
   create-transaction-summaries: ${CRON_CREATE_TRANSACTION_SUMMARIES:0 0 3 1 * *}
 
+  scheduling:
+    transaction-summary:
+      initial-delay: 10000
+      fixed-rate: P30D # every month default
+
 logging:
   level:
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}

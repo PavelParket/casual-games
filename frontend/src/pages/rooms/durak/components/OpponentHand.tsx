@@ -10,13 +10,17 @@ interface OpponentHandProps {
 export function OpponentHand({ cardCount, opponentName }: OpponentHandProps) {
     const displayCount = Math.max(0, cardCount);
 
+    const baseOverlap = 28;
+    const extraOverlap = Math.max(0, displayCount - 5) * 6;
+    const overlap = Math.min(38, baseOverlap + extraOverlap);
+
     return (
         <Box style={{
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            gap: "0.75rem",
+            gap: "0.5rem",
             padding: "0.5rem 0",
         }}>
             {/* Name + badge */}
@@ -64,7 +68,7 @@ export function OpponentHand({ cardCount, opponentName }: OpponentHandProps) {
                             animate={{ x: 0, y: 0, opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, transition: { duration: 0.1 } }}
                             transition={{ duration: 0.25, ease: "easeOut" }}
-                            style={{ marginLeft: i === 0 ? 0 : -28, zIndex: i }}
+                            style={{ marginLeft: i === 0 ? 0 : -overlap, zIndex: i }}
                         >
                             <PlayingCard faceDown size="sm" />
                         </motion.div>
@@ -81,6 +85,7 @@ export function OpponentHand({ cardCount, opponentName }: OpponentHandProps) {
                     </Typography>
                 )}
             </Box>
+            <Box />
         </Box>
     );
 }

@@ -1,9 +1,9 @@
 import type { ActionCreatorWithPayload } from "@reduxjs/toolkit";
 import type { AppDispatch, RootState } from "../store/store";
 import { useDispatch, useSelector } from "react-redux";
-import { useSystemToastContext } from "../providers/SystemToastContext";
 import { useEffect, useRef } from "react";
 import { errorCodeMessages } from "../models/constants/ErrorCodeMessages";
+import { useSystemToastContext } from "./useSystemToastContext";
 
 type ErrorsSelector = (state: RootState) => Record<string, string | null>;
 

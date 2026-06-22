@@ -1,25 +1,28 @@
+import "./durak/styles/DurakRoom.css";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import type { RootState } from "../../store/store";
 import { useGameToast } from "../../hooks/useGameToast";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { clearError } from "../../store/slices/DurakRoomSlice";
 import type { CardSuit, DurakAction, DurakCard, DurakPhase, DurakTablePair } from "../../models/Durak";
 import type { DurakGameMessage } from "../../models/WsMessage";
 import { useDurakMessages } from "../../hooks/useDurakMessages";
-import { Avatar, Box, Button, Card, Container, Stack, ToastContainer, Typography } from "../../ui";
+import { Box, Button, Card, Container, Icon, ToastContainer, Typography, useThemedIcon } from "../../ui";
 import { DurakBoard } from "./durak/components/DurakBoard";
 import { BettingPanel } from "./durak/components/BettingPanel";
 import { GameOverOverlay } from "./durak/components/GameOverOverlay";
-import { MiniProfile } from "../profile/components/MiniProfile";
 import { useGameSocket } from "../../hooks/useGameSocket";
+import { DurakPlayersPanel } from "./durak/components/DurakPlayerPanel";
+import { useSystemToastContext } from "../../hooks/useSystemToastContext";
 
 export type TableExitMode = "bita" | "pickup" | null;
 
 export default function DurakRoom() {
     const navigate = useNavigate();
+    const { getIcon } = useThemedIcon();
 
     const guid = useSelector((state: RootState) => state.auth.user?.guid);
     const balance = useSelector((state: RootState) => state.user.user?.balance);
@@ -34,6 +37,15 @@ export default function DurakRoom() {
     const [ready, setReady] = useState(false);
     const [betInput, setBetInput] = useState("");
     const [betPlaced, setBetPlaced] = useState(false);
+
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+    const isMobile = windowWidth <= 1060;
+    const [isMobilePlayersOpen, setIsMobilePlayersOpen] = useState(false);
 
     const [isGame, setIsGame] = useState(false);
     const [phase, setPhase] = useState<DurakPhase | null>(null);
@@ -243,23 +255,33 @@ export default function DurakRoom() {
                 </Box>
 
                 <Card style={{ padding: 0 }}>
-                    <Box style={{
-                        padding: "0.75rem 1.5rem",
-                        borderBottom: "1px solid var(--color-border)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                    }}>
-                        <Typography variant="caption" style={{ opacity: 0.7 }}>
-                            {isGame
-                                ? `Phase: ${phase ?? "..."}`
-                                : `Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`
-                            }
-                        </Typography>
-                        <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
-                            Leave
-                        </Button>
-                    </Box>
+                    {!isGameOver && (
+                        <Box style={{
+                            padding: "0.75rem 1.5rem",
+                            borderBottom: "1px solid var(--color-border)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                        }}>
+                            <Box>
+                                {isMobile ? (
+                                    <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <Icon src={getIcon("user")} size={18} alt="players" />
+                                        <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
+                                            Players ({players ? Object.keys(players).length : 0})
+                                        </Typography>
+                                    </Button>
+                                ) : (
+                                    <Typography variant="caption" style={{ opacity: 0.7 }}>
+                                        {`Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`}
+                                    </Typography>
+                                )}
+                            </Box>
+                            <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
+                                Leave
+                            </Button>
+                        </Box>
+                    )}
 
                     {isGame && (
                         <DurakBoard
@@ -297,72 +319,55 @@ export default function DurakRoom() {
                     )}
 
                     {!isGame && !isGameOver && (
-                        <Box style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 1fr 1fr",
-                            alignItems: "start",
-                            padding: "1.5rem",
-                            gap: "1.5rem",
-                        }}>
-                            <Stack gap="1rem" align="center" justify="center" style={{ paddingTop: "1rem" }}>
-                                <Typography variant="h3">Players</Typography>
-                                {Object.entries(players ?? {}).map(([playerGuid, player]) => (
-                                    <MiniProfile
-                                        key={playerGuid}
-                                        guid={playerGuid}
-                                        username={player.username}
-                                        status={player.status}
-                                        avatarUrl={player.linkProfilePictureMini}
-                                        avatarUrlFull={player.linkProfilePicture}>
-                                        <Stack
-                                            direction="row"
-                                            align="center"
-                                            gap="0.75rem"
-                                            style={{
-                                                cursor: "pointer",
-                                                width: "200px",
-                                                padding: "0.35rem",
-                                                paddingRight: "1rem",
-                                                background: "var(--color-bg-glass)",
-                                                border: "1px solid var(--color-border)",
-                                                borderRadius: "var(--radius-md)",
-                                                boxShadow: "var(--shadow-sm)",
-                                                transition: "all 0.2s ease",
-                                                userSelect: "none"
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.boxShadow = "var(--shadow-md)";
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.boxShadow = "var(--shadow-sm)";
-                                            }}
-                                        >
-                                            <Avatar src={player.linkProfilePictureMini} fallback={player.username} size={40} />
-
-                                            <Typography variant="body" style={{ fontWeight: "bold" }}>
-                                                {player.username}
-                                            </Typography>
-                                        </Stack>
-                                    </MiniProfile>
-                                ))}
-                            </Stack>
-                            <Box />
-                            <BettingPanel
-                                players={players}
-                                balance={balance}
-                                betInput={betInput}
-                                betPlaced={betPlaced}
-                                ready={ready}
-                                playerBetMap={playerBetMap}
-                                isConnected={isConnected}
-                                onBetInputChange={setBetInput}
-                                onPlaceBet={handlePlaceBet}
-                                onReady={handleReady}
-                            />
+                        <Box className="durak-main-content">
+                            <Box className="durak-lobby-grid">
+                                {!isMobile && (
+                                    <DurakPlayersPanel players={players} inDrawer={false} />
+                                )}
+                                <Box />
+                                <BettingPanel
+                                    players={players}
+                                    balance={balance}
+                                    betInput={betInput}
+                                    betPlaced={betPlaced}
+                                    ready={ready}
+                                    playerBetMap={playerBetMap}
+                                    isConnected={isConnected}
+                                    onBetInputChange={setBetInput}
+                                    onPlaceBet={handlePlaceBet}
+                                    onReady={handleReady}
+                                />
+                            </Box>
                         </Box>
                     )}
                 </Card>
             </Container>
+
+            <AnimatePresence>
+                {isMobile && isMobilePlayersOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+                            style={{ position: "fixed", inset: 0, background: "rgba(0, 0, 0, 0.4)", zIndex: 1000, backdropFilter: "blur(4px)" }}
+                            onClick={() => setIsMobilePlayersOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                            style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "300px", maxWidth: "85vw", background: "var(--color-bg)", zIndex: 1001, boxShadow: "var(--shadow-lg)", display: "flex", flexDirection: "column" }}
+                        >
+                            <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid var(--color-border)" }}>
+                                <Typography variant="h2">Players</Typography>
+                                <Button variant="ghost" onClick={() => setIsMobilePlayersOpen(false)} style={{ padding: "0.25rem", boxShadow: "none" }}>
+                                    <Icon src={getIcon("close")} size={20} alt="close" />
+                                </Button>
+                            </Box>
+                            <Box className="custom-scrollbar" style={{ flex: 1, overflowY: "auto" }}>
+                                <DurakPlayersPanel players={players} inDrawer={true} />
+                            </Box>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
         </Box >

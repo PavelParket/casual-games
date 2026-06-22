@@ -73,13 +73,7 @@ export function TablePairSlot({ pair, isOpponentAttacker, tableExitMode, discard
             animate={slotAnimate}
             exit={getExitAnimation()}
             transition={{ duration: 0.28, ease: "easeOut" }}
-            style={{
-                position: "relative",
-                width: 62,
-                height: 110,
-                flexShrink: 0,
-                margin: "0 1rem",
-            }}
+            className="table-pair-slot"
         >
             {/* Attack card */}
             <Box style={{ position: "absolute", top: 0, left: 0 }}>

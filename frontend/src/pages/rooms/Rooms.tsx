@@ -1,17 +1,17 @@
+import "./style/Rooms.css"
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Box, Button, Card, Container, Icon, Modal, ComboBox, Stack, Textfield, Typography, useThemedIcon, Grid, Divider } from "../../ui";
+import { Box, Button, Card, Container, Icon, Modal, ComboBox, Stack, FormField, Typography, useThemedIcon, Grid, Divider } from "../../ui";
 import { CreateRoomCard } from "./components/CreateRoomCard";
 import { RoomsFilterPanel } from "./components/RoomsFilterPanel";
 import { ROOM_TYPE_HANDLERS, ROOM_TYPE_LABELS, type Room, type RoomType, type RoomSortField, type SortDirection, type RoomFilterRequest } from "../../models/Room";
 import { validateRoomName } from "../../utils/SecurityUtils";
 import { clearError, createRoom, searchRooms } from "../../store/slices/RoomSlice";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
-import "./style/Rooms.css"
+import { useSystemToastContext } from "../../hooks/useSystemToastContext";
 
 const AVAILABLE_ROOM_TYPES = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
 
@@ -234,9 +234,18 @@ export default function Rooms() {
             <Container>
 
                 <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem 0 1rem", flexWrap: "wrap", gap: "1rem" }}>
-                    <Typography variant="h2">Rooms</Typography>
 
-                    <Stack direction="row" gap="1rem">
+                    <Box style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: isMobile ? "1 1 100%" : "0 1 auto" }}>
+                        <Typography variant="h2">Rooms</Typography>
+
+                        {isMobile && (
+                            <Button variant="ghost" onClick={handleRefresh} disabled={isRefreshing} style={{ padding: "0.4rem" }}>
+                                <Icon src={getIcon("refresh")} alt="refresh" size={24} />
+                            </Button>
+                        )}
+                    </Box>
+
+                    <Stack direction="row" gap="1rem" justify="end">
                         {isMobile && (
                             <Button variant="outline" onClick={() => setIsMobileFiltersOpen(true)} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                 <Icon src={getIcon("filter")} alt="filters" size={17} />
@@ -331,7 +340,7 @@ export default function Rooms() {
 
             <Modal isOpen={isCreateRoomModalOpen} onClose={() => { setIsCreateRoomModalOpen(false); setValidationError(""); }} title="Create Room">
                 <Box style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <Textfield value={roomName} onChange={handleRoomNameChange} placeholder="Room name" />
+                    <FormField value={roomName} onChange={(e) => handleRoomNameChange(e.target.value)} placeholder="Room name" rounded />
                     <ComboBox options={AVAILABLE_ROOM_TYPES.map((type) => ({ value: type, label: ROOM_TYPE_LABELS[type] }))} value={roomType} onValueChange={setRoomType} placeholder="Choose room type" searchable />
                     {validationError && <Typography variant="caption" style={{ color: "red", textAlign: "center" }}>{validationError}</Typography>}
                     <Button variant="solid" onClick={handleCreateRoom}>Create</Button>

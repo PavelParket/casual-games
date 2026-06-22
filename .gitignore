@@ -129,7 +129,6 @@ deploy/prod.env
 
 **/out/
 
-
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
@@ -210,3 +209,4 @@ dist-ssr
 # Generated for Docker builds — never commit
 backend/.m2-common-utils/
 /deploy/certs
+

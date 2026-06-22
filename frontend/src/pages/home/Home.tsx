@@ -54,11 +54,12 @@ export default function Home() {
                 flex: 1,
                 overflowY: "auto",
                 paddingRight: "4px",
-                maxHeight: isMobile ? "250px" : undefined
+                minHeight: 0,
+                maxHeight: isMobile ? "250px" : "360px"
             }}
         >
             {isLoadingTopWins ? (
-                <Skeleton variant="rectangular" height={41.58} count={10} />
+                <Skeleton variant="rectangular" height={36} count={9} />
             ) : topWins.length > 0 ? (
                 topWins.map((topWin) => (
                     <Stack
