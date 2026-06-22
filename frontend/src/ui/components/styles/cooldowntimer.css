@@ -4,6 +4,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: opacity 0.3s ease;
 }
 
 .cooldown-timer-svg {
@@ -28,4 +29,14 @@
     color: currentColor;
     font-size: 0.75rem;
     line-height: 1;
+}
+
+@keyframes cooldown-progress {
+    0% {
+        stroke-dashoffset: 0;
+    }
+
+    100% {
+        stroke-dashoffset: var(--circumference);
+    }
 }

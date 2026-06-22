@@ -24,14 +24,13 @@ export const DiscardPile = forwardRef<HTMLDivElement, DiscardPileProps>(
                         <Typography variant="caption" style={{
                             fontSize: "0.65rem",
                             opacity: 0.6,
-                            textTransform: "uppercase",
                             letterSpacing: "0.05em",
                         }}>
-                            Бита
+                            Discards
                         </Typography>
 
                         {/* Stacked pile */}
-                        <Box style={{ position: "relative", width: 44, height: 62 }}>
+                        <Box className="discard-pile-container">
                             {Array.from({ length: layers }).map((_, i) => (
                                 <Box
                                     key={i}

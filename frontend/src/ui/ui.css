@@ -383,7 +383,7 @@ html.dark {
     }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1320px) {
     :root {
         --page-margin-x: 10rem;
         --page-margin-y: 0;

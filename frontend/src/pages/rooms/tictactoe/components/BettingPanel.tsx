@@ -1,16 +1,15 @@
 import { Box, Button, FormField, Stack, Typography } from "../../../../ui";
-import type { PlayerResponse } from "../../../../models/Room";
-import { validateAmountInput } from "../../../../utils/SecurityUtils";
-import "../styles/DurakRoom.css";
+import "../styles/TicTacToeRoom.css"
 
 interface BettingPanelProps {
     balance: number | undefined;
     betInput: string;
     betPlaced: boolean;
     ready: boolean;
+    isGame: boolean;
     playerBetMap: Record<string, number> | undefined;
-    players: Record<string, PlayerResponse> | undefined;
     isConnected: boolean;
+    gameAborted: boolean;
     onBetInputChange: (value: string) => void;
     onPlaceBet: () => void;
     onReady: () => void;
@@ -21,21 +20,17 @@ export function BettingPanel({
     betInput,
     betPlaced,
     ready,
+    isGame,
     playerBetMap,
-    players,
     isConnected,
+    gameAborted,
     onBetInputChange,
     onPlaceBet,
     onReady,
 }: BettingPanelProps) {
     const hasBets = playerBetMap && Object.keys(playerBetMap).length > 0;
 
-    const handleBetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const validated = validateAmountInput(e.target.value);
-        if (validated !== null) {
-            onBetInputChange(validated);
-        }
-    };
+    const showForm = !ready && !isGame;
 
     return (
         <Stack gap="0.75rem" style={{
@@ -47,38 +42,48 @@ export function BettingPanel({
             display: "flex",
             flexDirection: "column"
         }}>
-            {/* Current bets */}
             {hasBets && (
                 <Box style={{
                     display: "flex",
                     flexDirection: "column",
-                    flex: !ready ? "none" : 1,
+                    flex: showForm ? "none" : 1,
                     minHeight: 0
                 }}>
                     <Typography variant="h3" style={{ marginBottom: "0.75rem" }}>Current Bets</Typography>
+
                     <Stack gap="1rem" justify="center">
-                        {Object.entries(playerBetMap!).map(([guid, bet]) => (
-                            <Box key={guid} style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                padding: "0.75rem",
-                                background: "var(--color-bg-secondary)",
-                                borderRadius: "var(--radius-sm)",
-                                border: "1px solid var(--color-border)",
-                            }}>
-                                <Typography variant="body">{players?.[guid]?.username ?? guid}</Typography>
+                        {Object.entries(playerBetMap).map(([username, bet]) => (
+                            <Box
+                                key={username}
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    padding: "0.75rem",
+                                    background: "var(--color-bg-secondary)",
+                                    borderRadius: "var(--radius-sm)",
+                                    border: "1px solid var(--color-border)",
+                                }}>
+                                <Typography variant="body">{username}</Typography>
                                 <Typography variant="body" style={{ color: "var(--color-income-text)", fontWeight: 600 }}>
                                     {bet} CG
                                 </Typography>
                             </Box>
                         ))}
                     </Stack>
-                    {!ready && <Box style={{ height: "1px", background: "var(--color-border)", marginTop: "0.75rem" }} />}
+
+                    {showForm && <Box style={{ height: "1px", background: "var(--color-border)", marginTop: "0.75rem" }} />}
                 </Box>
+            )}
+
+            {isGame && !hasBets && (
+                <Typography variant="caption" style={{ opacity: 0.6, textAlign: "center", margin: "auto 0" }}>
+                    No bets placed this round
+                </Typography>
             )}
 
             {!ready && (
                 <Box style={{ display: "flex", flexDirection: "column", gap: "0.75rem", flex: 1 }}>
+
                     <Typography variant="h3">Place Your Bet</Typography>
 
                     {balance !== undefined && (
@@ -91,15 +96,15 @@ export function BettingPanel({
                         type="text"
                         inputMode="decimal"
                         value={betInput}
-                        onChange={handleBetChange}
+                        onChange={(e) => onBetInputChange(e.target.value)}
                         placeholder="Enter bet amount"
-                        disabled={betPlaced || !isConnected}
+                        disabled={betPlaced || !isConnected || isGame || gameAborted}
                     />
 
                     <Button
                         onClick={onPlaceBet}
-                        disabled={betPlaced || !isConnected}
-                        style={{ opacity: betPlaced ? 0.5 : 1 }}
+                        disabled={betPlaced || !isConnected || isGame || gameAborted}
+                        style={{ opacity: (betPlaced || isGame || gameAborted) ? 0.5 : 1 }}
                     >
                         Place Bet
                     </Button>
@@ -111,19 +116,17 @@ export function BettingPanel({
                         }
                     </Typography>
 
-                    {/* Ready button */}
                     <Button
                         onClick={onReady}
-                        disabled={ready || !betPlaced || !isConnected}
-                        style={{ opacity: (!betPlaced || ready) ? 0.5 : 1 }}
+                        disabled={ready || !betPlaced || !isConnected || isGame || gameAborted}
+                        style={{ opacity: (!betPlaced || ready || isGame || gameAborted) ? 0.5 : 1, marginTop: "auto" }}
                     >
                         {ready ? "Waiting..." : "Get Ready"}
                     </Button>
-
                 </Box>
             )}
 
-            {ready && (
+            {ready && !isGame && (
                 <Typography variant="caption" style={{ textAlign: "center", color: "var(--color-text-secondary)", marginTop: "auto" }}>
                     Waiting for opponent...
                 </Typography>

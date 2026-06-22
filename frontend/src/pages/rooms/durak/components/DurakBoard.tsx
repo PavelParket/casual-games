@@ -10,6 +10,7 @@ import { TurnTimer } from "./TurnTimer";
 import { ActionButton } from "./ActionButton";
 import { LayoutGroup } from "framer-motion";
 import type { TableExitMode } from "../../DurakRoom";
+import "../styles/DurakRoom.css";
 
 const DEAL_STAGE_COUNTS = [0, 1, 3, 6] as const;
 
@@ -96,32 +97,23 @@ export function DurakBoard({
 
     return (
         <LayoutGroup id="durak-board">
-            <Box style={{
-                display: "grid",
-                gridTemplateAreas: `
-                    "opponent opponent opponent sidebar"
-                    "deck     table    table    sidebar"
-                    ".        action   action   sidebar"
-                    "player   player   player   sidebar"
-                `,
-                gridTemplateColumns: "120px 1fr 1fr 160px",
-                gridTemplateRows: "auto 1fr auto auto",
-                gap: "0.75rem",
-                minHeight: "520px",
-                padding: "0.75rem",
-            }}>
-                <Box style={{ gridArea: "opponent" }}>
+            <Box className="durak-board-grid">
+                <Box className="durak-area-opponent">
                     <OpponentHand
                         cardCount={visibleOpponentCount}
                         opponentName={opponentName}
                     />
                 </Box>
 
-                <Box style={{ gridArea: "deck", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box className="durak-area-timer">
+                    <TurnTimer remainingSeconds={remainingSeconds} isMyTurn={isMyTurn} />
+                </Box>
+
+                <Box className="durak-area-deck">
                     <DeckArea deckCardsLeft={deckCardsLeft} trumpCard={trumpCard} trumpSuit={trumpSuit} />
                 </Box>
 
-                <Box style={{ gridArea: "table", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box className="durak-area-table">
                     <TableArea
                         table={table}
                         tableRef={tableRef}
@@ -131,7 +123,11 @@ export function DurakBoard({
                     />
                 </Box>
 
-                <Box style={{ gridArea: "action", display: "flex", alignItems: "center", justifyContent: "center", padding: "0.25rem 0" }}>
+                <Box className="durak-area-discard">
+                    <DiscardPile ref={discardPileRef} discardCount={discardCount} />
+                </Box>
+
+                <Box className="durak-area-action">
                     <ActionButton
                         availableActions={availableActions}
                         phase={phase}
@@ -141,7 +137,7 @@ export function DurakBoard({
                     />
                 </Box>
 
-                <Box style={{ gridArea: "player" }}>
+                <Box className="durak-area-player">
                     <PlayerHand
                         cards={visibleMyCards}
                         trumpSuit={trumpSuit}
@@ -154,17 +150,6 @@ export function DurakBoard({
                     />
                 </Box>
 
-                <Box style={{
-                    gridArea: "sidebar",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "1rem",
-                    paddingTop: "0.5rem",
-                }}>
-                    <TurnTimer remainingSeconds={remainingSeconds} isMyTurn={isMyTurn} />
-                    <DiscardPile ref={discardPileRef} discardCount={discardCount} />
-                </Box>
             </Box>
         </LayoutGroup>
     );
