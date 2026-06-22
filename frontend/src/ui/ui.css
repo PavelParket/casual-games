@@ -1,3 +1,19 @@
+@font-face {
+    font-family: "Cause";
+    src: url("/fonts/cause-v2-latin-600.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Cause";
+    src: url("/fonts/cause-v2-latin-800.woff2") format("woff2");
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,7 +21,7 @@
 }
 
 body {
-    font-family: var(--font-family, "Poppins", sans-serif);
+    font-family: var(--font-family, "Cause", sans-serif);
     background: var(--color-bg);
     color: var(--color-text);
     transition: background 0.25s ease, color 0.25s ease;
@@ -227,6 +243,7 @@ html.is-scrolling.dark {
 
 /* Light theme by default */
 :root {
+    --font-family: "Cause", sans-serif;
     --color-bg: #ffffff;
     --color-bg-soft: rgba(255, 255, 255, 0.9);
     --color-bg-glass: rgba(255, 255, 255, 0.6);
