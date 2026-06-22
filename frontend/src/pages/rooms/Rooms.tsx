@@ -1,3 +1,4 @@
+import "./style/Rooms.css"
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
@@ -10,8 +11,7 @@ import { ROOM_TYPE_HANDLERS, ROOM_TYPE_LABELS, type Room, type RoomType, type Ro
 import { validateRoomName } from "../../utils/SecurityUtils";
 import { clearError, createRoom, searchRooms } from "../../store/slices/RoomSlice";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
-import "./style/Rooms.css"
+import { useSystemToastContext } from "../../hooks/useSystemToastContext";
 
 const AVAILABLE_ROOM_TYPES = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
 

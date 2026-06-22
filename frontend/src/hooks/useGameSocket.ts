@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef } from "react";
 import type { ErrorWSMessage, WSMessage } from "../models/WsMessage";
 import { errorCodeMessages, systemErrorCodes } from "../models/constants/ErrorCodeMessages";
 import { useWebSocket, type ConnectionState } from "./useWebSocket";
-import { useSystemToastContext } from "../providers/SystemToastContext";
 import type { ToastVariant } from "../ui";
+import { useSystemToastContext } from "./useSystemToastContext";
 
 export interface UseGameSocketOptions<T extends WSMessage> {
     roomId?: string;

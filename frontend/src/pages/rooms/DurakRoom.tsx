@@ -1,9 +1,9 @@
+import "./durak/styles/DurakRoom.css";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import type { RootState } from "../../store/store";
 import { useGameToast } from "../../hooks/useGameToast";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clearError } from "../../store/slices/DurakRoomSlice";
@@ -15,8 +15,8 @@ import { DurakBoard } from "./durak/components/DurakBoard";
 import { BettingPanel } from "./durak/components/BettingPanel";
 import { GameOverOverlay } from "./durak/components/GameOverOverlay";
 import { useGameSocket } from "../../hooks/useGameSocket";
-import "./durak/styles/DurakRoom.css";
 import { DurakPlayersPanel } from "./durak/components/DurakPlayerPanel";
+import { useSystemToastContext } from "../../hooks/useSystemToastContext";
 
 export type TableExitMode = "bita" | "pickup" | null;
 

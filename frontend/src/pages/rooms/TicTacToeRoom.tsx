@@ -1,3 +1,4 @@
+import "./tictactoe/styles/TicTacToeRoom.css";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -7,7 +8,6 @@ import type { TicTacToeGameMessage } from "../../models/WsMessage";
 import { validateToastMessage, validateAmountInput } from "../../utils/SecurityUtils";
 import { clearError } from "../../store/slices/TicTacToeRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useGameSocket } from "../../hooks/useGameSocket";
 import { useTicTacToeMessages } from "../../hooks/useTicTacToeMessages";
 import { useSliceErrorToast } from "../../hooks/useSliceErrorToast";
@@ -16,7 +16,7 @@ import { TicTacToePlayersPanel } from "./tictactoe/components/TicTacToePlayersPa
 import { TicTacToeBoard } from "./tictactoe/components/TicTacToeBoard";
 import { BettingPanel } from "./tictactoe/components/BettingPanel";
 import { EndGameOverlay } from "./tictactoe/components/EndGameOverlay";
-import "./tictactoe/styles/TicTacToeRoom.css";
+import { useSystemToastContext } from "../../hooks/useSystemToastContext";
 
 export default function TicTacToeRoom() {
     const guid = useSelector((state: RootState) => state.auth.user?.guid);
