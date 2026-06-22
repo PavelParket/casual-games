@@ -2,8 +2,8 @@ import { motion } from "framer-motion";
 import { Box, Button, Stack, Typography } from "../../../../ui";
 import type { PlayerResponse } from "../../../../models/Room";
 
-interface GameOverOverlayProps {
-    winnerId: string | null;
+interface EndGameOverlayProps {
+    winnerId: string | null | undefined;
     myGuid: string | undefined;
     players: Record<string, PlayerResponse> | undefined;
     onLeave: () => void;
@@ -34,10 +34,11 @@ const itemVariants = {
     },
 };
 
-export function GameOverOverlay({ winnerId, myGuid, players, onLeave }: GameOverOverlayProps) {
+export function EndGameOverlay({ winnerId, myGuid, players, onLeave }: EndGameOverlayProps) {
     const isDraw = winnerId === null;
     const iWon = !isDraw && winnerId === myGuid;
     const winnerName = !isDraw && winnerId && players ? (players[winnerId]?.username ?? "Opponent") : null;
+
 
     return (
         <motion.div
@@ -55,7 +56,6 @@ export function GameOverOverlay({ winnerId, myGuid, players, onLeave }: GameOver
         >
             <Stack gap="1.5rem" align="center">
 
-                {/* Result title */}
                 <motion.div variants={itemVariants}>
                     <Typography variant="h2" style={{
                         color: isDraw
@@ -68,7 +68,6 @@ export function GameOverOverlay({ winnerId, myGuid, players, onLeave }: GameOver
                     </Typography>
                 </motion.div>
 
-                {/* Winner name (when opponent won) */}
                 {!isDraw && !iWon && winnerName && (
                     <motion.div variants={itemVariants}>
                         <Typography variant="body" style={{ opacity: 0.7 }}>
@@ -77,7 +76,6 @@ export function GameOverOverlay({ winnerId, myGuid, players, onLeave }: GameOver
                     </motion.div>
                 )}
 
-                {/* Result badge */}
                 <motion.div variants={itemVariants}>
                     <Box style={{
                         padding: "0.5rem 1.5rem",
@@ -98,7 +96,6 @@ export function GameOverOverlay({ winnerId, myGuid, players, onLeave }: GameOver
                     </Box>
                 </motion.div>
 
-                {/* Button */}
                 <motion.div variants={itemVariants}>
                     <Button onClick={onLeave}>
                         Back to Rooms

@@ -71,11 +71,6 @@
     }
 }
 
-.profile-main-card {
-    min-height: 100%;
-    padding: 1.5rem;
-}
-
 .profile-filter-controls {
     display: flex;
     gap: 0.5rem;

@@ -15,21 +15,7 @@ interface TableAreaProps {
 
 export function TableArea({ table, tableRef, isOpponentAttacker, tableExitMode, discardPileRef }: TableAreaProps) {
     return (
-        <div
-            ref={tableRef}
-            style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "0.5rem",
-                justifyContent: "center",
-                minWidth: "400px",
-                minHeight: "140px",
-                padding: "0.5rem",
-                borderRadius: "var(--radius-md)",
-                border: "1px dashed var(--color-border)",
-                background: "var(--color-bg-glass)",
-            }}
-        >
+        <div ref={tableRef} className="durak-table-area">
             <AnimatePresence mode="popLayout">
                 {table.map((pair) => (
                     <TablePairSlot

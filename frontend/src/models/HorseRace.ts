@@ -29,3 +29,16 @@ export const HORSE_FILTERS: Record<string, string> = {
     "#e91e63": "sepia(1) saturate(5) hue-rotate(299deg) brightness(1.1)",
     "#1abc9c": "sepia(1) saturate(5) hue-rotate(130deg) brightness(1.0)",
 };
+
+export const HORSE_SPRITE_SIZE = 88;
+
+export const HORSE_COLORS = [
+    "#e74c3c",
+    "#e67e22",
+    "#2ecc71",
+    "#3498db",
+    "#9b59b6",
+    "#f1c40f",
+    "#e91e63",
+    "#1abc9c",
+];

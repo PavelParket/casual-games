@@ -64,7 +64,7 @@ export const validateAmountInput = (input: string): string | null => {
         val = '0' + val;
     }
 
-    const regex = /^\d{0,5}(\.\d{0,2})?$/;
+    const regex = /^(0|[1-9]\d{0,4})(\.\d{0,2})?$/;
 
     if (regex.test(val)) {
         return val;

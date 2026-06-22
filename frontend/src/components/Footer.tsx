@@ -19,7 +19,7 @@ export default function Footer() {
                         alignItems: "center",
                         gap: "1rem"
                     }}>
-                        <Stack direction="row" gap="1.5rem" align="center" wrap="wrap">
+                        <Stack direction="row" gap="1rem" align="center" wrap="wrap">
                             <Typography variant="caption" style={{ opacity: 0.5, fontSize: "0.75rem" }}>
                                 Copyright © {new Date().getFullYear()} Casual Games. All right reserved.
                             </Typography>

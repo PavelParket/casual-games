@@ -27,13 +27,7 @@ export function DeckArea({ deckCardsLeft, trumpCard, trumpSuit }: DeckAreaProps)
 
                     {/* Trump card — rotated 90°, negative marginBottom makes deck pile slide on top */}
                     {trumpCard && (
-                        <Box style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            marginBottom: "-62px",
-                            position: "relative",
-                            zIndex: 0,
-                        }}>
+                        <Box className="trump-card-container">
                             <PlayingCard
                                 card={trumpCard}
                                 faceDown={false}
@@ -64,17 +58,9 @@ export function DeckArea({ deckCardsLeft, trumpCard, trumpSuit }: DeckAreaProps)
 
             {/* ── Empty deck — trump suit symbol placeholder ── */}
             {isDeckEmpty && trumpSuit && (
-                <Box style={{
-                    width: 62,
-                    height: 88,
-                    borderRadius: "var(--radius-sm)",
-                    border: "1px dashed var(--color-border)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                }}>
+                <Box className="empty-deck-placeholder">
                     <Typography variant="h2" style={{
-                        color: trumpSuit === "HEARTS" || trumpSuit === "DIAMONDS"
+                        color: trumpSuit === "HEARTS" || trumpSuit === "CLUBS"
                             ? "#e74c3c"
                             : "var(--color-text)",
                     }}>
