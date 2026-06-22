@@ -8,6 +8,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.prod.yaml"
+ENV_FILE="$SCRIPT_DIR/prod.env"
 
 RED='\033[0;31m'; CYAN='\033[0;36m'; NC='\033[0m'
 fail() { echo -e "${RED}  x $*${NC}"; exit 1; }
@@ -33,9 +34,9 @@ fi
 
 if [[ "$MODE" == "-f" || "$MODE" == "--follow" ]]; then
   echo -e "${CYAN}  Following $SERVICE (Ctrl+C to stop)...${NC}\n"
-  docker compose -f "$COMPOSE_FILE" logs -f --tail=100 "$SERVICE"
+  docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs -f --tail=100 "$SERVICE"
 elif [[ "$MODE" =~ ^[0-9]+$ ]]; then
-  docker compose -f "$COMPOSE_FILE" logs --tail="$MODE" "$SERVICE"
+  docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs --tail="$MODE" "$SERVICE"
 else
   fail "Second arg must be a number or -f"
 fi
