@@ -32,8 +32,9 @@ export default function Header() {
     const formattedBalance = new Intl.NumberFormat('en-US', {
         notation: "compact",
         compactDisplay: "short",
-        maximumFractionDigits: 1
-    }).format(profileUser?.balance ?? 0);
+        maximumFractionDigits: 20,
+        minimumFractionDigits: 2
+    }).format(profileUser?.balance ?? 0).replace(/(\.\d{2})\d*/, '$1');
 
     const handleLogout = () => {
         dispatch(logout());

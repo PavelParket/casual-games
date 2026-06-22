@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import type { DurakCard } from "../../../../models/Durak";
 import { Box, Img } from "../../../../ui";
 import { CARD_BACK, getCardImage } from "../utils/CardUtils";
+import "../styles/DurakRoom.css";
 
 interface PlayingCardProps {
     card?: DurakCard;
@@ -15,11 +16,6 @@ interface PlayingCardProps {
     onClick?: () => void;
     onDragEnd?: (event: MouseEvent | TouchEvent | PointerEvent, info: { point: { x: number; y: number }; offset: { x: number; y: number } }) => void;
 }
-
-const SIZES = {
-    sm: { width: 50, height: 70 },
-    md: { width: 72, height: 100 },
-} as const;
 
 const fullCoverStyle: React.CSSProperties = {
     width: "100%",
@@ -40,7 +36,6 @@ export function PlayingCard({
     onClick,
     onDragEnd,
 }: PlayingCardProps) {
-    const { width, height } = SIZES[size];
     const isClickable = !!onClick && !disabled;
     const imgSrc = card ? getCardImage(card.rank, card.suit) : CARD_BACK;
 
@@ -53,17 +48,10 @@ export function PlayingCard({
             onClick={isClickable ? onClick : undefined}
             onDragEnd={draggable && !disabled ? onDragEnd : undefined}
             transition={{ layout: { duration: 0.25, ease: "easeOut" } }}
+            className={`playing-card playing-card-${size} ${disabled ? "is-disabled" : ""}`}
             style={{
-                position: "relative",
-                display: "inline-block",
-                width,
-                height,
                 cursor: isClickable ? "pointer" : "default",
-                opacity: disabled ? 0.5 : 1,
                 transform: trumpRotated ? "rotate(90deg)" : undefined,
-                transformOrigin: "center center",
-                userSelect: "none",
-                flexShrink: 0,
                 ...style,
             }}
         >

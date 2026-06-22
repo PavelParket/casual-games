@@ -1,0 +1,176 @@
+.decoder-main-content {
+    padding: 1rem;
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+.decoder-grid {
+    display: grid;
+    align-items: stretch;
+    justify-items: stretch;
+    grid-template-columns: minmax(240px, 1fr) 1fr minmax(240px, 1fr);
+    grid-template-areas: "players board history";
+    gap: 2rem;
+    height: 520px;
+    width: 100%;
+}
+
+.decoder-players-panel {
+    grid-area: players;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+.decoder-board-panel {
+    grid-area: board;
+    min-height: 0;
+    align-self: center;
+}
+
+.decoder-history-panel {
+    grid-area: history;
+    padding-left: 1rem;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.decoder-players-container {
+    gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 4px;
+}
+
+.decoder-player-card {
+    width: 200px;
+    padding: 0.35rem;
+    background: var(--color-bg-glass);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    user-select: none;
+    cursor: pointer;
+}
+
+.decoder-player-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.decoder-board-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    height: 100%;
+}
+
+.decoder-inputs-wrapper {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.decoder-char-input {
+    width: 70px;
+    height: 90px;
+    font-size: 3rem;
+    text-align: center;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--color-border);
+    background: var(--glass-surface);
+    color: var(--color-text);
+    outline: none;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s ease;
+    caret-color: transparent;
+    text-transform: uppercase;
+    font-family: inherit;
+}
+
+.decoder-char-input:focus {
+    border-color: var(--color-primary);
+}
+
+@media (max-width: 1060px) {
+    .decoder-grid {
+        grid-template-columns: 240px 1fr;
+        grid-template-rows: auto 400px;
+        grid-template-areas:
+            "board board"
+            "players history";
+        height: auto;
+        gap: 1.5rem;
+    }
+
+    .decoder-board-panel {
+        padding-top: 3rem;
+        padding-bottom: 1.5rem;
+    }
+
+    .decoder-history-panel {
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .decoder-main-content {
+        padding: 1rem;
+    }
+
+    .decoder-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "board"
+            "history"
+        ;
+        gap: 1.5rem;
+    }
+
+    .decoder-players-panel {
+        display: none;
+    }
+
+    .decoder-history-panel {
+        padding-bottom: 1.5rem;
+    }
+
+    .decoder-board-stack {
+        gap: 1.5rem;
+    }
+
+    .decoder-board-panel {
+        padding-top: 2rem;
+    }
+}
+
+@media (max-width: 500px) {
+    .decoder-main-content {
+        padding: 0.75rem;
+    }
+
+    .decoder-grid {
+        gap: 1rem;
+    }
+
+    .decoder-board-panel,
+    .decoder-history-panel {
+        padding-bottom: 1rem;
+    }
+
+    .decoder-inputs-wrapper {
+        gap: 10px;
+    }
+
+    .decoder-char-input {
+        width: clamp(45px, 18vw, 70px);
+        height: clamp(60px, 24vw, 90px);
+        font-size: clamp(2rem, 8vw, 3rem);
+    }
+}

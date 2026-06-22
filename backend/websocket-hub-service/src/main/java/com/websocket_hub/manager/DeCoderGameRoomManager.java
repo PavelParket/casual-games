@@ -94,7 +94,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
                 user.guid(),
                 null,
                 room.getId(),
-                "Player={" + user.username() + "} has joined the room={" + room.getName() + "}"
+                "Player " + user.username() + " has joined the room " + room.getName()
         ));
 
         sendGameState(user, room.getId());
@@ -110,7 +110,7 @@ public class DeCoderGameRoomManager extends AbstractRoomManager {
                 user.guid(),
                 null,
                 room.getId(),
-                "Player={" + user.username() + "} has left the room={" + room.getName() + "}"
+                "Player " + user.username() + " has left the room " + room.getName()
         ));
     }
 

@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from "react";
+import { useEffect, useState, type HTMLAttributes } from "react";
 import "../styles/cooldowntimer.css";
 import { classNames } from "../../utils/classNames";
 
@@ -20,12 +20,20 @@ export function CooldownTimer({
     const radius = (size / 2) - (strokeWidth / 2);
     const circumference = 2 * Math.PI * radius;
 
-    const strokeDashoffset = circumference + (timeLeft / maxTime) * circumference;
+    const [animKey, setAnimKey] = useState(0);
+
+    useEffect(() => {
+        if (timeLeft === maxTime) {
+            setAnimKey(prev => prev + 1);
+        }
+    }, [timeLeft, maxTime]);
+
+    const isRunning = timeLeft > 0;
 
     return (
         <div
             className={classNames("cooldown-timer", className)}
-            style={{ width: size, height: size, ...style }}
+            style={{ width: size, height: size, opacity: isRunning ? 1 : 0.2, ...style }}
             {...rest}
         >
             <svg width={size} height={size} className="cooldown-timer-svg">
@@ -37,16 +45,18 @@ export function CooldownTimer({
                     className="cooldown-timer-bg"
                 />
                 <circle
+                    key={animKey}
                     cx={size / 2}
                     cy={size / 2}
                     r={radius}
                     strokeWidth={strokeWidth}
                     strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
                     className="cooldown-timer-progress"
                     style={{
-                        transition: timeLeft === 0 || timeLeft === maxTime ? "none" : "stroke-dashoffset 1s linear"
-                    }}
+                        '--circumference': circumference,
+                        strokeDashoffset: 0,
+                        animation: isRunning ? `cooldown-progress ${maxTime}s linear forwards` : 'none',
+                    } as React.CSSProperties}
                 />
             </svg>
             <span className="cooldown-timer-text">

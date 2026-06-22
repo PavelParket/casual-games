@@ -1,0 +1,151 @@
+.ttt-main-content {
+    padding: 1rem;
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+.ttt-grid {
+    display: grid;
+    align-items: stretch;
+    justify-items: stretch;
+    grid-template-columns: minmax(240px, 1fr) 1fr minmax(240px, 1fr);
+    grid-template-areas: "players board betting";
+    gap: 2rem;
+    height: 520px;
+    width: 100%;
+}
+
+.ttt-players-panel {
+    grid-area: players;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+.ttt-board-panel {
+    grid-area: board;
+    min-height: 0;
+    align-self: center;
+    display: flex;
+    justify-content: center;
+}
+
+.ttt-betting-panel {
+    grid-area: betting;
+    padding-left: 1rem;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ttt-player-card {
+    width: 200px;
+    padding: 0.35rem;
+    background: var(--color-bg-glass);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    user-select: none;
+    cursor: pointer;
+}
+
+.ttt-player-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 1060px) {
+    .ttt-grid {
+        grid-template-columns: 240px 1fr;
+        grid-template-rows: auto minmax(250px, 1fr);
+        grid-template-areas:
+            "board board"
+            "players betting";
+        height: auto;
+        gap: 1.5rem;
+    }
+
+    .ttt-board-panel {
+        padding-bottom: 1.5rem;
+    }
+
+    .ttt-betting-panel {
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .ttt-main-content {
+        padding: 1rem;
+    }
+
+    .ttt-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "board"
+            "betting"
+        ;
+        gap: 1.5rem;
+    }
+
+    .ttt-players-panel {
+        display: none;
+    }
+
+    .ttt-betting-panel {
+        padding-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 500px) {
+    .ttt-main-content {
+        padding: 0.75rem;
+    }
+
+    .ttt-grid {
+        gap: 1rem;
+    }
+
+    .ttt-board-panel,
+    .ttt-betting-panel {
+        padding-bottom: 1rem;
+    }
+}
+
+.ttt-cell {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--color-text);
+    background: transparent;
+    transition: background 0.15s ease, transform 0.1s ease;
+    user-select: none;
+}
+
+.ttt-cell.interactive {
+    cursor: pointer;
+}
+
+.ttt-cell.interactive:hover {
+    background: var(--btn-ghost-hover-bg);
+}
+
+.ttt-cell.interactive:active {
+    background: var(--btn-ghost-active-bg);
+    transform: scale(0.95);
+}
+
+.ttt-cell.disabled-empty {
+    background: rgba(0, 0, 0, 0.1);
+    cursor: default;
+}
+
+html.dark .ttt-cell.disabled-empty {
+    background: rgba(0, 0, 0, 0.25);
+}
