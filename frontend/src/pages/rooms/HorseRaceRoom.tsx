@@ -5,7 +5,6 @@ import type { AppDispatch, RootState } from "../../store/store";
 import { getPreset, syncRoomState } from "../../store/slices/HorseRaceRoomSlice";
 import type { HorseRaceHorseKeyframes, PlacedBetInfo } from "../../models/HorseRace";
 import type { HorseRaceGameMessage } from "../../models/WsMessage";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { useGameToast } from "../../hooks/useGameToast";
 import { useHorseRaceMessages } from "../../hooks/useHorseRaceMessages";
 import { useGameSocket } from "../../hooks/useGameSocket";
@@ -15,6 +14,7 @@ import { BettingPanel } from "./horserace/components/BettingPanel";
 import { EndGameOverlay } from "./horserace/components/EndGameOverlay";
 import { HorseRaceTrack } from "./horserace/components/HorseRaceTrack";
 import { AnimatePresence, motion } from "framer-motion";
+import { useSystemToastContext } from "../../hooks/useSystemToastContext";
 
 type RacePhase = "LOBBY" | "WAITING" | "RACING" | "FINISHED";
 

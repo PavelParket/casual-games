@@ -3,7 +3,6 @@ import { Box, Button, Card, Divider, Stack, Typography } from "../ui";
 import axios, { AxiosError } from "axios";
 import { USER_SERVICE_URL } from "../api/ApiDictionary";
 import { Skeleton } from "../ui/components/common/Skeleton";
-import { useSystemToastContext } from "../providers/SystemToastContext";
 import { ToastContainer } from "../ui/components/common/ToastContainer";
 import { useGameToast } from "../hooks/useGameToast";
 import type { CardRank, CardSuit, DurakAction, DurakCard, DurakPhase, DurakTablePair } from "../models/Durak";
@@ -11,6 +10,7 @@ import { PlayingCard } from "./rooms/durak/components/PlayingCard";
 import { CARD_BACK } from "./rooms/durak/utils/CardUtils";
 import { DurakBoard } from "./rooms/durak/components/DurakBoard";
 import type { TableExitMode } from "./rooms/DurakRoom";
+import { useSystemToastContext } from "../hooks/useSystemToastContext";
 
 interface User {
     guid: string;

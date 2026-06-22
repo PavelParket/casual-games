@@ -1,3 +1,4 @@
+import "./style/Profile.css";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -14,9 +15,8 @@ import { PageablePanel } from "./components/PageablePanel";
 import { HistoryItem } from "./components/HistoryItem";
 import { AvatarEditorModal } from "./components/AvatarEditorModal.tsx";
 import { ImageViewerModal } from "./components/ImageViewerModal";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { type GameMatchRequestFilter, type ResultFilter, RESULT_FILTER_LABELS } from "../../models/GameMatch.ts";
-import "./style/Profile.css";
+import { useSystemToastContext } from "../../hooks/useSystemToastContext.ts";
 
 const AVAILABLE_ROOM_TYPES = (Object.keys(ROOM_TYPE_LABELS) as RoomType[])
     .filter(type => type !== "DE_CODER");

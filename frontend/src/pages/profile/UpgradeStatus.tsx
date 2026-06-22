@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Container, Card, Typography, Button, Grid, Stack, Divider, Modal, Icon, Avatar, useThemedIcon, List, Accordion } from "../../ui";
 import { Skeleton } from "../../ui/components/common/Skeleton";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { purchase, getBalance, getCurrentSubscription, getSubscriptionPlans, findByGuid } from "../../store/slices/UserSlice";
 import type { AppDispatch, RootState } from "../../store/store";
 import type { UserStatus } from "../../models/User";
 import type { Icons } from "../../assets/icons";
 import { UPGRADE_FAQ } from "../../models/constants/UpgradeFAQ";
+import { useSystemToastContext } from "../../hooks/useSystemToastContext";
 
 const PLAN_FEATURES: Record<string, string[]> = {
     DEFAULT: [],

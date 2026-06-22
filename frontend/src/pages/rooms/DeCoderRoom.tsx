@@ -1,3 +1,4 @@
+import "./decoder/styles/DeCoderRoom.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -5,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { AppDispatch, RootState } from "../../store/store";
 import { getPlayers, } from "../../store/slices/DeCoderRoomSlice";
 import { useGameToast } from "../../hooks/useGameToast";
-import { useSystemToastContext } from "../../providers/SystemToastContext";
 import { Box, Card, Container, Typography, ToastContainer, Button, Icon, useThemedIcon } from "../../ui";
 import { validateRoomName } from "../../utils/SecurityUtils";
 import type { DeCoderMessage } from "../../models/WsMessage";
@@ -16,7 +16,7 @@ import { PlayersPanel } from "./decoder/components/PlayersPanel";
 import { DeCoderHistory } from "./decoder/components/DeCoderHistory";
 import { DeCoderBoard } from "./decoder/components/DeCoderBoard";
 import { EndGameOverlay } from "./decoder/components/EndGameOverlay";
-import "./decoder/styles/DeCoderRoom.css";
+import { useSystemToastContext } from "../../hooks/useSystemToastContext";
 
 export default function DeCoderRoom() {
     const dispatch = useDispatch<AppDispatch>();
