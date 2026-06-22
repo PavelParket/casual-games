@@ -79,32 +79,6 @@ kafka:
   topics:
     room-lifecycle: ${KAFKA_ROOM_LIFECYCLE_TOPIC:room-lifecycle}
 
-app:
-  game-service:
-    url: http://localhost:8082
-  user-service:
-    url: http://localhost:8083
-  bank-service:
-    url: http://localhost:8084
-
-cron:
-  room-cleanup:
-    cleanup-rooms: ${CRON_CLEANUP_ROOMS:0 0/5 * * * *}
-    cleanup-pending-delete-rooms: ${CRON_CLEANUP_PENDING_DELETE_ROOMS:0 2/5 * * * *}
-    finished-kick-timeout-minutes: 2
-    waiting-stale-timeout-minutes: 30
-    tic-tac-toe-in-progress-timeout-minutes: 20
-    durak-in-progress-timeout-minutes: 60
-    de-coder-in-progress-timeout-minutes: 60
-
-kafka:
-  enabled: ${KAFKA_ENABLED:true}
-  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-  producer-config:
-    "[acks]": "1"
-  topics:
-    room-lifecycle: ${KAFKA_ROOM_LIFECYCLE_TOPIC:room-lifecycle}
-
 logging:
   level:
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}

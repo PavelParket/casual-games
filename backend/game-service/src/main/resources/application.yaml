@@ -42,16 +42,6 @@ kafka:
   topics:
     room-lifecycle: ${KAFKA_ROOM_LIFECYCLE_TOPIC:room-lifecycle}
 
-kafka:
-  enabled: ${KAFKA_ENABLED:true}
-  consumer-enabled: true
-  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-  consumer-config:
-    "[group.id]": game-service-room-lifecycle
-    "[auto.offset.reset]": earliest
-  topics:
-    room-lifecycle: ${KAFKA_ROOM_LIFECYCLE_TOPIC:room-lifecycle}
-
 logging:
   level:
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}

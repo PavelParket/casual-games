@@ -83,19 +83,6 @@ kafka:
 ws-ticket:
   ttl-seconds: ${WS_TICKET_TTL_SECONDS:30}
 
-kafka:
-  enabled: true
-  consumer-enabled: true
-  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-  consumer-config:
-    "[group.id]": security-service-user-sync
-    "[auto.offset.reset]": earliest
-  topics:
-    user: ${KAFKA_USER_TOPIC:user}
-
-ws-ticket:
-  ttl-seconds: ${WS_TICKET_TTL_SECONDS:30}
-
 logging:
   level:
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
