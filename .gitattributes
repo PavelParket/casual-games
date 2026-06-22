@@ -1,0 +1,23 @@
+# Normalize all line endings to LF in repository
+* text=auto eol=lf
+
+# Windows-specific files — keep CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Shell scripts — explicitly LF
+*.sh   text eol=lf
+gradlew text eol=lf
+
+# Binaries — no conversion
+*.class binary
+*.jar   binary
+*.p12   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
