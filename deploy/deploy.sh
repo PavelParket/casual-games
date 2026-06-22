@@ -11,6 +11,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.prod.yaml"
+ENV_FILE="$SCRIPT_DIR/prod.env"
 COMMON_UTILS_DIR="$PROJECT_ROOT/backend/common-utils"
 
 # --- Colors ------------------------------------------------------------------
@@ -52,16 +53,16 @@ bash "$SCRIPT_DIR/prepare-build.sh"
 # --- 4. docker compose build -------------------------------------------------
 step "4/5  Building images"
 cd "$PROJECT_ROOT"
-docker compose -f "$COMPOSE_FILE" build
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
 ok "images built"
 
 # --- 5. up -d ----------------------------------------------------------------
 step "5/5  Starting services"
-docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
 ok "services started"
 
 # --- Status ------------------------------------------------------------------
 echo ""
-docker compose -f "$COMPOSE_FILE" ps
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps
 echo ""
 echo -e "${GREEN}  Done.${NC}"
