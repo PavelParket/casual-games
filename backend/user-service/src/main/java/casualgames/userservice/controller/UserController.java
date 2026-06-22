@@ -82,9 +82,4 @@ public class UserController {
     public void deleteProfilePicture(@PathVariable UUID guid) {
         userService.deleteImageFile(guid);
     }
-
-    @GetMapping("/balance/{guid}")
-    public BigDecimal getBalance(@PathVariable UUID guid) {
-        return userService.getBalance(guid);
-    }
 }

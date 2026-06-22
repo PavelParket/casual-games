@@ -58,10 +58,4 @@ public class Room {
                 .map(ClientSession::getGuid)
                 .toList();
     }
-
-    public List<UUID> getParticipantGuids() {
-        return participants.stream()
-                .map(ClientSession::getGuid)
-                .toList();
-    }
 }
