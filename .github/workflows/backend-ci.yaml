@@ -1,0 +1,47 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yaml'
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build common-utils + services
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      # --- Phase 1: publish common-utils to the runner's local Maven repo ---
+      # Services resolve com.casualgames:* from mavenLocal, so this must run first.
+      - name: Build & publish common-utils
+        working-directory: backend/common-utils
+        run: ./gradlew publishToMavenLocal --no-daemon
+
+      # --- Phase 2: build each service sequentially ---
+      # Fail-fast: the first broken service stops the run and is easy to spot.
+      - name: Build services
+        run: |
+          set -e
+          for service in api-gateway security-service user-service bank-service game-service websocket-hub-service; do
+            echo "::group::Building $service"
+            (cd "backend/$service" && ./gradlew build --no-daemon)
+            echo "::endgroup::"
+          done
