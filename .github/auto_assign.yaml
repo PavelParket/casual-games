@@ -1,0 +1,8 @@
+addReviewers: true
+addAssignees: author
+
+reviewers:
+  - PavelParket
+  - timofei-username
+
+numberOfReviewers: 1
