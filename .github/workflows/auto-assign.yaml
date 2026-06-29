@@ -2,7 +2,10 @@ name: Auto Assign
 
 on:
   pull_request:
-    types: [ opened, ready_for_review ]
+    types: [ opened, reopened, ready_for_review ]
+
+permissions:
+  pull-requests: write
 
 jobs:
   auto-assign:
@@ -11,4 +14,4 @@ jobs:
     steps:
       - uses: kentaro-m/auto-assign-action@v2.0.1
         with:
-          configuration-path: '.github/auto_assign.yml'
+          configuration-path: '.github/auto-assign-config.yaml'
