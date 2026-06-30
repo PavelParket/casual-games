@@ -77,33 +77,83 @@ number — номер задачи.
 
 # Как пользоваться стартерами
 
-Стартеры нужны для вынесения какой-то общей логики, классов и другого
-в отдельный модуль, который шарится для всех модулей приложения
+Стартеры (`common-utils`, `security-starter`, `redis-starter`, `kafka-starter`, `grpc-utils`,
+`file-management-starter`) публикуются в GitHub Packages (GPR) и тянутся оттуда автоматически.
 
-### Как собрать стартер
+## Первоначальная настройка
 
-При первом клонировании репозитория нужно сделать билд модуля common-utils
-и опубликовать его в maven local
+Добавить токен в `~/.gradle/gradle.properties` (файл вне репозитория, не коммитится):
 
-#### Два пути это сделать
-
-1. Через консоль — с помощью команд:
-
-```shell
-
-cd .\backend\common-utils\
-./gradlew clean build publishToMavenLocal
+```properties
+gprUser=
+gprToken=
 ```
 
-2. Через UI в IDEA:
+Токен создаётся на `github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)`.
+Нужен только scope **`read:packages`**.
 
-- На правой панели инструментов найти слоника и надпись "Gradle";
-- Нажать, найти зелёного слоника и модуль "common-utils";
-- Развернуть эту вкладку (там будут и другие слоники, например "security-stater"), их игнорируем, если не надо сблидить;
-  конкретный стартер
-- Дальше последовательности:
-    - Tasks &rarr; build &rarr; build (это билд);
-    - Tasks &rarr; publishing &rarr; publishToMavenLocal (публикация в локальный мавен репозиторий).
+После этого IDEA подтянет стартеры автоматически при Reload Gradle — ничего собирать руками не нужно.
 
-Далее обновляем gradle зависимости в бизнес модуле.\
-После этого можно билдить и запускать любой другой бизнес модуль
+## Версии стартеров
+
+Версия задаётся в `gradle.properties` каждого сервиса (`commonUtilsVersion`):
+
+| Значение               | Когда использовать                                      |
+|------------------------|---------------------------------------------------------|
+| `1.4.0`                | продовая сборка (выставляется автоматически при деплое) |
+| `1.4.0-SNAPSHOT`       | обычная разработка (дефолт, коммитится)                 |
+| `1.4.0-local-SNAPSHOT` | когда сам правишь стартеры локально (не коммитить!)     |
+
+## Локальная разработка стартеров
+
+Если задача требует изменений в `common-utils`:
+
+```shell
+# 1. Опубликовать локальную версию
+cd backend/common-utils
+./gradlew publishToMavenLocal -Pversion=1.4.0-local-SNAPSHOT
+
+# 2. В gradle.properties нужного сервиса (не коммитить!)
+commonUtilsVersion=1.4.0-local-SNAPSHOT
+
+# 3. Reload Gradle в IDEA — сервис подхватит локальные стартеры
+
+# 4. Перед коммитом вернуть дефолт
+commonUtilsVersion=1.4.0-SNAPSHOT
+```
+
+# Деплой на VPS
+
+Деплой всегда выполняется с конкретного git-тега. Нетегованный код на прод не уходит.
+
+## Полный деплой
+
+```shell
+bash deploy/deploy.sh v1.4.0
+```
+
+Что делает скрипт:
+
+1. `git fetch --tags && git checkout v1.4.0`
+2. `docker compose build` — сервисы собираются, стартеры `1.4.0` тянутся из GPR
+3. `docker compose up -d`
+
+## Точечный деплой (один или несколько сервисов)
+
+Используется когда нужно пересобрать конкретный сервис без полного редеплоя.
+Требует что HEAD уже стоит на теге (т.е. `deploy.sh` уже запускался).
+
+```shell
+bash deploy/deploy-service.sh bank-service
+bash deploy/deploy-service.sh bank-service user-service
+```
+
+## Релизный цикл
+
+```
+1. Разработка идёт в feature-ветках → develop
+2. develop → main (PR от тимлида)
+3. git tag v1.4.0 && git push origin v1.4.0
+   → автоматически публикует стартеры 1.4.0 в GPR (GitHub Actions)
+4. На VPS: bash deploy/deploy.sh v1.4.0
+```

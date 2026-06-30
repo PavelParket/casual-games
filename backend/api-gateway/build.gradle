@@ -15,7 +15,18 @@ java {
 }
 
 repositories {
-    mavenLocal()
+    if (commonUtilsVersion.endsWith('-local-SNAPSHOT')) {
+        mavenLocal()
+    } else {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/PavelParket/casual-games")
+            credentials {
+                username = findProperty('gprUser') ?: System.getenv('GPR_USER')
+                password = findProperty('gprToken') ?: System.getenv('GPR_TOKEN')
+            }
+        }
+    }
     mavenCentral()
 }
 
@@ -26,7 +37,7 @@ dependencyManagement {
 }
 
 dependencies {
-    implementation 'com.casualgames:common-utils:1.0.0'
+    implementation "com.casualgames:common-utils:${commonUtilsVersion}"
 
     //Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
