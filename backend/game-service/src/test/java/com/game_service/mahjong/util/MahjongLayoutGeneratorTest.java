@@ -21,11 +21,11 @@ public class MahjongLayoutGeneratorTest {
             Set<String> removed = new HashSet<>();
 
             for (GeneratedPair pair : order) {
-                assertTrue(TileRules.isFree(pair.slot1(), removed), "seed=" + seed + " slot=" + pair.slot1());
-                assertTrue(TileRules.isFree(pair.slot2(), removed), "seed=" + seed + " slot=" + pair.slot2());
+                assertTrue(TileRules.isFree(pair.getSlot1(), removed), "seed=" + seed + " slot=" + pair.getSlot1());
+                assertTrue(TileRules.isFree(pair.getSlot2(), removed), "seed=" + seed + " slot=" + pair.getSlot2());
 
-                removed.add(pair.slot1());
-                removed.add(pair.slot2());
+                removed.add(pair.getSlot1());
+                removed.add(pair.getSlot2());
             }
 
             assertEquals(LayoutTemplate.getTotalSlots(), removed.size(), "seed=" + seed);

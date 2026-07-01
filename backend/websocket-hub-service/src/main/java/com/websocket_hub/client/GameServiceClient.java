@@ -7,6 +7,8 @@ import com.websocket_hub.domain.dto.client.DurakGameInternalRequest;
 import com.websocket_hub.domain.dto.client.DurakGameInternalResponse;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalRequest;
 import com.websocket_hub.domain.dto.client.HorseRaceGameInternalResponse;
+import com.websocket_hub.domain.dto.client.MahjongGameInternalRequest;
+import com.websocket_hub.domain.dto.client.MahjongGameInternalResponse;
 import com.websocket_hub.domain.dto.message.TicTacToeGameMessage;
 import com.websocket_hub.domain.enums.ErrorCode;
 import com.websocket_hub.exception.GameException;
@@ -349,6 +351,72 @@ public class GameServiceClient {
         } catch (Exception e) {
             log.warn("Failed to get De-Coder game state for room {}: {}", roomId, e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Mahjong
+    // -------------------------------------------------------------------------
+
+    public MahjongGameInternalResponse startMahjongGame(MahjongGameInternalRequest request) {
+        URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
+                .path("/game/mahjong/init")
+                .build()
+                .toUri();
+
+        log.info("Calling game-service to start Mahjong game: roomId={}, players={}", request.roomId(), request.players());
+
+        try {
+            ResponseEntity<MahjongGameInternalResponse> response = restTemplate.exchange(
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    MahjongGameInternalResponse.class
+            );
+
+            MahjongGameInternalResponse body = response.getBody();
+
+            if (body == null) {
+                throw new GameException(ErrorCode.GAME_NOT_STARTED);
+            }
+
+            log.info("Mahjong game started: roomId={}, seed={}", request.roomId(), body.seed());
+
+            return body;
+        } catch (GameException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to start Mahjong game: roomId={}", request.roomId(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
+        }
+    }
+
+    public MahjongGameInternalResponse processMahjongMove(MahjongGameInternalRequest request) {
+        URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
+                .path("/game/mahjong/move")
+                .build()
+                .toUri();
+
+        log.info("Calling game-service for Mahjong move: roomId={}, playerGuid={}, slot1={}, slot2={}", request.roomId(), request.playerGuid(), request.slot1(), request.slot2());
+
+        try {
+            ResponseEntity<MahjongGameInternalResponse> response = restTemplate.exchange(
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    MahjongGameInternalResponse.class
+            );
+
+            MahjongGameInternalResponse body = response.getBody();
+
+            if (body == null) {
+                throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
+            }
+
+            log.info("Mahjong move processed: roomId={}, playerGuid={}, valid={}, cleared={}", request.roomId(), request.playerGuid(), body.valid(), body.cleared());
+
+            return body;
+        } catch (ServiceUnavailableException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to process Mahjong move: roomId={}", request.roomId(), e);
+            throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
         }
     }
 }

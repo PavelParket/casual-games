@@ -119,8 +119,8 @@ public class MahjongGameUtils {
         Map<String, TileFace> faces = new HashMap<>();
 
         assignment.forEach(pair -> {
-            faces.put(pair.slot1(), pair.face());
-            faces.put(pair.slot2(), pair.face());
+            faces.put(pair.getSlot1(), pair.getFace());
+            faces.put(pair.getSlot2(), pair.getFace());
         });
 
         return Collections.unmodifiableMap(faces);

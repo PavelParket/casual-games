@@ -26,8 +26,8 @@ public class MahjongGameUtilsTest {
         assertFalse(board.getFreeSet().isEmpty());
 
         for (GeneratedPair pair : assignment) {
-            boolean applied = MahjongGameUtils.removePair(board, pair.slot1(), pair.slot2());
-            assertTrue(applied, "expected removable pair: " + pair.slot1() + "/" + pair.slot2());
+            boolean applied = MahjongGameUtils.removePair(board, pair.getSlot1(), pair.getSlot2());
+            assertTrue(applied, "expected removable pair: " + pair.getSlot1() + "/" + pair.getSlot2());
         }
 
         assertEquals(0, board.getRemaining());
@@ -93,7 +93,7 @@ public class MahjongGameUtilsTest {
         Board board2 = mahjong.getBoards().get(player2);
 
         GeneratedPair firstPair = MahjongLayoutGenerator.generate(SEED).getFirst();
-        boolean applied = MahjongGameUtils.removePair(board1, firstPair.slot1(), firstPair.slot2());
+        boolean applied = MahjongGameUtils.removePair(board1, firstPair.getSlot1(), firstPair.getSlot2());
 
         assertTrue(applied);
         assertEquals(70, board1.getRemaining());
