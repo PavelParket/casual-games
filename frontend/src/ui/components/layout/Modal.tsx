@@ -9,9 +9,10 @@ type ModalProps = {
     title?: string;
     children: ReactNode;
     disableOutsideClick?: boolean;
+    hideCloseButton?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, children, disableOutsideClick }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, disableOutsideClick, hideCloseButton }: ModalProps) {
     const { getIcon } = useThemedIcon();
 
     if (!isOpen) {
@@ -23,9 +24,12 @@ export function Modal({ isOpen, onClose, title, children, disableOutsideClick }:
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 {title && <h2 className="modal-title">{title}</h2>}
                 <div className="modal-body">{children}</div>
+
+                {!hideCloseButton && (
                 <button className="modal-close" onClick={onClose}>
                     <Icon src={getIcon("close")} size={24} alt="close" />
                 </button>
+                )}
             </div>
         </div>
     );
