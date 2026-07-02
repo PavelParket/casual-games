@@ -6,5 +6,6 @@ public enum RoomType {
     TIC_TAC_TOE,
     DE_CODER,
     HORSE_RACE,
-    DURAK
+    DURAK,
+    MAHJONG
 }
