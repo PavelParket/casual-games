@@ -5,10 +5,11 @@ import "../styles/DeCoderRoom.css";
 
 interface DeCoderHistoryProps {
     history: DeCoderGameHistory[];
+    isGameOver: boolean;
     onRequestSync: () => void;
 }
 
-export function DeCoderHistory({ history, onRequestSync }: DeCoderHistoryProps) {
+export function DeCoderHistory({ history, isGameOver, onRequestSync }: DeCoderHistoryProps) {
     const { getIcon } = useThemedIcon();
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -45,6 +46,7 @@ export function DeCoderHistory({ history, onRequestSync }: DeCoderHistoryProps) 
                 <Button
                     variant="ghost"
                     onClick={onRequestSync}
+                    disabled={isGameOver}
                     style={{ fontSize: "0.8rem", padding: "7px" }}
                     title="Sync State"
                 >
@@ -54,6 +56,7 @@ export function DeCoderHistory({ history, onRequestSync }: DeCoderHistoryProps) 
 
             <Input
                 value={searchQuery}
+                disabled={isGameOver}
                 onChange={(e) =>
                     setSearchQuery(
                         e.target.value

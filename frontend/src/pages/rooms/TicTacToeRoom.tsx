@@ -38,9 +38,12 @@ export default function TicTacToeRoom() {
     const [playersSymbols, setPlayersSymbols] = useState<Record<string, string>>();
     const [playersWithSymbols, setPlayersWithSymbols] = useState<Record<string, string>>({});
     const [winnerId, setWinnerId] = useState<string | null | undefined>(undefined);
+    const [winnerName, setWinnerName] = useState<string | null>(null);
 
     const [betInput, setBetInput] = useState<string>("");
     const [betPlaced, setBetPlaced] = useState<boolean>(false);
+
+    const [isOverlayOpen, setIsOverlayOpen] = useState(false);
 
     const { toasts, showGameToast, dismiss } = useGameToast();
     const { showSystemToast } = useSystemToastContext();
@@ -108,6 +111,7 @@ export default function TicTacToeRoom() {
 
         setBoard(message.board);
         setWinnerId(message.winner);
+        setWinnerName(message.players[message.winner] ?? "Opponent");
 
         if (message.winner === guid) {
             showGameToast("You are the winner!", "game-info");
@@ -116,6 +120,7 @@ export default function TicTacToeRoom() {
         }
 
         setIsGame(false);
+        setIsOverlayOpen(true);
     }, [guid, showGameToast]);
 
     const processDraw = useCallback((message: TicTacToeGameMessage) => {
@@ -125,8 +130,10 @@ export default function TicTacToeRoom() {
 
         setBoard(message.board);
         setWinnerId(message.winner);
+        setWinnerName(null);
         showGameToast(validateToastMessage(message.message), "game-info");
         setIsGame(false);
+        setIsOverlayOpen(true);
     }, [showGameToast]);
 
     const processAbort = useCallback(() => {
@@ -231,6 +238,8 @@ export default function TicTacToeRoom() {
     };
 
     const isGameOver = winnerId !== undefined;
+    const isDraw = winnerId === null;
+    const iWon = !isDraw && winnerId === guid;
 
     return (
         <Box className="page-wrapper">
@@ -247,85 +256,84 @@ export default function TicTacToeRoom() {
                     flexDirection: "column",
                 }}>
 
-                    {!isGameOver && (
-                        <Box style={{
-                            padding: "0.75rem 1.5rem",
-                            borderBottom: "1px solid var(--color-border)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                        }}>
-                            <Box>
-                                {isMobile ? (
-                                    <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <Icon src={getIcon("user")} size={18} alt="players" />
-                                        <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
-                                            Players ({players ? Object.keys(players).length : 0})
-                                        </Typography>
-                                    </Button>
-                                ) : (
-                                    <Typography variant="caption" style={{ opacity: 0.7 }}>
-                                        {`Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`}
+                    <Box style={{
+                        padding: "0.75rem 1.5rem",
+                        borderBottom: "1px solid var(--color-border)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                    }}>
+                        <Box>
+                            {isMobile ? (
+                                <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <Icon src={getIcon("user")} size={18} alt="players" />
+                                    <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
+                                        Players ({players ? Object.keys(players).length : 0})
                                     </Typography>
-                                )}
+                                </Button>
+                            ) : (
+                                <Typography variant="caption" style={{ opacity: 0.7 }}>
+                                    {`Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`}
+                                </Typography>
+                            )}
+                        </Box>
+
+                        <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
+                            Leave
+                        </Button>
+                    </Box>
+
+                    <Box className="ttt-main-content">
+                        <Box className="ttt-grid">
+                            <Box className="ttt-players-panel">
+                                <TicTacToePlayersPanel
+                                    players={players}
+                                    playersWithSymbols={playersWithSymbols}
+                                    isGame={isGame}
+                                />
                             </Box>
 
-                            <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
-                                Leave
-                            </Button>
-                        </Box>
-                    )}
+                            <Box className="ttt-board-panel">
+                                <TicTacToeBoard
+                                    board={board}
+                                    isGame={isGame}
+                                    gameAborted={gameAborted}
+                                    winnerId={winnerId}
+                                    mySymbol={mySymbol}
+                                    currentPlayerSymbol={currentPlayerSymbol}
+                                    onMove={handleMove}
+                                />
+                            </Box>
 
-                    {isGameOver ? (
-                        <EndGameOverlay
-                            winnerId={winnerId}
-                            myGuid={guid}
-                            players={players}
-                            onLeave={handleLeave}
-                        />
-                    ) : (
-                        <Box className="ttt-main-content">
-                            <Box className="ttt-grid">
-                                <Box className="ttt-players-panel">
-                                    <TicTacToePlayersPanel
-                                        players={players}
-                                        playersWithSymbols={playersWithSymbols}
-                                        isGame={isGame}
-                                    />
-                                </Box>
-
-                                <Box className="ttt-board-panel">
-                                    <TicTacToeBoard
-                                        board={board}
-                                        isGame={isGame}
-                                        gameAborted={gameAborted}
-                                        winnerId={winnerId}
-                                        mySymbol={mySymbol}
-                                        currentPlayerSymbol={currentPlayerSymbol}
-                                        onMove={handleMove}
-                                    />
-                                </Box>
-
-                                <Box className="ttt-betting-panel">
-                                    <BettingPanel
-                                        balance={balance}
-                                        betInput={betInput}
-                                        betPlaced={betPlaced}
-                                        ready={ready}
-                                        isGame={isGame}
-                                        playerBetMap={playerBetMap}
-                                        isConnected={isConnected}
-                                        gameAborted={gameAborted}
-                                        onBetInputChange={handleBetChange}
-                                        onPlaceBet={handlePlaceBet}
-                                        onReady={handleReady}
-                                    />
-                                </Box>
+                            <Box className="ttt-betting-panel">
+                                <BettingPanel
+                                    balance={balance}
+                                    betInput={betInput}
+                                    betPlaced={betPlaced}
+                                    ready={ready}
+                                    isGame={isGame}
+                                    isGameOver={isGameOver}
+                                    playerBetMap={playerBetMap}
+                                    isConnected={isConnected}
+                                    gameAborted={gameAborted}
+                                    onBetInputChange={handleBetChange}
+                                    onPlaceBet={handlePlaceBet}
+                                    onReady={handleReady}
+                                />
                             </Box>
                         </Box>
-                    )}
+                    </Box>
                 </Card>
             </Container>
+
+            <EndGameOverlay
+                isOpen={isGameOver && isOverlayOpen}
+                isDraw={isDraw}
+                iWon={iWon}
+                winnerName={winnerName}
+                onClose={() => setIsOverlayOpen(false)}
+                onLeave={handleLeave}
+            />
 
             <AnimatePresence>
                 {isMobile && isMobilePlayersOpen && (
