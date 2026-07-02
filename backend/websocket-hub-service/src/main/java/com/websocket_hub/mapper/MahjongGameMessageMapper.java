@@ -68,7 +68,7 @@ public interface MahjongGameMessageMapper extends MessageMapper {
     @Mapping(target = "bet", ignore = true)
     @Mapping(target = "removedSlotIds", ignore = true)
     @Mapping(target = "availableMoves", ignore = true)
-    @Mapping(target = "tilesRemaining", source = "response.opponentTilesRemaining")
+    @Mapping(target = "tilesRemaining", source = "response.tilesRemaining")
     MahjongGameMessage toOpponentStateMessage(MahjongGameInternalResponse response,
                                               MessageType type,
                                               MahjongGameEvent event,
@@ -110,4 +110,10 @@ public interface MahjongGameMessageMapper extends MessageMapper {
                                              UUID toUserId,
                                              UUID roomId,
                                              int seconds);
+
+    @Mapping(target = "players", ignore = true)
+    @Mapping(target = "playerGuid", ignore = true)
+    @Mapping(target = "slot1", ignore = true)
+    @Mapping(target = "slot2", ignore = true)
+    MahjongGameInternalRequest toFinishRequest(UUID roomId, UUID winnerId, Map<UUID, Integer> tilesCleared);
 }

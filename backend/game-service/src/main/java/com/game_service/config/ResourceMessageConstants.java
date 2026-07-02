@@ -67,6 +67,7 @@ public class ResourceMessageConstants {
 
     public static final String MAHJONG_GAME_NOT_FOUND = "Mahjong game not found";
     public static final String MAHJONG_PLAYER_NOT_IN_GAME = "Player is not part of this Mahjong game";
+    public static final String MAHJONG_MATCH_NOT_FOUND = "Mahjong match not found";
 
     // -------------------------------------------------------------------------
     // Durak

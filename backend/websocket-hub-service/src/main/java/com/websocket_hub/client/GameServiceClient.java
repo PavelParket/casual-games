@@ -360,7 +360,7 @@ public class GameServiceClient {
 
     public MahjongGameInternalResponse startMahjongGame(MahjongGameInternalRequest request) {
         URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
-                .path("/game/mahjong/init")
+                .path("/game/mahjong/start")
                 .build()
                 .toUri();
 
@@ -417,6 +417,24 @@ public class GameServiceClient {
         } catch (Exception e) {
             log.error("Failed to process Mahjong move: roomId={}", request.roomId(), e);
             throw new ServiceUnavailableException(ErrorCode.SERVICE_UNAVAILABLE.getMessage());
+        }
+    }
+
+    public void finishMahjongGame(MahjongGameInternalRequest request) {
+        URI uri = UriComponentsBuilder.fromUriString(gameServiceUrl)
+                .path("/game/mahjong/finish")
+                .build()
+                .toUri();
+
+        log.info("Calling game-service to finish Mahjong game: roomId={}, winnerId={}", request.roomId(), request.winnerId());
+
+        try {
+            restTemplate.exchange(
+                    new RequestEntity<>(request, HttpMethod.POST, uri),
+                    Void.class
+            );
+        } catch (Exception e) {
+            log.error("Failed to finish Mahjong game: roomId={}", request.roomId(), e);
         }
     }
 }

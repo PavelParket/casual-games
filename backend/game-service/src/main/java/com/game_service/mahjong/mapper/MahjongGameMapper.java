@@ -34,7 +34,7 @@ public interface MahjongGameMapper {
                 .build();
     }
 
-    default List<MahjongBoardResponse> toBoardResponses(Map<UUID, Board> boards) {
+    default List<MahjongBoardResponse> toBoardResponseList(Map<UUID, Board> boards) {
         return boards.entrySet().stream()
                 .map(entry -> toBoardResponse(entry.getKey(), entry.getValue()))
                 .toList();

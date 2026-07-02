@@ -16,13 +16,18 @@ public class MahjongGameController {
 
     private final MahjongGameService mahjongGameService;
 
-    @PostMapping("/init")
-    public MahjongGameResponse processInit(@RequestBody MahjongGameRequest request) {
+    @PostMapping("/start")
+    public MahjongGameResponse processStart(@RequestBody MahjongGameRequest request) {
         return mahjongGameService.processStart(request);
     }
 
     @PostMapping("/move")
     public MahjongGameResponse processMove(@RequestBody MahjongGameRequest request) {
         return mahjongGameService.processMove(request);
+    }
+
+    @PostMapping("/finish")
+    public void processFinish(@RequestBody MahjongGameRequest request) {
+        mahjongGameService.processFinish(request);
     }
 }

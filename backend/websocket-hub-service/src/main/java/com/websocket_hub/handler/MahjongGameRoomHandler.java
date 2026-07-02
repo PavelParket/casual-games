@@ -43,6 +43,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomManager> {
 
+    private static final int TILES_COUNT = 72;
+
     private final MahjongGameMessageMapper mahjongGameMessageMapper;
 
     private final GameServiceClient gameServiceClient;
@@ -125,7 +127,7 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
 
         UUID winnerGuid = remaining.iterator().next().getGuid();
 
-        processGameOver(roomId, winnerGuid);
+        processGameOver(roomId, winnerGuid, null);
     }
 
     private void handlePlayerReady(UUID roomId, UserInternalResponse user) {
@@ -215,7 +217,12 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
         }
 
         if (moveResponse.cleared()) {
-            processGameOver(roomId, user.guid());
+            Map<UUID, Integer> tilesCleared = Map.of(
+                    user.guid(), TILES_COUNT,
+                    moveResponse.opponentGuid(), TILES_COUNT - moveResponse.opponentTilesRemaining()
+            );
+
+            processGameOver(roomId, user.guid(), tilesCleared);
             return;
         }
 
@@ -253,7 +260,7 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
         }
 
         if (roomManager.bothDeadlocked(roomId)) {
-            processGameOver(roomId, null);
+            processGameOver(roomId, null, null);
             return;
         }
 
@@ -268,10 +275,10 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
             return;
         }
 
-        processGameOver(roomId, nonStuckGuid);
+        processGameOver(roomId, nonStuckGuid, null);
     }
 
-    private void processGameOver(UUID roomId, UUID winnerGuid) {
+    private void processGameOver(UUID roomId, UUID winnerGuid, Map<UUID, Integer> tilesCleared) {
         deadlockTimerScheduler.cancel(roomId);
 
         MahjongGameMessage gameOverMessage = mahjongGameMessageMapper.toGameOverMessage(
@@ -280,9 +287,11 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
 
         roomManager.broadcast(roomId, gameOverMessage);
 
-        if (winnerGuid == null) {
-            log.info("Room {} resolved as DRAW, no bank settlement", roomId);
+        gameServiceClient.finishMahjongGame(
+                mahjongGameMessageMapper.toFinishRequest(roomId, winnerGuid, tilesCleared)
+        );
 
+        if (winnerGuid == null) {
             roomManager.removePlayerBets(roomId);
             roomManager.updateRoomStatus(roomId, RoomStatus.FINISHED);
 
