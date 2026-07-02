@@ -25,6 +25,7 @@ import com.websocket_hub.mapper.GameTransactionMapper;
 import com.websocket_hub.mapper.MahjongGameMessageMapper;
 import com.websocket_hub.serializer.MessageDeserializer;
 import com.websocket_hub.service.grpc.client.GrpcGameTransactionClient;
+import com.websocket_hub.service.scheduler.MahjongDeadlockTimerScheduler;
 import com.websocket_hub.util.WebSocketUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
@@ -34,6 +35,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -51,6 +53,8 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
 
     private final GrpcGameTransactionClient grpcGameTransactionClient;
 
+    private final MahjongDeadlockTimerScheduler deadlockTimerScheduler;
+
     public MahjongGameRoomHandler(
             SessionManager sessionManager,
             MahjongGameRoomManager roomManager,
@@ -61,7 +65,8 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
             GameServiceClient gameServiceClient,
             WebSocketHelper webSocketHelper,
             GameTransactionMapper gameTransactionMapper,
-            GrpcGameTransactionClient grpcGameTransactionClient
+            GrpcGameTransactionClient grpcGameTransactionClient,
+            MahjongDeadlockTimerScheduler deadlockTimerScheduler
     ) {
         super(sessionManager, roomManager, errorHandler, messageDeserializer, defaultMessageMapper);
         this.mahjongGameMessageMapper = mahjongGameMessageMapper;
@@ -69,6 +74,7 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
         this.webSocketHelper = webSocketHelper;
         this.gameTransactionMapper = gameTransactionMapper;
         this.grpcGameTransactionClient = grpcGameTransactionClient;
+        this.deadlockTimerScheduler = deadlockTimerScheduler;
     }
 
     @Override
@@ -107,7 +113,19 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
 
     @Override
     protected void onLeave(UUID roomId, UserInternalResponse user) {
+        if (!RoomStatus.IN_PROGRESS.equals(roomManager.getStatus(roomId))) {
+            return;
+        }
 
+        Set<ClientSession> remaining = roomManager.getPlayersInRoom(roomId);
+
+        if (remaining.isEmpty()) {
+            return;
+        }
+
+        UUID winnerGuid = remaining.iterator().next().getGuid();
+
+        processGameOver(roomId, winnerGuid);
     }
 
     private void handlePlayerReady(UUID roomId, UserInternalResponse user) {
@@ -182,6 +200,10 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
     }
 
     private void handleGameMove(MahjongGameMessage mahjongGameMessage, UUID roomId, UserInternalResponse user) {
+        if (roomManager.isDeadlocked(roomId, user.guid())) {
+            throw new GameException(ErrorCode.INVALID_MOVE);
+        }
+
         MahjongGameInternalRequest moveRequest = mahjongGameMessageMapper.toMoveRequest(
                 roomId, user.guid(), mahjongGameMessage.slot1(), mahjongGameMessage.slot2()
         );
@@ -197,6 +219,11 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
             return;
         }
 
+        if (moveResponse.deadlocked()) {
+            handleDeadlock(roomId, user.guid());
+            return;
+        }
+
         MahjongGameMessage moverMessage = mahjongGameMessageMapper.toMoverStateMessage(
                 moveResponse, MessageType.SYSTEM, MahjongGameEvent.GAME_STATE, user.guid(), roomId
         );
@@ -208,12 +235,59 @@ public class MahjongGameRoomHandler extends AppWebSocketHandler<MahjongGameRoomM
         roomManager.broadcastMove(roomId, user.guid(), moverMessage, opponentMessage);
     }
 
+    private void handleDeadlock(UUID roomId, UUID playerGuid) {
+        roomManager.markDeadlocked(roomId, playerGuid);
+
+        MahjongGameMessage deadlockMessage = mahjongGameMessageMapper.toDeadlockWaitMessage(
+                MessageType.SYSTEM, MahjongGameEvent.DEADLOCK_WAIT, playerGuid, roomId, MahjongDeadlockTimerScheduler.DRAW_WINDOW_SECONDS
+        );
+
+        webSocketHelper.sendToSession(playerGuid, deadlockMessage);
+
+        deadlockTimerScheduler.startIfAbsent(roomId, () -> resolveDrawWindowExpired(roomId));
+    }
+
+    private void resolveDrawWindowExpired(UUID roomId) {
+        if (!RoomStatus.IN_PROGRESS.equals(roomManager.getStatus(roomId))) {
+            return;
+        }
+
+        if (roomManager.bothDeadlocked(roomId)) {
+            processGameOver(roomId, null);
+            return;
+        }
+
+        UUID nonStuckGuid = roomManager.getPlayersInRoom(roomId).stream()
+                .map(ClientSession::getGuid)
+                .filter(guid -> !roomManager.isDeadlocked(roomId, guid))
+                .findFirst()
+                .orElse(null);
+
+        if (nonStuckGuid == null) {
+            log.warn("Deadlock window expired in room {} but no non-stuck player found, skipping", roomId);
+            return;
+        }
+
+        processGameOver(roomId, nonStuckGuid);
+    }
+
     private void processGameOver(UUID roomId, UUID winnerGuid) {
+        deadlockTimerScheduler.cancel(roomId);
+
         MahjongGameMessage gameOverMessage = mahjongGameMessageMapper.toGameOverMessage(
                 MessageType.SYSTEM, MahjongGameEvent.GAME_OVER, roomId, winnerGuid
         );
 
         roomManager.broadcast(roomId, gameOverMessage);
+
+        if (winnerGuid == null) {
+            log.info("Room {} resolved as DRAW, no bank settlement", roomId);
+
+            roomManager.removePlayerBets(roomId);
+            roomManager.updateRoomStatus(roomId, RoomStatus.FINISHED);
+
+            return;
+        }
 
         try {
             List<PlayerBet> bets = roomManager.getPlayerBets(roomId);

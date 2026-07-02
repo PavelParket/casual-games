@@ -24,63 +24,90 @@ public interface MahjongGameMessageMapper extends MessageMapper {
     @Mapping(target = "players", ignore = true)
     MahjongGameInternalRequest toMoveRequest(UUID roomId, UUID playerGuid, String slot1, String slot2);
 
-    default MahjongGameMessage toStartMessage(MahjongBoard board,
-                                              long seed,
+    @Mapping(target = "winner", ignore = true)
+    @Mapping(target = "tilesRemaining", ignore = true)
+    @Mapping(target = "slot2", ignore = true)
+    @Mapping(target = "slot1", ignore = true)
+    @Mapping(target = "seconds", ignore = true)
+    @Mapping(target = "removedSlotIds", ignore = true)
+    @Mapping(target = "message", ignore = true)
+    @Mapping(target = "fromUserId", ignore = true)
+    @Mapping(target = "bet", ignore = true)
+    @Mapping(target = "availableMoves", ignore = true)
+    MahjongGameMessage toStartMessage(MahjongBoard board,
+                                      long seed,
+                                      MessageType type,
+                                      MahjongGameEvent event,
+                                      UUID toUserId,
+                                      UUID roomId,
+                                      Map<UUID, String> players);
+
+    @Mapping(target = "winner", ignore = true)
+    @Mapping(target = "tiles", ignore = true)
+    @Mapping(target = "slot2", ignore = true)
+    @Mapping(target = "slot1", ignore = true)
+    @Mapping(target = "seconds", ignore = true)
+    @Mapping(target = "players", ignore = true)
+    @Mapping(target = "message", ignore = true)
+    @Mapping(target = "fromUserId", ignore = true)
+    @Mapping(target = "bet", ignore = true)
+    MahjongGameMessage toMoverStateMessage(MahjongGameInternalResponse response,
+                                           MessageType type,
+                                           MahjongGameEvent event,
+                                           UUID toUserId,
+                                           UUID roomId);
+
+    @Mapping(target = "winner", ignore = true)
+    @Mapping(target = "tiles", ignore = true)
+    @Mapping(target = "slot2", ignore = true)
+    @Mapping(target = "slot1", ignore = true)
+    @Mapping(target = "seconds", ignore = true)
+    @Mapping(target = "players", ignore = true)
+    @Mapping(target = "message", ignore = true)
+    @Mapping(target = "fromUserId", ignore = true)
+    @Mapping(target = "bet", ignore = true)
+    @Mapping(target = "removedSlotIds", ignore = true)
+    @Mapping(target = "availableMoves", ignore = true)
+    @Mapping(target = "tilesRemaining", source = "response.opponentTilesRemaining")
+    MahjongGameMessage toOpponentStateMessage(MahjongGameInternalResponse response,
                                               MessageType type,
                                               MahjongGameEvent event,
                                               UUID toUserId,
-                                              UUID roomId,
-                                              Map<UUID, String> players) {
-        return MahjongGameMessage.builder()
-                .type(type)
-                .event(event)
-                .toUserId(toUserId)
-                .roomId(roomId)
-                .seed(seed)
-                .tiles(board.getTiles())
-                .players(players)
-                .build();
-    }
+                                              UUID roomId);
 
-    default MahjongGameMessage toMoverStateMessage(MahjongGameInternalResponse response,
-                                                   MessageType type,
-                                                   MahjongGameEvent event,
-                                                   UUID toUserId,
-                                                   UUID roomId) {
-        return MahjongGameMessage.builder()
-                .type(type)
-                .event(event)
-                .toUserId(toUserId)
-                .roomId(roomId)
-                .removedSlotIds(response.removedSlotIds())
-                .tilesRemaining(response.tilesRemaining())
-                .availableMoves(response.availableMoves())
-                .build();
-    }
+    @Mapping(target = "toUserId", ignore = true)
+    @Mapping(target = "tilesRemaining", ignore = true)
+    @Mapping(target = "tiles", ignore = true)
+    @Mapping(target = "slot2", ignore = true)
+    @Mapping(target = "slot1", ignore = true)
+    @Mapping(target = "seed", ignore = true)
+    @Mapping(target = "seconds", ignore = true)
+    @Mapping(target = "removedSlotIds", ignore = true)
+    @Mapping(target = "players", ignore = true)
+    @Mapping(target = "message", ignore = true)
+    @Mapping(target = "fromUserId", ignore = true)
+    @Mapping(target = "bet", ignore = true)
+    @Mapping(target = "availableMoves", ignore = true)
+    MahjongGameMessage toGameOverMessage(MessageType type,
+                                         MahjongGameEvent event,
+                                         UUID roomId,
+                                         UUID winner);
 
-    default MahjongGameMessage toOpponentStateMessage(MahjongGameInternalResponse response,
-                                                      MessageType type,
-                                                      MahjongGameEvent event,
-                                                      UUID toUserId,
-                                                      UUID roomId) {
-        return MahjongGameMessage.builder()
-                .type(type)
-                .event(event)
-                .toUserId(toUserId)
-                .roomId(roomId)
-                .tilesRemaining(response.opponentTilesRemaining())
-                .build();
-    }
-
-    default MahjongGameMessage toGameOverMessage(MessageType type,
-                                                 MahjongGameEvent event,
-                                                 UUID roomId,
-                                                 UUID winner) {
-        return MahjongGameMessage.builder()
-                .type(type)
-                .event(event)
-                .roomId(roomId)
-                .winner(winner)
-                .build();
-    }
+    @Mapping(target = "winner", ignore = true)
+    @Mapping(target = "tilesRemaining", ignore = true)
+    @Mapping(target = "tiles", ignore = true)
+    @Mapping(target = "slot2", ignore = true)
+    @Mapping(target = "slot1", ignore = true)
+    @Mapping(target = "seed", ignore = true)
+    @Mapping(target = "removedSlotIds", ignore = true)
+    @Mapping(target = "players", ignore = true)
+    @Mapping(target = "message", ignore = true)
+    @Mapping(target = "fromUserId", ignore = true)
+    @Mapping(target = "bet", ignore = true)
+    @Mapping(target = "availableMoves", ignore = true)
+    MahjongGameMessage toDeadlockWaitMessage(MessageType type,
+                                             MahjongGameEvent event,
+                                             UUID toUserId,
+                                             UUID roomId,
+                                             int seconds);
 }

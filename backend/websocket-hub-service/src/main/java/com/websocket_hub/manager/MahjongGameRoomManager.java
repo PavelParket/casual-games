@@ -40,6 +40,8 @@ public class MahjongGameRoomManager extends AbstractRoomManager {
 
     private final Map<UUID, List<PlayerBet>> playerBets = new ConcurrentHashMap<>();
 
+    private final Map<UUID, Set<UUID>> deadlockedPlayers = new ConcurrentHashMap<>();
+
     private final MahjongGameMessageMapper mahjongGameMessageMapper;
 
     private final ObjectFactory<PlayerBet> playerBetFactory;
@@ -122,7 +124,7 @@ public class MahjongGameRoomManager extends AbstractRoomManager {
 
     @Override
     protected void onDeleteRoom(UUID roomId) {
-
+        deadlockedPlayers.remove(roomId);
     }
 
     @Override
@@ -279,5 +281,18 @@ public class MahjongGameRoomManager extends AbstractRoomManager {
                 log.warn("broadcastMove interrupted for room {}", roomId);
             }
         }
+    }
+
+    public void markDeadlocked(UUID roomId, UUID playerGuid) {
+        deadlockedPlayers.computeIfAbsent(roomId, key -> ConcurrentHashMap.newKeySet()).add(playerGuid);
+    }
+
+    public boolean isDeadlocked(UUID roomId, UUID playerGuid) {
+        return deadlockedPlayers.getOrDefault(roomId, Set.of()).contains(playerGuid);
+    }
+
+    public boolean bothDeadlocked(UUID roomId) {
+        Set<UUID> deadlocked = deadlockedPlayers.getOrDefault(roomId, Set.of());
+        return deadlocked.size() == getPlayersInRoom(roomId).size() && !deadlocked.isEmpty();
     }
 }

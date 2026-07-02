@@ -41,6 +41,8 @@ public record MahjongGameMessage(
 
         Integer availableMoves,
 
+        Integer seconds,
+
         UUID winner,
 
         BigDecimal bet

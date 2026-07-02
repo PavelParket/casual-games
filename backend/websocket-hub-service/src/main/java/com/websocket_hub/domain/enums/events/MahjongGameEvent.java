@@ -10,6 +10,7 @@ public enum MahjongGameEvent implements EventType {
     MOVE,
     GAME_STATE,
     GAME_OVER,
+    DEADLOCK_WAIT,
     BET,
     BET_REJECT,
     BET_OUTBID,
