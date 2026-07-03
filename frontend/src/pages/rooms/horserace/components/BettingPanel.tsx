@@ -41,7 +41,7 @@ export function BettingPanel({
     onPlaceBet,
     onReady
 }: BettingPanelProps) {
-    const isBetButtonDisabled = betPlaced || selectedHorse === null || !betInput || parseFloat(betInput) <= 0 || phase !== "LOBBY";
+    const isBetButtonDisabled = betPlaced || selectedHorse === null || !betInput || parseFloat(betInput) <= 0;
 
     return (
         <Box style={{
@@ -125,7 +125,6 @@ export function BettingPanel({
                         onChange={(e) => onBetChange(e.target.value)}
                         placeholder="Amount"
                         style={{ width: "100%", background: "var(--color-bg)", color: "var(--color-text)", fontSize: "0.875rem" }}
-                        disabled={betPlaced || phase !== "LOBBY"}
                     />
 
                     {potentialWin !== null && (
