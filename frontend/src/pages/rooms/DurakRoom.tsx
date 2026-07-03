@@ -60,13 +60,10 @@ export default function DurakRoom() {
     const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
     const [discardCount, setDiscardCount] = useState(0);
     const [winnerId, setWinnerId] = useState<string | null | undefined>(undefined);
-    const [winnerName, setWinnerName] = useState<string | null>(null);
     const [attackerId, setAttackerId] = useState<string | null>(null);
     const [tableExitMode, setTableExitMode] = useState<TableExitMode>(null);
 
     const [isDealAnimation, setIsDealAnimation] = useState(false);
-
-    const [isOverlayOpen, setIsOverlayOpen] = useState(false);
 
     const wasGameRef = useRef(false);
 
@@ -136,17 +133,9 @@ export default function DurakRoom() {
 
     const processGameOver = useCallback((winnerGuid: string | undefined) => {
         setWinnerId(winnerGuid ?? null);
-
-        if (winnerGuid && players) {
-            setWinnerName(players[winnerGuid]?.username ?? "Opponent");
-        } else {
-            setWinnerName(null);
-        }
-
         setIsGame(false);
         setAvailableActions([]);
         setAwaitingResponse(false);
-        setIsOverlayOpen(true);
     }, []);
 
     const processAbort = useCallback(() => {
@@ -255,8 +244,6 @@ export default function DurakRoom() {
     const handleLeave = () => navigate("/rooms");
 
     const isGameOver = winnerId !== undefined;
-    const isDraw = winnerId === null;
-    const iWon = !isDraw && winnerId === guid;
 
     return (
         <Box className="page-wrapper">
@@ -268,38 +255,35 @@ export default function DurakRoom() {
                 </Box>
 
                 <Card style={{ padding: 0 }}>
-                    <Box style={{
-                        padding: "0.75rem 1.5rem",
-                        borderBottom: "1px solid var(--color-border)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                    }}>
-                        <Box>
-                            {isMobile ? (
-                                <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
-                                    <Icon src={getIcon("user")} size={18} alt="players" />
-                                    <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
-                                        Players ({players ? Object.keys(players).length : 0})
+                    {!isGameOver && (
+                        <Box style={{
+                            padding: "0.75rem 1.5rem",
+                            borderBottom: "1px solid var(--color-border)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                        }}>
+                            <Box>
+                                {isMobile ? (
+                                    <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <Icon src={getIcon("user")} size={18} alt="players" />
+                                        <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
+                                            Players ({players ? Object.keys(players).length : 0})
+                                        </Typography>
+                                    </Button>
+                                ) : (
+                                    <Typography variant="caption" style={{ opacity: 0.7 }}>
+                                        {`Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`}
                                     </Typography>
-                                </Button>
-                            ) : (
-                                <Typography variant="caption" style={{ opacity: 0.7 }}>
-                                    {isGameOver
-                                        ? "Game finished"
-                                        : isGame
-                                            ? "Game in progress..."
-                                            : `Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`
-                                    }
-                                </Typography>
-                            )}
+                                )}
+                            </Box>
+                            <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
+                                Leave
+                            </Button>
                         </Box>
-                        <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
-                            Leave
-                        </Button>
-                    </Box>
+                    )}
 
-                    {(isGame || isGameOver) && (
+                    {isGame && (
                         <DurakBoard
                             myCards={myCards}
                             opponentCardCount={opponentCardCount}
@@ -310,7 +294,7 @@ export default function DurakRoom() {
                             phase={phase}
                             isMyTurn={isMyTurn}
                             availableActions={availableActions}
-                            remainingSeconds={isGameOver ? null : remainingSeconds}
+                            remainingSeconds={remainingSeconds}
                             discardCount={discardCount}
                             playerName={myName}
                             opponentName={opponentName}
@@ -321,7 +305,16 @@ export default function DurakRoom() {
                             onPlayCard={handlePlayCard}
                             onPass={handlePass}
                             onTakeCards={handleTakeCards}
-                            disabled={awaitingResponse || isDealAnimation || gameAborted || isGameOver}
+                            disabled={awaitingResponse || isDealAnimation || gameAborted}
+                        />
+                    )}
+
+                    {isGameOver && (
+                        <GameOverOverlay
+                            winnerId={winnerId}
+                            myGuid={guid}
+                            players={players}
+                            onLeave={handleLeave}
                         />
                     )}
 
@@ -349,15 +342,6 @@ export default function DurakRoom() {
                     )}
                 </Card>
             </Container>
-
-            <GameOverOverlay
-                isOpen={isGameOver && isOverlayOpen}
-                isDraw={isDraw}
-                iWon={iWon}
-                winnerName={winnerName}
-                onClose={() => setIsOverlayOpen(false)}
-                onLeave={handleLeave}
-            />
 
             <AnimatePresence>
                 {isMobile && isMobilePlayersOpen && (

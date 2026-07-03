@@ -20,18 +20,7 @@ configurations {
 }
 
 repositories {
-    if (commonUtilsVersion.endsWith('-local-SNAPSHOT')) {
-        mavenLocal()
-    } else {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/PavelParket/casual-games")
-            credentials {
-                username = findProperty('gprUser') ?: System.getenv('GPR_USER')
-                password = findProperty('gprToken') ?: System.getenv('GPR_TOKEN')
-            }
-        }
-    }
+    mavenLocal()
     mavenCentral()
 }
 
@@ -58,11 +47,11 @@ dependencyManagement {
 }
 
 dependencies {
-    implementation "com.casualgames:common-utils:${commonUtilsVersion}"
-    implementation "com.casualgames:security-starter:${commonUtilsVersion}"
-    implementation "com.casualgames:redis-starter:${commonUtilsVersion}"
-    implementation "com.casualgames:grpc-utils:${commonUtilsVersion}"
-    implementation "com.casualgames:kafka-starter:${commonUtilsVersion}"
+    implementation 'com.casualgames:common-utils:1.0.0'
+    implementation 'com.casualgames:security-starter:1.0.0'
+    implementation 'com.casualgames:redis-starter:1.0.0'
+    implementation 'com.casualgames:grpc-utils:1.0.0'
+    implementation 'com.casualgames:kafka-starter:1.0.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

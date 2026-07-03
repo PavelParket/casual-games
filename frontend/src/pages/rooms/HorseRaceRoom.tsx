@@ -55,8 +55,6 @@ export default function HorseRaceRoom() {
     const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
     const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    const [isOverlayOpen, setIsOverlayOpen] = useState(false);
-
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
@@ -118,7 +116,6 @@ export default function HorseRaceRoom() {
         setPhase((prev) => {
             if (prev === "RACING") {
                 showGameToast(`Horse #${(winnerIndex ?? 0) + 1} wins!`, "game-info");
-                setIsOverlayOpen(true);
                 return "FINISHED";
             }
             return prev;
@@ -265,74 +262,78 @@ export default function HorseRaceRoom() {
 
                 <Card style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
-                    <Box style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid var(--color-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <Typography variant="caption" style={{ opacity: 0.7 }}>
-                            {phase === "RACING"
-                                ? "Race in progress..."
-                                : `Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`
-                            }
-                        </Typography>
-                        <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
-                            Leave
-                        </Button>
-                    </Box>
-
-                    <Box style={{ display: "flex", gap: "1.5rem", alignItems: "flex-start", minHeight: "280px" }}>
-
-                        <Box style={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: 0 }}>
-
-                            {(secondsLeft !== null || (isMobile && (phase === "LOBBY" || phase === "WAITING"))) && (
-                                <Box style={{ display: "flex", gap: "0.5rem", width: "100%", alignItems: "stretch" }}>
-                                    {secondsLeft !== null && (
-                                        <Box style={{
-                                            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0.5rem 1rem", borderRadius: "var(--radius-sm)",
-                                            background: secondsLeft <= 10 ? "rgba(231,76,60,0.12)" : "rgba(255,255,255,0.04)",
-                                            border: `1px solid ${secondsLeft <= 10 ? "rgba(231,76,60,0.4)" : "var(--color-border)"}`
-                                        }}>
-                                            <Typography variant="caption" style={{ fontWeight: 700, fontSize: "0.9rem", color: secondsLeft <= 10 ? "#e74c3c" : "var(--color-text-secondary)", letterSpacing: "0.04em" }}>
-                                                Race starts in {formatCountdown(secondsLeft)}
-                                            </Typography>
-                                        </Box>
-                                    )}
-
-                                    {isMobile && (phase === "LOBBY" || phase === "WAITING") && (
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => setIsMobileBettingOpen(true)}
-                                            style={{ width: "50px", flexShrink: 0, padding: "0.25rem 0.35rem" }}
-                                        >
-                                            Bets
-                                        </Button>
-                                    )}
-                                </Box>
-                            )}
-
-                            <Card style={{ flex: 1, padding: "1.25rem", background: "var(--color-bg-secondary)", minHeight: "260px" }}>
-                                <HorseRaceTrack
-                                    phase={phase}
-                                    horseCount={horseCount}
-                                    winnerIndex={winnerIndex}
-                                    raceKeyframes={raceKeyframes}
-                                    onRaceEnd={handleRaceEnd}
-                                    horseSize={horseSize}
-                                />
-                            </Card>
+                    {!isGameOver && (
+                        <Box style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid var(--color-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <Typography variant="caption" style={{ opacity: 0.7 }}>
+                                {phase === "RACING"
+                                    ? "Race in progress..."
+                                    : `Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`
+                                }
+                            </Typography>
+                            <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
+                                Leave
+                            </Button>
                         </Box>
-                        {!isMobile && (
-                            <BettingPanel {...bettingPanelProps} inDrawer={false} />
-                        )}
-                    </Box>
+                    )}
+
+                    {isGameOver ? (
+                        <EndGameOverlay
+                            won={won}
+                            betAmount={betAmount}
+                            winAmount={winAmount}
+                            onLeave={handleLeave}
+                        />
+                    ) : (
+
+                        <Box style={{ display: "flex", gap: "1.5rem", alignItems: "flex-start", minHeight: "280px" }}>
+
+                            <Box style={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: 0 }}>
+
+                                {(secondsLeft !== null || (isMobile && (phase === "LOBBY" || phase === "WAITING"))) && (
+                                    <Box style={{ display: "flex", gap: "0.5rem", width: "100%", alignItems: "stretch" }}>
+
+                                        {secondsLeft !== null && (
+                                            <Box style={{
+                                                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0.5rem 1rem", borderRadius: "var(--radius-sm)",
+                                                background: secondsLeft <= 10 ? "rgba(231,76,60,0.12)" : "rgba(255,255,255,0.04)",
+                                                border: `1px solid ${secondsLeft <= 10 ? "rgba(231,76,60,0.4)" : "var(--color-border)"}`
+                                            }}>
+                                                <Typography variant="caption" style={{ fontWeight: 700, fontSize: "0.9rem", color: secondsLeft <= 10 ? "#e74c3c" : "var(--color-text-secondary)", letterSpacing: "0.04em" }}>
+                                                    Race starts in {formatCountdown(secondsLeft)}
+                                                </Typography>
+                                            </Box>
+                                        )}
+
+                                        {isMobile && (phase === "LOBBY" || phase === "WAITING") && (
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setIsMobileBettingOpen(true)}
+                                                style={{ width: "50px", flexShrink: 0, padding: "0.25rem 0.35rem" }}
+                                            >
+                                                Bets
+                                            </Button>
+                                        )}
+                                    </Box>
+                                )}
+
+                                <Card style={{ flex: 1, padding: "1.25rem", background: "var(--color-bg-secondary)", minHeight: "260px" }}>
+                                    <HorseRaceTrack
+                                        phase={phase}
+                                        horseCount={horseCount}
+                                        winnerIndex={winnerIndex}
+                                        raceKeyframes={raceKeyframes}
+                                        onRaceEnd={handleRaceEnd}
+                                        horseSize={horseSize}
+                                    />
+                                </Card>
+                            </Box>
+                            {!isMobile && (
+                                <BettingPanel {...bettingPanelProps} inDrawer={false} />
+                            )}
+                        </Box>
+                    )}
                 </Card>
             </Container>
-
-            <EndGameOverlay
-                isOpen={isGameOver && isOverlayOpen}
-                won={won}
-                betAmount={betAmount}
-                winAmount={winAmount}
-                onClose={() => setIsOverlayOpen(false)}
-                onLeave={handleLeave}
-            />
 
             <AnimatePresence>
                 {isMobile && isMobileBettingOpen && (

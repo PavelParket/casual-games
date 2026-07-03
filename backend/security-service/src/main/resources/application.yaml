@@ -10,7 +10,7 @@ spring:
       - net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration
 
   datasource:
-    url: jdbc:postgresql://${SECURITY_POSTGRES_HOST:localhost}:${SECURITY_POSTGRES_PORT:5432}/${SECURITY_POSTGRES_DB:casual_games}?currentSchema=${SECURITY_DB_DEFAULT_SCHEMA:security_service}
+    url: jdbc:postgresql://${SECURITY_POSTGRES_HOST:localhost}:${SECURITY_POSTGRES_PORT:5432}/${SECURITY_POSTGRES_DB:diploma}?currentSchema=${SECURITY_DB_DEFAULT_SCHEMA:security_service}
     username: ${SECURITY_POSTGRES_USERNAME:postgres}
     password: ${SECURITY_POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
