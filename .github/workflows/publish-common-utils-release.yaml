@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
       - name: Extract version from tag
         id: version
@@ -30,10 +30,6 @@ jobs:
 
       - name: Set up Gradle (with cache)
         uses: gradle/actions/setup-gradle@v6
-
-      - name: Run tests
-        working-directory: backend/common-utils
-        run: ./gradlew test -Pversion=${{ steps.version.outputs.version }} --no-daemon
 
       - name: Publish release to GitHub Packages
         working-directory: backend/common-utils

@@ -13,7 +13,6 @@ import java.util.UUID;
 @Mapper(componentModel = "spring")
 public interface DeCoderGameMapper {
 
-    @Mapping(target = "player", ignore = true)
     @Mapping(target = "winner", ignore = true)
     @Mapping(target = "gameState", ignore = true)
     @Mapping(target = "isGameStarted", ignore = true)

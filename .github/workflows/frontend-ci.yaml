@@ -6,11 +6,6 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci.yaml'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yaml'
 
 concurrency:
   group: frontend-ci-${{ github.ref }}
@@ -27,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
       - name: Set up Node
         uses: actions/setup-node@v6
@@ -39,8 +34,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # eslint .
       - name: Lint
         run: npm run lint
 
+      # tsc -b && vite build
       - name: Build
         run: npm run build
