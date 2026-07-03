@@ -2,7 +2,7 @@ name: Publish common-utils (SNAPSHOT)
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ develop ]
     paths:
       - 'backend/common-utils/**'
       - '.github/workflows/publish-common-utils-snapshot.yaml'
