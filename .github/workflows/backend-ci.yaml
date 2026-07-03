@@ -6,6 +6,11 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yaml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yaml'
 
 concurrency:
   group: backend-ci-${{ github.ref }}
@@ -18,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up JDK 21
         uses: actions/setup-java@v5
@@ -29,24 +34,16 @@ jobs:
       - name: Set up Gradle (with cache)
         uses: gradle/actions/setup-gradle@v6
 
-      # --- Derive local-SNAPSHOT version for CI ---
-      # Reads version from common-utils/gradle.properties, strips -SNAPSHOT, appends -local-SNAPSHOT.
-      # Example: 1.4.0-SNAPSHOT → 1.4.0-local-SNAPSHOT
-      # CI always builds against mavenLocal, never GPR — no token needed for resolution.
       - name: Resolve CI starters version
         id: vars
         run: |
           BASE=$(grep '^version=' backend/common-utils/gradle.properties | cut -d= -f2 | sed 's/-SNAPSHOT//')
           echo "local_ver=${BASE}-local-SNAPSHOT" >> $GITHUB_OUTPUT
 
-      # --- Phase 1: publish common-utils to the runner's local Maven repo ---
       - name: Build & publish common-utils
         working-directory: backend/common-utils
         run: ./gradlew publishToMavenLocal -Pversion=${{ steps.vars.outputs.local_ver }} --no-daemon
 
-      # --- Phase 2: build each service sequentially ---
-      # -PcommonUtilsVersion forces mavenLocal resolution on all services, regardless of
-      # their gradle.properties default (which points to GPR for non-CI environments).
       - name: Build services
         run: |
           set -e
