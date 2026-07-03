@@ -33,7 +33,7 @@ export function PlayersPanel({ players, inDrawer = false }: PlayersPanelProps) {
                     Players
                 </Typography>
             )}
-            
+
             {players &&
                 Object.entries(players).map(([playerGuid, player]) => (
                     <MiniProfile

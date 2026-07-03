@@ -4,23 +4,25 @@ import "../styles/DeCoderRoom.css";
 
 interface DeCoderBoardProps {
     gameActive: boolean;
+    isGameOver: boolean;
     balanceBefore?: number;
     spent: number;
     onSendMove: (code: string) => void;
 }
 
-export function DeCoderBoard({ gameActive, balanceBefore, spent, onSendMove }: DeCoderBoardProps) {
+export function DeCoderBoard({ gameActive, isGameOver, balanceBefore, spent, onSendMove }: DeCoderBoardProps) {
     const [chars, setChars] = useState<string[]>(["", "", "", ""]);
     const [cooldown, setCooldown] = useState(0);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     useEffect(() => {
-        if (cooldown <= 0) return;
+        if (cooldown <= 0 || isGameOver) return;
         const timerId = setInterval(() => setCooldown((c) => c - 1), 1000);
         return () => clearInterval(timerId);
-    }, [cooldown]);
+    }, [cooldown, isGameOver]);
 
     const handleCharChange = (index: number, val: string) => {
+        if (isGameOver) return;
         const char = val.replace(/[^A-Za-z]/g, "").toUpperCase().slice(-1);
         const newChars = [...chars];
         newChars[index] = char;
@@ -32,6 +34,7 @@ export function DeCoderBoard({ gameActive, balanceBefore, spent, onSendMove }: D
     };
 
     const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (isGameOver) return;
         if (e.key === "Backspace" && chars[index] === "" && index > 0) {
             inputRefs.current[index - 1]?.focus();
         }
@@ -47,6 +50,7 @@ export function DeCoderBoard({ gameActive, balanceBefore, spent, onSendMove }: D
     };
 
     const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        if (isGameOver) return;
         e.preventDefault();
         const pastedData = e.clipboardData
             .getData("Text")
@@ -67,6 +71,7 @@ export function DeCoderBoard({ gameActive, balanceBefore, spent, onSendMove }: D
     };
 
     const handleSendClick = () => {
+        if (isGameOver) return;
         const codeStr = chars.join("");
         if (codeStr.length !== 4) return;
         if (cooldown > 0) return;
@@ -77,7 +82,7 @@ export function DeCoderBoard({ gameActive, balanceBefore, spent, onSendMove }: D
         inputRefs.current[0]?.focus();
     };
 
-    if (!gameActive) {
+    if (!gameActive && !isGameOver) {
         return (
             <Box style={{ textAlign: "center" }}>
                 <Typography variant="h2" style={{ marginBottom: "1.5rem" }}>
@@ -110,6 +115,11 @@ export function DeCoderBoard({ gameActive, balanceBefore, spent, onSendMove }: D
                             onKeyDown={(e) => handleKeyDown(index, e)}
                             onPaste={handlePaste}
                             onFocus={(e) => e.target.select()}
+                            disabled={isGameOver}
+                            style={{
+                                opacity: isGameOver ? 0.6 : 1,
+                                cursor: isGameOver ? "not-allowed" : "text",
+                            }}
                         />
                     ))}
                 </Box>
@@ -117,7 +127,7 @@ export function DeCoderBoard({ gameActive, balanceBefore, spent, onSendMove }: D
                 <Button
                     variant="solid"
                     onClick={handleSendClick}
-                    disabled={cooldown > 0 || chars.join("").length !== 4}
+                    disabled={cooldown > 0 || chars.join("").length !== 4 || isGameOver}
                     style={{
                         display: "inline-flex",
                         alignItems: "center",

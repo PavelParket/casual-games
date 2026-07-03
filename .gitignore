@@ -124,6 +124,7 @@ tmp/
 **/.env
 .env
 deploy/prod.env
+/deploy/certs
 .local
 *.properties.local
 
@@ -206,7 +207,4 @@ dist-ssr
 *.sln
 *.sw?
 
-# Generated for Docker builds — never commit
-backend/.m2-common-utils/
-/deploy/certs
 
