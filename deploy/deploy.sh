@@ -24,6 +24,7 @@ TAG="${1:-}"
 
 # Derive starters version from tag: v1.4.0 → 1.4.0
 APP_VERSION="${TAG#v}"
+export APP_VERSION
 
 # --- Read GPR credentials from prod.env --------------------------------------
 GPR_USER=$(grep '^GPR_USER='  "$ENV_FILE" | cut -d= -f2-)
@@ -46,7 +47,7 @@ ok "on ${TAG}"
 # --- 2. docker compose build -------------------------------------------------
 step "2/3  Building images"
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build \
-  --build-arg APP_VERSION="APP_VERSION"
+  --build-arg APP_VERSION="$APP_VERSION"
 ok "images built"
 
 # --- 3. up -d ----------------------------------------------------------------

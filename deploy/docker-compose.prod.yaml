@@ -131,6 +131,7 @@ services:
       context: ../backend
       args:
         SERVICE_NAME: api-gateway
+        APP_VERSION: ${APP_VERSION:-1.0.0}
       secrets:
         - gpr_user
         - gpr_token
@@ -150,6 +151,7 @@ services:
       context: ../backend
       args:
         SERVICE_NAME: security-service
+        APP_VERSION: ${APP_VERSION:-1.0.0}
       secrets:
         - gpr_user
         - gpr_token
@@ -179,6 +181,7 @@ services:
       context: ../backend
       args:
         SERVICE_NAME: user-service
+        APP_VERSION: ${APP_VERSION:-1.0.0}
       secrets:
         - gpr_user
         - gpr_token
@@ -210,6 +213,7 @@ services:
       context: ../backend
       args:
         SERVICE_NAME: bank-service
+        APP_VERSION: ${APP_VERSION:-1.0.0}
       secrets:
         - gpr_user
         - gpr_token
@@ -239,6 +243,7 @@ services:
       context: ../backend
       args:
         SERVICE_NAME: game-service
+        APP_VERSION: ${APP_VERSION:-1.0.0}
       secrets:
         - gpr_user
         - gpr_token
@@ -266,6 +271,7 @@ services:
       context: ../backend
       args:
         SERVICE_NAME: websocket-hub-service
+        APP_VERSION: ${APP_VERSION:-1.0.0}
       secrets:
         - gpr_user
         - gpr_token
@@ -294,6 +300,8 @@ services:
     image: casual-games/frontend:${APP_VERSION:-1.0.0}
     build:
       context: ../frontend
+      args:
+        APP_VERSION: ${APP_VERSION:-1.0.0}
     container_name: frontend
     restart: unless-stopped
     depends_on:
