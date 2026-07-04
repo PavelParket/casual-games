@@ -50,7 +50,7 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
         this.status = status;
         this.permissions = permissions;
         this.roleAndPermissionsMap = roleAndPermissionsMap;
-        this.principal = guid;
+        this.principal = this;
         this.credentials = null;
 
         if (authorities != null && !authorities.isEmpty()) {

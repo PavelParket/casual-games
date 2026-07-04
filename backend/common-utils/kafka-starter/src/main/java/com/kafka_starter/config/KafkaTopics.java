@@ -14,4 +14,5 @@ public class KafkaTopics {
     private String roomLifecycle;
     private String user;
     private String updateSubscription;
+    private String userNotification;
 }

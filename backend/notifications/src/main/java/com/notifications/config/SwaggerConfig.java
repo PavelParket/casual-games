@@ -1,4 +1,4 @@
-package com.bank_service.config;
+package com.notifications.config;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @OpenAPIDefinition(
-        info = @Info(title = "Bank API", version = "v1")
+        info = @Info(title = "Notification API", version = "v1")
 )
 @SecurityScheme(
         name = "bearerAuth",
