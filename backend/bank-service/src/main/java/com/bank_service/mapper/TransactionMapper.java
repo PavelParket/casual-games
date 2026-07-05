@@ -5,6 +5,8 @@ import com.bank_service.domain.entity.Transaction;
 import com.casualgames.grpc.transaction.UserTransaction;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
 
 import java.util.List;
 
@@ -20,6 +22,10 @@ public interface TransactionMapper {
             expression = "java(transaction.getCreatedAt().atOffset(java.time.ZoneOffset.UTC).toLocalTime())"
     )
     TransactionResponse toResponse(Transaction transaction);
+
+    default PagedModel<TransactionResponse> toResponsePage(Page<Transaction> transactions) {
+        return new PagedModel<>(transactions.map(this::toResponse));
+    }
 
     List<TransactionResponse> toResponseList(List<Transaction> transactions);
 

@@ -1,15 +1,15 @@
 package com.game_service.common.service;
 
 import com.game_service.common.dto.GameMatchRequestFilter;
-import com.game_service.common.dto.GameMatchResponse;
+import com.game_service.common.dto.GameMatchResponseList;
 import com.game_service.common.enums.GameType;
 import com.game_service.common.exception.NotFoundException;
 import com.game_service.common.service.provider.GameCleanupProvider;
 import com.game_service.common.service.provider.GameMatchesProvider;
 import com.kafka_starter.dto.event.RoomDeleteEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -44,14 +44,20 @@ public class GameService {
                 );
     }
 
-    public Page<GameMatchResponse> getMatches(UUID userGuid, GameMatchRequestFilter gameMatchRequestFilter, Pageable pageable) {
+    public GameMatchResponseList getMatches(UUID userGuid, GameMatchRequestFilter gameMatchRequestFilter, Pageable pageable) {
         GameMatchesProvider provider = gameMatchesProviders.get(gameMatchRequestFilter.gameType());
 
         if (provider == null) {
             throw new NotFoundException(String.format(GAME_TYPE_NOT_FOUND, gameMatchRequestFilter.gameType()));
         }
 
-        return provider.findMatches(userGuid, gameMatchRequestFilter, pageable);
+        return GameMatchResponseList.builder()
+                .gameMatches(
+                        new PagedModel<>(
+                                provider.findMatches(userGuid, gameMatchRequestFilter, pageable)
+                        )
+                )
+                .build();
     }
 
     public void handleRoomDeleted(RoomDeleteEvent event) {

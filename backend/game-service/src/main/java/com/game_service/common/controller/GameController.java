@@ -1,11 +1,18 @@
 package com.game_service.common.controller;
 
+import com.common_utils.dto.ErrorResponse;
 import com.game_service.common.dto.GameMatchRequestFilter;
-import com.game_service.common.dto.GameMatchResponse;
+import com.game_service.common.dto.GameMatchResponseList;
 import com.game_service.common.service.GameService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,14 +26,38 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/game")
 @RequiredArgsConstructor
+@ApiResponses(value = {
+        @ApiResponse(responseCode = "400",
+                description = "Bad Request",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401",
+                description = "Unauthorized",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403",
+                description = "Forbidden",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404",
+                description = "Not Found",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "500",
+                description = "Internal Server Error",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(implementation = ErrorResponse.class)))
+})
 public class GameController {
 
     private final GameService gameService;
 
     @PostMapping("/history/{userGuid}")
-    public Page<GameMatchResponse> getMatches(@PathVariable UUID userGuid,
-                                              @RequestBody @Valid GameMatchRequestFilter gameMatchRequestFilter,
-                                              @PageableDefault Pageable pageable) {
+    @Operation(summary = "Get game matches history for user", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200")
+    public GameMatchResponseList getMatches(@PathVariable UUID userGuid,
+                                            @RequestBody @Valid GameMatchRequestFilter gameMatchRequestFilter,
+                                            @ParameterObject @PageableDefault Pageable pageable) {
         return gameService.getMatches(userGuid, gameMatchRequestFilter, pageable);
     }
 }
