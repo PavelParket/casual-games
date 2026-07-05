@@ -312,7 +312,12 @@ public class UserSubscriptionService {
             User user = userRepository.findByGuid(subscription.getUserGuid())
                     .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, subscription.getUserGuid())));
 
-            long daysLeft = Duration.between(now, subscription.getExpiresAt()).toDays();
+            Duration remaining = Duration.between(now, subscription.getExpiresAt());
+            long daysLeft = remaining.toDays();
+
+            if (remaining.minusDays(daysLeft).compareTo(Duration.ZERO) > 0) {
+                daysLeft++;
+            }
 
             Map<String, String> params = Map.of(
                     NotificationEventParams.USERNAME.getParam(), user.getUsername(),

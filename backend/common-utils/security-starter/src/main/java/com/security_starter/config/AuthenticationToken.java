@@ -90,6 +90,11 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
         credentials = null;
     }
 
+    @Override
+    public String getName() {
+        return guid != null ? guid.toString() : "service-to-service";
+    }
+
     public boolean hasRole(Role role) {
         return roles.contains(role.name());
     }

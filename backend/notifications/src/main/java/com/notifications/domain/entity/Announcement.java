@@ -1,11 +1,8 @@
 package com.notifications.domain.entity;
 
-import com.common_utils.enums.NotificationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,41 +13,33 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
-@Table(name = "notification_templates")
+@Table(name = "announcements")
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class NotificationTemplate {
+public class Announcement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private NotificationType type;
+    private String title;
 
-    private String titleTemplate;
+    private String body;
 
-    private String bodyTemplate;
-
-    private String linkTemplate;
-
-    private boolean enabled;
+    private UUID createdBy;
 
     @CreatedDate
     @Column(updatable = false)
     private Instant createdAt;
-
-    @LastModifiedDate
-    private Instant lastModifiedAt;
 }
