@@ -45,8 +45,6 @@ spring:
       enabled: ${SERVICE_WHITELIST_ENABLED:true}
       hosts: [ "127.0.0.1" ]
 
-  #cors:
-
 server:
   port: 8085
 
@@ -62,6 +60,12 @@ kafka:
     "[auto.offset.reset]": earliest
   topics:
     user-notification: ${KAFKA_USER_NOTIFICATION_TOPIC:user-notification}
+
+cron:
+  notification-cleanup: ${CRON_NOTIFICATION_CLEANUP:0 0 0 * * *}
+
+notification-cleanup:
+  retention-days: ${NOTIFICATION_RETENTION_DAYS:7}
 
 logging:
   level:

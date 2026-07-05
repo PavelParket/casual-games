@@ -6,6 +6,7 @@ import com.notifications.domain.entity.Announcement;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -19,7 +20,7 @@ public interface AnnouncementMapper {
 
     AnnouncementResponse toResponse(Announcement announcement);
 
-    default Page<AnnouncementResponse> toResponsePage(Page<Announcement> announcements) {
-        return announcements.map(this::toResponse);
+    default PagedModel<AnnouncementResponse> toResponsePage(Page<Announcement> announcements) {
+        return new PagedModel<>(announcements.map(this::toResponse));
     }
 }

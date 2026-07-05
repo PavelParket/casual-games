@@ -18,6 +18,7 @@ import com.security_starter.enums.Permissions;
 import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,6 +43,9 @@ import static com.notifications.config.ResourceMessageConstants.NOTIFICATION_NOT
 public class NotificationService {
 
     private static final String PARAM_TEMPLATE = "{%s}";
+
+    @Value("${notification-cleanup.retention-days}")
+    private int notificationCleanupRetentionDays;
 
     private final NotificationRepository notificationRepository;
 
@@ -153,5 +158,11 @@ public class NotificationService {
                 .notifications(notificationMapper.toResponsePage(notifications))
                 .unread(unread)
                 .build();
+    }
+
+    @Transactional
+    public void deleteReadNotifications(Instant date) {
+        date = date.minus(notificationCleanupRetentionDays, ChronoUnit.DAYS);
+        notificationRepository.deleteRead(date);
     }
 }

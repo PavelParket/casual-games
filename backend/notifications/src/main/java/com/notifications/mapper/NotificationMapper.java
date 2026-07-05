@@ -6,6 +6,7 @@ import com.notifications.domain.entity.Notification;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
 
 import java.time.Instant;
 
@@ -19,7 +20,7 @@ public interface NotificationMapper {
 
     NotificationResponse toResponse(Notification notification);
 
-    default Page<NotificationResponse> toResponsePage(Page<Notification> notifications) {
-        return notifications.map(this::toResponse);
+    default PagedModel<NotificationResponse> toResponsePage(Page<Notification> notifications) {
+        return new PagedModel<>(notifications.map(this::toResponse));
     }
 }

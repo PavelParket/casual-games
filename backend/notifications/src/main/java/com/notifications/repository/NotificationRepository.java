@@ -28,4 +28,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             AND read_at IS NULL
             """, nativeQuery = true)
     void markAllAsRead(UUID recipientGuid, Instant now);
+
+    @Modifying
+    @Query(value = """
+            DELETE FROM notifications
+            WHERE read_at IS NOT NULL
+            AND created_at < :date
+            """, nativeQuery = true)
+    void deleteRead(Instant date);
 }

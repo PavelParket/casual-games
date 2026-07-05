@@ -1,12 +1,12 @@
 package com.notifications.domain.dto;
 
 import lombok.Builder;
-import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
 
 @Builder
 public record AnnouncementResponseList(
 
-        Page<AnnouncementResponse> announcements,
+        PagedModel<AnnouncementResponse> announcements,
 
         long unread
 ) {
