@@ -1,7 +1,8 @@
 package com.game_service.mahjong.util;
 
 import com.game_service.common.exception.GameInternalException;
-import com.game_service.mahjong.domain.dto.GeneratedPair;
+import com.game_service.mahjong.domain.entity.FacePair;
+import com.game_service.mahjong.domain.entity.GeneratedPair;
 import com.game_service.mahjong.domain.entity.TileFace;
 import com.game_service.mahjong.domain.enums.TileSuit;
 import lombok.experimental.UtilityClass;
@@ -39,7 +40,7 @@ public class MahjongLayoutGenerator {
         Set<String> assigned = new HashSet<>();
         List<GeneratedPair> order = new ArrayList<>();
 
-        List<TileFace> facePool = shuffledFacePool(random);
+        List<FacePair> facePool = shuffledFacePool(random);
         int poolIndex = 0;
 
         while (assigned.size() < LayoutTemplate.getTotalSlots()) {
@@ -59,7 +60,7 @@ public class MahjongLayoutGenerator {
 
             String slot1 = tiles.get(0);
             String slot2 = tiles.get(1);
-            TileFace face = facePool.get(poolIndex++);
+            FacePair faceTemplate = facePool.get(poolIndex++);
 
             assigned.add(slot1);
             assigned.add(slot2);
@@ -67,7 +68,8 @@ public class MahjongLayoutGenerator {
                     GeneratedPair.builder()
                             .slot1(slot1)
                             .slot2(slot2)
-                            .face(face)
+                            .face1(faceTemplate.getFace1())
+                            .face2(faceTemplate.getFace2())
                             .build()
             );
         }
@@ -75,35 +77,31 @@ public class MahjongLayoutGenerator {
         return order;
     }
 
-    private List<TileFace> shuffledFacePool(Random random) {
+    private List<FacePair> shuffledFacePool(Random random) {
 
-        List<TileFace> faces = new ArrayList<>(36);
+        List<FacePair> pairs = new ArrayList<>(72);
 
-        for (int value = 1; value <= 9; value++) {
-            faces.add(new TileFace(TileSuit.BAMBOO, value));
+        addExactQuad(pairs, TileSuit.BAMBOO, 1, 9);
+        addExactQuad(pairs, TileSuit.CHARACTERS, 1, 9);
+        addExactQuad(pairs, TileSuit.CIRCLES, 1, 9);
+        addExactQuad(pairs, TileSuit.WIND, 1, 4);
+        addExactQuad(pairs, TileSuit.DRAGON, 1, 3);
+
+        pairs.add(new FacePair(new TileFace(TileSuit.FLOWER, 1), new TileFace(TileSuit.FLOWER, 2)));
+        pairs.add(new FacePair(new TileFace(TileSuit.FLOWER, 3), new TileFace(TileSuit.FLOWER, 4)));
+        pairs.add(new FacePair(new TileFace(TileSuit.SEASON, 1), new TileFace(TileSuit.SEASON, 2)));
+        pairs.add(new FacePair(new TileFace(TileSuit.SEASON, 3), new TileFace(TileSuit.SEASON, 4)));
+
+        Collections.shuffle(pairs, random);
+
+        return pairs;
+    }
+
+    private void addExactQuad(List<FacePair> pairs, TileSuit suit, int fromValue, int toValue) {
+        for (int value = fromValue; value <= toValue; value++) {
+            TileFace face = new TileFace(suit, value);
+            pairs.add(new FacePair(face, face));
+            pairs.add(new FacePair(face, face));
         }
-
-        for (int value = 1; value <= 9; value++) {
-            faces.add(new TileFace(TileSuit.CHARACTERS, value));
-        }
-
-        for (int value = 1; value <= 9; value++) {
-            faces.add(new TileFace(TileSuit.CIRCLES, value));
-        }
-
-        for (int value = 1; value <= 4; value++) {
-            faces.add(new TileFace(TileSuit.WIND, value));
-        }
-
-        for (int value = 1; value <= 3; value++) {
-            faces.add(new TileFace(TileSuit.DRAGON, value));
-        }
-
-        faces.add(new TileFace(TileSuit.FLOWER, 1));
-        faces.add(new TileFace(TileSuit.SEASON, 1));
-
-        Collections.shuffle(faces, random);
-
-        return faces;
     }
 }

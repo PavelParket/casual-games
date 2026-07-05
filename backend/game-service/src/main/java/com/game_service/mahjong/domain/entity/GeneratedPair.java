@@ -1,6 +1,5 @@
-package com.game_service.mahjong.domain.dto;
+package com.game_service.mahjong.domain.entity;
 
-import com.game_service.mahjong.domain.entity.TileFace;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,5 +15,7 @@ public class GeneratedPair {
 
     private String slot2;
 
-    private TileFace face;
+    private TileFace face1;
+
+    private TileFace face2;
 }

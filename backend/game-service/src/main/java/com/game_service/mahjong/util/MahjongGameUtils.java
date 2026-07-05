@@ -1,7 +1,7 @@
 package com.game_service.mahjong.util;
 
-import com.game_service.mahjong.domain.dto.GeneratedPair;
 import com.game_service.mahjong.domain.entity.Board;
+import com.game_service.mahjong.domain.entity.GeneratedPair;
 import com.game_service.mahjong.domain.entity.Mahjong;
 import com.game_service.mahjong.domain.entity.Slot;
 import com.game_service.mahjong.domain.entity.TileFace;
@@ -119,8 +119,8 @@ public class MahjongGameUtils {
         Map<String, TileFace> faces = new HashMap<>();
 
         assignment.forEach(pair -> {
-            faces.put(pair.getSlot1(), pair.getFace());
-            faces.put(pair.getSlot2(), pair.getFace());
+            faces.put(pair.getSlot1(), pair.getFace1());
+            faces.put(pair.getSlot2(), pair.getFace2());
         });
 
         return Collections.unmodifiableMap(faces);
