@@ -1,6 +1,6 @@
 package com.notifications.domain.entity;
 
-import com.notifications.domain.enums.NotificationType;
+import com.common_utils.enums.NotificationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;

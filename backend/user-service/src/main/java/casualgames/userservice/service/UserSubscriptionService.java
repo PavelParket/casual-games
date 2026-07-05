@@ -12,6 +12,7 @@ import casualgames.userservice.repository.UserSubscriptionRepository;
 import casualgames.userservice.service.helper.KafkaMessageHelper;
 import casualgames.userservice.service.helper.PermissionHelper;
 import casualgames.userservice.service.helper.SubscriptionHelper;
+import com.common_utils.enums.NotificationEventParams;
 import com.common_utils.exception.BadRequestException;
 import com.common_utils.exception.ConflictException;
 import com.common_utils.exception.ForbiddenException;
@@ -29,8 +30,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.UUID;
 
 import static casualgames.userservice.config.ResourceMessageConstants.BAD_REQUEST_NO_NECESSARY_BALANCE_AMOUNT;
@@ -47,6 +50,7 @@ import static casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_
 public class UserSubscriptionService {
 
     private static final String SUBSCRIPTION_UPGRADE = "SUBSCRIPTION_UPGRADE";
+    private static final int SUBSCRIPTION_EXPIRING_IN_DAYS = 3;
 
     private final UserRepository userRepository;
 
@@ -294,5 +298,34 @@ public class UserSubscriptionService {
     @Transactional(readOnly = true)
     public Page<UserSubscription> findExpiringOrScheduled(Instant now, PageRequest pageRequest) {
         return userSubscriptionRepository.findExpiringOrScheduled(now, pageRequest);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserSubscription> findExpiringInDays(Instant now, PageRequest pageRequest) {
+        Instant daysLeft = now.plus(SUBSCRIPTION_EXPIRING_IN_DAYS, ChronoUnit.DAYS);
+        return userSubscriptionRepository.findExpiringInDays(now, daysLeft, pageRequest);
+    }
+
+    @Transactional
+    public void sendExpiringInDaysNotification(UserSubscription subscription, Instant now) {
+        try {
+            User user = userRepository.findByGuid(subscription.getUserGuid())
+                    .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, subscription.getUserGuid())));
+
+            long daysLeft = Duration.between(now, subscription.getExpiresAt()).toDays();
+
+            Map<String, String> params = Map.of(
+                    NotificationEventParams.USERNAME.getParam(), user.getUsername(),
+                    NotificationEventParams.TIER.getParam(), user.getStatus().name(),
+                    NotificationEventParams.DAYS_LEFT.getParam(), String.valueOf(daysLeft)
+            );
+
+            kafkaMessageHelper.save(
+                    kafkaMessageHelper.getTopics().getUserNotification(),
+                    kafkaMessageHelper.buildSubscriptionExpiringInDaysEvent(subscription.getUserGuid(), subscription.getExpiresAt(), params)
+            );
+        } catch (Exception e) {
+            log.error("Unexpected error notifying expiring subscription for userGuid={}", subscription.getUserGuid(), e);
+        }
     }
 }

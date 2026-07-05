@@ -54,24 +54,24 @@ public class NotificationController {
     @GetMapping
     @Operation(summary = "Get page of notifications", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200")
-    public NotificationResponseList getNotifications(@AuthenticationPrincipal AuthenticationToken authenticationToken,
-                                                     @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return notificationService.getNotifications(authenticationToken, pageable);
+    public NotificationResponseList getNotifications(@PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+                                                     @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        return notificationService.getNotifications(pageable, authenticationToken);
     }
 
     @PatchMapping("/{id}/read")
     @Operation(summary = "Mark a notification as read", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200")
-    public NotificationResponse markAsRead(@AuthenticationPrincipal AuthenticationToken authenticationToken,
-                                           @PathVariable Long id) {
-        return notificationService.markAsRead(authenticationToken, id);
+    public NotificationResponse markAsRead(@PathVariable Long id,
+                                           @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        return notificationService.markAsRead(id, authenticationToken);
     }
 
     @PatchMapping("/read-all")
     @Operation(summary = "Mark all notifications as read", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200")
-    public NotificationResponseList markAllAsRead(@AuthenticationPrincipal AuthenticationToken authenticationToken,
-                                                  @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return notificationService.markAllAsRead(authenticationToken, pageable);
+    public NotificationResponseList markAllAsRead(@PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+                                                  @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        return notificationService.markAllAsRead(pageable, authenticationToken);
     }
 }

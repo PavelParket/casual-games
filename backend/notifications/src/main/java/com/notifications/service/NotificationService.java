@@ -59,7 +59,7 @@ public class NotificationService {
             return;
         }
 
-        NotificationTemplate template = notificationTemplateRepository.findByType(event.getType())
+        NotificationTemplate template = notificationTemplateRepository.findByType(event.getType().name())
                 .filter(NotificationTemplate::isEnabled)
                 .orElse(null);
 
@@ -103,7 +103,7 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public NotificationResponseList getNotifications(AuthenticationToken authenticationToken, Pageable pageable) {
+    public NotificationResponseList getNotifications(Pageable pageable, AuthenticationToken authenticationToken) {
         if (!permissionValidator.can(Permissions.NOTIFICATION, Operation.READ,
                 permissionHelper.getContext(authenticationToken.getGuid()), authenticationToken)) {
             throw new ForbiddenException(FORBIDDEN_READ_NOTIFICATIONS);
@@ -113,7 +113,7 @@ public class NotificationService {
     }
 
     @Transactional
-    public NotificationResponse markAsRead(AuthenticationToken authenticationToken, Long id) {
+    public NotificationResponse markAsRead(Long id, AuthenticationToken authenticationToken) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(NOTIFICATION_NOT_FOUND));
 
@@ -134,7 +134,7 @@ public class NotificationService {
     }
 
     @Transactional
-    public NotificationResponseList markAllAsRead(AuthenticationToken authenticationToken, Pageable pageable) {
+    public NotificationResponseList markAllAsRead(Pageable pageable, AuthenticationToken authenticationToken) {
         if (!permissionValidator.can(Permissions.NOTIFICATION, Operation.UPDATE,
                 permissionHelper.getContext(authenticationToken.getGuid()), authenticationToken)) {
             throw new ForbiddenException(FORBIDDEN_UPDATE_NOTIFICATION);

@@ -83,11 +83,13 @@ kafka:
   topics:
     user: ${KAFKA_USER_TOPIC:user}
     update-subscription: ${KAFKA_UPDATE_SUBSCRIPTION_TOPIC:update-subscription}
+    user-notification: ${KAFKA_USER_NOTIFICATION_TOPIC:user-notification}
   transactional-outbox:
     enabled: true
 
 cron:
   update-user-subscriptions: ${CRON_UPDATE_USER_SUBSCRIPTIONS:0 0 2 * * *}
+  notify-expiring-subscriptions: ${CRON_NOTIFY_EXPIRING_SUBSCRIPTIONS:0 0 3 * * *}
 
 aws:
   s3:

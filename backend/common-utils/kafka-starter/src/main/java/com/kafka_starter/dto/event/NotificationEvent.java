@@ -1,5 +1,6 @@
 package com.kafka_starter.dto.event;
 
+import com.common_utils.enums.NotificationType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +23,7 @@ public class NotificationEvent {
 
     private UUID recipientGuid;
 
-    private String type;
+    private NotificationType type;
 
     @Builder.Default
     private Map<String, String> params = new HashMap<>();

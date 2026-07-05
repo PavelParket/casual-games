@@ -1,6 +1,6 @@
 package com.notifications.domain.dto;
 
-import com.notifications.domain.enums.NotificationType;
+import com.common_utils.enums.NotificationType;
 import lombok.Builder;
 
 import java.time.Instant;

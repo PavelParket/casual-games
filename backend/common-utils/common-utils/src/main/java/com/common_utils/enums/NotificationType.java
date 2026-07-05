@@ -1,4 +1,4 @@
-package com.notifications.domain.enums;
+package com.common_utils.enums;
 
 public enum NotificationType {
 
