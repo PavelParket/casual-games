@@ -4,7 +4,6 @@ import com.redis_starter.repository.RedisHashRepository;
 import com.security_starter.exception.JwtAccessDeniedHandler;
 import com.security_starter.exception.JwtAuthenticationEntryPoint;
 import com.security_starter.exception.SecurityExceptionHandler;
-import com.security_starter.factory.PermissionContextFactory;
 import com.security_starter.helper.PermissionContextHelper;
 import com.security_starter.jwt.HmacJwtKeyProvider;
 import com.security_starter.jwt.JwtClaimsExtractor;
@@ -29,7 +28,7 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties({JwtProperties.class, ServiceWhitelistProperties.class})
 @Import({
         DefaultSecurityFilterChain.class,
-        PermissionValidator.class, PermissionContextFactory.class, PermissionContextHelper.class,
+        PermissionValidator.class, PermissionContextHelper.class,
         JwtAccessDeniedHandler.class, JwtAuthenticationEntryPoint.class, SecurityExceptionHandler.class,
         JwtAuthenticationFilter.class, JwtDecoder.class,
         JwtClaimsExtractor.class, JwtValidator.class,

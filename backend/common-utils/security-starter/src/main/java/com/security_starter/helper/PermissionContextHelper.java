@@ -3,49 +3,40 @@ package com.security_starter.helper;
 import com.security_starter.config.AuthenticationToken;
 import com.security_starter.config.PermissionContext;
 import com.security_starter.enums.Operation;
+import com.security_starter.enums.OperationPostfix;
 import com.security_starter.enums.Permissions;
 import com.security_starter.enums.Role;
 import com.security_starter.enums.Status;
-import com.security_starter.factory.PermissionContextFactory;
+import com.security_starter.provider.PermissionProvider;
 import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
-
-import static com.security_starter.enums.OperationPostfix.FOR_ALL;
-import static com.security_starter.validator.PermissionValidator.UNDERSCORE;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class PermissionContextHelper {
 
+    private final PermissionProvider permissionProvider;
+
     private final PermissionValidator permissionValidator;
 
-    public AuthenticationToken getCurrentAuthentication() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication instanceof AuthenticationToken) {
-            return (AuthenticationToken) authentication;
-        }
-
-        return null;
+    public Optional<AuthenticationToken> getCurrentAuthentication() {
+        return permissionProvider.getToken();
     }
 
-    public PermissionContext createContextFromAuthentication(UUID targetGuid) {
-        // todo: убрать и прокидывать токен в параметрах метода
-        AuthenticationToken auth = getCurrentAuthentication();
-
-        if (auth == null) {
+    public PermissionContext createContextFromAuthentication(AuthenticationToken authenticationToken, UUID targetGuid) {
+        if (authenticationToken == null) {
             return null;
         }
 
         // Extract primary role (first role from set)
-        Role role = auth.getRoles().stream()
+        Role role = authenticationToken.getRoles().stream()
                 .findFirst()
                 .map(r -> {
                     try {
@@ -57,68 +48,107 @@ public class PermissionContextHelper {
                 })
                 .orElse(null);
 
-        Status status = auth.getStatus();
-        UUID actorGuid = auth.getGuid();
-        boolean isOwner = actorGuid != null && actorGuid.equals(targetGuid);
+        Status status = authenticationToken.getStatus();
+        UUID actorGuid = authenticationToken.getGuid();
+        boolean isOwner = Objects.equals(actorGuid, targetGuid);
 
-        return PermissionContextFactory.create(role, status, isOwner, actorGuid, targetGuid);
+        return PermissionContext.builder()
+                .role(role)
+                .status(status)
+                .isOwner(isOwner)
+                .actorGuid(actorGuid)
+                .targetGuid(targetGuid)
+                .build();
     }
 
-    public boolean isOwner(UUID resourceOwnerGuid) {
-        AuthenticationToken auth = getCurrentAuthentication();
+    public PermissionContext createContextFromAuthentication(UUID targetGuid) {
+        return getCurrentAuthentication()
+                .map(token -> createContextFromAuthentication(token, targetGuid))
+                .orElse(null);
+    }
 
-        if (auth == null || resourceOwnerGuid == null) {
+    public boolean isOwner(AuthenticationToken token, UUID resourceOwnerGuid) {
+        if (token == null || resourceOwnerGuid == null) {
             return false;
         }
 
-        return auth.getGuid().equals(resourceOwnerGuid);
+        return Objects.equals(token.getGuid(), resourceOwnerGuid);
+    }
+
+    public boolean isOwner(UUID resourceOwnerGuid) {
+        return getCurrentAuthentication()
+                .map(token -> isOwner(token, resourceOwnerGuid))
+                .orElse(false);
+    }
+
+    public UUID getCurrentUserGuid(AuthenticationToken token) {
+        return token != null ? token.getGuid() : null;
     }
 
     public UUID getCurrentUserGuid() {
-        AuthenticationToken auth = getCurrentAuthentication();
-        return auth != null ? auth.getGuid() : null;
+        return getCurrentAuthentication()
+                .map(this::getCurrentUserGuid)
+                .orElse(null);
+    }
+
+    public UUID getCurrentUserTokenSid(AuthenticationToken token) {
+        return token != null ? token.getSid() : null;
     }
 
     public UUID getCurrentUserTokenSid() {
-        AuthenticationToken auth = getCurrentAuthentication();
-        return auth != null ? auth.getSid() : null;
+        return getCurrentAuthentication()
+                .map(this::getCurrentUserTokenSid)
+                .orElse(null);
+    }
+
+    public String getCurrentUserEmail(AuthenticationToken token) {
+        return token != null ? token.getEmail() : null;
     }
 
     public String getCurrentUserEmail() {
-        AuthenticationToken auth = getCurrentAuthentication();
-        return auth != null ? auth.getEmail() : null;
+        return getCurrentAuthentication()
+                .map(this::getCurrentUserEmail)
+                .orElse(null);
     }
 
-    public boolean hasPermission(Permissions permission, Operation operation) {
-        AuthenticationToken auth = getCurrentAuthentication();
-
-        if (auth == null) {
+    public boolean hasPermission(AuthenticationToken token, Permissions permission, Operation operation) {
+        if (token == null) {
             return false;
         }
 
         return permissionValidator.getPermissions(permission, operation).stream()
-                .anyMatch(auth::hasPermission);
+                .anyMatch(token::hasPermission);
+    }
+
+    public boolean hasPermission(Permissions permission, Operation operation) {
+        return getCurrentAuthentication()
+                .map(token -> hasPermission(token, permission, operation))
+                .orElse(false);
+    }
+
+    public boolean hasPermission(AuthenticationToken token, Permissions permission, Operation operation, UUID targetUserGuid) {
+        if (token == null) {
+            return false;
+        }
+
+        PermissionContext context = createContextFromAuthentication(token, targetUserGuid);
+
+        return permissionValidator.hasAccess(permission, operation, context, token);
     }
 
     public boolean hasPermission(Permissions permission, Operation operation, UUID targetUserGuid) {
-        AuthenticationToken auth = getCurrentAuthentication();
-
-        if (auth == null) {
-            return false;
-        }
-
-        PermissionContext context = createContextFromAuthentication(targetUserGuid);
-
-        return permissionValidator.can(permission, operation, context, auth);
+        return getCurrentAuthentication()
+                .map(token -> hasPermission(token, permission, operation, targetUserGuid))
+                .orElse(false);
     }
 
-    public boolean hasPermissionForAll(Permissions permissions, Operation operation) {
-        AuthenticationToken auth = getCurrentAuthentication();
-
-        if (auth == null) {
-            return false;
-        }
-
-        return auth.hasPermission(String.join(UNDERSCORE, permissions.name(), operation.name(), FOR_ALL.name()));
+    public boolean hasPermissionForAll(Permissions permission, Operation operation) {
+        return getCurrentAuthentication()
+                .map(authenticationToken -> {
+                            String key = permissionValidator.getPermission(permission, operation, OperationPostfix.FOR_ALL);
+                            return key != null && authenticationToken.hasPermission(key);
+                        }
+                )
+                .orElse(false);
     }
 }

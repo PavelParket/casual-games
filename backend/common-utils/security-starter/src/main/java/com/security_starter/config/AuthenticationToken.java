@@ -16,9 +16,9 @@ import java.util.stream.Collectors;
 @Getter
 public class AuthenticationToken extends AbstractAuthenticationToken {
 
-    private Object principal;
+    private final Object principal;
 
-    private Object credentials;
+    private final Object credentials;
 
     private final UUID guid;
 
@@ -34,7 +34,7 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
 
     private final Map<String, Set<String>> roleAndPermissionsMap;
 
-    public AuthenticationToken(
+    private AuthenticationToken(
             UUID guid,
             UUID sid,
             String email,
@@ -50,7 +50,7 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
         this.status = status;
         this.permissions = permissions;
         this.roleAndPermissionsMap = roleAndPermissionsMap;
-        this.principal = guid;
+        this.principal = this;
         this.credentials = null;
 
         if (authorities != null && !authorities.isEmpty()) {
@@ -75,6 +75,11 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
     }
 
     @Override
+    public String getName() {
+        return guid != null ? guid.toString() : "anonymous";
+    }
+
+    @Override
     public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
         if (isAuthenticated) {
             throw new IllegalArgumentException(
@@ -87,7 +92,11 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
     @Override
     public void eraseCredentials() {
         super.eraseCredentials();
-        credentials = null;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("AuthenticationToken{guid=%s, email=%s, status=%s, roles=%s}", guid, email, status, roles);
     }
 
     public boolean hasRole(Role role) {
