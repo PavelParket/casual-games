@@ -6,7 +6,6 @@ import com.security_starter.config.PermissionContext;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.OperationPostfix;
 import com.security_starter.enums.Permissions;
-import com.security_starter.enums.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -89,7 +88,7 @@ public class PermissionValidator {
             }
 
             boolean allowed = annotation.value() == Permissions.NONE
-                    ? isBareAllowed(context)
+                    ? hasPrivateAccess(context)
                     : hasAccess(annotation.value(), Operation.READ, context, token);
 
             if (!allowed) {
@@ -120,7 +119,7 @@ public class PermissionValidator {
             }
 
             boolean allowed = annotation.value() == Permissions.NONE
-                    ? isBareAllowed(context)
+                    ? hasPrivateAccess(context)
                     : hasAccess(annotation.value(), Operation.UPDATE, context, token);
 
             if (allowed) {
@@ -129,8 +128,8 @@ public class PermissionValidator {
         });
     }
 
-    private boolean isBareAllowed(PermissionContext context) {
-        return context != null && (context.isOwner() || context.getRole() == Role.ADMIN);
+    private boolean hasPrivateAccess(PermissionContext context) {
+        return context != null && (context.isOwner() || context.isAdmin());
     }
 
     private boolean hasAnyAccessByPermission(String permission, PermissionContext context, AuthenticationToken token) {

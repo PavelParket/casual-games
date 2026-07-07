@@ -8,6 +8,7 @@ import com.security_starter.helper.PermissionContextHelper;
 import com.security_starter.jwt.HmacJwtKeyProvider;
 import com.security_starter.jwt.JwtClaimsExtractor;
 import com.security_starter.jwt.JwtDecoder;
+import com.security_starter.jwt.JwtKeyProvider;
 import com.security_starter.jwt.JwtProperties;
 import com.security_starter.jwt.filter.JwtAuthenticationFilter;
 import com.security_starter.provider.DefaultPermissionProvider;
@@ -31,9 +32,7 @@ import org.springframework.context.annotation.Import;
         PermissionValidator.class, PermissionContextHelper.class,
         JwtAccessDeniedHandler.class, JwtAuthenticationEntryPoint.class, SecurityExceptionHandler.class,
         JwtAuthenticationFilter.class, JwtDecoder.class,
-        JwtClaimsExtractor.class, JwtValidator.class,
-        HmacJwtKeyProvider.class,
-        ServiceWhitelistChecker.class
+        JwtClaimsExtractor.class, JwtValidator.class
 })
 public class SecurityAutoConfiguration {
 
@@ -41,5 +40,17 @@ public class SecurityAutoConfiguration {
     @ConditionalOnMissingBean(PermissionProvider.class)
     public PermissionProvider permissionProvider(RedisHashRepository redisHashRepository) {
         return new DefaultPermissionProvider(redisHashRepository);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(JwtKeyProvider.class)
+    public JwtKeyProvider jwtKeyProvider(JwtProperties jwtProperties) {
+        return new HmacJwtKeyProvider(jwtProperties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(ServiceWhitelistChecker.class)
+    public ServiceWhitelistChecker serviceWhitelistChecker(ServiceWhitelistProperties properties) {
+        return new ServiceWhitelistChecker(properties);
     }
 }

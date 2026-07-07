@@ -6,7 +6,6 @@ import com.security_starter.enums.Operation;
 import com.security_starter.enums.OperationPostfix;
 import com.security_starter.enums.Permissions;
 import com.security_starter.enums.Role;
-import com.security_starter.enums.Status;
 import com.security_starter.provider.PermissionProvider;
 import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
@@ -35,27 +34,13 @@ public class PermissionContextHelper {
             return null;
         }
 
-        // Extract primary role (first role from set)
-        Role role = authenticationToken.getRoles().stream()
-                .findFirst()
-                .map(r -> {
-                    try {
-                        return Role.valueOf(r);
-                    } catch (IllegalArgumentException e) {
-                        log.warn("Unknown role in token: {}", r);
-                        return null;
-                    }
-                })
-                .orElse(null);
-
-        Status status = authenticationToken.getStatus();
         UUID actorGuid = authenticationToken.getGuid();
         boolean isOwner = Objects.equals(actorGuid, targetGuid);
+        boolean isAdmin = authenticationToken.hasRole(Role.ADMIN);
 
         return PermissionContext.builder()
-                .role(role)
-                .status(status)
                 .isOwner(isOwner)
+                .isAdmin(isAdmin)
                 .actorGuid(actorGuid)
                 .targetGuid(targetGuid)
                 .build();
