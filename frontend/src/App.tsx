@@ -23,6 +23,7 @@ import TicTacToeRoomShell from './pages/rooms/shell/TicTacToeRoomShell'
 import HorseRaceRoomShell from './pages/rooms/shell/HorseRaceRoomShell'
 import DeCoderRoomShell from './pages/rooms/shell/DeCoderRoomShell'
 import DurakRoomShell from './pages/rooms/shell/DurakRoomShell'
+import MahjongRoomShell from './pages/rooms/shell/MahjongRoomShell'
 import UpgradeStatus from './pages/profile/UpgradeStatus'
 import { setOnRefreshRequired } from './utils/TokenManager'
 import { ensureFreshToken } from './api/EnsureFreshToken'
@@ -101,7 +102,9 @@ export default function App() {
 
                             {/* ===== Experiment Room ===== */}
                             <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
-                                <Route path="/ws" element={<ExperimentalPage />} />
+                                <Route element={<Layout />}>
+                                    <Route path="/ws/durak" element={<ExperimentalPage />} />
+                                </Route>
                             </Route>
 
                             {/* Protected Routes */}
@@ -114,6 +117,7 @@ export default function App() {
                                     <Route path="/room/horse-race/:roomName/:roomId" element={<HorseRaceRoomShell />} />
                                     <Route path="/room/de-coder/:roomName/:roomId" element={<DeCoderRoomShell />} />
                                     <Route path="/room/durak/:roomName/:roomId" element={<DurakRoomShell />} />
+                                    <Route path="/room/mahjong/:roomName/:roomId" element={<MahjongRoomShell />} />
                                 </Route>
                             </Route>
 
