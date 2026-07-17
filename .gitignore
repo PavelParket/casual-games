@@ -199,6 +199,11 @@ dist
 dist-ssr
 *.local
 
+# design-sync (claude.ai/design)
+.ds-sync/
+ds-bundle/
+frontend/.design-sync/
+
 # Editor directories and files
 .idea
 *.suo

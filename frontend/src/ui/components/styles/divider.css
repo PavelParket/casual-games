@@ -36,7 +36,7 @@
 /* === Variants === */
 
 /* --- Fullwidth --- */
-.divider-fullwidth {
+.divider-fullwidth.divider-horizontal {
     width: 100%;
 }
 
