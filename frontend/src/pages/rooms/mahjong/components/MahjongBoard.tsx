@@ -90,30 +90,39 @@ export function MahjongBoard({
         return () => observer.disconnect();
     }, [boardWidth]);
 
+    const isBoardCleared = tiles.length > 0 && removedIds.size === tiles.length;
+
     return (
         <Box style={{ display: "flex", flexDirection: "column", width: "100%", gap: "1rem" }}>
             <Box style={{
                 display: "flex",
                 justifyContent: "space-between",
+                alignItems: "center",
                 padding: "0.75rem 1rem",
                 background: "var(--color-bg-secondary)",
                 borderRadius: "var(--radius-md)",
                 border: "1px solid var(--color-border)"
             }}>
-                <Box style={{ textAlign: "center" }}>
-                    <Typography variant="caption" style={{ opacity: 0.7 }}>My Tiles</Typography>
-                    <Typography variant="body" style={{ fontWeight: 600 }}>{myTilesRemaining}</Typography>
-                </Box>
-                <Box style={{ textAlign: "center" }}>
-                    <Typography variant="caption" style={{ opacity: 0.7 }}>Available Moves</Typography>
-                    <Typography variant="body" style={{ fontWeight: 600, color: availableMoves === 0 ? "var(--color-expense-text)" : "var(--color-primary)" }}>
-                        {availableMoves}
-                    </Typography>
-                </Box>
-                {opponentTilesRemaining !== undefined && (
+                <Box style={{ display: "flex", gap: "2rem" }}>
+
                     <Box style={{ textAlign: "center" }}>
-                        <Typography variant="caption" style={{ opacity: 0.7 }}>Opponent Tiles</Typography>
-                        <Typography variant="body" style={{ fontWeight: 600 }}>{opponentTilesRemaining}</Typography>
+                        <Typography variant="caption" style={{ opacity: 0.7 }}>My Tiles</Typography>
+                        <Typography variant="body" style={{ fontWeight: 600 }}>{myTilesRemaining}</Typography>
+                    </Box>
+                    <Box style={{ textAlign: "center" }}>
+                        <Typography variant="caption" style={{ opacity: 0.7 }}>Available Moves</Typography>
+                        <Typography variant="body" style={{ fontWeight: 600, color: availableMoves === 0 ? "var(--color-expense-text)" : "var(--color-primary)" }}>
+                            {availableMoves}
+                        </Typography>
+                    </Box>
+                </Box>
+
+                {opponentTilesRemaining !== undefined && (
+                    <Box style={{ display: "flex", alignItems: "center" }}>
+                        <Box style={{ textAlign: "center" }}>
+                            <Typography variant="caption" style={{ opacity: 0.7 }}>Opponent Tiles</Typography>
+                            <Typography variant="body" style={{ fontWeight: 600 }}>{opponentTilesRemaining}</Typography>
+                        </Box>
                     </Box>
                 )}
             </Box>
@@ -132,6 +141,22 @@ export function MahjongBoard({
                     margin: "0 auto",
                     pointerEvents: disabled ? "none" : "auto"
                 }}>
+
+                    {isBoardCleared && (
+                        <Box style={{
+                            position: "absolute",
+                            inset: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            zIndex: 10
+                        }}>
+                            <Typography variant="h3" style={{ opacity: 0.4 }}>
+                                Board cleared
+                            </Typography>
+                        </Box>
+                    )}
+
                     <Box style={{ width: boardWidth }}>
                         <AnimatePresence>
                             {sortedTiles.map(({ slot, face }) => {

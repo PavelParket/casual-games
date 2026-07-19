@@ -1,17 +1,19 @@
 :root {
     --mj-top: #fdfbf7;
     --mj-left: #c4c9d1;
-    --mj-bottom: #949ca8; 
+    --mj-bottom: #949ca8;
     --mj-shadow: rgba(0, 0, 0, 0.35);
     --mj-select-border: rgba(0, 0, 0, 0.15);
+    --mj-border: rgba(0, 0, 0, 0.25);
 }
 
 html.dark {
     --mj-top: #2c3e50;
     --mj-left: #1e2a36;
-    --mj-bottom: #121921; 
+    --mj-bottom: #121921;
     --mj-shadow: rgba(0, 0, 0, 0.85);
     --mj-select-border: rgba(255, 255, 255, 0.2);
+    --mj-border: rgba(255, 255, 255, 0.15);
 }
 
 .mahjong-main-content {
@@ -33,6 +35,8 @@ html.dark {
     height: 100%;
     border-radius: 6px;
     position: relative;
+    user-select: none;
+    -webkit-user-select: none;
     transition:
         filter 0.2s ease,
         transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -44,7 +48,7 @@ html.dark {
         -2px 2px 0px #d0d0d0,
         -3px 3px 0px #c0c0c0,
         -4px 4px 0px #b0b0b0,
-        -5px 5px 6px rgba(0, 0, 0, 0.3);
+        -7px 7px 6px rgba(0, 0, 0, 0.3);
 }
 
 .mahjong-tile-face {
@@ -53,6 +57,8 @@ html.dark {
     position: relative;
     border-radius: 6px;
     overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .mahjong-tile-bg {
@@ -62,6 +68,7 @@ html.dark {
     height: 100%;
     object-fit: fill;
     z-index: 0;
+    pointer-events: none;
 }
 
 .mahjong-tile-symbol {
@@ -72,6 +79,8 @@ html.dark {
     object-fit: contain;
     padding: 4px;
     z-index: 1;
+    pointer-events: none;
+    box-shadow: inset -0.5px 0 0 var(--mj-border), inset 0 0.5px 0 var(--mj-border);
 }
 
 .mahjong-tile::before {
@@ -81,11 +90,12 @@ html.dark {
     left: 2px;
     height: 4px;
     width: 90%;
-    background: var(--mj-top);
+    background: var(--mj-bottom);
     transform: skewX(-45deg);
     transform-origin: top;
     border-bottom-left-radius: 2px;
     border-bottom-right-radius: 4px;
+    box-shadow: inset -1px 0 0 var(--mj-border), inset 0 -1px 0 var(--mj-border);
 }
 
 .mahjong-tile::after {
@@ -95,11 +105,12 @@ html.dark {
     right: 100%;
     width: 4px;
     height: 90%;
-    background: var(--mj-right);
+    background: var(--mj-left);
     transform: skewY(-45deg);
     transform-origin: right;
     border-top-left-radius: 4px;
     border-bottom-left-radius: 2px;
+    box-shadow: inset 0 -1px 0 var(--mj-border), inset -1px 0 0 var(--mj-border);
 }
 
 .mahjong-tile.is-blocked {

@@ -1,5 +1,5 @@
 import "./mahjong/styles/MahjongRoom.css";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +19,7 @@ import { validateAmountInput } from "../../utils/SecurityUtils";
 
 import type { MahjongTileData } from "./mahjong/utils/MahjongTypes";
 import { MAHJONG_LAYOUT } from "./mahjong/utils/MahjongLayoutData";
-import { facesMatch } from "./mahjong/utils/MahjongGameUtils";
+import { facesMatch, getAvailableMoves } from "./mahjong/utils/MahjongGameUtils";
 
 import { MahjongBoard } from "./mahjong/components/MahjongBoard";
 import { BettingPanel } from "./mahjong/components/BettingPanel";
@@ -41,24 +41,30 @@ export default function MahjongRoom() {
     const { showSystemToast } = useSystemToastContext();
     useSliceErrorToast((state: RootState) => state.mahjongRoom.errors, clearError);
 
-    // Локальный стейт лобби
     const [ready, setReady] = useState(false);
     const [betInput, setBetInput] = useState("");
     const [betPlaced, setBetPlaced] = useState(false);
     const [gameAborted, setGameAborted] = useState(false);
 
-    // Локальный стейт игры
     const [isGame, setIsGame] = useState(false);
     const [tiles, setTiles] = useState<MahjongTileData[]>([]);
     const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [winnerId, setWinnerId] = useState<string | null | undefined>(undefined);
     const [deadlockSecondsLeft, setDeadlockSecondsLeft] = useState<number | null>(null);
     const [awaitingResponse, setAwaitingResponse] = useState(false);
 
-    // Статистика доски
+    const pendingMoveRef = useRef<{ slot1: string, slot2: string } | null>(null);
+
+    const [gameOverState, setGameOverState] = useState<{
+        isOpen: boolean;
+        isDraw: boolean;
+        iWon: boolean;
+        winnerName: string | null;
+    } | null>(null);
+
     const [myTilesRemaining, setMyTilesRemaining] = useState<number>(0);
     const [availableMoves, setAvailableMoves] = useState<number>(0);
+    const [opponentTilesRemaining, setOpponentTilesRemaining] = useState<number | undefined>(undefined);
 
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     useEffect(() => {
@@ -66,13 +72,10 @@ export default function MahjongRoom() {
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
-    
+
     const isMobile = windowWidth <= 1060;
     const [isMobilePlayersOpen, setIsMobilePlayersOpen] = useState(false);
 
-    // -------------------------------------------------------------
-    // WebSocket Handlers
-    // -------------------------------------------------------------
     const handleDisplaced = useCallback(() => {
         showSystemToast("Your session was opened in another window", "system-error");
         navigate("/rooms");
@@ -85,41 +88,48 @@ export default function MahjongRoom() {
 
     const handleSocketError = useCallback(() => {
         setAwaitingResponse(false);
+        pendingMoveRef.current = null;
     }, []);
 
     const processGameState = useCallback((msg: MahjongGameMessage) => {
         setAwaitingResponse(false);
+        pendingMoveRef.current = null;
 
-        // Инициализация при START
         if (msg.tiles && msg.tiles.length > 0) {
             const newTiles = msg.tiles.map(bt => {
                 const slot = MAHJONG_LAYOUT.find(s => s.id === bt.slotId);
                 return slot ? { slot, face: { suit: bt.suit, value: bt.value } } : null;
             }).filter(Boolean) as MahjongTileData[];
-            
+
             setTiles(newTiles);
             setRemovedIds(new Set());
             setIsGame(true);
-            setWinnerId(undefined);
+            setGameOverState(null);
             setDeadlockSecondsLeft(null);
             setSelectedId(null);
-        }
 
-        // Удаление тайлов при MOVE
-        if (msg.removedSlotIds && msg.removedSlotIds.length > 0) {
-            setRemovedIds(prev => {
-                const next = new Set(prev);
-                msg.removedSlotIds!.forEach(id => next.add(id));
-                return next;
-            });
-        }
+            setMyTilesRemaining(newTiles.length);
+            setOpponentTilesRemaining(newTiles.length);
+            setAvailableMoves(getAvailableMoves(newTiles, new Set()));
+        } else {
+            if (msg.removedSlotIds && msg.removedSlotIds.length > 0) {
+                setRemovedIds(prev => {
+                    const next = new Set(prev);
+                    msg.removedSlotIds!.forEach(id => next.add(id));
+                    return next;
+                });
 
-        // Обновление статистики
-        if (msg.tilesRemaining !== undefined) {
-            setMyTilesRemaining(msg.tilesRemaining);
-        }
-        if (msg.availableMoves !== undefined) {
-            setAvailableMoves(msg.availableMoves);
+                if (msg.tilesRemaining !== undefined) {
+                    setMyTilesRemaining(msg.tilesRemaining);
+                }
+                if (msg.availableMoves !== undefined) {
+                    setAvailableMoves(msg.availableMoves);
+                }
+            } else {
+                if (msg.tilesRemaining !== undefined) {
+                    setOpponentTilesRemaining(msg.tilesRemaining);
+                }
+            }
         }
     }, []);
 
@@ -127,12 +137,49 @@ export default function MahjongRoom() {
         setDeadlockSecondsLeft(seconds);
     }, []);
 
-    const processGameOver = useCallback((winnerGuid: string | undefined) => {
-        setWinnerId(winnerGuid ?? null);
-        setIsGame(false);
+    const processGameOver = useCallback((winnerGuid: string | undefined | null) => {
+        const isDraw = winnerGuid === null || winnerGuid === undefined;
+        const iWon = !isDraw && winnerGuid === guid;
+        const name = !isDraw && winnerGuid && players ? (players[winnerGuid]?.username ?? "Opponent") : null;
+
+        const lastMove = pendingMoveRef.current;
+
+        setRemovedIds(prev => {
+            if (iWon && lastMove) {
+                const next = new Set(prev);
+                next.add(lastMove.slot1);
+                next.add(lastMove.slot2);
+                return next;
+            }
+            return prev;
+        });
+
+        setMyTilesRemaining(prev => {
+            if (iWon && lastMove && prev === 2) {
+                return 0;
+            }
+            return prev;
+        });
+
+        setAvailableMoves(prev => {
+            if (iWon && lastMove) {
+                return 0;
+            }
+            return prev;
+        });
+
+        pendingMoveRef.current = null;
+
+        setGameOverState({
+            isOpen: true,
+            isDraw,
+            iWon,
+            winnerName: name
+        });
+
         setAwaitingResponse(false);
         setDeadlockSecondsLeft(null);
-    }, []);
+    }, [guid, players]);
 
     const processAbort = useCallback(() => {
         setGameAborted(true);
@@ -163,23 +210,18 @@ export default function MahjongRoom() {
         onConnectionLost: handleDisconnect,
     });
 
-    // -------------------------------------------------------------
-    // Component Logic
-    // -------------------------------------------------------------
-    
-    // Таймер дедлока
     useEffect(() => {
         if (deadlockSecondsLeft === null || deadlockSecondsLeft <= 0) return;
-        
+
         const timer = setInterval(() => {
             setDeadlockSecondsLeft(prev => prev !== null && prev > 0 ? prev - 1 : 0);
         }, 1000);
-        
+
         return () => clearInterval(timer);
     }, [deadlockSecondsLeft]);
 
     const handleTileClick = (id: string) => {
-        if (!room || !isConnected || !guid || awaitingResponse || deadlockSecondsLeft !== null || gameAborted) {
+        if (!room || !isConnected || !guid || awaitingResponse || deadlockSecondsLeft !== null || gameAborted || !!gameOverState) {
             return;
         }
 
@@ -197,8 +239,8 @@ export default function MahjongRoom() {
         const tile2 = tiles.find(t => t.slot.id === id);
 
         if (tile1 && tile2 && facesMatch(tile1.face, tile2.face)) {
-            // Отправляем ход на сервер (оптимистично не удаляем, ждем GAME_STATE)
             setAwaitingResponse(true);
+            pendingMoveRef.current = { slot1: selectedId, slot2: id };
             send({
                 type: "USER_MESSAGE",
                 event: "MOVE",
@@ -215,7 +257,7 @@ export default function MahjongRoom() {
 
     const handlePlaceBet = () => {
         if (!room || !isConnected || !guid || betPlaced || gameAborted) return;
-        
+
         const amount = parseFloat(betInput);
         if (isNaN(amount) || amount <= 0) {
             showGameToast("Please enter a valid bet amount greater than 0", "game-error");
@@ -242,8 +284,6 @@ export default function MahjongRoom() {
 
     const handleLeave = () => navigate("/rooms");
 
-    const isGameOver = winnerId !== undefined;
-
     return (
         <Box className="page-wrapper">
             <Container>
@@ -254,65 +294,67 @@ export default function MahjongRoom() {
                 </Box>
 
                 <Card style={{ padding: 0 }}>
-                    {!isGameOver && (
-                        <Box style={{
-                            padding: "0.75rem 1.5rem",
-                            borderBottom: "1px solid var(--color-border)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                        }}>
-                            <Box>
-                                {isMobile ? (
-                                    <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <Icon src={getIcon("user")} size={18} alt="players" />
-                                        <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
-                                            Players ({players ? Object.keys(players).length : 0})
-                                        </Typography>
-                                    </Button>
-                                ) : (
-                                    <Typography variant="caption" style={{ opacity: 0.7 }}>
-                                        {`Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`}
+                    <Box style={{
+                        padding: "0.75rem 1.5rem",
+                        borderBottom: "1px solid var(--color-border)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                    }}>
+                        <Box>
+                            {isMobile ? (
+                                <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <Icon src={getIcon("user")} size={18} alt="players" />
+                                    <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
+                                        Players ({players ? Object.keys(players).length : 0})
                                     </Typography>
-                                )}
-                            </Box>
-                            <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
-                                Leave
-                            </Button>
+                                </Button>
+                            ) : (
+                                <Typography variant="caption" style={{ opacity: 0.7 }}>
+                                    {`Ready: ${readyPlayersCount ?? 0} / ${totalPlayersCount ?? 0}`}
+                                </Typography>
+                            )}
                         </Box>
-                    )}
+                        <Button variant="outline" onClick={handleLeave} style={{ padding: "0.25rem 0.75rem" }}>
+                            Leave
+                        </Button>
+                    </Box>
 
                     {isGame && (
                         <Box style={{ position: "relative", minHeight: "450px" }}>
-                            
-                            {deadlockSecondsLeft !== null && (
-                                <DeadlockOverlay secondsLeft={deadlockSecondsLeft} />
-                            )}
+
+                            <DeadlockOverlay
+                                isOpen={deadlockSecondsLeft !== null}
+                                secondsLeft={deadlockSecondsLeft ?? 0}
+                                onLeave={handleLeave}
+                            />
 
                             <Box style={{ padding: "1.5rem" }}>
                                 <MahjongBoard
                                     tiles={tiles}
                                     removedIds={removedIds}
                                     selectedId={selectedId}
-                                    disabled={awaitingResponse || gameAborted || deadlockSecondsLeft !== null}
-                                    myTilesRemaining={myTilesRemaining}
+                                    disabled={awaitingResponse || gameAborted || deadlockSecondsLeft !== null || gameOverState !== null} myTilesRemaining={myTilesRemaining}
                                     availableMoves={availableMoves}
+                                    opponentTilesRemaining={opponentTilesRemaining}
                                     onTileClick={handleTileClick}
                                 />
                             </Box>
                         </Box>
                     )}
 
-                    {isGameOver && (
+                    {gameOverState && (
                         <EndGameOverlay
-                            winnerId={winnerId}
-                            myGuid={guid}
-                            players={players}
+                            isOpen={gameOverState.isOpen}
+                            isDraw={gameOverState.isDraw}
+                            iWon={gameOverState.iWon}
+                            winnerName={gameOverState.winnerName}
+                            onClose={() => setGameOverState(prev => prev ? { ...prev, isOpen: false } : null)}
                             onLeave={handleLeave}
                         />
                     )}
 
-                    {!isGame && !isGameOver && (
+                    {!isGame && !gameOverState && (
                         <Box className="mahjong-main-content">
                             <Box className="mahjong-lobby-grid">
                                 {!isMobile && (
@@ -342,7 +384,6 @@ export default function MahjongRoom() {
                 </Card>
             </Container>
 
-            {/* Mobile Players Drawer */}
             <AnimatePresence>
                 {isMobile && isMobilePlayersOpen && (
                     <>
