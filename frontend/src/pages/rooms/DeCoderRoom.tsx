@@ -113,6 +113,8 @@ export default function DeCoderRoom() {
         }
     }, [dispatch, roomId, room?.type]);
 
+    const isGameOver = endGameState !== null;
+
     return (
         <Box className="page-wrapper">
             <Container>
@@ -131,62 +133,71 @@ export default function DeCoderRoom() {
                         minHeight: 0,
                     }}
                 >
-                    {!endGameState?.isOpen && (
-                        <Box style={{
-                            padding: "0.75rem 1.5rem",
-                            borderBottom: "1px solid var(--color-border)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                        }}>
-                            <Box>
-                                {isMobile && (
-                                    <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <Icon src={getIcon("user")} size={18} alt="players" />
-                                        <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
-                                            Players ({players ? Object.keys(players).length : 0})
-                                        </Typography>
-                                    </Button>
-                                )}
-                            </Box>
-                            <Button variant="outline" onClick={() => navigate("/rooms")} style={{ padding: "0.25rem 0.75rem" }}>
-                                Leave
-                            </Button>
+                    <Box style={{
+                        padding: "0.75rem 1.5rem",
+                        borderBottom: "1px solid var(--color-border)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                    }}>
+                        <Box>
+                            {isMobile ? (
+                                <Button variant="outline" onClick={() => setIsMobilePlayersOpen(true)} style={{ padding: "0.25rem 0.75rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <Icon src={getIcon("user")} size={18} alt="players" />
+                                    <Typography variant="body" style={{ fontSize: "14px", fontWeight: 500 }}>
+                                        Players ({players ? Object.keys(players).length : 0})
+                                    </Typography>
+                                </Button>
+                            ) : (
+                                <Typography variant="caption" style={{ opacity: 0.7 }}>
+                                    {isGameOver
+                                        ? "Game finished"
+                                        : gameActive
+                                            ? "Game in progress..."
+                                            : "Waiting for players..."
+                                    }
+                                </Typography>
+                            )}
                         </Box>
-                    )}
+                        <Button variant="outline" onClick={() => navigate("/rooms")} style={{ padding: "0.25rem 0.75rem" }}>
+                            Leave
+                        </Button>
+                    </Box>
 
-                    {endGameState?.isOpen ? (
-                        <EndGameOverlay
-                            isWin={endGameState.isWin}
-                            winnerName={endGameState.winnerName}
-                            jackpot={jackpot}
-                            onLeave={() => navigate("/rooms")}
-                        />
-                    ) : (
-                        <Box className="decoder-main-content">
-                            <Box className="decoder-grid">
-                                {!isMobile && (
-                                    <Box className="decoder-players-panel">
-                                        <PlayersPanel players={players} inDrawer={false} />
-                                    </Box>
-                                )}
-
-                                <Box className="decoder-board-panel">
-                                    <DeCoderBoard
-                                        gameActive={gameActive}
-                                        balanceBefore={balance}
-                                        spent={spent}
-                                        onSendMove={handleSendMove}
-                                    />                                </Box>
-
-                                <Box className="decoder-history-panel">
-                                    <DeCoderHistory history={history} onRequestSync={requestSync} />
+                    <Box className="decoder-main-content">
+                        <Box className="decoder-grid">
+                            {!isMobile && (
+                                <Box className="decoder-players-panel">
+                                    <PlayersPanel players={players} inDrawer={false} />
                                 </Box>
+                            )}
+
+                            <Box className="decoder-board-panel">
+                                <DeCoderBoard
+                                    gameActive={gameActive}
+                                    isGameOver={isGameOver}
+                                    balanceBefore={balance}
+                                    spent={spent}
+                                    onSendMove={handleSendMove}
+                                />
+                            </Box>
+
+                            <Box className="decoder-history-panel">
+                                <DeCoderHistory history={history} isGameOver={isGameOver} onRequestSync={requestSync} />
                             </Box>
                         </Box>
-                    )}
+                    </Box>
                 </Card>
             </Container>
+
+            <EndGameOverlay
+                isOpen={endGameState?.isOpen ?? false}
+                isWin={endGameState?.isWin ?? false}
+                winnerName={endGameState?.winnerName}
+                jackpot={jackpot}
+                onClose={() => setEndGameState(prev => prev ? { ...prev, isOpen: false } : null)}
+                onLeave={() => navigate("/rooms")}
+            />
 
             <AnimatePresence>
                 {isMobile && isMobilePlayersOpen && (
@@ -213,7 +224,6 @@ export default function DeCoderRoom() {
                     </>
                 )}
             </AnimatePresence>
-
 
             <ToastContainer layer="game" toasts={toasts} dismiss={dismiss} />
         </Box>
