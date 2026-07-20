@@ -1,0 +1,45 @@
+name: Publish common-utils (SNAPSHOT)
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'backend/common-utils/**'
+      - '.github/workflows/publish-common-utils-snapshot.yaml'
+
+concurrency:
+  group: publish-common-utils-snapshot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Publish SNAPSHOT to GitHub Packages
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Run tests
+        working-directory: backend/common-utils
+        run: ./gradlew test --no-daemon
+
+      - name: Publish SNAPSHOT to GitHub Packages
+        working-directory: backend/common-utils
+        run: ./gradlew publish --no-daemon
+        env:
+          GPR_USER: ${{ github.actor }}
+          GPR_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -27,6 +27,7 @@ import filterLight from './filter_light.svg';
 import horseLight from './horse_light.svg';
 import ticTacToeLight from './tic_tac_toe_light.svg';
 import durakLight from './durak_light.svg';
+import mahjongLight from './mahjong_light.svg';
 
 // Dark theme icons
 import userDark from './user_dark.svg';
@@ -56,6 +57,7 @@ import filterDark from './filter_dark.svg';
 import horseDark from './horse_dark.svg';
 import ticTacToeDark from './tic_tac_toe_dark.svg';
 import durakDark from './durak_dark.svg';
+import mahjongDark from './mahjong_dark.svg';
 
 export const Icons = {
     light: {
@@ -87,6 +89,7 @@ export const Icons = {
         horse: horseLight,
         ticTacToe: ticTacToeLight,
         durak: durakLight,
+        mahjong: mahjongLight,
     },
     dark: {
         user: userDark,
@@ -117,5 +120,6 @@ export const Icons = {
         horse: horseDark,
         ticTacToe: ticTacToeDark,
         durak: durakDark,
+        mahjong: mahjongDark
     },
 } as const;

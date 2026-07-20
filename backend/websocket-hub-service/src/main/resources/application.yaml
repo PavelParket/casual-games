@@ -70,6 +70,7 @@ cron:
     tic-tac-toe-in-progress-timeout-minutes: 20
     durak-in-progress-timeout-minutes: 60
     de-coder-in-progress-timeout-minutes: 60
+    mahjong-in-progress-timeout-minutes: 30
 
 kafka:
   enabled: ${KAFKA_ENABLED:true}

@@ -7,6 +7,7 @@ interface BettingPanelProps {
     betPlaced: boolean;
     ready: boolean;
     isGame: boolean;
+    isGameOver: boolean;
     playerBetMap: Record<string, number> | undefined;
     isConnected: boolean;
     gameAborted: boolean;
@@ -21,6 +22,7 @@ export function BettingPanel({
     betPlaced,
     ready,
     isGame,
+    isGameOver,
     playerBetMap,
     isConnected,
     gameAborted,
@@ -30,7 +32,7 @@ export function BettingPanel({
 }: BettingPanelProps) {
     const hasBets = playerBetMap && Object.keys(playerBetMap).length > 0;
 
-    const showForm = !ready && !isGame;
+    const showForm = !ready && !isGame && !isGameOver;
 
     return (
         <Stack gap="0.75rem" style={{
@@ -75,13 +77,13 @@ export function BettingPanel({
                 </Box>
             )}
 
-            {isGame && !hasBets && (
+            {(isGame || isGameOver) && !hasBets && (
                 <Typography variant="caption" style={{ opacity: 0.6, textAlign: "center", margin: "auto 0" }}>
                     No bets placed this round
                 </Typography>
             )}
 
-            {!ready && (
+            {!ready && !isGameOver && (
                 <Box style={{ display: "flex", flexDirection: "column", gap: "0.75rem", flex: 1 }}>
 
                     <Typography variant="h3">Place Your Bet</Typography>
@@ -126,7 +128,7 @@ export function BettingPanel({
                 </Box>
             )}
 
-            {ready && !isGame && (
+            {ready && !isGame && !isGameOver && (
                 <Typography variant="caption" style={{ textAlign: "center", color: "var(--color-text-secondary)", marginTop: "auto" }}>
                     Waiting for opponent...
                 </Typography>

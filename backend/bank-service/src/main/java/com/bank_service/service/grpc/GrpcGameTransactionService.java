@@ -6,6 +6,7 @@ import com.casualgames.grpc.transaction.DurakTransactionRequest;
 import com.casualgames.grpc.transaction.GameTransactionResponse;
 import com.casualgames.grpc.transaction.GameTransactionServiceGrpc;
 import com.casualgames.grpc.transaction.HorseRaceTransactionRequest;
+import com.casualgames.grpc.transaction.MahjongTransactionRequest;
 import com.casualgames.grpc.transaction.TicTacToeTransactionRequest;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +52,14 @@ public class GrpcGameTransactionService extends GameTransactionServiceGrpc.GameT
         log.info("gRPC ProcessDeCoderTransaction: roomId={}", request.getRoomId());
 
         handle(() -> gameTransactionService.processDeCoder(request), responseObserver);
+    }
+
+    @Override
+    public void processMahjongTransaction(MahjongTransactionRequest request,
+                                          StreamObserver<GameTransactionResponse> responseObserver) {
+        log.info("gRPC ProcessMahjongTransaction: roomId={}", request.getRoomId());
+
+        handle(() -> gameTransactionService.processMahjong(request), responseObserver);
     }
 
     private void handle(Supplier<GameTransactionResponse> supplier,

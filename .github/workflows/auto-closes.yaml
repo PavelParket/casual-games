@@ -1,0 +1,52 @@
+name: Auto Add Closes
+
+on:
+  pull_request:
+    types: [ opened, reopened, edited ]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  add-closes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            try {
+              const pr = context.payload.pull_request;
+              if (!pr) return;
+
+              const action = context.payload.action;
+
+              // При edited — реагируем только если изменился заголовок
+              if (action === 'edited' && !context.payload.changes?.title) return;
+
+              const title = pr.title || '';
+              const match = title.match(/CG-\d+/i);
+
+              // Нет номера задачи (например хотфикс без тикета) — намеренно ничего не делаем
+              if (!match) {
+                core.info(`No CG-XXX found in title "${title}", skipping.`);
+                return;
+              }
+
+              const closes = `Closes ${match[0].toUpperCase()}`;
+              const body = pr.body || '';
+
+              if (body.includes(closes)) return;
+
+              // Убираем старый Closes если был (при переименовании PR)
+              const cleaned = body.replace(/Closes CG-\d+/gi, '').trim();
+
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                body: cleaned ? `${cleaned}\n\n${closes}` : closes
+              });
+            } catch (error) {
+              // Не блокируем PR из-за вспомогательной автоматики
+              core.warning(`Auto Add Closes failed: ${error.message}`);
+            }
