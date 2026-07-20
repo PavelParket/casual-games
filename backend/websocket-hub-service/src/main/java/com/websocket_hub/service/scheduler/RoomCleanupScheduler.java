@@ -152,6 +152,7 @@ public class RoomCleanupScheduler {
             case DURAK -> roomCleanupProperties.durakInProgressTimeoutMinutes();
             case DE_CODER -> roomCleanupProperties.deCoderInProgressTimeoutMinutes();
             case HORSE_RACE -> Long.MAX_VALUE;
+            case MAHJONG -> roomCleanupProperties.mahjongInProgressTimeoutMinutes();
         };
     }
 }

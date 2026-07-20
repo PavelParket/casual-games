@@ -40,7 +40,8 @@ public class SecurityConfig {
                                         "/ws/t-t-t",
                                         "/ws/de-coder",
                                         "/ws/horse-race",
-                                        "/ws/durak"
+                                        "/ws/durak",
+                                        "/ws/mahjong"
                                 ).permitAll()
                                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                                 .requestMatchers(

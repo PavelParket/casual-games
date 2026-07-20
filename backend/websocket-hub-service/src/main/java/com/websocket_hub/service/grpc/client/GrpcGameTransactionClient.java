@@ -5,6 +5,7 @@ import com.casualgames.grpc.transaction.DurakTransactionRequest;
 import com.casualgames.grpc.transaction.GameTransactionResponse;
 import com.casualgames.grpc.transaction.GameTransactionServiceGrpc;
 import com.casualgames.grpc.transaction.HorseRaceTransactionRequest;
+import com.casualgames.grpc.transaction.MahjongTransactionRequest;
 import com.casualgames.grpc.transaction.TicTacToeTransactionRequest;
 import com.grpc_utils.mapper.GrpcStatusExceptionMapper;
 import io.grpc.StatusRuntimeException;
@@ -47,6 +48,12 @@ public class GrpcGameTransactionClient {
         log.info("gRPC process De-Coder transaction: roomId={}, playerCount={}", request.getRoomId(), request.getPlayerTransactionsCount());
 
         return execute(request, gameTransactionServiceBlockingStub::processDeCoderTransaction);
+    }
+
+    public GameTransactionResponse saveMahjongGameResults(MahjongTransactionRequest request) {
+        log.info("gRPC process Mahjong transaction: roomId={}, winner={}", request.getRoomId(), request.getWinner());
+
+        return execute(request, gameTransactionServiceBlockingStub::processMahjongTransaction);
     }
 
     private <T> GameTransactionResponse execute(T request, Function<T, GameTransactionResponse> function) {
