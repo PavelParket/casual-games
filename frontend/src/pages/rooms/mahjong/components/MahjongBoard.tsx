@@ -127,7 +127,7 @@ export function MahjongBoard({
                 )}
             </Box>
 
-            <Box
+            <div
                 className="mahjong-board-container"
                 ref={containerRef}
                 style={{ height: boardHeight * scale + 48, opacity: disabled ? 0.7 : 1, transition: "opacity 0.2s" }}
@@ -200,7 +200,7 @@ export function MahjongBoard({
                         </AnimatePresence>
                     </Box>
                 </Box>
-            </Box>
+            </div>
         </Box>
     );
 }
