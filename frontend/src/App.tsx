@@ -14,6 +14,7 @@ import { ProtectedRoute } from './router/ProtectedRoute'
 import Rooms from './pages/rooms/Rooms'
 import Profile from './pages/profile/Profile'
 import ExperimentalPage from './pages/ExperimentalPage'
+import MahjongExperimentalPage from './pages/rooms/mahjong/MahjongExperimentalPage.tsx'
 import LoadingPage from './pages/LoadingPage'
 import TermsOfUse from './pages/info/TermsOfUse'
 import PrivacyPolicy from './pages/info/PrivacyPolicy'
@@ -104,6 +105,7 @@ export default function App() {
                             <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
                                 <Route element={<Layout />}>
                                     <Route path="/ws/durak" element={<ExperimentalPage />} />
+                                    <Route path="/ws/mahjong" element={<MahjongExperimentalPage />} />
                                 </Route>
                             </Route>
 

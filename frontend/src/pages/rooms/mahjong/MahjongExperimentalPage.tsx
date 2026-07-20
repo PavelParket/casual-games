@@ -1,37 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Box, Button, Card, Stack, Typography, ComboBox, Container } from "../../../ui";
 
 import type { MahjongTileData } from "./utils/MahjongTypes";
-import { generateTestBoard, getAvailableMoves, facesMatch, generateAllUniqueFaces } from "./utils/MahjongGameUtils";
-import { MahjongBoard, type TileAnimationType } from "./components/MahjongBoard";
+import { generateTestBoard, getAvailableMoves, generateAllUniqueFaces } from "./utils/MahjongGameUtils";
 import { MahjongTile } from "./components/MahjongTile";
 import "./styles/MahjongRoom.css";
 
-const ANIMATION_OPTIONS = [
-    { value: "flight", label: "Flight" },
-    { value: "match", label: "Match & Drop" },
-    { value: "disappear", label: "Disappear" },
-];
+import { MahjongBoard } from "./components/MahjongBoard";
 
 const TILE_COUNT_OPTIONS = [
     { value: "72", label: "72 Tiles (Half)" },
     { value: "144", label: "144 Tiles (Full)" },
 ];
 
-export default function ExperimentalPage() {
+export default function MahjongExperimentalPage() {
     const [tiles, setTiles] = useState<MahjongTileData[]>([]);
     const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [animationType, setAnimationType] = useState<TileAnimationType>("flight");
     const [tileCount, setTileCount] = useState<"72" | "144">("72");
 
     const [previewDisabled, setPreviewDisabled] = useState<Record<string, boolean>>({});
     const allUniqueFaces = generateAllUniqueFaces();
-
-    useEffect(() => {
-        handleRestart();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tileCount]);
 
     const handleRestart = () => {
         setTiles(generateTestBoard(Number(tileCount) as 72 | 144));
@@ -53,7 +42,7 @@ export default function ExperimentalPage() {
         const tile1 = tiles.find(t => t.slot.id === selectedId);
         const tile2 = tiles.find(t => t.slot.id === id);
 
-        if (tile1 && tile2 && facesMatch(tile1.face, tile2.face)) {
+        if (tile1 && tile2) {
             setRemovedIds(prev => {
                 const next = new Set(prev);
                 next.add(tile1.slot.id);
@@ -91,13 +80,6 @@ export default function ExperimentalPage() {
                         gap: "1rem"
                     }}>
                         <Stack direction="row" gap="1rem" align="center" wrap="wrap">
-                            <Box style={{ width: "200px" }}> Tile hide variants:
-                                <ComboBox
-                                    options={ANIMATION_OPTIONS}
-                                    value={animationType}
-                                    onValueChange={(val) => setAnimationType(val as TileAnimationType)}
-                                />
-                            </Box>
                             <Box style={{ width: "160px" }}> Count of tiles:
                                 <ComboBox
                                     options={TILE_COUNT_OPTIONS}
@@ -146,8 +128,10 @@ export default function ExperimentalPage() {
                                     tiles={tiles}
                                     removedIds={removedIds}
                                     selectedId={selectedId}
-                                    animationType={animationType}
                                     onTileClick={handleTileClick}
+                                    disabled={false}
+                                    myTilesRemaining={0}
+                                    availableMoves={0}
                                 />
                             </Box>
                         </Stack>
