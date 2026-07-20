@@ -7,6 +7,7 @@ import ticTacToeReducer from "./slices/TicTacToeRoomSlice";
 import deCoderReducer from "./slices/DeCoderRoomSlice";
 import horseRaceReducer from "./slices/HorseRaceRoomSlice";
 import durakReducer from "./slices/DurakRoomSlice";
+import mahjongReducer from "./slices/MahjongRoomSlice";
 
 const rootReducer = combineReducers({
     auth: authReducer,
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
     deCoderRoom: deCoderReducer,
     horseRaceRoom: horseRaceReducer,
     durakRoom: durakReducer,
+    mahjongRoom: mahjongReducer,
 });
 
 export const store = configureStore({

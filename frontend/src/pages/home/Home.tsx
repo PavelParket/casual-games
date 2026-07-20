@@ -11,16 +11,18 @@ import "./Home.css";
 import ticTacToeImg from "../../assets/images/img-tic-tac-toe.png";
 import deCoderImg from "../../assets/images/img-de-coder.png";
 import durakImg from "../../assets/images/img-durak.png";
+import mahjongImg from "../../assets/images/img-mahjong.png";
 import horseRaceImg from "../../assets/images/img-horse-race.png";
 
 const GAME_IMAGES: Record<string, { src: string; invert: boolean }> = {
     DE_CODER: { src: deCoderImg, invert: true },
     DURAK: { src: durakImg, invert: false },
     HORSE_RACE: { src: horseRaceImg, invert: true },
-    TIC_TAC_TOE: { src: ticTacToeImg, invert: true }
+    TIC_TAC_TOE: { src: ticTacToeImg, invert: true },
+    MAHJONG: { src: mahjongImg, invert: false },
 };
 
-const AVAILABLE_GAMES: RoomType[] = ["DE_CODER", "DURAK", "HORSE_RACE", "TIC_TAC_TOE"];
+const AVAILABLE_GAMES: RoomType[] = ["DE_CODER", "DURAK", "HORSE_RACE", "TIC_TAC_TOE", "MAHJONG"];
 
 export default function Home() {
     const { theme } = useTheme();

@@ -30,6 +30,7 @@ const ROOM_ICON_NAMES: Record<RoomType, keyof typeof Icons.light> = {
     DURAK: "durak",
     TIC_TAC_TOE: "ticTacToe",
     HORSE_RACE: "horse",
+    MAHJONG: "mahjong",
 };
 
 const getStatusIconName = (status: string): keyof typeof Icons.light => {

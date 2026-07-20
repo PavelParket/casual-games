@@ -1,6 +1,7 @@
 import type { CardSuit, DurakAction, DurakCard, DurakPhase, DurakTablePair } from "./Durak";
 import type { DeCoderGameHistory } from "./DeCoderGameHistory";
 import type { HorseRaceHorseKeyframes } from "./HorseRace";
+import type { MahjongTile } from "./Mahjong";
 
 export interface WSMessage {
     type: string;
@@ -69,4 +70,18 @@ export interface DurakGameMessage extends WSMessage {
     defenderId?: string;
     winnerId?: string;
     remainingSeconds?: number;
+}
+
+export interface MahjongGameMessage extends WSMessage {
+    seed?: number;
+    tiles?: MahjongTile[];
+    players?: Record<string, string>;
+    slot1?: string;
+    slot2?: string;
+    removedSlotIds?: string[];
+    tilesRemaining?: number;
+    availableMoves?: number;
+    seconds?: number;
+    winner?: string;
+    bet?: number;
 }
