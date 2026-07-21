@@ -24,6 +24,17 @@ spring:
       secret: ${JWT_SECRET}
       access-expiration: ${JWT_ACCESS_EXPIRATION}
       refresh-expiration: ${JWT_REFRESH_EXPIRATION}
+      public-paths:
+        - /ws/room
+        - /ws/t-t-t
+        - /ws/de-coder
+        - /ws/horse-race
+        - /ws/durak
+        - /ws/mahjong
+        - /v3/api-docs/**
+        - /swagger-ui.html
+        - /swagger-ui/**
+        - /webjars/**
 
   data:
     redis:
