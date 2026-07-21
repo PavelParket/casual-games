@@ -4,6 +4,7 @@ import com.game_service.durak.domain.dto.DurakGameRequest;
 import com.game_service.durak.domain.dto.DurakGameResponse;
 import com.game_service.durak.service.DurakGameService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/game/durak")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('SERVICE')")
 public class DurakGameController {
 
     private final DurakGameService durakGameService;

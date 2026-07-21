@@ -4,6 +4,7 @@ import com.game_service.mahjong.domain.dto.MahjongGameRequest;
 import com.game_service.mahjong.domain.dto.MahjongGameResponse;
 import com.game_service.mahjong.service.MahjongGameService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("game/mahjong")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('SERVICE')")
 public class MahjongGameController {
 
     private final MahjongGameService mahjongGameService;

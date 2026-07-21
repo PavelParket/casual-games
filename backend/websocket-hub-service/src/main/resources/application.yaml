@@ -71,6 +71,7 @@ grpc:
 app:
   game-service:
     url: ${GAME_SERVICE_URL:http://localhost:8082}
+    service-token: ${SERVICE_TOKEN}
 
 cron:
   room-cleanup:
