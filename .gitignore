@@ -127,6 +127,7 @@ deploy/prod.env
 /deploy/certs
 .local
 *.properties.local
+/backups
 
 **/out/
 
