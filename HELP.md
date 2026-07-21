@@ -111,7 +111,7 @@ gprToken=
 ```shell
 # 1. Опубликовать локальную версию
 cd backend/common-utils
-./gradlew publishToMavenLocal -Pversion=1.4.0-local-SNAPSHOT
+./gradlew clean build publishToMavenLocal "-Pversion=1.4.0-local-SNAPSHOT"
 
 # 2. В gradle.properties нужного сервиса (не коммитить!)
 commonUtilsVersion=1.4.0-local-SNAPSHOT

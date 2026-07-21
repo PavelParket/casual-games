@@ -26,6 +26,14 @@ spring:
         jdbc:
           time_zone: UTC
 
+  data:
+    redis:
+      enabled: ${REDIS_ENABLED:true}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      password: ${REDIS_PASSWORD:}  # optional
+
 server:
   port: 8082
   forward-headers-strategy: framework

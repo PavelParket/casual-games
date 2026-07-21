@@ -18,6 +18,7 @@
     left: 0;
     right: 0;
     bottom: 0;
+    max-height: 65.5%;
 }
 
 .home-page .games-container {
@@ -76,10 +77,22 @@
     line-height: 1.2;
 }
 
+.home-page .game-card-wrapper:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc(50% - 0.75rem);
+}
+
 
 @media (max-width: 500px) {
     .home-page .games-container {
         grid-template-columns: 1fr;
+    }
+
+    .home-page .game-card-wrapper:last-child:nth-child(odd) {
+        grid-column: auto;
+        justify-self: stretch;
+        width: 100%;
     }
 
     .home-page .game-card-title {

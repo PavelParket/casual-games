@@ -1,6 +1,6 @@
 services:
   # ─────────────────────────────────────────────────────────
-  # PostgreSQL — одна БД diploma, 4 схемы (init.sql)
+  # PostgreSQL — одна БД casual_games, 4 схемы (init.sql)
   # ─────────────────────────────────────────────────────────
   postgres:
     image: postgres:17.10
@@ -126,11 +126,15 @@ services:
   # ═══════════════════ BACKEND ═══════════════════
 
   api-gateway:
-    image: casual-games/api-gateway:1.0.0
+    image: casual-games/api-gateway:${APP_VERSION:-1.0.0}
     build:
       context: ../backend
       args:
         SERVICE_NAME: api-gateway
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+      secrets:
+        - gpr_user
+        - gpr_token
     container_name: api-gateway
     restart: unless-stopped
     env_file: prod.env
@@ -142,11 +146,15 @@ services:
       - casual-games-net
 
   security-service:
-    image: casual-games/security-service:1.0.0
+    image: casual-games/security-service:${APP_VERSION:-1.0.0}
     build:
       context: ../backend
       args:
         SERVICE_NAME: security-service
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+      secrets:
+        - gpr_user
+        - gpr_token
     container_name: security-service
     restart: unless-stopped
     env_file: prod.env
@@ -168,11 +176,15 @@ services:
       - casual-games-net
 
   user-service:
-    image: casual-games/user-service:1.0.0
+    image: casual-games/user-service:${APP_VERSION:-1.0.0}
     build:
       context: ../backend
       args:
         SERVICE_NAME: user-service
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+      secrets:
+        - gpr_user
+        - gpr_token
     container_name: user-service
     restart: unless-stopped
     env_file: prod.env
@@ -196,11 +208,15 @@ services:
       - casual-games-net
 
   bank-service:
-    image: casual-games/bank-service:1.0.0
+    image: casual-games/bank-service:${APP_VERSION:-1.0.0}
     build:
       context: ../backend
       args:
         SERVICE_NAME: bank-service
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+      secrets:
+        - gpr_user
+        - gpr_token
     container_name: bank-service
     restart: unless-stopped
     env_file: prod.env
@@ -222,11 +238,15 @@ services:
       - casual-games-net
 
   game-service:
-    image: casual-games/game-service:1.0.0
+    image: casual-games/game-service:${APP_VERSION:-1.0.0}
     build:
       context: ../backend
       args:
         SERVICE_NAME: game-service
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+      secrets:
+        - gpr_user
+        - gpr_token
     container_name: game-service
     restart: unless-stopped
     env_file: prod.env
@@ -246,11 +266,15 @@ services:
       - casual-games-net
 
   websocket-hub-service:
-    image: casual-games/websocket-hub-service:1.0.0
+    image: casual-games/websocket-hub-service:${APP_VERSION:-1.0.0}
     build:
       context: ../backend
       args:
         SERVICE_NAME: websocket-hub-service
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+      secrets:
+        - gpr_user
+        - gpr_token
     container_name: websocket-hub-service
     restart: unless-stopped
     env_file: prod.env
@@ -273,9 +297,11 @@ services:
   # Frontend — статика (React build), за nginx в проде.
   # ─────────────────────────────────────────────────────────
   frontend:
-    image: casual-games/frontend:1.0.0
+    image: casual-games/frontend:${APP_VERSION:-1.0.0}
     build:
       context: ../frontend
+      args:
+        APP_VERSION: ${APP_VERSION:-1.0.0}
     container_name: frontend
     restart: unless-stopped
     depends_on:
@@ -316,3 +342,9 @@ volumes:
 networks:
   casual-games-net:
     driver: bridge
+
+secrets:
+  gpr_user:
+    environment: GPR_USER
+  gpr_token:
+    environment: GPR_TOKEN

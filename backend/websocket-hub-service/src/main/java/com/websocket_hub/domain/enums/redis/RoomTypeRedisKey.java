@@ -10,7 +10,8 @@ public enum RoomTypeRedisKey {
     TIC_TAC_TOE_ROOM("room:tic-tac-toe"),
     DE_CODER_ROOM("room:de-coder"),
     HORSE_RACE_ROOM("room:horse-race"),
-    DURAK_ROOM("room:durak");
+    DURAK_ROOM("room:durak"),
+    MAHJONG_ROOM("room:mahjong");
 
     private final String redisKey;
 }
