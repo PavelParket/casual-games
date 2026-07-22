@@ -36,26 +36,24 @@ public class User {
     private Long id;
 
     @Permission(Permissions.GUID)
-    @Column
     private UUID guid;
 
     @Permission(Permissions.USERNAME)
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String username;
 
     @Permission(Permissions.EMAIL)
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 60)
+    @Column(length = 60)
     private String password;
 
-    @Permission(value = Permissions.ROLE, deleteAllowed = false)
-    @Column(nullable = false)
+    @Permission(value = Permissions.ROLE)
     @Enumerated(EnumType.STRING)
     private Role role;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(updatable = false)
     private Instant createdAt;
 }

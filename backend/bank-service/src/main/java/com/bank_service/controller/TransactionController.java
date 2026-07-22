@@ -8,6 +8,7 @@ import com.bank_service.domain.dto.TransactionSummaryFilterRequest;
 import com.bank_service.domain.dto.TransactionSummaryResponse;
 import com.bank_service.service.TransactionService;
 import com.bank_service.service.TransactionSummaryService;
+import com.security_starter.config.AuthenticationToken;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,13 +40,15 @@ public class TransactionController {
 
     @GetMapping("/{guid}")
     public PageResponse<TransactionResponse> getByUserGuid(@PathVariable UUID guid,
-                                                           @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return transactionService.getByUserGuid(guid, pageable);
+                                                           @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+                                                           @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        return transactionService.getByUserGuid(guid, pageable, authenticationToken);
     }
 
     @PostMapping("/summary/search")
-    public List<TransactionSummaryResponse> getSummaryByUserGuid(@RequestBody @Valid TransactionSummaryFilterRequest request) {
-        return summaryService.getByUserGuid(request);
+    public List<TransactionSummaryResponse> getSummaryByUserGuid(@RequestBody @Valid TransactionSummaryFilterRequest request,
+                                                                 @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        return summaryService.getByUserGuid(request, authenticationToken);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -54,8 +58,9 @@ public class TransactionController {
     }
 
     @PostMapping("/deposit")
-    public TransactionResponse deposit(@RequestBody @Valid DepositRequest request) {
-        return transactionService.processDeposit(request);
+    public TransactionResponse deposit(@RequestBody @Valid DepositRequest request,
+                                       @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        return transactionService.processDeposit(request, authenticationToken);
     }
 
     @GetMapping("/top-wins")

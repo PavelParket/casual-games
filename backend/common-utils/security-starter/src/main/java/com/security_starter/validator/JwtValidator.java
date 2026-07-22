@@ -29,7 +29,7 @@ public class JwtValidator {
         }
     }
 
-    public boolean isExpiredToken(String token) {
+    public boolean isExpired(String token) {
         try {
             Claims claims = jwtDecoder.decode(token);
             return isExpiredClaims(claims);
@@ -42,9 +42,5 @@ public class JwtValidator {
     private boolean isExpiredClaims(Claims claims) {
         Date expiration = claims.getExpiration();
         return expiration != null && expiration.before(new Date());
-    }
-
-    public boolean isValidAndNotExpired(String token) {
-        return isValid(token) && !isExpiredToken(token);
     }
 }

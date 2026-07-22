@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -139,6 +140,20 @@ public class RedisHashRepository {
         } catch (Exception e) {
             log.error("Error finding value: key={}, hashKey={}", key, hashKey, e);
             return null;
+        }
+    }
+
+    public List<String> findByKeys(String key, Collection<String> hashKeys) {
+        if (key == null || hashKeys == null || hashKeys.isEmpty()) {
+            log.warn("Attempted to find values with invalid parameters: key={}", key);
+            return List.of();
+        }
+
+        try {
+            return hashOperations.multiGet(key, new ArrayList<>(hashKeys));
+        } catch (Exception e) {
+            log.error("Error finding values: key={}, hashKeys={}", key, hashKeys, e);
+            return List.of();
         }
     }
 

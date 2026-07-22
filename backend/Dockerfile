@@ -16,23 +16,23 @@ COPY ${SERVICE_NAME}/build.gradle ${SERVICE_NAME}/settings.gradle ./
 
 RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew
 
-RUN --mount=type=secret,id=gpr_user,env=GPR_USER \
-    --mount=type=secret,id=gpr_token,env=GPR_TOKEN \
+RUN --mount=type=secret,id=gpr_user \
+    --mount=type=secret,id=gpr_token \
     ./gradlew dependencies \
       -PcommonUtilsVersion=${APP_VERSION} \
-      -PgprUser=${GPR_USER} \
-      -PgprToken=${GPR_TOKEN} \
+      -PgprUser="$(cat /run/secrets/gpr_user)" \
+      -PgprToken="$(cat /run/secrets/gpr_token)" \
       --no-daemon || true
 
 # Исходники и сборка.
 COPY ${SERVICE_NAME}/src ./src
 
-RUN --mount=type=secret,id=gpr_user,env=GPR_USER \
-    --mount=type=secret,id=gpr_token,env=GPR_TOKEN \
+RUN --mount=type=secret,id=gpr_user \
+    --mount=type=secret,id=gpr_token \
     ./gradlew bootJar \
       -PcommonUtilsVersion=${APP_VERSION} \
-      -PgprUser=${GPR_USER} \
-      -PgprToken=${GPR_TOKEN} \
+      -PgprUser="$(cat /run/secrets/gpr_user)" \
+      -PgprToken="$(cat /run/secrets/gpr_token)" \
       --no-daemon -x test && \
     cp build/libs/*.jar /build/app.jar
 

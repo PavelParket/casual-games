@@ -40,6 +40,7 @@ spring:
       access-expiration: ${JWT_ACCESS_EXPIRATION:600000}      # 10 minutes default
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
       public-paths:
+        - /transactions/top-wins
         - /v3/api-docs/**
         - /swagger-ui.html
         - /swagger-ui/**
@@ -84,6 +85,7 @@ kafka:
 cron:
   create-transaction-summaries: ${CRON_CREATE_TRANSACTION_SUMMARIES:0 0 3 1 * *}
 
+  # TODO: delete after implementing cron-module
   scheduling:
     transaction-summary:
       initial-delay: 10000

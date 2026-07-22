@@ -11,6 +11,7 @@ import com.bank_service.repository.TransactionSummaryRepository;
 import com.bank_service.repository.projection.TransactionSummaryProjection;
 import com.bank_service.service.helper.PermissionHelper;
 import com.common_utils.exception.ForbiddenException;
+import com.security_starter.config.AuthenticationToken;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
 import com.security_starter.validator.PermissionValidator;
@@ -49,12 +50,12 @@ public class TransactionSummaryService {
     private final PermissionValidator permissionValidator;
 
     @Transactional(readOnly = true)
-    public List<TransactionSummaryResponse> getByUserGuid(TransactionSummaryFilterRequest request) {
-        if (!permissionValidator.can(
+    public List<TransactionSummaryResponse> getByUserGuid(TransactionSummaryFilterRequest request, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(
                 Permissions.TRANSACTION_SUMMARY,
                 Operation.READ,
-                permissionHelper.getContext(request.userGuid()),
-                permissionHelper.getToken()
+                permissionHelper.getContext(request.userGuid(), token),
+                token
         )) {
             throw new ForbiddenException(String.format(FORBIDDEN_READ_SUMMARY, request.userGuid()));
         }

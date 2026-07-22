@@ -13,8 +13,6 @@ public record JwtProperties(
 
         Long refreshExpiration,
 
-        String algorithm,
-
         List<String> publicPaths
 ) {
 }

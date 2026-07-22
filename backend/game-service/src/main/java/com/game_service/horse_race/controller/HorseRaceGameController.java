@@ -6,6 +6,7 @@ import com.game_service.horse_race.domain.dto.HorseRaceGameResponse;
 import com.game_service.horse_race.service.HorseRaceGameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/game/horse-race")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('SERVICE')")
 public class HorseRaceGameController {
 
     private final HorseRaceGameService horseRaceGameService;

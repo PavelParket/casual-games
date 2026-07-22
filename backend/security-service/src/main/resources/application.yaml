@@ -43,6 +43,15 @@ spring:
       secret: ${JWT_SECRET}
       access-expiration: ${JWT_ACCESS_EXPIRATION:600000}      # 10 minutes default
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
+      public-paths:
+        - /auth/register
+        - /auth/login
+        - /auth/refresh
+        - /auth/logout
+        - /v3/api-docs/**
+        - /swagger-ui.html
+        - /swagger-ui/**
+        - /webjars/**
     service-whitelist:
       enabled: ${SERVICE_WHITELIST_ENABLED:true}
       hosts: [ "127.0.0.1" ]

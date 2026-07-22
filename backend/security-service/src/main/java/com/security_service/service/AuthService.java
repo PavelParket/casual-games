@@ -10,7 +10,6 @@ import com.security_service.mapper.AuthMapper;
 import com.security_service.validator.RefreshTokenValidator;
 import com.security_starter.config.AuthenticationToken;
 import com.security_starter.enums.Status;
-import com.security_starter.helper.PermissionContextHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -42,8 +41,6 @@ public class AuthService {
     private final AuthMapper mapper;
 
     private final AuthenticationManager authenticationManager;
-
-    private final PermissionContextHelper permissionContextHelper;
 
     public AuthResponse register(RegisterRequest request, HttpServletResponse response) {
         UserResponse user = userService.create(request);
@@ -98,9 +95,7 @@ public class AuthService {
         cookieService.deleteRefreshToken(response);
     }
 
-    public WsTicketResponse createWsTicket(WsTicketRequest ticketRequest) {
-        AuthenticationToken token = permissionContextHelper.getCurrentAuthentication();
-
+    public WsTicketResponse createWsTicket(WsTicketRequest ticketRequest, AuthenticationToken token) {
         return WsTicketResponse.builder()
                 .ticketId(
                         wsTicketService.create(token.getGuid(), token.getSid(), ticketRequest.roomId())

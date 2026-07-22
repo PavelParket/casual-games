@@ -1,6 +1,5 @@
 package com.security_starter.jwt;
 
-import com.security_starter.enums.Role;
 import com.security_starter.enums.Status;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +17,19 @@ import java.util.UUID;
 public class JwtClaimsExtractor {
 
     private final JwtDecoder jwtDecoder;
+
+    public TokenClaims extractAll(String token) {
+        Claims claims = jwtDecoder.decode(token);
+
+        return new TokenClaims(
+                UUID.fromString(claims.getSubject()),
+                UUID.fromString(claims.get("sid", String.class)),
+                claims.get("email", String.class),
+                Status.valueOf(claims.get("status", String.class)),
+                claims.get("roles", List.class) != null
+                        ? new HashSet<>(claims.get("roles", List.class)) : Set.of()
+        );
+    }
 
     public UUID extractGuid(String token) {
         Claims claims = jwtDecoder.decode(token);
@@ -37,17 +49,6 @@ public class JwtClaimsExtractor {
         List<String> roles = claims.get("roles", List.class);
 
         return roles != null ? new HashSet<>(roles) : Set.of();
-    }
-
-    public Role extractRole(String token) {
-        Claims claims = jwtDecoder.decode(token);
-        String roleStr = claims.get("role", String.class);
-        try {
-            return roleStr != null ? Role.valueOf(roleStr) : null;
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid role in token: {}", roleStr);
-            return null;
-        }
     }
 
     public Status extractStatus(String token) {
