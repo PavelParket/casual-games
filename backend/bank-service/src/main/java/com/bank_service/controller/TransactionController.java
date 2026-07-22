@@ -1,7 +1,6 @@
 package com.bank_service.controller;
 
 import com.bank_service.domain.dto.DepositRequest;
-import com.bank_service.domain.dto.GenerateSummaryRequest;
 import com.bank_service.domain.dto.PageResponse;
 import com.bank_service.domain.dto.TransactionResponse;
 import com.bank_service.domain.dto.TransactionSummaryFilterRequest;
@@ -15,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,12 +47,6 @@ public class TransactionController {
     public List<TransactionSummaryResponse> getSummaryByUserGuid(@RequestBody @Valid TransactionSummaryFilterRequest request,
                                                                  @AuthenticationPrincipal AuthenticationToken authenticationToken) {
         return summaryService.getByUserGuid(request, authenticationToken);
-    }
-
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @PostMapping("/summary/generate")
-    public void generateSummaryManually(@RequestBody @Valid GenerateSummaryRequest request) {
-        summaryService.generateSummary(request);
     }
 
     @PostMapping("/deposit")

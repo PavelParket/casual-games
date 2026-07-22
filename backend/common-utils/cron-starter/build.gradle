@@ -1,0 +1,31 @@
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot' version '3.5.14'
+    id 'io.spring.dependency-management'
+    id 'maven-publish'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+def springDoc = '2.8.17'
+def shedLock = '7.7.0'
+
+dependencies {
+    implementation project(":common-utils")
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    implementation "net.javacrumbs.shedlock:shedlock-spring:${shedLock}"
+    implementation "net.javacrumbs.shedlock:shedlock-provider-redis-spring:${shedLock}"
+
+    compileOnly "org.springdoc:springdoc-openapi-starter-common:${springDoc}"
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+}

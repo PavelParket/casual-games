@@ -25,16 +25,13 @@ spring:
       access-expiration: ${JWT_ACCESS_EXPIRATION}
       refresh-expiration: ${JWT_REFRESH_EXPIRATION}
       public-paths:
+        - /websocket-hub-service/doc/**
         - /ws/room
         - /ws/t-t-t
         - /ws/de-coder
         - /ws/horse-race
         - /ws/durak
         - /ws/mahjong
-        - /v3/api-docs/**
-        - /swagger-ui.html
-        - /swagger-ui/**
-        - /webjars/**
 
   data:
     redis:
@@ -46,9 +43,9 @@ spring:
 
 server:
   port: 8081
-  forward-headers-strategy: framework
 
 server-url: ${SERVER_URL:http://localhost:8081}
+server-route:
 
 grpc:
   client:
@@ -102,7 +99,8 @@ springdoc:
   preLoadingEnabled: true
   api-docs:
     enabled: ${SWAGGER_ENABLED:true}
-    path: /v3/api-docs
+    path: /websocket-hub-service/doc/api-docs
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
-    path: /swagger-ui.html
+    path: /websocket-hub-service/doc/swagger-ui.html
+    operationsSorter: alpha
