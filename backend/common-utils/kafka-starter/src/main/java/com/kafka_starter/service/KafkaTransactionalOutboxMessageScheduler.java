@@ -29,6 +29,7 @@ public class KafkaTransactionalOutboxMessageScheduler implements CronService {
 
     private final KafkaTransactionalOutboxProperties kafkaTransactionalOutboxProperties;
 
+    // TODO: reanalyze and refactor process
     @Scheduled(fixedDelayString = "${kafka.transactional-outbox.poll-delay-ms:3000}")
     @Transactional
     public void poll() {
