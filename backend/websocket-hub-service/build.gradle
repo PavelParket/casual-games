@@ -38,6 +38,7 @@ repositories {
 def grpcVersion = '1.81.0'
 def protobufVersion = '4.34.1'
 def grpcSpring = '3.1.0.RELEASE'
+def shedLock = '7.7.0'
 
 dependencyManagement {
     dependencies {
@@ -63,6 +64,7 @@ dependencies {
     implementation "com.casualgames:kafka-starter:${commonUtilsVersion}"
     implementation "com.casualgames:grpc-utils:${commonUtilsVersion}"
     implementation "com.casualgames:security-starter:${commonUtilsVersion}"
+    implementation "com.casualgames:cron-starter:${commonUtilsVersion}"
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
@@ -70,6 +72,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.kafka:spring-kafka'
+
+    implementation "net.javacrumbs.shedlock:shedlock-spring:${shedLock}"
+    implementation "net.javacrumbs.shedlock:shedlock-provider-redis-spring:${shedLock}"
 
     implementation "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"
 

@@ -92,8 +92,8 @@ springdoc:
   preLoadingEnabled: true
   api-docs:
     enabled: ${SWAGGER_ENABLED:true}
-    path: bank-service/doc/api-docs
+    path: /bank-service/doc/api-docs
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
-    path: bank-service/doc/swagger-ui.html
+    path: /bank-service/doc/swagger-ui.html
     operationsSorter: alpha

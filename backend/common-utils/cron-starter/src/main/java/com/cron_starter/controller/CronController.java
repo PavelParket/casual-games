@@ -2,6 +2,9 @@ package com.cron_starter.controller;
 
 import com.cron_starter.model.CronJobDescriptor;
 import com.cron_starter.service.CronRunService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,11 +29,15 @@ public class CronController {
     private final CronRunService cronRunService;
 
     @GetMapping
+    @Operation(summary = "Get jobs list", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200")
     public List<CronJobDescriptor> list() {
         return cronRunService.list();
     }
 
     @PostMapping("/{code}/run")
+    @Operation(summary = "Run a job", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200")
     public void run(@PathVariable String code) {
         cronRunService.run(code);
     }

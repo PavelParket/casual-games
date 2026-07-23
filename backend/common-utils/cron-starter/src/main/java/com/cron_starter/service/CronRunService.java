@@ -31,7 +31,7 @@ public class CronRunService {
 
     private final LockProvider lockProvider;
 
-    public CronRunService(final Collection<CronService> cronServices, final LockProvider lockProvider) {
+    public CronRunService(Collection<CronService> cronServices, LockProvider lockProvider) {
         this.cronServiceMap = cronServices.stream()
                 .collect(
                         Collectors.toMap(

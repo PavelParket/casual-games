@@ -1,6 +1,5 @@
 package com.bank_service.service;
 
-import com.bank_service.domain.dto.GenerateSummaryRequest;
 import com.bank_service.domain.dto.TransactionSummaryFilterRequest;
 import com.bank_service.domain.dto.TransactionSummaryResponse;
 import com.bank_service.domain.entity.TransactionSummary;
@@ -70,8 +69,9 @@ public class TransactionSummaryService {
         ));
     }
 
-    public void generateSummary(GenerateSummaryRequest request) {
-        LocalDate targetMonth = request.targetMonth().withDayOfMonth(ONE_DAY);
+    // TODO: reanalyze and refactor process
+    public void generateSummary(LocalDate summaryMonth) {
+        LocalDate targetMonth = summaryMonth.withDayOfMonth(ONE_DAY);
         LocalDate nextMonth = targetMonth.plusMonths(1);
 
         Instant start = targetMonth.atStartOfDay(ZoneOffset.UTC).toInstant();

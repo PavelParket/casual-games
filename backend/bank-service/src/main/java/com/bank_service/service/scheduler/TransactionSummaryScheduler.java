@@ -1,6 +1,5 @@
 package com.bank_service.service.scheduler;
 
-import com.bank_service.domain.dto.GenerateSummaryRequest;
 import com.bank_service.service.TransactionSummaryService;
 import com.cron_starter.service.CronService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +8,7 @@ import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 
@@ -30,19 +30,15 @@ public class TransactionSummaryScheduler implements CronService {
 
     @Override
     public void run() {
-        log.info("Started job: {}", DESCRIPTION);
+        log.info("Started job: {} at {}", DESCRIPTION, Instant.now());
 
         LocalDate targetMonth = LocalDate.now(ZoneOffset.UTC).minusMonths(1);
 
         log.info("Target month: {}", targetMonth);
 
-        transactionSummaryService.generateSummary(
-                GenerateSummaryRequest.builder()
-                        .targetMonth(targetMonth)
-                        .build()
-        );
+        transactionSummaryService.generateSummary(targetMonth);
 
-        log.info("Finished job: {}", DESCRIPTION);
+        log.info("Finished job: {} at {}", DESCRIPTION, Instant.now());
     }
 
     @Override
