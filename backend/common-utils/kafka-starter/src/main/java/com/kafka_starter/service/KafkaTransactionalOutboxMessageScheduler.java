@@ -1,10 +1,12 @@
 package com.kafka_starter.service;
 
+import com.cron_starter.service.CronService;
 import com.kafka_starter.config.KafkaTransactionalOutboxProperties;
 import com.kafka_starter.entity.KafkaOutboxMessage;
 import com.kafka_starter.repository.KafkaOutboxMessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +18,10 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class KafkaTransactionalOutboxMessageScheduler {
+public class KafkaTransactionalOutboxMessageScheduler implements CronService {
+
+    private static final String CODE = "delete-old-transactional-outbox-events";
+    private static final String DESCRIPTION = "Delete old transactional outbox events";
 
     private final KafkaOutboxMessageRepository kafkaOutboxMessageRepository;
 
@@ -55,8 +60,15 @@ public class KafkaTransactionalOutboxMessageScheduler {
     }
 
     @Scheduled(cron = "${kafka.transactional-outbox.cleaner-cron:0 0 3 * * *}")
+    @SchedulerLock(lockAtLeastFor = "PT5M", lockAtMostFor = "PT10M", name = CODE)
     @Transactional
-    public void cleanup() {
+    public void scheduled() {
+        run();
+    }
+
+    @Override
+    @Transactional
+    public void run() {
         try {
             Instant date = Instant.now().minus(kafkaTransactionalOutboxProperties.getDeleteEventsAfterDays(), ChronoUnit.DAYS);
             int deleted = kafkaOutboxMessageRepository.deleteSentBefore(date);
@@ -67,5 +79,15 @@ public class KafkaTransactionalOutboxMessageScheduler {
         } catch (Exception e) {
             log.error("Outbox cleanup: unexpected error", e);
         }
+    }
+
+    @Override
+    public String getCode() {
+        return CODE;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
     }
 }
