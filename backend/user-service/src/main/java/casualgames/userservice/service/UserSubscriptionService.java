@@ -31,13 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static casualgames.userservice.config.ResourceMessageConstants.BAD_REQUEST_NO_NECESSARY_BALANCE_AMOUNT;
 import static casualgames.userservice.config.ResourceMessageConstants.CONFLICT_SAME_TIER_SUBSCRIPTION;
@@ -53,9 +47,6 @@ import static casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_
 public class UserSubscriptionService {
 
     private static final String SUBSCRIPTION_UPGRADE = "SUBSCRIPTION_UPGRADE";
-    private static final int INITIAL_PAGE = 0;
-    private static final int PAGE_SIZE = 100;
-    private static final int ONE_PAGE = 1;
 
     private final UserRepository userRepository;
 
@@ -116,7 +107,7 @@ public class UserSubscriptionService {
                                          Instant date) {
         BigDecimal amount;
 
-        if (currentPlan.getTier() == Status.DEFAULT.ordinal()) {
+        if (currentPlan.getTier() == 0) {
             amount = targetPlan.getPrice();
         } else {
             amount = subscriptionHelper.calculateUpgradeAmount(subscription, currentPlan, targetPlan, date);
@@ -204,50 +195,27 @@ public class UserSubscriptionService {
     }
 
     @Transactional
-    public void processExpiringSubscriptions() {
-        Instant now = Instant.now();
-        Map<Status, SubscriptionPlan> subscriptionPlans = subscriptionPlanRepository.findAll()
-                .stream()
-                .collect(Collectors.toMap(
-                        SubscriptionPlan::getStatus,
-                        Function.identity()
-                ));
-
-        Page<UserSubscription> userSubscriptionPage = findExpiringOrScheduled(now, PageRequest.of(INITIAL_PAGE, PAGE_SIZE));
-        long maxFetches = (userSubscriptionPage.getTotalElements() + PAGE_SIZE - ONE_PAGE) / PAGE_SIZE;
-        AtomicLong fetchCount = new AtomicLong();
-
-        Stream.iterate(userSubscriptionPage,
-                        Page::hasContent,
-                        next -> findExpiringOrScheduled(now, PageRequest.of(INITIAL_PAGE, PAGE_SIZE)))
-                .limit(maxFetches + ONE_PAGE)
-                .forEach(userSubscription -> {
-                    fetchCount.incrementAndGet();
-                    userSubscription.getContent().forEach(subscription -> processOne(subscription, now, subscriptionPlans));
-                });
-
-        if (fetchCount.get() > maxFetches) {
-            log.error("Subscription processing did not converge after {} fetches (expected {}), aborting batch", fetchCount.get(), maxFetches);
+    public void processOne(UserSubscription subscription, Instant now) {
+        if (subscription == null) {
+            return;
         }
-    }
 
-    public void processOne(UserSubscription subscription, Instant now, Map<Status, SubscriptionPlan> subscriptionPlans) {
         try {
             boolean hasChange = subscription.getNewStatus() != null
                     && subscription.getStatusChangeAt() != null
                     && !subscription.getStatusChangeAt().isAfter(now);
 
             if (hasChange) {
-                handleScheduledChange(subscription, now, subscriptionPlans);
+                handleScheduledChange(subscription, now);
             } else if (!subscription.getExpiresAt().isAfter(now)) {
-                handleExpiry(subscription, now, subscriptionPlans);
+                handleExpiry(subscription, now);
             }
         } catch (Exception e) {
             log.error("Unexpected error processing subscription for userGuid={}", subscription.getUserGuid(), e);
         }
     }
 
-    private void handleExpiry(UserSubscription subscription, Instant now, Map<Status, SubscriptionPlan> subscriptionPlans) {
+    private void handleExpiry(UserSubscription subscription, Instant now) {
         UUID userGuid = subscription.getUserGuid();
 
         if (!subscription.isAutoRenew()) {
@@ -258,24 +226,24 @@ public class UserSubscriptionService {
         User user = userRepository.findByGuidForUpdate(userGuid)
                 .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, userGuid)));
 
-        SubscriptionPlan plan = Optional.ofNullable(subscriptionPlans.get(user.getStatus()))
+        SubscriptionPlan plan = subscriptionPlanRepository.findByStatus(user.getStatus())
                 .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION_PLAN, user.getStatus())));
 
-        if (plan.getTier() == Status.DEFAULT.ordinal()) {
+        if (plan.getTier() == 0) {
             return;
         }
 
         chargeAndRenew(subscription, user, user.getStatus(), plan.getPrice(), now);
     }
 
-    private void handleScheduledChange(UserSubscription subscription, Instant now, Map<Status, SubscriptionPlan> subscriptionPlans) {
+    private void handleScheduledChange(UserSubscription subscription, Instant now) {
         UUID userGuid = subscription.getUserGuid();
         Status targetStatus = subscription.getNewStatus();
 
-        SubscriptionPlan targetPlan = Optional.ofNullable(subscriptionPlans.get(targetStatus))
+        SubscriptionPlan targetPlan = subscriptionPlanRepository.findByStatus(targetStatus)
                 .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION_PLAN, targetStatus)));
 
-        if (targetPlan.getTier() == Status.DEFAULT.ordinal()) {
+        if (targetPlan.getTier() == 0) {
             resetToDefault(userGuid);
             return;
         }
