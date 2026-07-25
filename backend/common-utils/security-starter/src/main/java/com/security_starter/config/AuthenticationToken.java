@@ -99,11 +99,6 @@ public class AuthenticationToken extends AbstractAuthenticationToken {
         return String.format("AuthenticationToken{guid=%s, email=%s, status=%s, roles=%s}", guid, email, status, roles);
     }
 
-    @Override
-    public String getName() {
-        return guid != null ? guid.toString() : "service-to-service";
-    }
-
     public boolean hasRole(Role role) {
         return roles.contains(role.name());
     }

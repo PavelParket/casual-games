@@ -74,7 +74,7 @@ public class AnnouncementService {
         long unread = announcementRepository.countByIdGreaterThan(cursor);
 
         return AnnouncementResponseList.builder()
-                .announcements(announcementMapper.toResponsePage(announcements))
+                .announcements(announcementMapper.toResponsePagedModel(announcements))
                 .unread(unread)
                 .build();
     }

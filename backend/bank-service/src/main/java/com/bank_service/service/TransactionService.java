@@ -70,7 +70,7 @@ public class TransactionService {
         Page<Transaction> transactions = transactionRepository.findByUserGuidAndStatus(userGuid, TransactionStatus.SUCCESS, pageable);
 
         return TransactionResponseList.builder()
-                .transactions(transactionMapper.toResponsePage(transactions))
+                .transactions(transactionMapper.toResponsePagedModel(transactions))
                 .build();
     }
 

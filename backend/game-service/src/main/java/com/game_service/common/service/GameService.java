@@ -80,6 +80,7 @@ public class GameService {
         }
 
         log.info("Handling room deleted event: roomId={}, gameType={}, reason={}", roomId, gameType, event.getReason());
+
         provider.cleanup(roomId);
     }
 }

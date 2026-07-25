@@ -90,7 +90,7 @@ public class NotificationService {
         }
     }
 
-    public String renderParams(String template, Map<String, String> params) {
+    private String renderParams(String template, Map<String, String> params) {
         if (template == null) {
             return null;
         }
@@ -109,7 +109,7 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public NotificationResponseList getNotifications(Pageable pageable, AuthenticationToken authenticationToken) {
-        if (!permissionValidator.can(Permissions.NOTIFICATION, Operation.READ,
+        if (!permissionValidator.hasAccess(Permissions.NOTIFICATION, Operation.READ,
                 permissionHelper.getContext(authenticationToken.getGuid()), authenticationToken)) {
             throw new ForbiddenException(FORBIDDEN_READ_NOTIFICATIONS);
         }
@@ -122,7 +122,7 @@ public class NotificationService {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(NOTIFICATION_NOT_FOUND));
 
-        if (!permissionValidator.can(Permissions.NOTIFICATION, Operation.UPDATE,
+        if (!permissionValidator.hasAccess(Permissions.NOTIFICATION, Operation.UPDATE,
                 permissionHelper.getContext(notification.getRecipientGuid()), authenticationToken)) {
             throw new ForbiddenException(FORBIDDEN_UPDATE_NOTIFICATION);
         }
@@ -140,7 +140,7 @@ public class NotificationService {
 
     @Transactional
     public NotificationResponseList markAllAsRead(Pageable pageable, AuthenticationToken authenticationToken) {
-        if (!permissionValidator.can(Permissions.NOTIFICATION, Operation.UPDATE,
+        if (!permissionValidator.hasAccess(Permissions.NOTIFICATION, Operation.UPDATE,
                 permissionHelper.getContext(authenticationToken.getGuid()), authenticationToken)) {
             throw new ForbiddenException(FORBIDDEN_UPDATE_NOTIFICATION);
         }
@@ -155,7 +155,7 @@ public class NotificationService {
         long unread = notificationRepository.countByRecipientGuidAndReadAtIsNull(recipientGuid);
 
         return NotificationResponseList.builder()
-                .notifications(notificationMapper.toResponsePage(notifications))
+                .notifications(notificationMapper.toResponsePagedModel(notifications))
                 .unread(unread)
                 .build();
     }
