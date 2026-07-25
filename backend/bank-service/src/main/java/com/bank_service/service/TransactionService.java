@@ -13,6 +13,7 @@ import com.bank_service.service.grpc.client.GrpcUserTransactionClient;
 import com.bank_service.service.helper.PermissionHelper;
 import com.common_utils.exception.BadRequestException;
 import com.common_utils.exception.ForbiddenException;
+import com.security_starter.config.AuthenticationToken;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
 import com.security_starter.validator.PermissionValidator;
@@ -61,8 +62,8 @@ public class TransactionService {
     private final PermissionValidator permissionValidator;
 
     @Transactional(readOnly = true)
-    public TransactionResponseList getByUserGuid(UUID userGuid, Pageable pageable) {
-        if (!permissionValidator.can(Permissions.TRANSACTION, Operation.READ, permissionHelper.getContext(userGuid), permissionHelper.getToken())) {
+    public TransactionResponseList getByUserGuid(UUID userGuid, Pageable pageable, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(Permissions.TRANSACTION, Operation.READ, permissionHelper.getContext(userGuid, token), token)) {
             throw new ForbiddenException(String.format(FORBIDDEN_READ_TRANSACTIONS, userGuid));
         }
 
@@ -74,12 +75,12 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionResponse processDeposit(DepositRequest request) {
-        if (!permissionValidator.can(
+    public TransactionResponse processDeposit(DepositRequest request, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(
                 Permissions.BALANCE,
                 Operation.UPDATE,
-                permissionHelper.getContext(request.userGuid()),
-                permissionHelper.getToken()
+                permissionHelper.getContext(request.userGuid(), token),
+                token
         )) {
             throw new ForbiddenException(String.format(FORBIDDEN_DEPOSIT, request.userGuid()));
         }

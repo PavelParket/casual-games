@@ -5,6 +5,7 @@ import com.casualgames.grpc.transaction.DeCoderTransactionRequest;
 import com.casualgames.grpc.transaction.DurakTransactionRequest;
 import com.casualgames.grpc.transaction.HorseRacePlayerBetMessage;
 import com.casualgames.grpc.transaction.HorseRaceTransactionRequest;
+import com.casualgames.grpc.transaction.MahjongTransactionRequest;
 import com.casualgames.grpc.transaction.PlayerBetMessage;
 import com.casualgames.grpc.transaction.TicTacToeTransactionRequest;
 import com.websocket_hub.domain.entity.DecoderPlayerSpending;
@@ -120,5 +121,21 @@ public interface GameTransactionMapper {
                 .setRoomType(roomType.name())
                 .addAllPlayerTransactions(entries)
                 .build();
+    }
+
+    default MahjongTransactionRequest toMahjongRequest(UUID roomId,
+                                                       RoomType roomType,
+                                                       List<PlayerBet> playerBets,
+                                                       UUID winner) {
+        MahjongTransactionRequest.Builder builder = MahjongTransactionRequest.newBuilder()
+                .setRoomId(roomId.toString())
+                .setRoomType(roomType.name())
+                .addAllPlayerBets(toPlayerBetMessages(playerBets));
+
+        if (winner != null) {
+            builder.setWinner(winner.toString());
+        }
+
+        return builder.build();
     }
 }

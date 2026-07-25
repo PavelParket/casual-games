@@ -41,6 +41,7 @@ spring:
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
       public-paths:
         - /bank-service/doc/**
+        - /transactions/top-wins
     service-whitelist:
       enabled: ${SERVICE_WHITELIST_ENABLED:true}
       hosts: [ "127.0.0.1" ]
@@ -81,6 +82,7 @@ kafka:
 cron:
   create-transaction-summaries: ${CRON_CREATE_TRANSACTION_SUMMARIES:0 0 3 1 * *}
 
+  # TODO: delete after implementing cron-module
   scheduling:
     transaction-summary:
       initial-delay: 10000
@@ -96,8 +98,8 @@ springdoc:
   preLoadingEnabled: true
   api-docs:
     enabled: ${SWAGGER_ENABLED:true}
-    path: bank-service/doc/api-docs
+    path: /bank-service/doc/api-docs
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
-    path: bank-service/doc/swagger-ui.html
+    path: /bank-service/doc/swagger-ui.html
     operationsSorter: alpha

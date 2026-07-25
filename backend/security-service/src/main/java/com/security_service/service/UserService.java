@@ -14,6 +14,7 @@ import com.security_service.repository.UserRepository;
 import com.security_service.service.grpc.client.GrpcUserClient;
 import com.security_service.service.helper.PermissionHelper;
 import com.security_service.validator.UserValidator;
+import com.security_starter.config.AuthenticationToken;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
 import lombok.RequiredArgsConstructor;
@@ -103,19 +104,17 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public void updatePassword(UUID guid, UpdatePasswordRequest request) {
+    public void updatePassword(UUID guid, UpdatePasswordRequest request, AuthenticationToken token) {
         User user = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
-        if (!permissionHelper.hasPermission(Permissions.PASSWORD, Operation.UPDATE, user.getGuid())) {
+        if (!permissionHelper.hasPermission(Permissions.PASSWORD, Operation.UPDATE, user.getGuid(), token)) {
             throw new ForbiddenException(FORBIDDEN_PASSWORD_UPDATE);
         }
 
         user.setPassword(passwordService.encode(request.newPassword()));
 
         userRepository.save(user);
-
-        log.info("Password changed for user guid={}", guid);
     }
 
     public List<UserResponse> getAll() {

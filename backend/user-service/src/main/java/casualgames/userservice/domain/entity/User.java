@@ -34,33 +34,30 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
     @Permission(Permissions.GUID)
+    @Column(unique = true)
     private UUID guid;
 
-    @Column(nullable = false)
-    @Permission(value = Permissions.USERNAME, deleteAllowed = false)
+    @Permission(value = Permissions.USERNAME)
     private String username;
 
-    @Column(unique = true, nullable = false)
-    @Permission(value = Permissions.EMAIL, deleteAllowed = false)
+    @Permission(value = Permissions.EMAIL)
+    @Column(unique = true)
     private String email;
 
-    @Builder.Default
-    @Column(precision = 19, scale = 2)
     @Permission(Permissions.BALANCE)
+    @Column(precision = 19, scale = 2)
+    @Builder.Default
     private BigDecimal balance = BigDecimal.ZERO;
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     @Permission(Permissions.ROLE)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
     private Role role = Role.USER;
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     @Permission(Permissions.STATUS)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
     private Status status = Status.DEFAULT;
 
     private String linkProfilePicture;
@@ -68,6 +65,6 @@ public class User {
     private String linkProfilePictureMini;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(updatable = false)
     private Instant createdAt;
 }

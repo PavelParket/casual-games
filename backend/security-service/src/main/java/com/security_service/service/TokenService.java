@@ -42,7 +42,7 @@ public class TokenService {
     }
 
     public UUID extractGuid(String token) {
-        if (jwtValidator.isExpiredToken(token)) {
+        if (jwtValidator.isExpired(token)) {
             throw new CredentialsExpiredException(EXPIRED_TOKEN);
         }
 
@@ -50,7 +50,7 @@ public class TokenService {
     }
 
     public String extractEmail(String token) {
-        if (jwtValidator.isExpiredToken(token)) {
+        if (jwtValidator.isExpired(token)) {
             throw new CredentialsExpiredException(EXPIRED_TOKEN);
         }
 

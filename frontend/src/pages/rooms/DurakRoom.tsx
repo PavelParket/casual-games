@@ -147,7 +147,7 @@ export default function DurakRoom() {
         setAvailableActions([]);
         setAwaitingResponse(false);
         setIsOverlayOpen(true);
-    }, []);
+    }, [players]);
 
     const processAbort = useCallback(() => {
         console.warn("[DurakRoom] game aborted — opponent left");

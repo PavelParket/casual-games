@@ -45,6 +45,10 @@ spring:
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
       public-paths:
         - /security-service/doc/**
+        - /auth/register
+        - /auth/login
+        - /auth/refresh
+        - /auth/logout
     service-whitelist:
       enabled: ${SERVICE_WHITELIST_ENABLED:true}
       hosts: [ "127.0.0.1" ]

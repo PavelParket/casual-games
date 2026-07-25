@@ -3,6 +3,7 @@ package casualgames.userservice.controller;
 import casualgames.userservice.domain.dto.SubscriptionPlanResponse;
 import casualgames.userservice.service.SubscriptionPlanService;
 import com.common_utils.dto.ErrorResponse;
+import com.security_starter.config.AuthenticationToken;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,7 +50,7 @@ public class SubscriptionPlanController {
     @GetMapping
     @Operation(summary = "Get list of available subscription plans", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200")
-    public List<SubscriptionPlanResponse> get() {
-        return subscriptionPlanService.get();
+    public List<SubscriptionPlanResponse> get(@AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        return subscriptionPlanService.get(authenticationToken);
     }
 }

@@ -24,7 +24,7 @@ public class JwtGenerator {
                 .subject(guid.toString())
                 .claim("email", email)
                 .claim("roles", roles)
-                .claim("status", status)
+                .claim("status", status.name())
                 .claim("sid", sid.toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.accessExpiration()))

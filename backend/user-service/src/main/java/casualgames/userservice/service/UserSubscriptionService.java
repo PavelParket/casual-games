@@ -69,13 +69,11 @@ public class UserSubscriptionService {
     private final PermissionValidator permissionValidator;
 
     @Transactional
-    public SubscriptionResponse purchase(SubscriptionRequest request) {
-        AuthenticationToken token = permissionHelper.getToken();
-
-        if (!permissionValidator.can(
+    public SubscriptionResponse purchase(SubscriptionRequest request, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(
                 Permissions.SUBSCRIPTION,
                 Operation.UPDATE,
-                permissionHelper.getContext(token.getGuid()),
+                permissionHelper.getContext(token.getGuid(), token),
                 token
         )) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_SUBSCRIPTION);
@@ -158,13 +156,11 @@ public class UserSubscriptionService {
     }
 
     @Transactional(readOnly = true)
-    public SubscriptionResponse get() {
-        AuthenticationToken token = permissionHelper.getToken();
-
-        if (!permissionValidator.can(
+    public SubscriptionResponse get(AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(
                 Permissions.SUBSCRIPTION,
                 Operation.READ,
-                permissionHelper.getContext(token.getGuid()),
+                permissionHelper.getContext(token.getGuid(), token),
                 token
         )) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_READ_SUBSCRIPTION);
@@ -180,13 +176,11 @@ public class UserSubscriptionService {
     }
 
     @Transactional
-    public SubscriptionResponse updateAutoRenew(Boolean enable) {
-        AuthenticationToken token = permissionHelper.getToken();
-
-        if (!permissionValidator.can(
+    public SubscriptionResponse updateAutoRenew(Boolean enable, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(
                 Permissions.SUBSCRIPTION,
                 Operation.UPDATE,
-                permissionHelper.getContext(token.getGuid()),
+                permissionHelper.getContext(token.getGuid(), token),
                 token
         )) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_SUBSCRIPTION);

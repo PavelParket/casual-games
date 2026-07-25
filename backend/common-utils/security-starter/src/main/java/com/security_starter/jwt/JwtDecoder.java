@@ -27,13 +27,4 @@ public class JwtDecoder {
             throw new JwtException("Invalid JWT token", e);
         }
     }
-
-    public boolean isValid(String token) {
-        try {
-            decode(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
 }

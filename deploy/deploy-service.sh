@@ -28,7 +28,9 @@ VALID_SERVICES=(
 TAG=$(git -C "$PROJECT_ROOT" describe --tags --exact-match 2>/dev/null || true)
 [[ -z "$TAG" ]] && \
   fail "HEAD is not on a release tag. Checkout a tag first: bash deploy/deploy.sh v1.4.0"
-COMMON_UTILS_VERSION="${TAG#v}"
+
+APP_VERSION="${TAG#v}"
+export APP_VERSION
 
 # --- Read GPR credentials from prod.env --------------------------------------
 GPR_USER=$(grep '^GPR_USER='  "$ENV_FILE" | cut -d= -f2-)
@@ -36,6 +38,8 @@ GPR_TOKEN=$(grep '^GPR_TOKEN=' "$ENV_FILE" | cut -d= -f2-)
 
 [[ -z "$GPR_USER"  ]] && fail "GPR_USER not set in prod.env"
 [[ -z "$GPR_TOKEN" ]] && fail "GPR_TOKEN not set in prod.env"
+
+export GPR_USER GPR_TOKEN
 
 # --- Parse and validate service arguments ------------------------------------
 SERVICES=()
@@ -61,9 +65,7 @@ echo -e "\n${CYAN}  casual-games — selective redeploy: ${SERVICES[*]} (${TAG})
 step "Building: ${SERVICES[*]}"
 cd "$PROJECT_ROOT"
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build \
-  --build-arg COMMON_UTILS_VERSION="$COMMON_UTILS_VERSION" \
-  --build-arg GPR_USER="$GPR_USER" \
-  --build-arg GPR_TOKEN="$GPR_TOKEN" \
+  --build-arg APP_VERSION="$APP_VERSION" \
   "${SERVICES[@]}"
 ok "built"
 

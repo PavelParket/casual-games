@@ -3,6 +3,7 @@ package com.websocket_hub.config;
 import com.websocket_hub.handler.DeCoderGameRoomHandler;
 import com.websocket_hub.handler.DurakGameRoomHandler;
 import com.websocket_hub.handler.HorseRaceGameRoomHandler;
+import com.websocket_hub.handler.MahjongGameRoomHandler;
 import com.websocket_hub.handler.TicTacToeGameRoomHandler;
 import com.websocket_hub.interceptor.AppHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final DurakGameRoomHandler durakGameRoomHandler;
 
+    private final MahjongGameRoomHandler mahjongGameRoomHandler;
+
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(ticTacToeGameRoomHandler, "/ws/t-t-t")
@@ -41,6 +44,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 .addInterceptors(handshakeInterceptor);
 
         registry.addHandler(durakGameRoomHandler, "/ws/durak")
+                .setAllowedOriginPatterns("*")
+                .addInterceptors(handshakeInterceptor);
+
+        registry.addHandler(mahjongGameRoomHandler, "/ws/mahjong")
                 .setAllowedOriginPatterns("*")
                 .addInterceptors(handshakeInterceptor);
     }

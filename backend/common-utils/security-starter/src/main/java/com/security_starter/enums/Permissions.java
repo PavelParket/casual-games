@@ -2,6 +2,8 @@ package com.security_starter.enums;
 
 public enum Permissions {
 
+    NONE,
+
     GUID,
     USERNAME,
     EMAIL,

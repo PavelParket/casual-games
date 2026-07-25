@@ -1,12 +1,12 @@
 package com.security_service.controller;
 
-import com.common_utils.dto.ErrorResponse;
 import com.security_service.domain.dto.AuthResponse;
 import com.security_service.domain.dto.LoginRequest;
 import com.security_service.domain.dto.RegisterRequest;
 import com.security_service.domain.dto.WsTicketRequest;
 import com.security_service.domain.dto.WsTicketResponse;
 import com.security_service.service.AuthService;
+import com.security_starter.config.AuthenticationToken;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -84,7 +85,8 @@ public class AuthController {
     @PostMapping("/ws-ticket")
     @Operation(summary = "Create ticket for secure WebSocket connection")
     @ApiResponse(responseCode = "200")
-    public WsTicketResponse createWsTicket(@Valid @RequestBody WsTicketRequest ticketRequest) {
-        return authService.createWsTicket(ticketRequest);
+    public WsTicketResponse createWsTicket(@Valid @RequestBody WsTicketRequest ticketRequest,
+                                           @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        return authService.createWsTicket(ticketRequest, authenticationToken);
     }
 }

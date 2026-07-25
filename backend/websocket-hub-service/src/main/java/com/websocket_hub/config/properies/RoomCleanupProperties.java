@@ -17,6 +17,8 @@ public record RoomCleanupProperties(
 
         long durakInProgressTimeoutMinutes,
 
-        long deCoderInProgressTimeoutMinutes
+        long deCoderInProgressTimeoutMinutes,
+
+        long mahjongInProgressTimeoutMinutes
 ) {
 }

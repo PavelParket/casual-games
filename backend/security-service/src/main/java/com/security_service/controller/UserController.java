@@ -4,6 +4,7 @@ import com.common_utils.dto.ErrorResponse;
 import com.security_service.domain.dto.UpdatePasswordRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.service.UserService;
+import com.security_starter.config.AuthenticationToken;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -76,7 +78,9 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Update user password", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "204")
-    public void updatePassword(@PathVariable UUID guid, @Valid @RequestBody UpdatePasswordRequest request) {
-        userService.updatePassword(guid, request);
+    public void updatePassword(@PathVariable UUID guid,
+                               @Valid @RequestBody UpdatePasswordRequest request,
+                               @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        userService.updatePassword(guid, request, authenticationToken);
     }
 }

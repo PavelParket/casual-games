@@ -10,6 +10,7 @@ import com.casualgames.grpc.transaction.DeCoderTransactionRequest;
 import com.casualgames.grpc.transaction.DurakTransactionRequest;
 import com.casualgames.grpc.transaction.GameTransactionResponse;
 import com.casualgames.grpc.transaction.HorseRaceTransactionRequest;
+import com.casualgames.grpc.transaction.MahjongTransactionRequest;
 import com.casualgames.grpc.transaction.TicTacToeTransactionRequest;
 import com.common_utils.exception.ConflictException;
 import lombok.extern.slf4j.Slf4j;
@@ -87,6 +88,14 @@ public class GameTransactionService {
 
     public GameTransactionResponse processDeCoder(DeCoderTransactionRequest request) {
         return process(request, RoomType.DE_CODER, request.getRoomId());
+    }
+
+    public GameTransactionResponse processMahjong(MahjongTransactionRequest request) {
+        if (!request.hasWinner()) {
+            return gameTransactionMapper.toGrpcResponse(request.getRoomId(), request.getRoomType(), 0);
+        }
+
+        return processWithDeduplication(request, RoomType.MAHJONG, request.getRoomId(), 2);
     }
 
     private <T> GameTransactionResponse processWithDeduplication(T request,
