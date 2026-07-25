@@ -127,6 +127,7 @@ deploy/prod.env
 /deploy/certs
 .local
 *.properties.local
+/backups
 
 **/out/
 
@@ -198,6 +199,11 @@ node_modules
 dist
 dist-ssr
 *.local
+
+# design-sync (claude.ai/design)
+.ds-sync/
+ds-bundle/
+frontend/.design-sync/
 
 # Editor directories and files
 .idea
