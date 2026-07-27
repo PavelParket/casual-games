@@ -2,7 +2,7 @@
 # Full redeploy on VPS by immutable git tag.
 #
 # Usage:
-#   bash deploy/deploy.sh v1.4.0
+#   bash deploy/deploy.sh v1.4.1
 
 set -euo pipefail
 
@@ -19,23 +19,14 @@ fail() { echo -e "${RED}  x $*${NC}"; exit 1; }
 
 # --- Validate tag argument ---------------------------------------------------
 TAG="${1:-}"
-[[ -z "$TAG" ]]    && fail "Usage: bash deploy/deploy.sh <tag>  (e.g. v1.4.0)"
-[[ "$TAG" != v* ]] && fail "Tag must start with 'v'  (e.g. v1.4.0)"
+[[ -z "$TAG" ]]    && fail "Usage: bash deploy/deploy.sh <tag>  (e.g. v1.4.1)"
+[[ "$TAG" != v* ]] && fail "Tag must start with 'v'  (e.g. v1.4.1)"
 
-# Derive starters version from tag: v1.4.0 → 1.4.0
+# Derive image version from tag: v1.4.1 → 1.4.1
 APP_VERSION="${TAG#v}"
 export APP_VERSION
 
-# --- Read GPR credentials from prod.env --------------------------------------
-GPR_USER=$(grep '^GPR_USER='  "$ENV_FILE" | cut -d= -f2-)
-GPR_TOKEN=$(grep '^GPR_TOKEN=' "$ENV_FILE" | cut -d= -f2-)
-
-[[ -z "$GPR_USER"  ]] && fail "GPR_USER not set in prod.env"
-[[ -z "$GPR_TOKEN" ]] && fail "GPR_TOKEN not set in prod.env"
-
-export GPR_USER GPR_TOKEN
-
-echo -e "\n${CYAN}  casual-games — deploying ${TAG} (starters: ${APP_VERSION})${NC}"
+echo -e "\n${CYAN}  casual-games — deploying ${TAG} (images: ${APP_VERSION})${NC}"
 
 # --- 1. Checkout tag ---------------------------------------------------------
 step "1/3  git checkout ${TAG}"
@@ -44,11 +35,10 @@ git fetch --tags
 git checkout "$TAG"
 ok "on ${TAG}"
 
-# --- 2. docker compose build -------------------------------------------------
-step "2/3  Building images"
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build \
-  --build-arg APP_VERSION="$APP_VERSION"
-ok "images built"
+# --- 2. docker compose pull ---------------------------------------------------
+step "2/3  Pulling images"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" pull
+ok "images pulled"
 
 # --- 3. up -d ----------------------------------------------------------------
 step "3/3  Starting services"
