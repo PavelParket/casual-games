@@ -11,10 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +27,6 @@ public class DefaultSecurityFilterChain {
             "/actuator/info"
     );
 
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
@@ -42,29 +38,20 @@ public class DefaultSecurityFilterChain {
     @Bean
     @ConditionalOnMissingBean(SecurityFilterChain.class)
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
+        return DefaultHttpSecurityConfig
+                .defaultHttpSecurity(httpSecurity, jwtAuthenticationFilter, authenticationEntryPoint, accessDeniedHandler)
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers(publicPathsArray()).permitAll()
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler)
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
     private String[] publicPathsArray() {
-        List<String> merged = new ArrayList<>(DEFAULT_PUBLIC_PATHS);
+        List<String> publicPathList = new ArrayList<>(DEFAULT_PUBLIC_PATHS);
         if (jwtProperties.publicPaths() != null) {
-            merged.addAll(jwtProperties.publicPaths());
+            publicPathList.addAll(jwtProperties.publicPaths());
         }
-        return merged.toArray(String[]::new);
+        return publicPathList.toArray(String[]::new);
     }
 }

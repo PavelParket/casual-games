@@ -1,12 +1,10 @@
 package com.security_starter.jwt.filter;
 
-import com.common_utils.exception.JwtException;
 import com.security_starter.config.AuthenticationToken;
-import com.security_starter.enums.Status;
 import com.security_starter.jwt.JwtClaimsExtractor;
+import com.security_starter.jwt.TokenClaims;
 import com.security_starter.provider.PermissionProvider;
 import com.security_starter.validator.JwtValidator;
-import com.security_starter.whitelist.ServiceWhitelistChecker;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,17 +12,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -41,9 +36,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final PermissionProvider permissionProvider;
 
-    // Temp whitelist
-    private final ServiceWhitelistChecker serviceWhitelistChecker;
-
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
@@ -52,37 +44,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (jwt != null) {
             try {
-                if (jwtValidator.isValidAndNotExpired(jwt)) {
+                if (jwtValidator.isValid(jwt)) {
                     AuthenticationToken authentication = createAuthentication(jwt);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
-            } catch (JwtException e) {
-                log.warn("JWT validation failed: {}", e.getMessage());
-                // Don't set authentication, let it continue to AuthenticationEntryPoint
             } catch (Exception e) {
                 log.error("Error during JWT authentication", e);
             }
-
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // Проверяем whitelist - если запрос от доверенного сервиса, пропускаем без JWT
-        if (serviceWhitelistChecker.isWhitelistedService(request)) {
-            log.info("Request from whitelisted service: host={}, address={}, port={} - skipping JWT validation", request.getRemoteHost(), request.getRemoteAddr(), request.getRemotePort());
-
-            setServiceToServiceAuthentication();
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    // Can be extended to skip certain paths
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-
-        return path.startsWith("/actuator/health") || path.startsWith("/actuator/info");
     }
 
     private String extractJwt(HttpServletRequest request) {
@@ -96,30 +67,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private AuthenticationToken createAuthentication(String jwt) {
-        UUID guid = claimsExtractor.extractGuid(jwt);
-        UUID sid = claimsExtractor.extractSid(jwt);
-        String email = claimsExtractor.extractEmail(jwt);
-        Status status = claimsExtractor.extractStatus(jwt);
-        Set<String> roles = claimsExtractor.extractRoles(jwt) != null
-                ? claimsExtractor.extractRoles(jwt)
-                : Set.of();
+        TokenClaims claims = claimsExtractor.extractAll(jwt);
 
-        Set<String> permissions = permissionProvider.loadPermissions(roles, email);
+        Set<String> permissions = permissionProvider.loadPermissions(claims.roles(), claims.email());
 
-        return AuthenticationToken.authenticated(guid, sid, email, status, roles, permissions, Map.of());
-    }
-
-    private void setServiceToServiceAuthentication() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new AuthenticationToken(
-                        null,
-                        null,
-                        "service-to-service",
-                        null,
-                        Set.of(),
-                        Map.of(),
-                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_SERVICE"))
-                )
+        return AuthenticationToken.authenticated(
+                claims.guid(),
+                claims.sid(),
+                claims.email(),
+                claims.status(),
+                claims.roles(),
+                permissions,
+                Map.of()
         );
     }
 }

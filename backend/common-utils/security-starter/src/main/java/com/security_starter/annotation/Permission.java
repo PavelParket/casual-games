@@ -13,20 +13,5 @@ import java.lang.annotation.Target;
 @Documented
 public @interface Permission {
 
-    Permissions value();
-
-    /**
-     * Allow value creating (null → non-null) through updateObject
-     */
-    boolean createAllowed() default true;
-
-    /**
-     * Allow value editing (non-null → other non-null) through updateObject
-     */
-    boolean editAllowed() default true;
-
-    /**
-     * Allow value dropping (non-null → null) through updateObject
-     */
-    boolean deleteAllowed() default true;
+    Permissions value() default Permissions.NONE;
 }

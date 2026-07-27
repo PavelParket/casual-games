@@ -63,11 +63,10 @@ public class UserService {
     private final AttachmentsProperties attachmentsProperties;
 
     @Transactional
-    public UserResponse update(UUID guid, UpdateUserRequest request) {
-        PermissionContext context = permissionHelper.getContext(guid);
-        AuthenticationToken token = permissionHelper.getToken();
+    public UserResponse update(UUID guid, UpdateUserRequest request, AuthenticationToken token) {
+        PermissionContext context = permissionHelper.getContext(guid, token);
 
-        if (!permissionValidator.can(Permissions.USER, Operation.UPDATE, context, token)) {
+        if (!permissionValidator.hasAccess(Permissions.USER, Operation.UPDATE, context, token)) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_USER);
         }
 
@@ -92,8 +91,8 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteByGuid(UUID guid) {
-        if (!permissionValidator.can(Permissions.USER, Operation.DELETE, permissionHelper.getContext(guid), permissionHelper.getToken())) {
+    public void deleteByGuid(UUID guid, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(Permissions.USER, Operation.DELETE, permissionHelper.getContext(guid, token), token)) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_DELETE_USER);
         }
 
@@ -106,33 +105,33 @@ public class UserService {
         grpcSecurityClient.delete(guid);
     }
 
-    public List<UserResponse> findAll() {
+    public List<UserResponse> findAll(AuthenticationToken token) {
         return userRepository.findAll().stream()
                 .map(user -> buildResponse(
                         user,
-                        permissionHelper.getContext(user.getGuid()),
-                        permissionHelper.getToken()
+                        permissionHelper.getContext(user.getGuid(), token),
+                        token
                 ))
                 .toList();
     }
 
-    public List<UserResponse> search(UserSearchFilterRequest request) {
+    public List<UserResponse> search(UserSearchFilterRequest request, AuthenticationToken token) {
         String status = request.status() == null ? null : request.status().name();
         return userRepository.search(request.username(), status).stream()
-                .map(user -> buildResponse(user, permissionHelper.getContext(user.getGuid()), permissionHelper.getToken()))
+                .map(user -> buildResponse(user, permissionHelper.getContext(user.getGuid(), token), token))
                 .toList();
     }
 
-    public UserResponse findByGuid(UUID guid) {
+    public UserResponse findByGuid(UUID guid, AuthenticationToken token) {
         User user = userRepository.findByGuid(guid)
                 .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
 
-        return buildResponse(user, permissionHelper.getContext(user.getGuid()), permissionHelper.getToken());
+        return buildResponse(user, permissionHelper.getContext(user.getGuid(), token), token);
     }
 
     @Transactional
-    public UserResponse updateRole(UUID guid, Role role) {
-        if (!permissionValidator.can(Permissions.ROLE, Operation.UPDATE, permissionHelper.getContext(guid), permissionHelper.getToken())) {
+    public UserResponse updateRole(UUID guid, Role role, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(Permissions.ROLE, Operation.UPDATE, permissionHelper.getContext(guid, token), token)) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_USER_ROLE);
         }
 
@@ -145,11 +144,11 @@ public class UserService {
 
         kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildSynchronizedUserMessage(saved));
 
-        return buildResponse(saved, permissionHelper.getContext(saved.getGuid()), permissionHelper.getToken());
+        return buildResponse(saved, permissionHelper.getContext(saved.getGuid(), token), token);
     }
 
-    public BigDecimal getBalance(UUID guid) {
-        if (!permissionValidator.can(Permissions.BALANCE, Operation.READ, permissionHelper.getContext(guid), permissionHelper.getToken())) {
+    public BigDecimal getBalance(UUID guid, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(Permissions.BALANCE, Operation.READ, permissionHelper.getContext(guid, token), token)) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_READ_USER_BALANCE);
         }
 
@@ -158,11 +157,10 @@ public class UserService {
                 .getBalance();
     }
 
-    public UserResponse uploadImageFile(UUID guid, MultipartFile fullFile, MultipartFile miniFile) {
-        PermissionContext context = permissionHelper.getContext(guid);
-        AuthenticationToken token = permissionHelper.getToken();
+    public UserResponse uploadImageFile(UUID guid, MultipartFile fullFile, MultipartFile miniFile, AuthenticationToken token) {
+        PermissionContext context = permissionHelper.getContext(guid, token);
 
-        if (!permissionValidator.can(Permissions.USER, Operation.UPDATE, context, token)) {
+        if (!permissionValidator.hasAccess(Permissions.USER, Operation.UPDATE, context, token)) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_PROFILE_PICTURE);
         }
 
@@ -183,11 +181,10 @@ public class UserService {
         return buildResponse(saved, context, token);
     }
 
-    public void deleteImageFile(UUID guid) {
-        PermissionContext context = permissionHelper.getContext(guid);
-        AuthenticationToken token = permissionHelper.getToken();
+    public void deleteImageFile(UUID guid, AuthenticationToken token) {
+        PermissionContext context = permissionHelper.getContext(guid, token);
 
-        if (!permissionValidator.can(Permissions.USER, Operation.UPDATE, context, token)) {
+        if (!permissionValidator.hasAccess(Permissions.USER, Operation.UPDATE, context, token)) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_DELETE_PROFILE_PICTURE);
         }
 

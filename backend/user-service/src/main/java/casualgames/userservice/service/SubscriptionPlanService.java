@@ -7,9 +7,9 @@ import casualgames.userservice.domain.entity.UserSubscription;
 import casualgames.userservice.repository.SubscriptionPlanRepository;
 import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.repository.UserSubscriptionRepository;
-import casualgames.userservice.service.helper.PermissionHelper;
 import casualgames.userservice.service.helper.SubscriptionHelper;
 import com.common_utils.exception.NotFoundException;
+import com.security_starter.config.AuthenticationToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,11 +36,9 @@ public class SubscriptionPlanService {
 
     private final SubscriptionHelper subscriptionHelper;
 
-    private final PermissionHelper permissionHelper;
-
     @Transactional(readOnly = true)
-    public List<SubscriptionPlanResponse> get() {
-        UUID userGuid = permissionHelper.getToken().getGuid();
+    public List<SubscriptionPlanResponse> get(AuthenticationToken token) {
+        UUID userGuid = token.getGuid();
 
         User user = userRepository.findByGuid(userGuid)
                 .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, userGuid)));

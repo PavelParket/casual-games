@@ -10,13 +10,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.security_starter.enums.Operation.CREATE;
 import static com.security_starter.enums.Operation.DELETE;
@@ -42,7 +43,9 @@ import static com.security_starter.enums.OperationPostfix.WITHOUT_ME;
 @RequiredArgsConstructor
 public class PermissionValidator {
 
-    public static final String UNDERSCORE = "_";
+    public static final String DELIMITER_UNDERSCORE = "_";
+
+    private static final Map<Class<?>, List<Field>> FIELD_CACHE = new ConcurrentHashMap<>();
 
     private static final Map<Operation, Set<String>> permissionMap = Map.of(
             CREATE, Set.of(CREATE_FOR_ME.name(), CREATE_FOR_ALL.name(), CREATE_WITHOUT_ME.name()),
@@ -52,39 +55,44 @@ public class PermissionValidator {
     );
 
     public List<String> getPermissions(Permissions permission, Operation operation) {
-        return permissionMap.getOrDefault(operation, Collections.emptySet()).stream()
-                .map(postfix -> String.join(UNDERSCORE, permission.name(), postfix))
+        return permissionMap.getOrDefault(operation, Collections.emptySet())
+                .stream()
+                .map(postfix -> String.join(DELIMITER_UNDERSCORE, permission.name(), postfix))
                 .collect(Collectors.toList());
     }
 
     public String getPermission(Permissions permission, Operation operation, OperationPostfix operationPostfix) {
-        return permissionMap.getOrDefault(operation, Collections.emptySet()).stream()
+        return permissionMap.getOrDefault(operation, Collections.emptySet())
+                .stream()
                 .filter(postfix -> postfix.equals(operationPostfix.name()))
-                .map(postfix -> String.join(UNDERSCORE, permission.name(), postfix))
+                .map(postfix -> String.join(DELIMITER_UNDERSCORE, permission.name(), postfix))
                 .findFirst()
                 .orElse(null);
     }
 
-    public boolean can(Permissions permission, Operation operation, PermissionContext context, AuthenticationToken token) {
+    public boolean hasAccess(Permissions permission, Operation operation, PermissionContext context, AuthenticationToken token) {
         if (context == null || token == null) {
             return false;
         }
 
         return getPermissions(permission, operation).stream()
-                .anyMatch(p -> checkAccessForAll(p, context, token));
-    }
-
-    public boolean checkPermissionByOperation(Set<String> permissions, Permissions permission, Operation operation) {
-        return getPermissions(permission, operation).stream()
-                .anyMatch(permissions::contains);
+                .anyMatch(p -> hasAnyAccessByPermission(p, context, token));
     }
 
     public void readObject(Object object, PermissionContext context, AuthenticationToken token) {
         allFields(object.getClass()).forEach(field -> {
-            if (field.isAnnotationPresent(Permission.class)) {
-                if (!can(field.getAnnotation(Permission.class).value(), Operation.READ, context, token)) {
-                    setNull(field, object);
-                }
+            Permission annotation = field.getAnnotation(Permission.class);
+
+            if (annotation == null) {
+                return;
+            }
+
+            boolean allowed = annotation.value() == Permissions.NONE
+                    ? hasPrivateAccess(context)
+                    : hasAccess(annotation.value(), Operation.READ, context, token);
+
+            if (!allowed) {
+                setNull(field, object);
             }
         });
     }
@@ -103,28 +111,28 @@ public class PermissionValidator {
                 return;
             }
 
-            Permission permission = targetField.getAnnotation(Permission.class);
+            Permission annotation = targetField.getAnnotation(Permission.class);
 
-            if (permission == null) {
+            if (annotation == null) {
                 copyField(sourceField, source, targetField, target);
                 return;
             }
 
-            if (!can(permission.value(), UPDATE, context, token)) {
-                return;
-            }
+            boolean allowed = annotation.value() == Permissions.NONE
+                    ? hasPrivateAccess(context)
+                    : hasAccess(annotation.value(), Operation.UPDATE, context, token);
 
-            swapValueFields(
-                    sourceField, source,
-                    targetField, target,
-                    permission.createAllowed(),
-                    permission.editAllowed(),
-                    permission.deleteAllowed()
-            );
+            if (allowed) {
+                copyField(sourceField, source, targetField, target);
+            }
         });
     }
 
-    private boolean checkAccessForAll(String permission, PermissionContext context, AuthenticationToken token) {
+    private boolean hasPrivateAccess(PermissionContext context) {
+        return context != null && (context.isOwner() || context.isAdmin());
+    }
+
+    private boolean hasAnyAccessByPermission(String permission, PermissionContext context, AuthenticationToken token) {
         if (!token.getPermissions().contains(permission)) {
             return false;
         }
@@ -132,40 +140,6 @@ public class PermissionValidator {
         return permission.endsWith(FOR_ALL.name())
                 || (permission.endsWith(FOR_ME.name()) && context.isOwner())
                 || (permission.endsWith(WITHOUT_ME.name()) && !context.isOwner());
-    }
-
-    private void swapValueFields(Field sourceField,
-                                 Object source,
-                                 Field targetField,
-                                 Object target,
-                                 boolean createAllowed,
-                                 boolean editAllowed,
-                                 boolean deleteAllowed) {
-        try {
-            sourceField.setAccessible(true);
-            targetField.setAccessible(true);
-
-            Object sourceValue = sourceField.get(source);
-            Object targetValue = targetField.get(target);
-
-            if (targetValue == null && sourceValue != null && !createAllowed) {
-                return;
-            }
-
-            if (targetValue != null && sourceValue != null
-                    && !targetValue.equals(sourceValue) && !editAllowed) {
-                return;
-            }
-
-            if (targetValue != null && sourceValue == null && !deleteAllowed) {
-                return;
-            }
-
-            targetField.set(target, sourceValue);
-
-        } catch (IllegalAccessException e) {
-            throw new IllegalStateException("Cannot update field: " + sourceField.getName(), e);
-        }
     }
 
     private void copyField(Field sourceField, Object source, Field targetField, Object target) {
@@ -187,13 +161,21 @@ public class PermissionValidator {
         }
     }
 
-    private Stream<Field> allFields(Class<?> type) {
-        Stream<Field> fields = Arrays.stream(type.getDeclaredFields());
+    private List<Field> allFields(Class<?> type) {
+        return FIELD_CACHE.computeIfAbsent(type, t -> {
+            List<Field> fields = new ArrayList<>(
+                    Arrays.asList(t.getDeclaredFields())
+            );
 
-        if (type.getSuperclass() != null && type.getSuperclass() != Object.class) {
-            fields = Stream.concat(fields, allFields(type.getSuperclass()));
-        }
+            if (t.getSuperclass() != null && t.getSuperclass() != Object.class) {
+                fields.addAll(
+                        allFields(t.getSuperclass())
+                );
+            }
 
-        return fields;
+            fields.forEach(field -> field.setAccessible(true));
+
+            return fields;
+        });
     }
 }

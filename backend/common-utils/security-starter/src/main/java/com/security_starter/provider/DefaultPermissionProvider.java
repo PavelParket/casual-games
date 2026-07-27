@@ -5,7 +5,6 @@ import com.security_starter.config.AuthenticationToken;
 import com.security_starter.enums.PermissionRedisKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Arrays;
@@ -19,7 +18,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultPermissionProvider implements PermissionProvider {
 
-    private static final String DELIMITER = ",";
+    private static final String DELIMITER_COMMA = ",";
 
     private final RedisHashRepository redisHashRepository;
 
@@ -28,9 +27,12 @@ public class DefaultPermissionProvider implements PermissionProvider {
         try {
             Set<String> permissions = new HashSet<>();
 
-            roles.forEach(role -> {
-                permissions.addAll(readFromHash(PermissionRedisKey.ROLE.getKey(), role));
-            });
+            redisHashRepository.findByKeys(PermissionRedisKey.ROLE.getKey(), roles)
+                    .stream()
+                    .filter(java.util.Objects::nonNull)
+                    .forEach(rolePermission -> permissions.addAll(
+                            parseValue(rolePermission)
+                    ));
 
             permissions.addAll(readFromHash(PermissionRedisKey.USER_ALLOW.getKey(), email));
             permissions.removeAll(readFromHash(PermissionRedisKey.USER_RESTRICT.getKey(), email));
@@ -42,13 +44,13 @@ public class DefaultPermissionProvider implements PermissionProvider {
         }
     }
 
+    // todo: add loadRolePermissionMap method to get and fill roleAndPermissionsMap field
+
     @Override
-    public AuthenticationToken getToken() {
-        return Optional.ofNullable(SecurityContextHolder.getContext())
-                .map(SecurityContext::getAuthentication)
+    public Optional<AuthenticationToken> getToken() {
+        return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
                 .filter(AuthenticationToken.class::isInstance)
-                .map(AuthenticationToken.class::cast)
-                .orElse(null);
+                .map(AuthenticationToken.class::cast);
     }
 
     private Set<String> readFromHash(String key, String field) {
@@ -58,7 +60,11 @@ public class DefaultPermissionProvider implements PermissionProvider {
             return Set.of();
         }
 
-        return Arrays.stream(value.split(DELIMITER))
+        return parseValue(value);
+    }
+
+    private Set<String> parseValue(String value) {
+        return Arrays.stream(value.split(DELIMITER_COMMA))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toSet());

@@ -3,10 +3,12 @@ package com.security_service.controller;
 import com.security_service.domain.dto.UpdatePasswordRequest;
 import com.security_service.domain.dto.UserResponse;
 import com.security_service.service.UserService;
+import com.security_starter.config.AuthenticationToken;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -41,7 +43,9 @@ public class UserController {
 
     @PatchMapping("/update-password/{guid}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updatePassword(@PathVariable UUID guid, @Valid @RequestBody UpdatePasswordRequest request) {
-        userService.updatePassword(guid, request);
+    public void updatePassword(@PathVariable UUID guid,
+                               @Valid @RequestBody UpdatePasswordRequest request,
+                               @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        userService.updatePassword(guid, request, authenticationToken);
     }
 }
