@@ -40,10 +40,7 @@ spring:
       access-expiration: ${JWT_ACCESS_EXPIRATION:600000}
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}
       public-paths:
-        - /v3/api-docs/**
-        - /swagger-ui.html
-        - /swagger-ui/**
-        - /webjars/**
+        - /game-service/doc/**
 
 server:
   port: 8082

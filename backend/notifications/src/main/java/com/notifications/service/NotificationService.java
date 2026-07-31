@@ -155,7 +155,7 @@ public class NotificationService {
         long unread = notificationRepository.countByRecipientGuidAndReadAtIsNull(recipientGuid);
 
         return NotificationResponseList.builder()
-                .notifications(notificationMapper.toResponsePagedModel(notifications))
+                .notifications(notificationMapper.toPagedModel(notifications, notificationMapper::toResponse))
                 .unread(unread)
                 .build();
     }

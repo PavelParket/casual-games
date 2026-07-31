@@ -3,14 +3,14 @@ package com.bank_service.mapper;
 import com.bank_service.domain.dto.TransactionResponse;
 import com.bank_service.domain.entity.Transaction;
 import com.casualgames.grpc.transaction.UserTransaction;
-import com.common_utils.mapper.EntityMapper;
+import com.common_utils.mapper.PagedModelMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
-public interface TransactionMapper extends EntityMapper<Transaction, TransactionResponse> {
+public interface TransactionMapper extends PagedModelMapper<Transaction, TransactionResponse> {
 
     @Mapping(
             target = "createdAtDate",
