@@ -19,5 +19,8 @@ public enum Permissions {
 
     SUBSCRIPTION,
 
-    NOTIFICATION
+    NOTIFICATION,
+
+    FRIEND,
+    FRIEND_REQUEST,
 }
