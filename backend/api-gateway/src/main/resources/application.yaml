@@ -35,41 +35,79 @@ spring:
                   requestedTokens: 1
                 key-resolver: "#{@keyResolver}"
           routes:
+            # Production Routes
             - id: user-service
               uri: ${USER_SERVICE_URL:http://localhost:8083}
               predicates:
-                - Path=/user-service/**
+                - Path=/user-service/api/**
               filters:
-                - StripPrefix=1
+                - StripPrefix=2
 
             - id: security-service
               uri: ${SECURITY_SERVICE_URL:http://localhost:8080}
               predicates:
-                - Path=/security-service/**
+                - Path=/security-service/api/**
               filters:
-                - StripPrefix=1
+                - StripPrefix=2
 
             - id: game-service
               uri: ${GAME_SERVICE_URL:http://localhost:8082}
               predicates:
-                - Path=/game-service/**
+                - Path=/game-service/api/**
               filters:
-                - StripPrefix=1
+                - StripPrefix=2
 
             - id: websocket-hub-service
               uri: ${WEBSOCKET_HUB_URL:http://localhost:8081}
               predicates:
-                - Path=/websocket-hub-service/**
+                - Path=/websocket-hub-service/api/**
               filters:
-                - StripPrefix=1
+                - StripPrefix=2
 
             - id: bank-service
               uri: ${BANK_SERVICE_URL:http://localhost:8084}
               predicates:
-                - Path=/bank-service/**
+                - Path=/bank-service/api/**
               filters:
-                - StripPrefix=1
+                - StripPrefix=2
 
+            - id: notifications
+              uri: ${NOTIFICATIONS_URL:http://localhost:8085}
+              predicates:
+                - Path=/notifications/api/**
+              filters:
+                - StripPrefix=2
+
+            # Development Routes for Swagger Documentation
+            - id: user-service-unsecured
+              uri: ${USER_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/user-service/doc/**
+
+            - id: security-service-unsecured
+              uri: ${SECURITY_SERVICE_URL:http://localhost:8080}
+              predicates:
+                - Path=/security-service/doc/**
+
+            - id: game-service-unsecured
+              uri: ${GAME_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/game-service/doc/**
+
+            - id: websocket-hub-service-unsecured
+              uri: ${WEBSOCKET_HUB_URL:http://localhost:8081}
+              predicates:
+                - Path=/websocket-hub-service/doc/**
+
+            - id: bank-service-unsecured
+              uri: ${BANK_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/bank-service/doc/**
+
+            - id: notifications-unsecured
+              uri: ${NOTIFICATIONS_URL:http://localhost:8085}
+              predicates:
+                - Path=/notifications/doc/**
   cors:
     allowed-origins: ${ALLOWED_ORIGINS_URLS:http://localhost:5173,https://localhost:5173}
 
@@ -78,28 +116,26 @@ spring:
       secret: ${JWT_SECRET}
       algorithm: ${JWT_ALGORITHM:HS256}
       public-paths:
+        - /doc/**
+        - /actuator/**
         - /security-service/auth/login
         - /security-service/auth/register
         - /security-service/auth/refresh
         - /security-service/auth/logout
-        - /actuator/health
-        - /actuator/info
-        - /swagger-ui.html
-        - /swagger-ui/**
-        - /webjars/**
-        - /v3/api-docs/**
-        - /security-service/v3/api-docs/**
-        - /user-service/v3/api-docs/**
-        - /bank-service/v3/api-docs/**
-        - /game-service/v3/api-docs/**
-        - /websocket-hub-service/v3/api-docs/**
         - /bank-service/transactions/top-wins
+        - /security-service/doc/**
+        - /user-service/doc/**
+        - /bank-service/doc/**
+        - /game-service/doc/**
+        - /websocket-hub-service/doc/**
+        - /notifications/doc/**
 
 server:
   port: 8888
   max-http-request-header-size: 16384
 
 server-url: ${SERVER_URL:http://localhost:8888}
+server-route:
 
 logging:
   level:
@@ -109,19 +145,21 @@ logging:
 springdoc:
   api-docs:
     enabled: ${SWAGGER_ENABLED:true}
-    path: /v3/api-docs
+    path: /doc/api-docs
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
-    path: /swagger-ui.html
+    path: /doc/swagger-ui.html
     operationsSorter: alpha
     urls:
-      - url: /security-service/v3/api-docs
-        name: Security-service API
-      - url: /user-service/v3/api-docs
-        name: User-service API
-      - url: /bank-service/v3/api-docs
-        name: Bank-service API
-      - url: /game-service/v3/api-docs
-        name: Game-service API
-      - url: /websocket-hub-service/v3/api-docs
-        name: Websocket-hub-service API
+      - url: ${SERVER_URL:http://localhost:8888}/security-service/doc/api-docs
+        name: Security Service API
+      - url: ${SERVER_URL:http://localhost:8888}/user-service/doc/api-docs
+        name: User Service API
+      - url: ${SERVER_URL:http://localhost:8888}/bank-service/doc/api-docs
+        name: Bank Service API
+      - url: ${SERVER_URL:http://localhost:8888}/game-service/doc/api-docs
+        name: Game Service API
+      - url: ${SERVER_URL:http://localhost:8888}/websocket-hub-service/doc/api-docs
+        name: Websocket Hub API
+      - url: ${SERVER_URL:http://localhost:8888}/notifications/doc/api-docs
+        name: Notifications API

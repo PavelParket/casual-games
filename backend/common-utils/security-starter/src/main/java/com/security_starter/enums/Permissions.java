@@ -17,5 +17,7 @@ public enum Permissions {
     TRANSACTION,
     TRANSACTION_SUMMARY,
 
-    SUBSCRIPTION
+    SUBSCRIPTION,
+
+    NOTIFICATION
 }

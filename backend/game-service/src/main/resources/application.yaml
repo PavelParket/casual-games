@@ -40,16 +40,13 @@ spring:
       access-expiration: ${JWT_ACCESS_EXPIRATION:600000}
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}
       public-paths:
-        - /v3/api-docs/**
-        - /swagger-ui.html
-        - /swagger-ui/**
-        - /webjars/**
+        - /game-service/doc/**
 
 server:
   port: 8082
-  forward-headers-strategy: framework
 
 server-url: ${SERVER_URL:http://localhost:8082}
+server-route:
 
 kafka:
   enabled: ${KAFKA_ENABLED:true}
@@ -69,7 +66,8 @@ springdoc:
   preLoadingEnabled: true
   api-docs:
     enabled: ${SWAGGER_ENABLED:true}
-    path: /v3/api-docs
+    path: /game-service/doc/api-docs
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
-    path: /swagger-ui.html
+    path: /game-service/doc/swagger-ui.html
+    operationsSorter: alpha

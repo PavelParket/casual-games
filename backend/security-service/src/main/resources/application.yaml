@@ -44,14 +44,11 @@ spring:
       access-expiration: ${JWT_ACCESS_EXPIRATION:600000}      # 10 minutes default
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}  # 24 hours default
       public-paths:
+        - /security-service/doc/**
         - /auth/register
         - /auth/login
         - /auth/refresh
         - /auth/logout
-        - /v3/api-docs/**
-        - /swagger-ui.html
-        - /swagger-ui/**
-        - /webjars/**
     service-whitelist:
       enabled: ${SERVICE_WHITELIST_ENABLED:true}
       hosts: [ "127.0.0.1" ]
@@ -75,9 +72,9 @@ grpc:
 
 server:
   port: 8080
-  forward-headers-strategy: framework
 
 server-url: ${SERVER_URL:http://localhost:8080}
+server-route:
 
 kafka:
   enabled: true
@@ -102,8 +99,8 @@ springdoc:
   preLoadingEnabled: true
   api-docs:
     enabled: ${SWAGGER_ENABLED:true}
-    path: /v3/api-docs
+    path: /security-service/doc/api-docs
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
-    path: /swagger-ui.html
+    path: /security-service/doc/swagger-ui.html
     operationsSorter: alpha
