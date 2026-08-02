@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 import static casualgames.userservice.config.ResourceMessageConstants.BAD_REQUEST_SELF_FRIEND_REQUEST;
 import static casualgames.userservice.config.ResourceMessageConstants.CONFLICT_ALREADY_FRIENDS;
+import static casualgames.userservice.config.ResourceMessageConstants.CONFLICT_REQUEST_ALREADY_SENT;
 import static casualgames.userservice.config.ResourceMessageConstants.CONFLICT_REQUEST_LIMIT_EXCEEDED;
 import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_READ_FRIEND_REQUEST;
 import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_UPDATE_FRIEND_REQUEST;
@@ -87,6 +88,24 @@ public class FriendRequestService {
             throw new ConflictException(CONFLICT_ALREADY_FRIENDS);
         }
 
+        FriendRequest existingRequestFromRecipient = friendRequestRepository.findLatestByRequesterGuidAndRecipientGuidAndStatusIn(
+                        recipient.getGuid(),
+                        requester.getGuid(),
+                        List.of(FriendRequestStatus.PENDING.name())
+                )
+                .orElse(null);
+
+        if (existingRequestFromRecipient != null) {
+            friendshipService.create(
+                    requester,
+                    recipient,
+                    List.of(existingRequestFromRecipient),
+                    authenticationToken
+            );
+
+            return buildResponse(existingRequestFromRecipient, requester, recipient, authenticationToken);
+        }
+
         Instant requestCooldownExpiring = Instant.now().minus(REQUEST_COOLDOWN_DAYS, ChronoUnit.DAYS);
 
         Long existingRequestCount = friendRequestRepository.countByRequesterGuidAndStatusAndCreatedAtAfter(
@@ -114,32 +133,13 @@ public class FriendRequestService {
 
         if (existingPendingRequest != null) {
             if (existingPendingRequest.getCreatedAt().isAfter(requestCooldownExpiring)) {
-                // todo: return an exception
-                return buildResponse(existingPendingRequest, requester, recipient, authenticationToken);
+                throw new ConflictException(CONFLICT_REQUEST_ALREADY_SENT);
             }
 
             existingPendingRequest.setStatus(FriendRequestStatus.CANCELED);
             existingPendingRequest.setResolvedAt(existingPendingRequest.getCreatedAt());
 
             friendRequestRepository.save(existingPendingRequest);
-        }
-
-        FriendRequest existingRequestFromRecipient = friendRequestRepository.findLatestByRequesterGuidAndRecipientGuidAndStatusIn(
-                        recipient.getGuid(),
-                        requester.getGuid(),
-                        List.of(FriendRequestStatus.PENDING.name())
-                )
-                .orElse(null);
-
-        if (existingRequestFromRecipient != null) {
-            friendshipService.create(
-                    requester,
-                    recipient,
-                    List.of(existingRequestFromRecipient),
-                    authenticationToken
-            );
-
-            return buildResponse(existingRequestFromRecipient, requester, recipient, authenticationToken);
         }
 
         FriendRequest newRequest = friendRequestRepository.save(

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -18,10 +19,25 @@ import static casualgames.userservice.service.FriendRequestService.REQUEST_COOLD
 public class FriendRequestValidator {
 
     public void validateCooldown(FriendRequest friendRequest) {
-        if (friendRequest.getResolvedAt()
-                .plus(REQUEST_COOLDOWN_DAYS, ChronoUnit.DAYS)
-                .isAfter(Instant.now())) {
-            throw new ConflictException(CONFLICT_REQUEST_COOLDOWN);
+        Instant cooldownExpiring = friendRequest.getResolvedAt().plus(REQUEST_COOLDOWN_DAYS, ChronoUnit.DAYS);
+
+        if (cooldownExpiring.isAfter(Instant.now())) {
+            throw new ConflictException(String.format(
+                    CONFLICT_REQUEST_COOLDOWN,
+                    formatRemaining(Duration.between(Instant.now(), cooldownExpiring))
+            ));
         }
+    }
+
+    private String formatRemaining(Duration duration) {
+        long totalMinutes = Math.max(duration.toMinutes(), 1);
+        long hours = totalMinutes / 60;
+        long minutes = totalMinutes % 60;
+
+        if (hours > 0) {
+            return String.format("%dh:%dmin", hours, minutes);
+        }
+
+        return String.format("%dmin", minutes);
     }
 }
