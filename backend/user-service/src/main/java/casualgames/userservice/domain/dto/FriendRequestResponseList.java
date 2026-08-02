@@ -6,8 +6,12 @@ import org.springframework.data.web.PagedModel;
 @Builder
 public record FriendRequestResponseList(
 
-        PagedModel<FriendRequestResponse> friendRequests,
+        PagedModel<FriendRequestResponse> incomingFriendRequests,
 
-        long incomingCount
+        PagedModel<FriendRequestResponse> outgoingFriendRequests,
+
+        long incomingCount,
+
+        long outgoingCount
 ) {
 }

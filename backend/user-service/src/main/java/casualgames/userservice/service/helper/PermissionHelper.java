@@ -19,4 +19,8 @@ public class PermissionHelper {
     public PermissionContext getContext(UUID targetGuid, AuthenticationToken authenticationToken) {
         return permissionContextHelper.createContextFromAuthentication(authenticationToken, targetGuid);
     }
+
+    public PermissionContext getContext(UUID targetGuid) {
+        return permissionContextHelper.createContextFromAuthentication(targetGuid);
+    }
 }

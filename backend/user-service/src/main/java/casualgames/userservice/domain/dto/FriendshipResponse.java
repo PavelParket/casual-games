@@ -1,6 +1,5 @@
 package casualgames.userservice.domain.dto;
 
-import casualgames.userservice.domain.enums.RelationshipStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,11 +11,11 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class FriendResponse {
+public class FriendshipResponse {
+
+    private UserResponse user;
 
     private UserResponse friend;
-
-    private RelationshipStatus relationshipStatus;
 
     private Instant friendshipDate;
 }
