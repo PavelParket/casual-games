@@ -34,4 +34,7 @@ public class ResourceMessageConstants {
     public static final String NOT_FOUND_FRIEND_REQUEST = "Friend request not found";
     public static final String DO_NOT_HAVE_PERMISSION_TO_READ_FRIEND_REQUEST = "You do not have permission to read friend requests";
     public static final String DO_NOT_HAVE_PERMISSION_TO_UPDATE_FRIEND_REQUEST = "You do not have permission to update friend requests";
+    public static final String NOT_FOUND_FRIENDSHIP = "You are not friends";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_READ_FRIEND = "You do not have permission to read friends";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_DELETE_FRIEND = "You do not have permission to delete friend";
 }

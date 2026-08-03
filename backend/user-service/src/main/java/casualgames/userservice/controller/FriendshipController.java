@@ -1,9 +1,7 @@
 package casualgames.userservice.controller;
 
-import casualgames.userservice.domain.dto.FriendRequestRequest;
-import casualgames.userservice.domain.dto.FriendRequestResponse;
-import casualgames.userservice.domain.dto.FriendRequestResponseList;
-import casualgames.userservice.service.FriendRequestService;
+import casualgames.userservice.domain.dto.FriendshipResponseList;
+import casualgames.userservice.service.FriendshipService;
 import com.common_utils.dto.ErrorResponse;
 import com.security_starter.config.AuthenticationToken;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +10,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
@@ -20,20 +17,17 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/friend-request")
+@RequestMapping("/friends")
 @RequiredArgsConstructor
 @ApiResponses(value = {
         @ApiResponse(responseCode = "400",
@@ -61,33 +55,24 @@ import java.util.UUID;
                 content = @Content(mediaType = "application/json",
                         schema = @Schema(implementation = ErrorResponse.class)))
 })
-public class FriendRequestController {
+public class FriendshipController {
 
-    private final FriendRequestService friendRequestService;
+    private final FriendshipService friendshipService;
 
-    @PostMapping("/{recipientGuid}")
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create a friend request", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponse(responseCode = "201")
-    public FriendRequestResponse create(@PathVariable UUID recipientGuid,
-                                        @AuthenticationPrincipal AuthenticationToken authenticationToken) {
-        return friendRequestService.create(recipientGuid, authenticationToken);
+    @GetMapping("/{userGuid}")
+    @Operation(summary = "Get user friends", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200")
+    public FriendshipResponseList getByUserGuid(@PathVariable UUID userGuid,
+                                                @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+                                                @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        return friendshipService.getByUserGuid(userGuid, pageable, authenticationToken);
     }
 
-    @PatchMapping
-    @Operation(summary = "Accept, decline or cancel a friend request", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponse(responseCode = "200")
-    public FriendRequestResponse update(@Valid @RequestBody FriendRequestRequest request,
-                                        @AuthenticationPrincipal AuthenticationToken authenticationToken) {
-        return friendRequestService.update(request, authenticationToken);
-    }
-
-    @GetMapping("/search")
-    @Operation(summary = "Get incoming or outgoing friend requests", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponse(responseCode = "200")
-    public FriendRequestResponseList search(@RequestParam(required = false) Boolean incoming,
-                                            @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
-                                            @AuthenticationPrincipal AuthenticationToken authenticationToken) {
-        return friendRequestService.search(incoming, pageable, authenticationToken);
+    @DeleteMapping("/{friendGuid}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remove a friend", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "204")
+    public void delete(@PathVariable UUID friendGuid, @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        friendshipService.delete(friendGuid, authenticationToken);
     }
 }

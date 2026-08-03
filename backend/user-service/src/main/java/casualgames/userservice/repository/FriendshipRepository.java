@@ -1,6 +1,8 @@
 package casualgames.userservice.repository;
 
 import casualgames.userservice.domain.entity.Friendship;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -16,4 +18,19 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
             OR (user_guid = :friendGuid AND friend_guid = :userGuid)
             """, nativeQuery = true)
     Optional<Friendship> findByUserGuidAndFriendGuid(UUID userGuid, UUID friendGuid);
+
+    @Query(value = """
+            SELECT *
+            FROM friendship
+            WHERE user_guid = :userGuid
+            OR friend_guid = :userGuid
+            """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM friendship
+                    WHERE user_guid = :userGuid
+                    OR friend_guid = :userGuid
+                    """,
+            nativeQuery = true)
+    Page<Friendship> findByUserGuid(UUID userGuid, Pageable pageable);
 }
