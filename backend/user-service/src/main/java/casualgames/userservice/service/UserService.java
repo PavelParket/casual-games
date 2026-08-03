@@ -23,11 +23,14 @@ import com.security_starter.enums.Role;
 import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -206,5 +209,18 @@ public class UserService {
         imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);
 
         log.info("Profile picture deleted for user guid={}", guid);
+    }
+
+    public User getByGuid(UUID guid) {
+        return userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
+    }
+
+    public Collection<User> getByGuidIn(List<UUID> guids) {
+        return userRepository.findAllByGuidIn(guids);
+    }
+
+    public Page<User> searchByUsername(String username, Pageable pageable, AuthenticationToken token) {
+        return userRepository.searchByUsername(username, token.getGuid(), pageable);
     }
 }

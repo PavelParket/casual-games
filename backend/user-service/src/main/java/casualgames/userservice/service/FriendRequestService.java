@@ -9,7 +9,6 @@ import casualgames.userservice.domain.enums.FriendRequestStatus;
 import casualgames.userservice.mapper.FriendRequestMapper;
 import casualgames.userservice.repository.FriendRequestRepository;
 import casualgames.userservice.repository.FriendshipRepository;
-import casualgames.userservice.repository.UserRepository;
 import casualgames.userservice.service.helper.PermissionHelper;
 import casualgames.userservice.validator.FriendRequestValidator;
 import com.common_utils.exception.BadRequestException;
@@ -19,7 +18,6 @@ import com.common_utils.exception.NotFoundException;
 import com.security_starter.config.AuthenticationToken;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
-import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -42,7 +40,6 @@ import static casualgames.userservice.config.ResourceMessageConstants.CONFLICT_R
 import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_READ_FRIEND_REQUEST;
 import static casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_UPDATE_FRIEND_REQUEST;
 import static casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_FRIEND_REQUEST;
-import static casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_USER;
 
 @Service
 @RequiredArgsConstructor
@@ -57,13 +54,9 @@ public class FriendRequestService {
 
     private final FriendshipRepository friendshipRepository;
 
-    private final UserRepository userRepository;
-
     private final FriendRequestMapper friendRequestMapper;
 
     private final PermissionHelper permissionHelper;
-
-    private final PermissionValidator permissionValidator;
 
     private final UserService userService;
 
@@ -73,15 +66,14 @@ public class FriendRequestService {
 
     @Transactional
     public FriendRequestResponse create(UUID recipientGuid, AuthenticationToken authenticationToken) {
-        User requester = userRepository.findByGuid(authenticationToken.getGuid())
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, authenticationToken.getGuid())));
+
+        User requester = userService.getByGuid(authenticationToken.getGuid());
 
         if (requester.getGuid().equals(recipientGuid)) {
             throw new BadRequestException(BAD_REQUEST_SELF_FRIEND_REQUEST);
         }
 
-        User recipient = userRepository.findByGuid(recipientGuid)
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, recipientGuid)));
+        User recipient = userService.getByGuid(recipientGuid);
 
         if (friendshipRepository.findByUserGuidAndFriendGuid(requester.getGuid(), recipient.getGuid())
                 .isPresent()) {
@@ -181,13 +173,12 @@ public class FriendRequestService {
 
     @Transactional
     public FriendRequestResponse processAccept(FriendRequestRequest friendRequestRequest, AuthenticationToken token) {
-        User requester = userRepository.findByGuid(token.getGuid())
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, token.getGuid())));
+        User requester = userService.getByGuid(token.getGuid());
 
-        if (!permissionValidator.hasAccess(
+        if (!permissionHelper.hasAccess(
                 Permissions.FRIEND_REQUEST,
                 Operation.UPDATE,
-                permissionHelper.getContext(requester.getGuid(), token),
+                requester.getGuid(),
                 token
         )) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_FRIEND_REQUEST);
@@ -198,8 +189,7 @@ public class FriendRequestService {
                 .filter(friendRequest -> FriendRequestStatus.PENDING.equals(friendRequest.getStatus()))
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_FRIEND_REQUEST));
 
-        User recipient = userRepository.findByGuid(request.getRequesterGuid())
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, request.getRequesterGuid())));
+        User recipient = userService.getByGuid(request.getRequesterGuid());
 
         friendshipService.create(requester, recipient, List.of(request), token);
 
@@ -208,13 +198,12 @@ public class FriendRequestService {
 
     @Transactional
     public FriendRequestResponse processDecline(FriendRequestRequest friendRequestRequest, AuthenticationToken token) {
-        User recipient = userRepository.findByGuid(token.getGuid())
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, token.getGuid())));
+        User recipient = userService.getByGuid(token.getGuid());
 
-        if (!permissionValidator.hasAccess(
+        if (!permissionHelper.hasAccess(
                 Permissions.FRIEND_REQUEST,
                 Operation.UPDATE,
-                permissionHelper.getContext(recipient.getGuid(), token),
+                recipient.getGuid(),
                 token
         )) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_FRIEND_REQUEST);
@@ -225,8 +214,7 @@ public class FriendRequestService {
                 .filter(friendRequest -> FriendRequestStatus.PENDING.equals(friendRequest.getStatus()))
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_FRIEND_REQUEST));
 
-        User requester = userRepository.findByGuid(existingRequest.getRequesterGuid())
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, existingRequest.getRequesterGuid())));
+        User requester = userService.getByGuid(existingRequest.getRequesterGuid());
 
         existingRequest.setStatus(friendRequestRequest.status());
         existingRequest.setResolvedAt(Instant.now());
@@ -236,13 +224,12 @@ public class FriendRequestService {
 
     @Transactional
     public FriendRequestResponse processCancel(FriendRequestRequest friendRequestRequest, AuthenticationToken token) {
-        User requester = userRepository.findByGuid(token.getGuid())
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, token.getGuid())));
+        User requester = userService.getByGuid(token.getGuid());
 
-        if (!permissionValidator.hasAccess(
+        if (!permissionHelper.hasAccess(
                 Permissions.FRIEND_REQUEST,
                 Operation.UPDATE,
-                permissionHelper.getContext(requester.getGuid(), token),
+                requester.getGuid(),
                 token
         )) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_FRIEND_REQUEST);
@@ -253,8 +240,7 @@ public class FriendRequestService {
                 .filter(friendRequest -> FriendRequestStatus.PENDING.equals(friendRequest.getStatus()))
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_FRIEND_REQUEST));
 
-        User recipient = userRepository.findByGuid(existingRequest.getRecipientGuid())
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, existingRequest.getRecipientGuid())));
+        User recipient = userService.getByGuid(existingRequest.getRecipientGuid());
 
         existingRequest.setStatus(friendRequestRequest.status());
         existingRequest.setResolvedAt(Instant.now());
@@ -264,13 +250,12 @@ public class FriendRequestService {
 
     @Transactional(readOnly = true)
     public FriendRequestResponseList search(Boolean incoming, Pageable pageable, AuthenticationToken token) {
-        User user = userRepository.findByGuid(token.getGuid())
-                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, token.getGuid())));
+        User user = userService.getByGuid(token.getGuid());
 
-        if (!permissionValidator.hasAccess(
+        if (!permissionHelper.hasAccess(
                 Permissions.FRIEND_REQUEST,
                 Operation.READ,
-                permissionHelper.getContext(user.getGuid(), token),
+                user.getGuid(),
                 token
         )) {
             throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_READ_FRIEND_REQUEST);
@@ -292,7 +277,7 @@ public class FriendRequestService {
                 pageable
         );
 
-        Map<UUID, User> requesters = userRepository.findAllByGuidIn(
+        Map<UUID, User> requesters = userService.getByGuidIn(
                         friendRequestPage.getContent()
                                 .stream()
                                 .map(FriendRequest::getRequesterGuid)
@@ -325,7 +310,7 @@ public class FriendRequestService {
                 pageable
         );
 
-        Map<UUID, User> recipients = userRepository.findAllByGuidIn(
+        Map<UUID, User> recipients = userService.getByGuidIn(
                         friendRequestPage.getContent()
                                 .stream()
                                 .map(FriendRequest::getRecipientGuid)

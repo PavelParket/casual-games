@@ -1,6 +1,8 @@
 package casualgames.userservice.controller;
 
 import casualgames.userservice.domain.dto.FriendshipResponseList;
+import casualgames.userservice.domain.dto.UserFriendRequestFilter;
+import casualgames.userservice.domain.dto.UserFriendResponseList;
 import casualgames.userservice.service.FriendshipService;
 import com.common_utils.dto.ErrorResponse;
 import com.security_starter.config.AuthenticationToken;
@@ -10,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +23,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -74,5 +79,14 @@ public class FriendshipController {
     @ApiResponse(responseCode = "204")
     public void delete(@PathVariable UUID friendGuid, @AuthenticationPrincipal AuthenticationToken authenticationToken) {
         friendshipService.delete(friendGuid, authenticationToken);
+    }
+
+    @PostMapping("/search")
+    @Operation(summary = "Search users to add as friends", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200")
+    public UserFriendResponseList search(@Valid @RequestBody UserFriendRequestFilter filter,
+                                         @ParameterObject @PageableDefault(sort = "username") Pageable pageable,
+                                         @AuthenticationPrincipal AuthenticationToken authenticationToken) {
+        return friendshipService.search(filter, pageable, authenticationToken);
     }
 }
