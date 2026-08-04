@@ -9,8 +9,11 @@ import casualgames.userservice.domain.enums.FriendRequestStatus;
 import casualgames.userservice.mapper.FriendRequestMapper;
 import casualgames.userservice.repository.FriendRequestRepository;
 import casualgames.userservice.repository.FriendshipRepository;
+import casualgames.userservice.service.helper.KafkaMessageHelper;
 import casualgames.userservice.service.helper.PermissionHelper;
 import casualgames.userservice.validator.FriendRequestValidator;
+import com.common_utils.enums.NotificationEventParams;
+import com.common_utils.enums.NotificationType;
 import com.common_utils.exception.BadRequestException;
 import com.common_utils.exception.ConflictException;
 import com.common_utils.exception.ForbiddenException;
@@ -63,6 +66,8 @@ public class FriendRequestService {
     private final FriendRequestValidator friendRequestValidator;
 
     private final FriendshipService friendshipService;
+
+    private final KafkaMessageHelper kafkaMessageHelper;
 
     @Transactional
     public FriendRequestResponse create(UUID recipientGuid, AuthenticationToken authenticationToken) {
@@ -141,7 +146,17 @@ public class FriendRequestService {
                         .build()
         );
 
-        return buildResponse(friendRequestRepository.save(newRequest), requester, recipient, authenticationToken);
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUserNotification(),
+                kafkaMessageHelper.buildFriendRequestUpdatedEvent(
+                        recipient.getGuid(),
+                        newRequest.getId(),
+                        NotificationType.FRIEND_REQUEST_RECEIVED,
+                        Map.of(NotificationEventParams.USERNAME.getParam(), requester.getUsername())
+                )
+        );
+
+        return buildResponse(newRequest, requester, recipient, authenticationToken);
     }
 
     private FriendRequestResponse buildResponse(FriendRequest friendRequest,

@@ -75,4 +75,33 @@ public class KafkaMessageHelper {
                 .timestamp(Instant.now())
                 .build();
     }
+
+    public NotificationEvent buildFriendRequestUpdatedEvent(UUID userGuid,
+                                                            Long requestId,
+                                                            NotificationType notificationType,
+                                                            Map<String, String> params) {
+        String seed = String.join(COLON_DELIMITER, userGuid.toString(), notificationType.name(), requestId.toString());
+        UUID eventId = UUID.nameUUIDFromBytes(seed.getBytes(StandardCharsets.UTF_8));
+
+        return NotificationEvent.builder()
+                .eventId(eventId)
+                .recipientGuid(userGuid)
+                .type(notificationType)
+                .params(params)
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    public NotificationEvent buildFriendRemovedEvent(UUID userGuid, Long friendshipId, Map<String, String> params) {
+        String seed = String.join(COLON_DELIMITER, userGuid.toString(), NotificationType.FRIEND_REMOVED.name(), friendshipId.toString());
+        UUID eventId = UUID.nameUUIDFromBytes(seed.getBytes(StandardCharsets.UTF_8));
+
+        return NotificationEvent.builder()
+                .eventId(eventId)
+                .recipientGuid(userGuid)
+                .type(NotificationType.FRIEND_REMOVED)
+                .params(params)
+                .timestamp(Instant.now())
+                .build();
+    }
 }
