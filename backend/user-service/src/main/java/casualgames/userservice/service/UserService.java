@@ -82,7 +82,11 @@ public class UserService {
 
         User saved = userRepository.save(target);
 
-        kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildSynchronizedUserMessage(saved));
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
 
         return buildResponse(saved, context, token);
     }
@@ -145,7 +149,11 @@ public class UserService {
 
         User saved = userRepository.save(target);
 
-        kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildSynchronizedUserMessage(saved));
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
 
         return buildResponse(saved, permissionHelper.getContext(saved.getGuid(), token), token);
     }
@@ -176,6 +184,12 @@ public class UserService {
         User updated = imageFileService.upload(user, fullFile, miniFile);
         User saved = userRepository.save(updated);
 
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
+
         String bucket = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE).getBucket();
         imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);
 
@@ -203,7 +217,13 @@ public class UserService {
 
         user.setLinkProfilePicture(null);
         user.setLinkProfilePictureMini(null);
-        userRepository.save(user);
+        User saved = userRepository.save(user);
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
 
         String bucket = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE).getBucket();
         imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);

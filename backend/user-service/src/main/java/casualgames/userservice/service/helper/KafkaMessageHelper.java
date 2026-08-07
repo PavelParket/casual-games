@@ -1,10 +1,12 @@
 package casualgames.userservice.service.helper;
 
+import casualgames.userservice.domain.entity.Friendship;
 import casualgames.userservice.domain.entity.User;
 import com.common_utils.enums.NotificationType;
 import com.kafka_starter.config.KafkaTopics;
 import com.kafka_starter.dto.event.NotificationEvent;
 import com.kafka_starter.dto.event.UpdateSubscriptionEvent;
+import com.kafka_starter.dto.event.sync.SynchronizedFriendship;
 import com.kafka_starter.dto.event.sync.SynchronizedUser;
 import com.kafka_starter.service.KafkaTransactionalOutboxMessageService;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +38,21 @@ public class KafkaMessageHelper {
         kafkaTransactionalOutboxMessageService.save(topic, payload);
     }
 
+    public void save(String topic, String partitionKey, Object payload) {
+        kafkaTransactionalOutboxMessageService.save(topic, partitionKey, payload);
+    }
+
     public SynchronizedUser buildSynchronizedUserMessage(User user) {
         return SynchronizedUser.builder()
+                .id(user.getId())
                 .guid(user.getGuid())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role(user.getRole().name())
+                .status(user.getStatus().name())
+                .linkProfilePicture(user.getLinkProfilePicture())
+                .linkProfilePictureMini(user.getLinkProfilePictureMini())
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 
@@ -103,5 +114,23 @@ public class KafkaMessageHelper {
                 .params(params)
                 .timestamp(Instant.now())
                 .build();
+    }
+
+    public SynchronizedFriendship buildSynchronizedFriendshipEvent(String type, Friendship friendship) {
+        return SynchronizedFriendship.builder()
+                .type(type)
+                .id(friendship.getId())
+                .userGuid(friendship.getUserGuid())
+                .friendGuid(friendship.getFriendGuid())
+                .createdAt(friendship.getCreatedAt())
+                .build();
+    }
+
+    // todo: вынести в абстракцию с дженериками
+    public String friendshipPartitionKey(UUID userGuid, UUID friendGuid) {
+        boolean first = userGuid.compareTo(friendGuid) <= 0;
+        UUID user = first ? userGuid : friendGuid;
+        UUID friend = first ? friendGuid : userGuid;
+        return user + COLON_DELIMITER + friend;
     }
 }

@@ -23,5 +23,7 @@ dependencies {
 
     runtimeOnly 'org.postgresql:postgresql:42.7.11'
 
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 }

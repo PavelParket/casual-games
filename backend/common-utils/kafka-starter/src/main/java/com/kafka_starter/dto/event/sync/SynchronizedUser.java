@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -15,6 +16,8 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SynchronizedUser {
 
+    private Long id;
+
     private UUID guid;
 
     private String username;
@@ -22,4 +25,12 @@ public class SynchronizedUser {
     private String email;
 
     private String role;
+
+    private String status;
+
+    private String linkProfilePicture;
+
+    private String linkProfilePictureMini;
+
+    private Instant createdAt;
 }

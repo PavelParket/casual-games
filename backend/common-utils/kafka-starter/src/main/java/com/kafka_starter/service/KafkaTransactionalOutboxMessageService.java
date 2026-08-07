@@ -21,6 +21,10 @@ public class KafkaTransactionalOutboxMessageService {
     private final ObjectMapper objectMapper;
 
     public void save(String topic, Object payload) {
+        save(topic, null, payload);
+    }
+
+    public void save(String topic, String partitionKey, Object payload) {
         try {
             String json = objectMapper.writeValueAsString(payload);
 
@@ -28,6 +32,7 @@ public class KafkaTransactionalOutboxMessageService {
                     .id(UUID.randomUUID())
                     .topic(topic)
                     .messageId(UUID.randomUUID())
+                    .partitionKey(partitionKey)
                     .messagePayload(json)
                     .sent(false)
                     .createdDate(Instant.now())
@@ -35,7 +40,7 @@ public class KafkaTransactionalOutboxMessageService {
 
             kafkaOutboxMessageRepository.save(kafkaOutboxMessage);
 
-            log.debug("Outbox event saved: topic={}, messageId={}", topic, kafkaOutboxMessage.getMessageId());
+            log.debug("Outbox event saved: topic={}, messageId={}, partitionKey={}", topic, kafkaOutboxMessage.getMessageId(), partitionKey);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize outbox payload: topic={}", topic, e);
             throw new IllegalArgumentException("Failed to serialize outbox event payload", e);

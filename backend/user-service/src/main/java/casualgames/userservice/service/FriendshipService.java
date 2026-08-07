@@ -53,6 +53,9 @@ public class FriendshipService {
 
     public static final String FRIENDS_KEY_PREFIX = "friends:";
 
+    private static final String CREATED = "CREATED";
+    private static final String REMOVED = "REMOVED";
+
     private final FriendshipRepository friendshipRepository;
 
     private final FriendRequestRepository friendRequestRepository;
@@ -88,7 +91,8 @@ public class FriendshipService {
 
         Long requestId = requests.iterator().next().getId();
 
-        // todo: отрефаторить на более короткий вызов
+        /* todo: отрефаторить на более короткий вызов,
+            слать уведомление только одному, тому, кто отправлял оригинальный запрос */
         kafkaMessageHelper.save(
                 kafkaMessageHelper.getTopics().getUserNotification(),
                 kafkaMessageHelper.buildFriendRequestUpdatedEvent(
@@ -106,6 +110,12 @@ public class FriendshipService {
                         NotificationType.FRIEND_REQUEST_ACCEPTED,
                         Map.of(NotificationEventParams.USERNAME.getParam(), user.getUsername())
                 )
+        );
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getFriendship(),
+                kafkaMessageHelper.friendshipPartitionKey(friendship.getUserGuid(), friendship.getFriendGuid()),
+                kafkaMessageHelper.buildSynchronizedFriendshipEvent(CREATED, friendship)
         );
 
         // todo: обобщить создание ключей + вынести все ключи в стартер
@@ -186,6 +196,12 @@ public class FriendshipService {
                         friendship.getId(),
                         Map.of(NotificationEventParams.USERNAME.getParam(), userService.getByGuid(token.getGuid()).getUsername())
                 )
+        );
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getFriendship(),
+                kafkaMessageHelper.friendshipPartitionKey(friendship.getUserGuid(), friendship.getFriendGuid()),
+                kafkaMessageHelper.buildSynchronizedFriendshipEvent(REMOVED, friendship)
         );
 
         redisSetRepository.removeOrThrow(friendsKey(token.getGuid()), friendGuid.toString());

@@ -15,4 +15,5 @@ public class KafkaTopics {
     private String user;
     private String updateSubscription;
     private String userNotification;
+    private String friendship;
 }

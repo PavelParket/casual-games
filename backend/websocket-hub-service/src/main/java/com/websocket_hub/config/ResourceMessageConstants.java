@@ -13,4 +13,5 @@ public class ResourceMessageConstants {
     public static final String VALIDATION_FAILED = "Validation failed";
     public static final String MUST_PLACE_BET_BEFORE_READY = "You must place a bet before becoming ready";
     public static final String ROOM_IS_FULL = "Room is already full";
+    public static final String USER_NOT_FOUND = "User not found";
 }

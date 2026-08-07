@@ -6,6 +6,5 @@ CREATE SCHEMA IF NOT EXISTS security_service;
 CREATE SCHEMA IF NOT EXISTS user_service;
 CREATE SCHEMA IF NOT EXISTS bank_service;
 CREATE SCHEMA IF NOT EXISTS game_service;
-
--- websocket-hub-service использует public schema (своих таблиц не имеет,
--- datasource нужен только для JPA-автоконфигурации из kafka-starter).
+CREATE SCHEMA IF NOT EXISTS websocket_hub;
+CREATE SCHEMA IF NOT EXISTS notifications;

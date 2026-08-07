@@ -25,19 +25,20 @@ public class KafkaOutboxMessage {
     @Id
     private UUID id;
 
-    @Column(nullable = false)
     private String topic;
 
-    @Column(nullable = false, updatable = false)
+    @Column(updatable = false)
     private UUID messageId;
 
+    @Column(updatable = false)
+    private String partitionKey;
+
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(nullable = false, columnDefinition = "jsonb")
+    @Column(columnDefinition = "jsonb")
     private String messagePayload;
 
-    @Column(nullable = false)
     private boolean sent;
 
-    @Column(nullable = false, updatable = false)
+    @Column(updatable = false)
     private Instant createdDate;
 }

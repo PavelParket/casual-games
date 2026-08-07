@@ -84,6 +84,7 @@ kafka:
     user: ${KAFKA_USER_TOPIC:user}
     update-subscription: ${KAFKA_UPDATE_SUBSCRIPTION_TOPIC:update-subscription}
     user-notification: ${KAFKA_USER_NOTIFICATION_TOPIC:user-notification}
+    friendship: ${KAFKA_FRIENDSHIP_TOPIC:friendship}
   transactional-outbox:
     enabled: true
 
