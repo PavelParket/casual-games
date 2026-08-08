@@ -6,6 +6,7 @@ import com.kafka_starter.config.KafkaTopics;
 import com.kafka_starter.dto.event.NotificationEvent;
 import com.kafka_starter.dto.event.RoomDeleteEvent;
 import com.kafka_starter.service.KafkaMessageService;
+import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.enums.RoomType;
 import lombok.RequiredArgsConstructor;
@@ -40,13 +41,13 @@ public class KafkaMessageHelper {
         log.info("Room deleted event sent: roomId={}, roomType={}, reason={}", roomId, roomType, reason);
     }
 
-    public void sendRoomInvitedEvent(UUID recipientGuid, String inviter, Room room, Duration expiresAt, Instant timestamp) {
+    public void sendRoomInvitedEvent(UUID recipientGuid, ClientSession client, Room room, Duration expiresAt, Instant timestamp) {
         NotificationEvent notificationEvent = NotificationEvent.builder()
                 .eventId(UUID.randomUUID())
                 .recipientGuid(recipientGuid)
                 .type(NotificationType.ROOM_INVITE)
                 .params(Map.of(
-                        NotificationEventParams.USERNAME.getParam(), inviter,
+                        NotificationEventParams.USERNAME.getParam(), client.getUsername(),
                         NotificationEventParams.ROOM_HANDLER.getParam(), room.getType().getHandlerUrl(),
                         NotificationEventParams.ROOM_NAME.getParam(), room.getName(),
                         NotificationEventParams.ROOM_ID.getParam(), room.getId().toString()

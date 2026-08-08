@@ -20,7 +20,6 @@ import com.common_utils.enums.NotificationEventParams;
 import com.common_utils.enums.NotificationType;
 import com.common_utils.exception.ForbiddenException;
 import com.common_utils.exception.NotFoundException;
-import com.redis_starter.repository.RedisSetRepository;
 import com.security_starter.config.AuthenticationToken;
 import com.security_starter.enums.Operation;
 import com.security_starter.enums.Permissions;
@@ -51,8 +50,6 @@ import static casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_
 @Slf4j
 public class FriendshipService {
 
-    public static final String FRIENDS_KEY_PREFIX = "friends:";
-
     private static final String CREATED = "CREATED";
     private static final String REMOVED = "REMOVED";
 
@@ -69,8 +66,6 @@ public class FriendshipService {
     private final UserMapper userMapper;
 
     private final KafkaMessageHelper kafkaMessageHelper;
-
-    private final RedisSetRepository redisSetRepository;
 
     @Transactional
     public FriendshipResponse create(User user, User friend, Collection<FriendRequest> requests, AuthenticationToken token) {
@@ -119,9 +114,6 @@ public class FriendshipService {
         );
 
         // todo: обобщить создание ключей + вынести все ключи в стартер
-        redisSetRepository.addOrThrow(friendsKey(user.getGuid()), friend.getGuid().toString());
-        redisSetRepository.addOrThrow(friendsKey(friend.getGuid()), user.getGuid().toString());
-
 
         return buildResponse(friendship, user, friend, token);
     }
@@ -203,9 +195,6 @@ public class FriendshipService {
                 kafkaMessageHelper.friendshipPartitionKey(friendship.getUserGuid(), friendship.getFriendGuid()),
                 kafkaMessageHelper.buildSynchronizedFriendshipEvent(REMOVED, friendship)
         );
-
-        redisSetRepository.removeOrThrow(friendsKey(token.getGuid()), friendGuid.toString());
-        redisSetRepository.removeOrThrow(friendsKey(friendGuid), token.getGuid().toString());
     }
 
     @Transactional(readOnly = true)
@@ -267,9 +256,5 @@ public class FriendshipService {
         }
 
         return friendshipStatusMap.getOrDefault(userFriendGuid, FriendshipStatus.NONE);
-    }
-
-    public static String friendsKey(UUID guid) {
-        return FRIENDS_KEY_PREFIX + guid;
     }
 }

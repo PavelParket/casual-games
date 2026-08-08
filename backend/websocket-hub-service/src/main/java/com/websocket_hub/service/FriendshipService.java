@@ -31,7 +31,7 @@ public class FriendshipService {
         switch (synchronizedFriendship.getType()) {
             case CREATED -> updateFriendship(synchronizedFriendship);
             case REMOVED -> deleteFriendship(synchronizedFriendship);
-            case FULL_SYNC -> replaceForUser(synchronizedFriendship);
+            case FULL_SYNC -> fullSync(synchronizedFriendship);
             default -> log.warn("Unknown friendship sync event type: {}", synchronizedFriendship.getType());
         }
     }
@@ -56,7 +56,7 @@ public class FriendshipService {
         friendshipRepository.deleteById(synchronizedFriendship.getId());
     }
 
-    private void replaceForUser(SynchronizedFriendship synchronizedFriendship) {
+    private void fullSync(SynchronizedFriendship synchronizedFriendship) {
         List<Long> friendshipIds = synchronizedFriendship.getSynchronizedFriendshipList()
                 .stream()
                 .map(SynchronizedFriendship::getId)

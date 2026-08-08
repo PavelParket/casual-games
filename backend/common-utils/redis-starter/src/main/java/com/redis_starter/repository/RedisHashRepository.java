@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.stereotype.Repository;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -253,5 +254,29 @@ public class RedisHashRepository {
             log.error("Error getting keys: key={}", key, e);
             return Collections.emptySet();
         }
+    }
+
+    public void putOrThrow(String key, String hashKey, String value) {
+        if (key == null || hashKey == null || value == null) {
+            throw new IllegalArgumentException("key, hashKey and value must not be null");
+        }
+
+        hashOperations.put(key, hashKey, value);
+    }
+
+    public Boolean expireOrThrow(String key, Duration ttl) {
+        if (key == null || ttl == null || ttl.isZero() || ttl.isNegative()) {
+            throw new IllegalArgumentException("key must not be null and ttl must be positive");
+        }
+
+        return hashOperations.getOperations().expire(key, ttl);
+    }
+
+    public Map<String, String> findAllOrThrow(String key) {
+        if (key == null) {
+            throw new IllegalArgumentException("key must not be null");
+        }
+
+        return hashOperations.entries(key);
     }
 }

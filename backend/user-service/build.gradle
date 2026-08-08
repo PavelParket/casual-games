@@ -65,7 +65,6 @@ dependencies {
     implementation "com.casualgames:grpc-utils:${commonUtilsVersion}"
     implementation "com.casualgames:kafka-starter:${commonUtilsVersion}"
     implementation "com.casualgames:file-management-starter:${commonUtilsVersion}"
-    implementation "com.casualgames:redis-starter:${commonUtilsVersion}"
 
     //Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -73,7 +72,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     //gRPC
     implementation "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
