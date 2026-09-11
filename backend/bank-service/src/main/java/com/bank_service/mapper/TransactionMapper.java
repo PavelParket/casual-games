@@ -10,7 +10,7 @@ import org.mapstruct.Mapping;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
-public interface TransactionMapper extends PagedModelMapper<Transaction, TransactionResponse> {
+public interface TransactionMapper extends PagedModelMapper {
 
     @Mapping(
             target = "createdAtDate",

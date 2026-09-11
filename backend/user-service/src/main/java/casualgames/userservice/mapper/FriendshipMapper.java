@@ -8,7 +8,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
-public interface FriendshipMapper extends PagedModelMapper<Friendship, FriendshipResponse> {
+public interface FriendshipMapper extends PagedModelMapper {
 
     @Mapping(target = "friendshipDate", source = "friendship.createdAt")
     FriendshipResponse toResponse(Friendship friendship, UserResponse user, UserResponse friend);

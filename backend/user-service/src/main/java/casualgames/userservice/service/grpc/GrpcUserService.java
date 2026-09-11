@@ -28,6 +28,7 @@ public class GrpcUserService extends UserServiceGrpc.UserServiceImplBase {
 
     private final UserValidator userValidator;
 
+    // todo: добавить синк таблиц реплик
     @Override
     public void createUser(CreateUserRequest request, StreamObserver<UserResponse> responseObserver) {
         User newUser = userRepository.save(buildUser(request));

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class KafkaMessageHelper {
 
     private static final String COLON_DELIMITER = ":";
+    private static final String FULL_SYNC = "FULL_SYNC";
 
     private final KafkaTopics kafkaTopics;
 
@@ -132,5 +134,17 @@ public class KafkaMessageHelper {
         UUID user = first ? userGuid : friendGuid;
         UUID friend = first ? friendGuid : userGuid;
         return user + COLON_DELIMITER + friend;
+    }
+
+    public SynchronizedFriendship buildSynchronizedFriendshipFullSyncEvent(UUID userGuid, List<Friendship> friendships) {
+        List<SynchronizedFriendship> synchronizedFriendshipList = friendships.stream()
+                .map(friendship -> buildSynchronizedFriendshipEvent(FULL_SYNC, friendship))
+                .toList();
+
+        return SynchronizedFriendship.builder()
+                .type(FULL_SYNC)
+                .userGuid(userGuid)
+                .synchronizedFriendshipList(synchronizedFriendshipList)
+                .build();
     }
 }

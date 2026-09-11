@@ -8,7 +8,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
-public interface FriendRequestMapper extends PagedModelMapper<FriendRequest, FriendRequestResponse> {
+public interface FriendRequestMapper extends PagedModelMapper {
 
     @Mapping(target = "status", source = "friendRequest.status")
     @Mapping(target = "createdAt", source = "friendRequest.createdAt")
