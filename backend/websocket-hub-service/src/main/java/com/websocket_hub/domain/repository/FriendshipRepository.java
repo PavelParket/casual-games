@@ -16,10 +16,12 @@ import java.util.UUID;
 public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
 
     @Query(value = """
-            SELECT count(*)
-            FROM friendship
-            WHERE (user_guid = :userGuid AND friend_guid = :friendGuid)
-            OR (user_guid = :friendGuid AND friend_guid = :userGuid)
+            SELECT EXISTS(
+                SELECT 1
+                FROM friendship
+                WHERE (user_guid = :userGuid AND friend_guid = :friendGuid)
+                OR (user_guid = :friendGuid AND friend_guid = :userGuid)
+            )
             """, nativeQuery = true)
     boolean existsByUserGuidAndFriendGuid(UUID userGuid, UUID friendGuid);
 
@@ -59,6 +61,7 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
                         ELSE f.user_guid
                     END
                 ) NOT IN (:excludedUserGuids)
+            ORDER BY u.username
             """,
             countQuery = """
                     SELECT count(*)

@@ -17,7 +17,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -73,7 +72,7 @@ public class RoomInviteController {
     @ApiResponse(responseCode = "200")
     public RoomInviteResponseList getInviteUsers(@PathVariable UUID roomId,
                                                  @PathVariable RoomType roomType,
-                                                 @ParameterObject @PageableDefault(sort = "username") Pageable pageable,
+                                                 @ParameterObject Pageable pageable,
                                                  @AuthenticationPrincipal AuthenticationToken authenticationToken) {
         return roomInviteService.getInviteUsers(roomId, roomType, pageable, authenticationToken);
     }

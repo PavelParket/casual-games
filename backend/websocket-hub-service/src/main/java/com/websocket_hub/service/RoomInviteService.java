@@ -2,7 +2,6 @@ package com.websocket_hub.service;
 
 import com.common_utils.exception.BadRequestException;
 import com.common_utils.exception.ForbiddenException;
-import com.common_utils.exception.NotFoundException;
 import com.common_utils.exception.ServiceUnavailableException;
 import com.redis_starter.repository.RedisHashRepository;
 import com.security_starter.config.AuthenticationToken;
@@ -33,10 +32,14 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.websocket_hub.config.ResourceMessageConstants.ALREADY_INVITED;
+import static com.websocket_hub.config.ResourceMessageConstants.ALREADY_IN_ROOM;
+import static com.websocket_hub.config.ResourceMessageConstants.LIMIT_EXCEEDED;
+import static com.websocket_hub.config.ResourceMessageConstants.NOT_FRIEND;
+import static com.websocket_hub.config.ResourceMessageConstants.NOT_ROOM_PARTICIPANT;
 import static com.websocket_hub.config.ResourceMessageConstants.ROOM_ALREADY_FINISHED;
 import static com.websocket_hub.config.ResourceMessageConstants.ROOM_ALREADY_IN_PROGRESS;
 import static com.websocket_hub.config.ResourceMessageConstants.SERVICE_UNAVAILABLE;
-import static com.websocket_hub.config.ResourceMessageConstants.USER_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -48,11 +51,6 @@ public class RoomInviteService {
 
     private static final int ROOM_INVITE_LIMIT = 10;
     private static final Duration ROOM_INVITE_TTL = Duration.ofMinutes(2);
-
-    private static final String NOT_FRIEND = "NOT_FRIEND";
-    private static final String ALREADY_IN_ROOM = "ALREADY_IN_ROOM";
-    private static final String ALREADY_INVITED = "ALREADY_INVITED";
-    private static final String LIMIT_EXCEEDED = "LIMIT_EXCEEDED";
 
     private final RoomService roomService;
 
@@ -73,11 +71,10 @@ public class RoomInviteService {
 
         Set<ClientSession> participants = room.getParticipants();
 
-        ClientSession client = participants
-                .stream()
+        ClientSession client = participants.stream()
                 .filter(participant -> participant.getGuid().equals(token.getGuid()))
                 .findFirst()
-                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
+                .orElseThrow(() -> new ForbiddenException(NOT_ROOM_PARTICIPANT));
 
         User friend = userService.getByGuid(request.friendGuid());
 
@@ -164,7 +161,7 @@ public class RoomInviteService {
         ClientSession client = participants.stream()
                 .filter(participant -> participant.getGuid().equals(token.getGuid()))
                 .findFirst()
-                .orElseThrow(() -> new ForbiddenException(USER_NOT_FOUND));
+                .orElseThrow(() -> new ForbiddenException(NOT_ROOM_PARTICIPANT));
 
         Set<UUID> excludedUserGuids = participants.stream()
                 .map(ClientSession::getGuid)
