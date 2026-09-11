@@ -2,7 +2,7 @@ package com.websocket_hub.controller;
 
 import com.common_utils.dto.ErrorResponse;
 import com.security_starter.config.AuthenticationToken;
-import com.websocket_hub.domain.dto.RoomInviteResponseList;
+import com.websocket_hub.domain.dto.response.RoomInviteResponseList;
 import com.websocket_hub.domain.dto.request.RoomInviteRequest;
 import com.websocket_hub.domain.dto.response.RoomInviteResponse;
 import com.websocket_hub.domain.enums.RoomType;

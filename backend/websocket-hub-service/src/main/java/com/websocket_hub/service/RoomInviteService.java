@@ -5,13 +5,14 @@ import com.common_utils.exception.ForbiddenException;
 import com.common_utils.exception.ServiceUnavailableException;
 import com.redis_starter.repository.RedisHashRepository;
 import com.security_starter.config.AuthenticationToken;
-import com.websocket_hub.domain.dto.RoomInviteResponseList;
 import com.websocket_hub.domain.dto.request.RoomInviteRequest;
+import com.websocket_hub.domain.dto.response.RoomInviteFriendResponse;
 import com.websocket_hub.domain.dto.response.RoomInviteResponse;
-import com.websocket_hub.domain.dto.response.UserResponse;
+import com.websocket_hub.domain.dto.response.RoomInviteResponseList;
 import com.websocket_hub.domain.entity.ClientSession;
 import com.websocket_hub.domain.entity.Room;
 import com.websocket_hub.domain.entity.User;
+import com.websocket_hub.domain.enums.RoomInviteFriendStatus;
 import com.websocket_hub.domain.enums.RoomType;
 import com.websocket_hub.domain.repository.FriendshipRepository;
 import com.websocket_hub.mapper.UserMapper;
@@ -21,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -29,7 +29,6 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.websocket_hub.config.ResourceMessageConstants.ALREADY_INVITED;
@@ -163,26 +162,43 @@ public class RoomInviteService {
                 .findFirst()
                 .orElseThrow(() -> new ForbiddenException(NOT_ROOM_PARTICIPANT));
 
-        Set<UUID> excludedUserGuids = participants.stream()
+        Set<UUID> participantGuids = participants.stream()
                 .map(ClientSession::getGuid)
                 .collect(Collectors.toSet());
 
-        findAllInvites(roomInviteKey(roomId, client.getGuid()))
+        Set<UUID> invitedFriendGuids = findAllInvites(roomInviteKey(roomId, client.getGuid()))
                 .keySet()
                 .stream()
                 .map(UUID::fromString)
-                .forEach(excludedUserGuids::add);
+                .collect(Collectors.toSet());
 
-        Page<User> inviteUsers = friendshipRepository.findInviteUsers(client.getGuid(), excludedUserGuids, pageable);
+        Page<User> friends = friendshipRepository.findAllFriends(client.getGuid(), pageable);
 
-        return buildRoomInviteResponseList(inviteUsers, userMapper::toResponse);
+        return buildRoomInviteResponseList(friends, participantGuids, invitedFriendGuids);
     }
 
-    private RoomInviteResponseList buildRoomInviteResponseList(Page<User> inviteUsers, Function<User, UserResponse> mapping) {
+    private RoomInviteResponseList buildRoomInviteResponseList(Page<User> friends, Set<UUID> participantGuids, Set<UUID> invitedGuids) {
         return RoomInviteResponseList.builder()
-                .users(new PagedModel<>(
-                        inviteUsers.map(mapping)
+                .friends(userMapper.toPagedModel(
+                        friends.map(friend ->
+                                RoomInviteFriendResponse.builder()
+                                        .user(userMapper.toResponse(friend))
+                                        .status(resolveRoomInviteStatus(friend.getGuid(), participantGuids, invitedGuids))
+                                        .build()
+                        )
                 ))
                 .build();
+    }
+
+    private RoomInviteFriendStatus resolveRoomInviteStatus(UUID friendGuid, Set<UUID> participantGuids, Set<UUID> invitedGuids) {
+        if (participantGuids.contains(friendGuid)) {
+            return RoomInviteFriendStatus.ALREADY_IN_ROOM;
+        }
+
+        if (invitedGuids.contains(friendGuid)) {
+            return RoomInviteFriendStatus.ALREADY_INVITED;
+        }
+
+        return RoomInviteFriendStatus.AVAILABLE;
     }
 }

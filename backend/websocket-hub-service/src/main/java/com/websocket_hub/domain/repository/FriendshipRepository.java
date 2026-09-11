@@ -54,26 +54,14 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
                     THEN f.friend_guid
                     ELSE f.user_guid
                 END
-            WHERE (f.user_guid = :userGuid OR f.friend_guid = :userGuid)
-            AND (CASE
-                    WHEN f.user_guid = :userGuid
-                        THEN f.friend_guid
-                        ELSE f.user_guid
-                    END
-                ) NOT IN (:excludedUserGuids)
+            WHERE f.user_guid = :userGuid OR f.friend_guid = :userGuid
             ORDER BY u.username
             """,
             countQuery = """
                     SELECT count(*)
                     FROM friendship f
-                    WHERE (f.user_guid = :userGuid OR f.friend_guid = :userGuid)
-                    AND (CASE
-                            WHEN f.user_guid = :userGuid
-                                THEN f.friend_guid
-                                ELSE f.user_guid
-                            END
-                        ) NOT IN (:excludedUserGuids)
+                    WHERE f.user_guid = :userGuid OR f.friend_guid = :userGuid
                     """,
             nativeQuery = true)
-    Page<User> findInviteUsers(UUID userGuid, Collection<UUID> excludedUserGuids, Pageable pageable);
+    Page<User> findAllFriends(UUID userGuid, Pageable pageable);
 }
