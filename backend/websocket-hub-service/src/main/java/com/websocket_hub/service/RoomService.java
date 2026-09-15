@@ -75,7 +75,10 @@ public class RoomService {
     }
 
     public RoomResponse create(RoomRequest roomRequest) {
-        return roomMapper.toResponse(getManager(roomRequest.roomType()).create(roomRequest));
+        return roomMapper.toResponse(
+                getManager(roomRequest.roomType())
+                        .create(roomRequest)
+        );
     }
 
     public RoomResponse getById(UUID id) {
@@ -86,6 +89,14 @@ public class RoomService {
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException(ROOM_NOT_FOUND))
         );
+    }
+
+    public Room getByIdAndType(UUID id, RoomType roomType) {
+        return getManager(roomType).getRoomsList()
+                .stream()
+                .filter(room -> room.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException(ROOM_NOT_FOUND));
     }
 
     private AbstractRoomManager getManager(RoomType roomType) {

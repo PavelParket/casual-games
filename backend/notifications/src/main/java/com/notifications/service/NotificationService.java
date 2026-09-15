@@ -151,8 +151,9 @@ public class NotificationService {
     }
 
     private NotificationResponseList buildNotificationList(UUID recipientGuid, Pageable pageable) {
-        Page<Notification> notifications = notificationRepository.findByRecipientGuid(recipientGuid, pageable);
-        long unread = notificationRepository.countByRecipientGuidAndReadAtIsNull(recipientGuid);
+        Instant now = Instant.now();
+        Page<Notification> notifications = notificationRepository.findByRecipientGuid(recipientGuid, now, pageable);
+        long unread = notificationRepository.countByRecipientGuidAndReadAtIsNull(recipientGuid, now);
 
         return NotificationResponseList.builder()
                 .notifications(notificationMapper.toPagedModel(notifications, notificationMapper::toResponse))

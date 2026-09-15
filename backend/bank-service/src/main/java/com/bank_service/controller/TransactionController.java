@@ -70,7 +70,7 @@ public class TransactionController {
     @Operation(summary = "Get user transactions", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200")
     public TransactionResponseList getByUserGuid(@PathVariable UUID userGuid,
-                                                 @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+                                                 @ParameterObject @PageableDefault(sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable,
                                                  @AuthenticationPrincipal AuthenticationToken authenticationToken) {
         return transactionService.getByUserGuid(userGuid, pageable, authenticationToken);
     }

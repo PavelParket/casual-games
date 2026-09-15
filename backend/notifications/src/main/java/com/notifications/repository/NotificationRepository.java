@@ -16,9 +16,26 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     boolean existsByEventId(UUID eventId);
 
-    Page<Notification> findByRecipientGuid(UUID recipientGuid, Pageable pageable);
+    @Query(value = """
+            SELECT * FROM notifications
+            WHERE recipient_guid = :recipientGuid
+            AND (expires_at IS NULL OR expires_at > :now)
+            """,
+            countQuery = """
+                    SELECT count(*) FROM notifications
+                    WHERE recipient_guid = :recipientGuid
+                    AND (expires_at IS NULL OR expires_at > :now)
+                    """,
+            nativeQuery = true)
+    Page<Notification> findByRecipientGuid(UUID recipientGuid, Instant now, Pageable pageable);
 
-    long countByRecipientGuidAndReadAtIsNull(UUID recipientGuid);
+    @Query(value = """
+            SELECT count(*) FROM notifications
+            WHERE recipient_guid = :recipientGuid
+            AND read_at IS NULL
+            AND (expires_at IS NULL OR expires_at > :now)
+            """, nativeQuery = true)
+    long countByRecipientGuidAndReadAtIsNull(UUID recipientGuid, Instant now);
 
     @Modifying
     @Query(value = """

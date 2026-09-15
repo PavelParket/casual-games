@@ -146,7 +146,14 @@ public class PermissionValidator {
         try {
             sourceField.setAccessible(true);
             targetField.setAccessible(true);
-            targetField.set(target, sourceField.get(source));
+
+            Object value = sourceField.get(source);
+
+            if (value == null) {
+                return;
+            }
+
+            targetField.set(target, value);
         } catch (IllegalAccessException e) {
             throw new IllegalStateException("Cannot copy field: " + sourceField.getName(), e);
         }

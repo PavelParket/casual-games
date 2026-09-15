@@ -55,7 +55,7 @@ public class NotificationController {
     @GetMapping
     @Operation(summary = "Get page of notifications", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200")
-    public NotificationResponseList getNotifications(@ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+    public NotificationResponseList getNotifications(@ParameterObject @PageableDefault(sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable,
                                                      @AuthenticationPrincipal AuthenticationToken authenticationToken) {
         return notificationService.getNotifications(pageable, authenticationToken);
     }
@@ -71,7 +71,7 @@ public class NotificationController {
     @PatchMapping("/mark-all-as-read")
     @Operation(summary = "Mark all notifications as read", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200")
-    public NotificationResponseList markAllAsRead(@ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+    public NotificationResponseList markAllAsRead(@ParameterObject @PageableDefault(sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable,
                                                   @AuthenticationPrincipal AuthenticationToken authenticationToken) {
         return notificationService.markAllAsRead(pageable, authenticationToken);
     }

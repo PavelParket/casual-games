@@ -16,8 +16,15 @@ spring:
       ddl-auto: none
     properties:
       hibernate:
+        default_schema: websocket_hub
         jdbc:
           time_zone: UTC
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+    default-schema: websocket_hub
+    liquibase-schema: websocket_hub
 
   security:
     jwt:
@@ -83,11 +90,18 @@ cron:
 
 kafka:
   enabled: ${KAFKA_ENABLED:true}
+  consumer-enabled: true
   bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   producer-config:
     "[acks]": "1"
+  consumer-config:
+    "[group.id]": websocket-hub-service-friends-sync
+    "[auto.offset.reset]": earliest
   topics:
     room-lifecycle: ${KAFKA_ROOM_LIFECYCLE_TOPIC:room-lifecycle}
+    user-notification: ${KAFKA_USER_NOTIFICATION_TOPIC:user-notification}
+    user: ${KAFKA_USER_TOPIC:user}
+    friendship: ${KAFKA_FRIENDSHIP_TOPIC:friendship}
 
 logging:
   level:

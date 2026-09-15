@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Mapper(componentModel = "spring", imports = Instant.class)
-public interface AnnouncementMapper extends PagedModelMapper<Announcement, AnnouncementResponse> {
+public interface AnnouncementMapper extends PagedModelMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", expression = "java(Instant.now())")

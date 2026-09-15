@@ -10,7 +10,7 @@ import org.mapstruct.Mapping;
 import java.time.Instant;
 
 @Mapper(componentModel = "spring", imports = Instant.class)
-public interface NotificationMapper extends PagedModelMapper<Notification, NotificationResponse> {
+public interface NotificationMapper extends PagedModelMapper {
 
     @Mapping(target = "readAt", ignore = true)
     @Mapping(target = "id", ignore = true)

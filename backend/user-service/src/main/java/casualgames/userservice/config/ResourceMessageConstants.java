@@ -25,4 +25,16 @@ public class ResourceMessageConstants {
     public static final String BAD_REQUEST_NO_NECESSARY_BALANCE_AMOUNT = "You balance have no necessary balance amount";
     public static final String DO_NOT_HAVE_PERMISSION_TO_READ_SUBSCRIPTION = "You do not have permission to read subscription";
     public static final String DO_NOT_HAVE_PERMISSION_TO_UPDATE_SUBSCRIPTION = "You do not have permission to update subscription";
+
+    public static final String CONFLICT_ALREADY_FRIENDS = "You are already friends";
+    public static final String CONFLICT_REQUEST_COOLDOWN = "You cannot send a new friend request to this user. Try again in %s";
+    public static final String CONFLICT_REQUEST_LIMIT_EXCEEDED = "You have reached the maximum number of pending outgoing friend requests";
+    public static final String CONFLICT_REQUEST_ALREADY_SENT = "You already have a pending friend request to this user";
+    public static final String BAD_REQUEST_SELF_FRIEND_REQUEST = "You cannot send a friend request to yourself";
+    public static final String NOT_FOUND_FRIEND_REQUEST = "Friend request not found";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_READ_FRIEND_REQUEST = "You do not have permission to read friend requests";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_UPDATE_FRIEND_REQUEST = "You do not have permission to update friend requests";
+    public static final String NOT_FOUND_FRIENDSHIP = "You are not friends";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_READ_FRIEND = "You do not have permission to read friends";
+    public static final String DO_NOT_HAVE_PERMISSION_TO_DELETE_FRIEND = "You do not have permission to delete friend";
 }

@@ -23,11 +23,14 @@ import com.security_starter.enums.Role;
 import com.security_starter.validator.PermissionValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -79,7 +82,11 @@ public class UserService {
 
         User saved = userRepository.save(target);
 
-        kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildSynchronizedUserMessage(saved));
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
 
         return buildResponse(saved, context, token);
     }
@@ -142,7 +149,11 @@ public class UserService {
 
         User saved = userRepository.save(target);
 
-        kafkaMessageHelper.save(kafkaMessageHelper.getTopics().getUser(), kafkaMessageHelper.buildSynchronizedUserMessage(saved));
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
 
         return buildResponse(saved, permissionHelper.getContext(saved.getGuid(), token), token);
     }
@@ -173,6 +184,12 @@ public class UserService {
         User updated = imageFileService.upload(user, fullFile, miniFile);
         User saved = userRepository.save(updated);
 
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
+
         String bucket = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE).getBucket();
         imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);
 
@@ -200,11 +217,30 @@ public class UserService {
 
         user.setLinkProfilePicture(null);
         user.setLinkProfilePictureMini(null);
-        userRepository.save(user);
+        User saved = userRepository.save(user);
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
 
         String bucket = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE).getBucket();
         imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);
 
         log.info("Profile picture deleted for user guid={}", guid);
+    }
+
+    public User getByGuid(UUID guid) {
+        return userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
+    }
+
+    public Collection<User> getByGuidIn(List<UUID> guids) {
+        return userRepository.findAllByGuidIn(guids);
+    }
+
+    public Page<User> searchByUsername(String username, Pageable pageable, AuthenticationToken token) {
+        return userRepository.searchByUsername(username, token.getGuid(), pageable);
     }
 }

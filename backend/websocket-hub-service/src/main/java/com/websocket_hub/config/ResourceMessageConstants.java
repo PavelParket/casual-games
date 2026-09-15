@@ -13,4 +13,10 @@ public class ResourceMessageConstants {
     public static final String VALIDATION_FAILED = "Validation failed";
     public static final String MUST_PLACE_BET_BEFORE_READY = "You must place a bet before becoming ready";
     public static final String ROOM_IS_FULL = "Room is already full";
+    public static final String USER_NOT_FOUND = "User not found";
+    public static final String NOT_FRIEND = "You can only invite friends to a room";
+    public static final String ALREADY_IN_ROOM = "This user is already in the room";
+    public static final String ALREADY_INVITED = "This user has already been invited";
+    public static final String LIMIT_EXCEEDED = "Room invite limit exceeded";
+    public static final String NOT_ROOM_PARTICIPANT = "You are not a participant of this room";
 }

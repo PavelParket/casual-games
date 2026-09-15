@@ -73,7 +73,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
-    //  gRPC
+    //gRPC
     implementation "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
     implementation "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"
 
