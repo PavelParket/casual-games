@@ -6,6 +6,7 @@ import com.kafka_starter.entity.KafkaOutboxMessage;
 import com.kafka_starter.repository.KafkaOutboxMessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -18,6 +19,7 @@ public class KafkaTransactionalOutboxMessageService {
 
     private final KafkaOutboxMessageRepository kafkaOutboxMessageRepository;
 
+    @Qualifier("kafkaObjectMapper")
     private final ObjectMapper objectMapper;
 
     public void save(String topic, Object payload) {

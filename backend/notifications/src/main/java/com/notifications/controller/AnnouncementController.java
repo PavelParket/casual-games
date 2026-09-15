@@ -71,7 +71,7 @@ public class AnnouncementController {
     @GetMapping
     @Operation(summary = "Get announcements", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200")
-    public AnnouncementResponseList getAnnouncements(@ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+    public AnnouncementResponseList getAnnouncements(@ParameterObject @PageableDefault(sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable,
                                                      @AuthenticationPrincipal AuthenticationToken authenticationToken) {
         return announcementService.getAnnouncements(pageable, authenticationToken);
     }
@@ -79,7 +79,7 @@ public class AnnouncementController {
     @PatchMapping("/mark-as-seen")
     @Operation(summary = "Mark announcements as seen", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200")
-    public AnnouncementResponseList markAsSeen(@ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+    public AnnouncementResponseList markAsSeen(@ParameterObject @PageableDefault(sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable,
                                                @AuthenticationPrincipal AuthenticationToken authenticationToken) {
         return announcementService.markAsSeen(pageable, authenticationToken);
     }

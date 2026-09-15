@@ -86,7 +86,7 @@ public class FriendRequestController {
     @Operation(summary = "Get incoming or outgoing friend requests", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200")
     public FriendRequestResponseList search(@RequestParam(required = false) Boolean incoming,
-                                            @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+                                            @ParameterObject @PageableDefault(sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable,
                                             @AuthenticationPrincipal AuthenticationToken authenticationToken) {
         return friendRequestService.search(incoming, pageable, authenticationToken);
     }

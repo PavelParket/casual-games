@@ -342,8 +342,8 @@ public class FriendRequestService {
                         friendRequestPage,
                         friendRequest -> buildResponse(
                                 friendRequest,
-                                recipients.get(friendRequest.getRecipientGuid()),
                                 user,
+                                recipients.get(friendRequest.getRecipientGuid()),
                                 token
                         )
                 ))
