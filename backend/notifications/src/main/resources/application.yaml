@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: notifications
+
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: jdbc:postgresql://${NOTIFICATIONS_POSTGRES_HOST:localhost}:${NOTIFICATIONS_POSTGRES_PORT:5432}/${NOTIFICATIONS_POSTGRES_DB:casual_games}?currentSchema=${NOTIFICATIONS_DB_DEFAULT_SCHEMA:notifications}
+    username: ${NOTIFICATIONS_POSTGRES_USERNAME:postgres}
+    password: ${NOTIFICATIONS_POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+    default-schema: notifications
+    liquibase-schema: notifications
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: notifications
+        jdbc:
+          time_zone: UTC
+
+  data:
+    redis:
+      enabled: ${REDIS_ENABLED:true}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      password: ${REDIS_PASSWORD:}
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      access-expiration: ${JWT_ACCESS_EXPIRATION:600000}
+      refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}
+      public-paths:
+        - /notifications/doc/**
+    service-whitelist:
+      enabled: ${SERVICE_WHITELIST_ENABLED:true}
+      hosts: [ "127.0.0.1" ]
+
+server:
+  port: 8085
+
+server-url: ${SERVER_URL:http://localhost:8085}
+server-route:
+
+kafka:
+  enabled: true
+  consumer-enabled: true
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  consumer-config:
+    "[group.id]": notifications
+    "[auto.offset.reset]": earliest
+  topics:
+    user-notification: ${KAFKA_USER_NOTIFICATION_TOPIC:user-notification}
+
+cron:
+  notification-cleanup: ${CRON_NOTIFICATION_CLEANUP:0 0 0 * * *}
+
+notification-cleanup:
+  retention-days: ${NOTIFICATION_RETENTION_DAYS:7}
+
+logging:
+  level:
+    org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
+    org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY:INFO}
+
+springdoc:
+  preLoadingEnabled: true
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /notifications/doc/api-docs
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /notifications/doc/swagger-ui.html
+    operationsSorter: alpha

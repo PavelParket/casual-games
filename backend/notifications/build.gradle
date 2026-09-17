@@ -1,0 +1,75 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.14'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com'
+version = '1.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    if (commonUtilsVersion.endsWith('-local-SNAPSHOT')) {
+        mavenLocal()
+    } else {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/PavelParket/casual-games")
+            credentials {
+                username = findProperty('gprUser') ?: System.getenv('GPR_USER')
+                password = findProperty('gprToken') ?: System.getenv('GPR_TOKEN')
+            }
+        }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation "com.casualgames:common-utils:${commonUtilsVersion}"
+    implementation "com.casualgames:security-starter:${commonUtilsVersion}"
+    implementation "com.casualgames:kafka-starter:${commonUtilsVersion}"
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+
+    runtimeOnly 'org.postgresql:postgresql:42.7.11'
+
+    implementation 'org.liquibase:liquibase-core'
+    implementation 'org.apache.commons:commons-lang3:3.20.0'
+
+    compileOnly 'org.projectlombok:lombok:1.18.46'
+    annotationProcessor 'org.projectlombok:lombok:1.18.46'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}

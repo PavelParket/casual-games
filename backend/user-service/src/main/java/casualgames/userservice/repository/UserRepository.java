@@ -1,6 +1,8 @@
 package casualgames.userservice.repository;
 
 import casualgames.userservice.domain.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -30,6 +32,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             FOR UPDATE
             """, nativeQuery = true)
     List<User> findAllByGuidWithLock(Collection<UUID> guids);
+
+    Collection<User> findAllByGuidIn(Collection<UUID> guids);
 
     @Query(value = """
             SELECT *
@@ -61,4 +65,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE guid = :guid
             """, nativeQuery = true)
     Optional<BigDecimal> getBalance(UUID guid);
+
+    @Query(value = """
+            SELECT *
+            FROM users
+            WHERE lower(username) ILIKE lower(CONCAT('%',:username,'%'))
+            AND guid <> :actorGuid
+            """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM users
+                    WHERE lower(username) ILIKE lower(CONCAT('%',:username,'%'))
+                    AND guid <> :actorGuid
+                    """,
+            nativeQuery = true)
+    Page<User> searchByUsername(String username, UUID actorGuid, Pageable pageable);
 }

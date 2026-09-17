@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.SetOperations;
 import org.springframework.stereotype.Repository;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -167,5 +168,37 @@ public class RedisSetRepository {
             log.error("Error deleting set: key={}", key, e);
             return false;
         }
+    }
+
+    public boolean containsOrThrow(String key, String value) {
+        if (key == null || value == null) {
+            throw new IllegalArgumentException("key and value must not be null");
+        }
+
+        return Boolean.TRUE.equals(setOperations.isMember(key, value));
+    }
+
+    public Long addOrThrow(String key, String value) {
+        if (key == null || value == null) {
+            throw new IllegalArgumentException("key and value must not be null");
+        }
+
+        return setOperations.add(key, value);
+    }
+
+    public Long removeOrThrow(String key, String value) {
+        if (key == null || value == null) {
+            throw new IllegalArgumentException("key and value must not be null");
+        }
+
+        return setOperations.remove(key, value);
+    }
+
+    public Boolean expireOrThrow(String key, Duration ttl) {
+        if (key == null || ttl == null || ttl.isZero() || ttl.isNegative()) {
+            throw new IllegalArgumentException("key must not be null and ttl must be positive");
+        }
+
+        return setOperations.getOperations().expire(key, ttl);
     }
 }

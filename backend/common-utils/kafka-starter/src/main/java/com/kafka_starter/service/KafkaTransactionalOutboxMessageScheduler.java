@@ -50,7 +50,9 @@ public class KafkaTransactionalOutboxMessageScheduler implements CronService {
 
     private void processMessage(KafkaOutboxMessage message) {
         try {
-            kafkaMessageService.send(message.getTopic(), message.getMessageId().toString(), message.getMessagePayload());
+            String key = message.getPartitionKey() != null ? message.getPartitionKey() : message.getMessageId().toString();
+
+            kafkaMessageService.send(message.getTopic(), key, message.getMessagePayload());
 
             message.setSent(true);
 

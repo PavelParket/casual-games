@@ -9,7 +9,7 @@ import org.hibernate.validator.constraints.Length;
 @Builder
 public record RegisterRequest(
         @NotBlank(message = "Username cannot be empty")
-        @Length(max = 50)
+        @Length(min = 3, max = 50)
         @Pattern(regexp = "^[a-zA-Z0-9_]+$")
         String username,
 

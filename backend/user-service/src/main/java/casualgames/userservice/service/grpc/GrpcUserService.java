@@ -2,6 +2,7 @@ package casualgames.userservice.service.grpc;
 
 import casualgames.userservice.domain.entity.User;
 import casualgames.userservice.repository.UserRepository;
+import casualgames.userservice.service.helper.KafkaMessageHelper;
 import casualgames.userservice.validator.UserValidator;
 import com.casualgames.grpc.user.CreateUserRequest;
 import com.casualgames.grpc.user.GetByGuidRequest;
@@ -28,9 +29,17 @@ public class GrpcUserService extends UserServiceGrpc.UserServiceImplBase {
 
     private final UserValidator userValidator;
 
+    private final KafkaMessageHelper kafkaMessageHelper;
+
     @Override
     public void createUser(CreateUserRequest request, StreamObserver<UserResponse> responseObserver) {
         User newUser = userRepository.save(buildUser(request));
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                newUser.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(newUser)
+        );
 
         responseObserver.onNext(buildUserResponse(newUser));
         responseObserver.onCompleted();

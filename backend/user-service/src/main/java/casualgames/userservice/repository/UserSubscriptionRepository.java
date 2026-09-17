@@ -20,10 +20,20 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
             SELECT s.* FROM user_subscriptions s
             JOIN users u ON u.guid = s.user_guid
             WHERE u.status != 'DEFAULT'
-              AND (
-                  s.expires_at <= :now
-                  OR (s.status_change_at IS NOT NULL AND s.status_change_at <= :now)
-              )
+            AND (
+                s.expires_at <= :now
+                OR (s.status_change_at IS NOT NULL AND s.status_change_at <= :now)
+            )
             """, nativeQuery = true)
     Page<UserSubscription> findExpiringOrScheduled(Instant now, Pageable pageable);
+
+    @Query(value = """
+            SELECT s.* FROM user_subscriptions s
+            JOIN users u ON u.guid = s.user_guid
+            WHERE u.status != 'DEFAULT'
+            AND s.auto_renew = false
+            AND s.expires_at > :now
+            AND s.expires_at <= :daysLeft
+            """, nativeQuery = true)
+    Page<UserSubscription> findExpiringInDays(Instant now, Instant daysLeft, Pageable pageable);
 }

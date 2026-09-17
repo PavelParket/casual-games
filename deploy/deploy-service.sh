@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rebuild and restart one or more services on the current checked-out tag.
+# Pull and restart one or more services on the current checked-out tag.
 # Run deploy.sh first to switch to the right tag.
 #
 # Usage:
@@ -27,19 +27,10 @@ VALID_SERVICES=(
 # Fails if HEAD is not on an exact tag — prevents deploying untagged code.
 TAG=$(git -C "$PROJECT_ROOT" describe --tags --exact-match 2>/dev/null || true)
 [[ -z "$TAG" ]] && \
-  fail "HEAD is not on a release tag. Checkout a tag first: bash deploy/deploy.sh v1.4.0"
+  fail "HEAD is not on a release tag. Checkout a tag first: bash deploy/deploy.sh v1.4.1"
 
 APP_VERSION="${TAG#v}"
 export APP_VERSION
-
-# --- Read GPR credentials from prod.env --------------------------------------
-GPR_USER=$(grep '^GPR_USER='  "$ENV_FILE" | cut -d= -f2-)
-GPR_TOKEN=$(grep '^GPR_TOKEN=' "$ENV_FILE" | cut -d= -f2-)
-
-[[ -z "$GPR_USER"  ]] && fail "GPR_USER not set in prod.env"
-[[ -z "$GPR_TOKEN" ]] && fail "GPR_TOKEN not set in prod.env"
-
-export GPR_USER GPR_TOKEN
 
 # --- Parse and validate service arguments ------------------------------------
 SERVICES=()
@@ -61,13 +52,11 @@ done
 
 echo -e "\n${CYAN}  casual-games — selective redeploy: ${SERVICES[*]} (${TAG})${NC}"
 
-# --- Build -------------------------------------------------------------------
-step "Building: ${SERVICES[*]}"
+# --- Pull ----------------------------------------------------------------------
+step "Pulling: ${SERVICES[*]}"
 cd "$PROJECT_ROOT"
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build \
-  --build-arg APP_VERSION="$APP_VERSION" \
-  "${SERVICES[@]}"
-ok "built"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" pull "${SERVICES[@]}"
+ok "pulled"
 
 # --- Up ----------------------------------------------------------------------
 step "Restarting: ${SERVICES[*]}"

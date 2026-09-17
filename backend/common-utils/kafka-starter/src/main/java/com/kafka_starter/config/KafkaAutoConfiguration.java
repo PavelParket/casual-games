@@ -14,7 +14,8 @@ import org.springframework.context.annotation.Import;
         KafkaProducerConfig.class,
         KafkaConsumerConfig.class,
         KafkaMessageService.class,
-        KafkaTransactionalOutboxConfiguration.class
+        KafkaTransactionalOutboxConfiguration.class,
+        KafkaJacksonConfig.class
 })
 public class KafkaAutoConfiguration {
 

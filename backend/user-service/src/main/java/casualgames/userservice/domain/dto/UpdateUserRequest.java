@@ -6,11 +6,11 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateUserRequest(
 
-        @Size(max = 50)
+        @Size(min = 3, max = 50)
         @Pattern(regexp = "^[a-zA-Z0-9_]+$")
         String username,
 
-        @Email(message = "Email should satisfy the email format: youremail@gmail.com!")
+        @Email(message = "Email should satisfy the email format: your.email@gmail.com")
         @Size(max = 200)
         String email
 ) {

@@ -17,5 +17,10 @@ public enum Permissions {
     TRANSACTION,
     TRANSACTION_SUMMARY,
 
-    SUBSCRIPTION
+    SUBSCRIPTION,
+
+    NOTIFICATION,
+
+    FRIEND,
+    FRIEND_REQUEST,
 }

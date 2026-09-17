@@ -1,9 +1,13 @@
 package com.game_service.mahjong.mapper;
 
+import com.game_service.common.dto.MahjongGameMatchResponse;
+import com.game_service.common.enums.GameResult;
+import com.game_service.common.enums.GameType;
 import com.game_service.mahjong.domain.dto.MahjongBoardResponse;
 import com.game_service.mahjong.domain.dto.MahjongGameResponse;
 import com.game_service.mahjong.domain.dto.MahjongTileResponse;
 import com.game_service.mahjong.domain.entity.Board;
+import com.game_service.mahjong.domain.entity.Mahjong;
 import com.game_service.mahjong.domain.entity.TileFace;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -63,4 +67,7 @@ public interface MahjongGameMapper {
                                        boolean deadlocked,
                                        UUID opponentGuid,
                                        int opponentTilesRemaining);
+
+    MahjongGameMatchResponse toMatchResponse(Mahjong mahjong, UUID userGuid, GameType gameType, GameResult gameResult);
+
 }

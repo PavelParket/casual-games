@@ -80,7 +80,7 @@ dependencies {
     implementation "net.javacrumbs.shedlock:shedlock-spring:${shedLock}"
     implementation "net.javacrumbs.shedlock:shedlock-provider-redis-spring:${shedLock}"
 
-    //  gRPC
+    //gRPC
     implementation "net.devh:grpc-server-spring-boot-starter:${grpcSpring}"
     implementation "net.devh:grpc-client-spring-boot-starter:${grpcSpring}"
 

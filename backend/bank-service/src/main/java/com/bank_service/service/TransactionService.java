@@ -1,8 +1,8 @@
 package com.bank_service.service;
 
 import com.bank_service.domain.dto.DepositRequest;
-import com.bank_service.domain.dto.PageResponse;
 import com.bank_service.domain.dto.TransactionResponse;
+import com.bank_service.domain.dto.TransactionResponseList;
 import com.bank_service.domain.entity.Transaction;
 import com.bank_service.domain.enums.TransactionStatus;
 import com.bank_service.domain.enums.TransactionType;
@@ -62,14 +62,16 @@ public class TransactionService {
     private final PermissionValidator permissionValidator;
 
     @Transactional(readOnly = true)
-    public PageResponse<TransactionResponse> getByUserGuid(UUID userGuid, Pageable pageable, AuthenticationToken token) {
+    public TransactionResponseList getByUserGuid(UUID userGuid, Pageable pageable, AuthenticationToken token) {
         if (!permissionValidator.hasAccess(Permissions.TRANSACTION, Operation.READ, permissionHelper.getContext(userGuid, token), token)) {
             throw new ForbiddenException(String.format(FORBIDDEN_READ_TRANSACTIONS, userGuid));
         }
 
         Page<Transaction> transactions = transactionRepository.findByUserGuidAndStatus(userGuid, TransactionStatus.SUCCESS, pageable);
 
-        return PageResponse.of(transactions.map(transactionMapper::toResponse));
+        return TransactionResponseList.builder()
+                .transactions(transactionMapper.toPagedModel(transactions, transactionMapper::toResponse))
+                .build();
     }
 
     @Transactional
