@@ -1,5 +1,6 @@
 package com.websocket_hub.service.scheduler;
 
+import com.cron_starter.service.CronService;
 import com.websocket_hub.config.properies.RoomCleanupProperties;
 import com.websocket_hub.domain.entity.RoomMetadata;
 import com.websocket_hub.domain.enums.RoomStatus;
@@ -8,6 +9,7 @@ import com.websocket_hub.manager.AbstractRoomManager;
 import com.websocket_hub.service.helper.KafkaMessageHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -19,13 +21,15 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class RoomCleanupScheduler {
+public class RoomCleanupScheduler implements CronService {
 
-    private final static String CLEANUP_EMPTY = "CLEANUP_EMPTY";
-    private final static String CLEANUP_WAITING_STALE = "CLEANUP_WAITING_STALE";
-    private final static String CLEANUP_IN_PROGRESS_EMPTY = "CLEANUP_IN_PROGRESS_EMPTY";
-    private final static String CLEANUP_IN_PROGRESS_STALE = "CLEANUP_IN_PROGRESS_STALE";
-    private final static String CLEANUP_FINISHED = "CLEANUP_FINISHED";
+    private static final String CODE = "room-cleanup";
+    private static final String DESCRIPTION = "Cleanup rooms";
+
+    private static final String CLEANUP_WAITING_STALE = "CLEANUP_WAITING_STALE";
+    private static final String CLEANUP_IN_PROGRESS_EMPTY = "CLEANUP_IN_PROGRESS_EMPTY";
+    private static final String CLEANUP_IN_PROGRESS_STALE = "CLEANUP_IN_PROGRESS_STALE";
+    private static final String CLEANUP_FINISHED = "CLEANUP_FINISHED";
 
     private final RoomCleanupProperties roomCleanupProperties;
 
@@ -34,8 +38,14 @@ public class RoomCleanupScheduler {
     private final KafkaMessageHelper kafkaMessageHelper;
 
     @Scheduled(cron = "${cron.room-cleanup.cleanup-rooms}")
-    public void runCleanup() {
-        log.info("Room cleanup: main pass started");
+    @SchedulerLock(lockAtLeastFor = "PT2M", lockAtMostFor = "PT30M", name = CODE)
+    public void scheduled() {
+        run();
+    }
+
+    @Override
+    public void run() {
+        log.info("Started job: {} at {}", DESCRIPTION, Instant.now());
 
         roomManagers.stream()
                 .filter(manager -> Objects.nonNull(manager.getRedisKey()))
@@ -47,26 +57,7 @@ public class RoomCleanupScheduler {
                     }
                 });
 
-        log.info("Room cleanup: main pass finished");
-    }
-
-    @Scheduled(cron = "${cron.room-cleanup.cleanup-pending-delete-rooms}")
-    public void runCleanupPendingDelete() {
-        log.info("Room cleanup: pending-delete pass started");
-
-        roomManagers.stream()
-                .filter(manager -> manager.getRedisKey() != null)
-                .forEach(manager -> {
-                    try {
-                        manager.getAllMetadata().stream()
-                                .filter(meta -> RoomStatus.PENDING_DELETE.equals(meta.getStatus()))
-                                .forEach(meta -> processPendingDelete(meta, manager));
-                    } catch (Exception e) {
-                        log.error("Room cleanup pending-delete pass failed for manager={}", manager.getRoomType(), e);
-                    }
-                });
-
-        log.info("Room cleanup: pending-delete pass finished");
+        log.info("Finished job: {} at {}", DESCRIPTION, Instant.now());
     }
 
     private void processRoom(RoomMetadata metadata, AbstractRoomManager manager) {
@@ -120,17 +111,6 @@ public class RoomCleanupScheduler {
         }
     }
 
-    private void processPendingDelete(RoomMetadata metadata, AbstractRoomManager manager) {
-        if (metadata.getParticipantCount() == 0) {
-            deleteRoom(metadata, manager, CLEANUP_EMPTY);
-        } else {
-            RoomStatus rollback = metadata.getType().isAllowsLateJoin()
-                    ? RoomStatus.IN_PROGRESS
-                    : RoomStatus.WAITING;
-            manager.updateRoomStatus(metadata.getId(), rollback);
-        }
-    }
-
     private void kickAndDelete(RoomMetadata metadata, AbstractRoomManager manager, String reason) {
         manager.kickAll(metadata.getId());
         manager.delete(metadata.getId());
@@ -154,5 +134,15 @@ public class RoomCleanupScheduler {
             case HORSE_RACE -> Long.MAX_VALUE;
             case MAHJONG -> roomCleanupProperties.mahjongInProgressTimeoutMinutes();
         };
+    }
+
+    @Override
+    public String getCode() {
+        return CODE;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
     }
 }

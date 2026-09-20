@@ -22,41 +22,41 @@ public class ServiceExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleMissingRefreshToken(MissingRefreshTokenException e, HttpServletRequest request) {
         log.warn("Missing refresh token: path={}", request.getRequestURI());
-        return ErrorResponse.of(ErrorCode.NO_SESSION, HttpStatus.UNAUTHORIZED, e.getMessage(), null, request.getRequestURI());
+        return ErrorResponse.of(ErrorCode.NO_SESSION, e.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(InvalidTokenException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleInvalidToken(InvalidTokenException e, HttpServletRequest request) {
         log.warn("Invalid refresh token: {}", e.getMessage());
-        return ErrorResponse.of(ErrorCode.INVALID_TOKEN, HttpStatus.UNAUTHORIZED, e.getMessage(), null, request.getRequestURI());
+        return ErrorResponse.of(ErrorCode.INVALID_TOKEN, e.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(SessionRevokedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleSessionRevoked(SessionRevokedException e, HttpServletRequest request) {
         log.warn("Session revoked: {}", e.getMessage());
-        return ErrorResponse.of(ErrorCode.SESSION_REVOKED, HttpStatus.UNAUTHORIZED, e.getMessage(), null, request.getRequestURI());
+        return ErrorResponse.of(ErrorCode.SESSION_REVOKED, e.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(CredentialsExpiredException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleExpiredCredentials(CredentialsExpiredException e, HttpServletRequest request) {
         log.warn("Credentials expired: {}", e.getMessage());
-        return ErrorResponse.of(ErrorCode.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, e.getMessage(), null, request.getRequestURI());
+        return ErrorResponse.of(ErrorCode.UNAUTHORIZED, e.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadCredentials(BadCredentialsException e, HttpServletRequest request) {
         log.warn("Bad credentials: {}", e.getMessage());
-        return ErrorResponse.of(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, e.getMessage(), null, request.getRequestURI());
+        return ErrorResponse.of(ErrorCode.BAD_REQUEST, e.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleUsernameNotFound(UsernameNotFoundException e, HttpServletRequest request) {
         log.warn("User not found: {}", e.getMessage());
-        return ErrorResponse.of(ErrorCode.NOT_FOUND, HttpStatus.NOT_FOUND, e.getMessage(), null, request.getRequestURI());
+        return ErrorResponse.of(ErrorCode.NOT_FOUND, e.getMessage(), request.getRequestURI(), null);
     }
 }

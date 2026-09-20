@@ -22,64 +22,39 @@ public class ServiceExceptionHandler {
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
     public ErrorResponse handleInvalidAttachmentType(InvalidAttachmentTypeException ex, HttpServletRequest request) {
         log.warn("Invalid attachment type: {}", ex.getMessage());
-        return ErrorResponse.of(
-                ErrorCode.BAD_REQUEST,
-                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-                ex.getMessage(),
-                null,
-                request.getRequestURI()
-        );
+
+        return ErrorResponse.of(ErrorCode.UNSUPPORTED_MEDIA_TYPE, ex.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(InvalidImageDimensionsException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleInvalidDimensions(InvalidImageDimensionsException ex, HttpServletRequest request) {
         log.warn("Invalid image dimensions: {}", ex.getMessage());
-        return ErrorResponse.of(
-                ErrorCode.BAD_REQUEST,
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage(),
-                null,
-                request.getRequestURI()
-        );
+
+        return ErrorResponse.of(ErrorCode.BAD_REQUEST, ex.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(CorruptedImageException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleCorruptedImage(CorruptedImageException ex, HttpServletRequest request) {
         log.warn("Corrupted image: {}", ex.getMessage());
-        return ErrorResponse.of(
-                ErrorCode.BAD_REQUEST,
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage(),
-                null,
-                request.getRequestURI()
-        );
+
+        return ErrorResponse.of(ErrorCode.BAD_REQUEST, ex.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
     public ErrorResponse handleMaxUploadSize(MaxUploadSizeExceededException ex, HttpServletRequest request) {
         log.warn("Upload size exceeded: {}", ex.getMessage());
-        return ErrorResponse.of(
-                ErrorCode.BAD_REQUEST,
-                HttpStatus.PAYLOAD_TOO_LARGE,
-                TOO_LARGE_UPLOADING_FILE,
-                null,
-                request.getRequestURI()
-        );
+
+        return ErrorResponse.of(ErrorCode.PAYLOAD_TOO_LARGE, TOO_LARGE_UPLOADING_FILE, request.getRequestURI(), null);
     }
 
     @ExceptionHandler(MissingServletRequestPartException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMissingServletRequestPart(MissingServletRequestPartException ex, HttpServletRequest request) {
         log.warn("Missing request part: {}", ex.getRequestPartName());
-        return ErrorResponse.of(
-                ErrorCode.BAD_REQUEST,
-                HttpStatus.BAD_REQUEST,
-                FILES_ARE_MISSING,
-                null,
-                request.getRequestURI()
-        );
+
+        return ErrorResponse.of(ErrorCode.BAD_REQUEST, FILES_ARE_MISSING, request.getRequestURI(), null);
     }
 }

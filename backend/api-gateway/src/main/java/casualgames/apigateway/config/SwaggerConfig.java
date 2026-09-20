@@ -12,7 +12,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@OpenAPIDefinition(info = @Info(title = "Api Gateway API", version = "v1"))
+@OpenAPIDefinition(
+        info = @Info(title = "Api Gateway API", version = "v1")
+)
 @SecurityScheme(
         name = "bearerAuth",
         type = SecuritySchemeType.HTTP,

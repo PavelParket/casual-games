@@ -35,10 +35,14 @@ repositories {
     mavenCentral()
 }
 
+def shedLock = '7.7.0'
+
 dependencies {
     implementation "com.casualgames:common-utils:${commonUtilsVersion}"
     implementation "com.casualgames:security-starter:${commonUtilsVersion}"
     implementation "com.casualgames:kafka-starter:${commonUtilsVersion}"
+    implementation "com.casualgames:redis-starter:${commonUtilsVersion}"
+    implementation "com.casualgames:cron-starter:${commonUtilsVersion}"
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -46,6 +50,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    implementation "net.javacrumbs.shedlock:shedlock-spring:${shedLock}"
+    implementation "net.javacrumbs.shedlock:shedlock-provider-redis-spring:${shedLock}"
 
     implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'

@@ -32,13 +32,13 @@ spring:
       access-expiration: ${JWT_ACCESS_EXPIRATION}
       refresh-expiration: ${JWT_REFRESH_EXPIRATION}
       public-paths:
+        - /websocket-hub-service/doc/**
         - /ws/room
         - /ws/t-t-t
         - /ws/de-coder
         - /ws/horse-race
         - /ws/durak
         - /ws/mahjong
-        - /websocket-hub-service/doc/**
 
   data:
     redis:

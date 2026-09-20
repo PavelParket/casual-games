@@ -1,32 +1,53 @@
 package com.bank_service.service.scheduler;
 
-import com.bank_service.domain.dto.GenerateSummaryRequest;
 import com.bank_service.service.TransactionSummaryService;
+import com.cron_starter.service.CronService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 
-@Component
+@Service
 @RequiredArgsConstructor
 @Slf4j
-public class TransactionSummaryScheduler {
+public class TransactionSummaryScheduler implements CronService {
 
-    private final TransactionSummaryService summaryService;
+    private static final String CODE = "transaction-summary-generation";
+    private static final String DESCRIPTION = "Generate transaction summaries";
+
+    private final TransactionSummaryService transactionSummaryService;
 
     @Scheduled(cron = "${cron.create-transaction-summaries}", zone = "UTC")
+    @SchedulerLock(lockAtLeastFor = "PT5M", lockAtMostFor = "PT30M", name = CODE)
+    public void scheduled() {
+        run();
+    }
+
+    @Override
     public void run() {
+        log.info("Started job: {} at {}", DESCRIPTION, Instant.now());
+
         LocalDate targetMonth = LocalDate.now(ZoneOffset.UTC).minusMonths(1);
 
-        log.info("Scheduler start transaction summaries generation for {}", targetMonth);
+        log.info("Target month: {}", targetMonth);
 
-        summaryService.generateSummary(
-                GenerateSummaryRequest.builder()
-                        .targetMonth(targetMonth)
-                        .build()
-        );
+        transactionSummaryService.generateSummary(targetMonth);
+
+        log.info("Finished job: {} at {}", DESCRIPTION, Instant.now());
+    }
+
+    @Override
+    public String getCode() {
+        return CODE;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
     }
 }
