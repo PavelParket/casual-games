@@ -64,13 +64,7 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
                                      ErrorCode errorCode,
                                      String path) {
         try {
-            ErrorResponse response = ErrorResponse.of(
-                    errorCode,
-                    status,
-                    errorCode.getMessage(),
-                    null,
-                    path
-            );
+            ErrorResponse response = ErrorResponse.of(errorCode, errorCode.getMessage(), path, null);
 
             byte[] bytes = objectMapper.writeValueAsBytes(response);
             DataBuffer dataBuffer = exchange.getResponse().bufferFactory().wrap(bytes);

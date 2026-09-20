@@ -32,20 +32,15 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
                 request.getMethod(),
                 request.getRequestURI(),
                 request.getHeader("User-Agent"),
-                authException.getMessage()
+                authException.getMessage(),
+                authException
         );
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
-        ErrorResponse errorResponse = ErrorResponse.of(
-                ErrorCode.UNAUTHORIZED,
-                HttpStatus.UNAUTHORIZED,
-                UNAUTHORIZED,
-                null,
-                request.getRequestURI()
-        );
+        ErrorResponse errorResponse = ErrorResponse.of(ErrorCode.UNAUTHORIZED, UNAUTHORIZED, request.getRequestURI(), null);
 
         objectMapper.writeValue(response.getWriter(), errorResponse);
     }

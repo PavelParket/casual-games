@@ -32,20 +32,15 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
                 request.getMethod(),
                 request.getRequestURI(),
                 request.getHeader("User-Agent"),
-                accessDeniedException.getMessage()
+                accessDeniedException.getMessage(),
+                accessDeniedException
         );
 
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
-        ErrorResponse errorResponse = ErrorResponse.of(
-                ErrorCode.FORBIDDEN,
-                HttpStatus.FORBIDDEN,
-                FORBIDDEN,
-                null,
-                request.getRequestURI()
-        );
+        ErrorResponse errorResponse = ErrorResponse.of(ErrorCode.FORBIDDEN, FORBIDDEN, request.getRequestURI(), null);
 
         objectMapper.writeValue(response.getWriter(), errorResponse);
     }

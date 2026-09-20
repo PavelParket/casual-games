@@ -2,7 +2,6 @@ package com.common_utils.dto;
 
 import com.common_utils.enums.ErrorCode;
 import lombok.Builder;
-import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
 import java.util.List;
@@ -26,14 +25,13 @@ public record ErrorResponse(
 ) {
 
     public static ErrorResponse of(ErrorCode errorCode,
-                                   HttpStatus status,
                                    String message,
-                                   Map<String, List<String>> details,
-                                   String path) {
+                                   String path,
+                                   Map<String, List<String>> details) {
         return ErrorResponse.builder()
                 .errorCode(errorCode)
                 .message(message)
-                .status(status.value())
+                .status(errorCode.getHttpStatus().value())
                 .timestamp(Instant.now())
                 .path(path)
                 .details(details)
@@ -43,9 +41,9 @@ public record ErrorResponse(
     public static ErrorResponse of(String path) {
         return ErrorResponse.of(
                 ErrorCode.INTERNAL_SERVER_ERROR,
-                HttpStatus.INTERNAL_SERVER_ERROR,
                 ErrorCode.INTERNAL_SERVER_ERROR.getMessage(),
-                null,
-                path);
+                path,
+                null
+        );
     }
 }

@@ -38,7 +38,7 @@ public class RoomCleanupScheduler implements CronService {
     private final KafkaMessageHelper kafkaMessageHelper;
 
     @Scheduled(cron = "${cron.room-cleanup.cleanup-rooms}")
-    @SchedulerLock(lockAtLeastFor = "PT5M", lockAtMostFor = "PT30M", name = CODE)
+    @SchedulerLock(lockAtLeastFor = "PT2M", lockAtMostFor = "PT30M", name = CODE)
     public void scheduled() {
         run();
     }

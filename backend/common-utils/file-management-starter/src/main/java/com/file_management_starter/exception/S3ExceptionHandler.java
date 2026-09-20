@@ -16,9 +16,9 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import static com.file_management_starter.config.ResourceMessageConstants.NOT_FOUND_RESOURCE_IN_STORAGE;
 import static org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type.SERVLET;
 
+@ConditionalOnWebApplication(type = SERVLET)
 @RestControllerAdvice
 @ConditionalOnClass(S3Client.class)
-@ConditionalOnWebApplication(type = SERVLET)
 @Slf4j
 public class S3ExceptionHandler {
 
@@ -26,25 +26,15 @@ public class S3ExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNoSuchKeyException(NoSuchKeyException ex, HttpServletRequest request) {
         log.warn("S3 object not found: {}", ex.getMessage());
-        return ErrorResponse.of(
-                ErrorCode.NOT_FOUND,
-                HttpStatus.NOT_FOUND,
-                NOT_FOUND_RESOURCE_IN_STORAGE,
-                null,
-                request.getRequestURI()
-        );
+
+        return ErrorResponse.of(ErrorCode.NOT_FOUND, NOT_FOUND_RESOURCE_IN_STORAGE, request.getRequestURI(), null);
     }
 
     @ExceptionHandler(S3OperationException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ErrorResponse handleS3OperationException(S3OperationException ex, HttpServletRequest request) {
         log.error("S3 operation failed: {}", ex.getMessage(), ex);
-        return ErrorResponse.of(
-                ErrorCode.SERVICE_UNAVAILABLE,
-                HttpStatus.SERVICE_UNAVAILABLE,
-                ErrorCode.SERVICE_UNAVAILABLE.getMessage(),
-                null,
-                request.getRequestURI()
-        );
+
+        return ErrorResponse.of(ErrorCode.SERVICE_UNAVAILABLE, ErrorCode.SERVICE_UNAVAILABLE.getMessage(), request.getRequestURI(), null);
     }
 }

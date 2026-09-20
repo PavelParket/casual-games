@@ -142,10 +142,9 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
         try {
             ErrorResponse errorResponse = ErrorResponse.of(
                     errorCode,
-                    HttpStatus.UNAUTHORIZED,
                     message,
-                    null,
-                    path
+                    path,
+                    null
             );
 
             byte[] bytes = objectMapper.writeValueAsBytes(errorResponse);
