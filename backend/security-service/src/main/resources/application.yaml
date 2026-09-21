@@ -93,7 +93,7 @@ logging:
   level:
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
     org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY:INFO}
-    com.grpc_utils: ${LOG_LEVEL_GRPC:INFO}
+    com.casualgames.grpcutils: ${LOG_LEVEL_GRPC:INFO}
 
 springdoc:
   preLoadingEnabled: true

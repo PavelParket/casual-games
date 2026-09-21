@@ -1,0 +1,19 @@
+package com.casualgames.kafkastarter.config;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class KafkaTopics {
+
+    private String roomLifecycle;
+    private String user;
+    private String updateSubscription;
+    private String userNotification;
+    private String friendship;
+}

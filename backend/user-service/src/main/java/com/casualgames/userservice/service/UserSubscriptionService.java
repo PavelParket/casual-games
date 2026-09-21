@@ -1,0 +1,330 @@
+package com.casualgames.userservice.service;
+
+import com.casualgames.commonutils.enums.NotificationEventParams;
+import com.casualgames.commonutils.exception.BadRequestException;
+import com.casualgames.commonutils.exception.ConflictException;
+import com.casualgames.commonutils.exception.ForbiddenException;
+import com.casualgames.commonutils.exception.NotFoundException;
+import com.casualgames.securitystarter.config.AuthenticationToken;
+import com.casualgames.securitystarter.enums.Operation;
+import com.casualgames.securitystarter.enums.Permissions;
+import com.casualgames.securitystarter.enums.Status;
+import com.casualgames.securitystarter.validator.PermissionValidator;
+import com.casualgames.userservice.domain.dto.SubscriptionRequest;
+import com.casualgames.userservice.domain.dto.SubscriptionResponse;
+import com.casualgames.userservice.domain.entity.SubscriptionPlan;
+import com.casualgames.userservice.domain.entity.User;
+import com.casualgames.userservice.domain.entity.UserSubscription;
+import com.casualgames.userservice.mapper.SubscriptionMapper;
+import com.casualgames.userservice.repository.SubscriptionPlanRepository;
+import com.casualgames.userservice.repository.UserRepository;
+import com.casualgames.userservice.repository.UserSubscriptionRepository;
+import com.casualgames.userservice.service.helper.KafkaMessageHelper;
+import com.casualgames.userservice.service.helper.PermissionHelper;
+import com.casualgames.userservice.service.helper.SubscriptionHelper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.UUID;
+
+import static com.casualgames.userservice.config.ResourceMessageConstants.BAD_REQUEST_NO_NECESSARY_BALANCE_AMOUNT;
+import static com.casualgames.userservice.config.ResourceMessageConstants.CONFLICT_SAME_TIER_SUBSCRIPTION;
+import static com.casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_READ_SUBSCRIPTION;
+import static com.casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_UPDATE_SUBSCRIPTION;
+import static com.casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_SUBSCRIPTION;
+import static com.casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_SUBSCRIPTION_PLAN;
+import static com.casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_USER;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class UserSubscriptionService {
+
+    private static final String SUBSCRIPTION_UPGRADE = "SUBSCRIPTION_UPGRADE";
+    private static final int SUBSCRIPTION_EXPIRING_IN_DAYS = 3;
+
+    private final UserRepository userRepository;
+
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
+
+    private final UserSubscriptionRepository userSubscriptionRepository;
+
+    private final SubscriptionMapper subscriptionMapper;
+
+    private final SubscriptionHelper subscriptionHelper;
+
+    private final KafkaMessageHelper kafkaMessageHelper;
+
+    private final PermissionHelper permissionHelper;
+
+    private final PermissionValidator permissionValidator;
+
+    @Transactional
+    public SubscriptionResponse purchase(SubscriptionRequest request, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(
+                Permissions.SUBSCRIPTION,
+                Operation.UPDATE,
+                permissionHelper.getContext(token.getGuid(), token),
+                token
+        )) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_SUBSCRIPTION);
+        }
+
+        User user = userRepository.findByGuidForUpdate(token.getGuid())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, token.getGuid())));
+
+        SubscriptionPlan currentPlan = subscriptionPlanRepository.findByStatus(user.getStatus())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION_PLAN, user.getStatus())));
+
+        SubscriptionPlan targetPlan = subscriptionPlanRepository.findByStatus(request.status())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION_PLAN, request.status())));
+
+        if (currentPlan.getTier().equals(targetPlan.getTier())) {
+            throw new ConflictException(String.format(CONFLICT_SAME_TIER_SUBSCRIPTION, request.status()));
+        }
+
+        UserSubscription currentSubscription = userSubscriptionRepository.findByUserGuid(token.getGuid())
+                .orElse(
+                        UserSubscription.builder()
+                                .userGuid(token.getGuid())
+                                .build()
+                );
+
+        return currentPlan.getTier() > targetPlan.getTier()
+                ? downgrade(request.status(), currentSubscription, user)
+                : upgrade(user, currentSubscription, currentPlan, targetPlan, Instant.now());
+    }
+
+    private SubscriptionResponse upgrade(User user,
+                                         UserSubscription subscription,
+                                         SubscriptionPlan currentPlan,
+                                         SubscriptionPlan targetPlan,
+                                         Instant date) {
+        BigDecimal amount;
+
+        if (currentPlan.getTier() == 0) {
+            amount = targetPlan.getPrice();
+        } else {
+            amount = subscriptionHelper.calculateUpgradeAmount(subscription, currentPlan, targetPlan, date);
+        }
+
+        BigDecimal balanceBefore = user.getBalance();
+        BigDecimal balanceAfter = balanceBefore.subtract(amount);
+
+        if (balanceAfter.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BadRequestException(BAD_REQUEST_NO_NECESSARY_BALANCE_AMOUNT);
+        }
+
+        Status targetStatus = targetPlan.getStatus();
+
+        user.setBalance(balanceAfter);
+        user.setStatus(targetStatus);
+        userRepository.save(user);
+
+        subscription.setStartedAt(date);
+        subscription.setExpiresAt(date.plus(SubscriptionHelper.SUBSCRIPTION_PERIOD_DAYS, ChronoUnit.DAYS));
+        subscription.setNewStatus(null);
+        subscription.setStatusChangeAt(null);
+
+        userSubscriptionRepository.save(subscription);
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUpdateSubscription(),
+                kafkaMessageHelper.buildUpdateSubscriptionEvent(user.getGuid(), SUBSCRIPTION_UPGRADE, amount, balanceBefore, balanceAfter)
+        );
+
+        return subscriptionMapper.toResponse(subscription, targetStatus);
+    }
+
+    private SubscriptionResponse downgrade(Status targetStatus,
+                                           UserSubscription currentSubscription,
+                                           User user) {
+        currentSubscription.setNewStatus(targetStatus);
+        currentSubscription.setStatusChangeAt(currentSubscription.getExpiresAt());
+        userSubscriptionRepository.save(currentSubscription);
+
+        return subscriptionMapper.toResponse(currentSubscription, user.getStatus());
+    }
+
+    @Transactional(readOnly = true)
+    public SubscriptionResponse get(AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(
+                Permissions.SUBSCRIPTION,
+                Operation.READ,
+                permissionHelper.getContext(token.getGuid(), token),
+                token
+        )) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_READ_SUBSCRIPTION);
+        }
+
+        User user = userRepository.findByGuid(token.getGuid())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, token.getGuid())));
+
+        UserSubscription subscription = userSubscriptionRepository.findByUserGuid(token.getGuid())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION, token.getGuid())));
+
+        return subscriptionMapper.toResponse(subscription, user.getStatus());
+    }
+
+    @Transactional
+    public SubscriptionResponse updateAutoRenew(Boolean enable, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(
+                Permissions.SUBSCRIPTION,
+                Operation.UPDATE,
+                permissionHelper.getContext(token.getGuid(), token),
+                token
+        )) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_SUBSCRIPTION);
+        }
+
+        UserSubscription subscription = userSubscriptionRepository.findByUserGuid(token.getGuid())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION, token.getGuid())));
+
+        subscription.setAutoRenew(enable);
+        userSubscriptionRepository.save(subscription);
+
+        User user = userRepository.findByGuid(token.getGuid())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, token.getGuid())));
+
+        return subscriptionMapper.toResponse(subscription, user.getStatus());
+    }
+
+    @Transactional
+    public void processOne(UserSubscription subscription, Instant now) {
+        if (subscription == null) {
+            return;
+        }
+
+        try {
+            boolean hasChange = subscription.getNewStatus() != null
+                    && subscription.getStatusChangeAt() != null
+                    && !subscription.getStatusChangeAt().isAfter(now);
+
+            if (hasChange) {
+                handleScheduledChange(subscription, now);
+            } else if (!subscription.getExpiresAt().isAfter(now)) {
+                handleExpiry(subscription, now);
+            }
+        } catch (Exception e) {
+            log.error("Unexpected error processing subscription for userGuid={}", subscription.getUserGuid(), e);
+        }
+    }
+
+    private void handleExpiry(UserSubscription subscription, Instant now) {
+        UUID userGuid = subscription.getUserGuid();
+
+        if (!subscription.isAutoRenew()) {
+            resetToDefault(userGuid);
+            return;
+        }
+
+        User user = userRepository.findByGuidForUpdate(userGuid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, userGuid)));
+
+        SubscriptionPlan plan = subscriptionPlanRepository.findByStatus(user.getStatus())
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION_PLAN, user.getStatus())));
+
+        if (plan.getTier() == 0) {
+            return;
+        }
+
+        chargeAndRenew(subscription, user, user.getStatus(), plan.getPrice(), now);
+    }
+
+    private void handleScheduledChange(UserSubscription subscription, Instant now) {
+        UUID userGuid = subscription.getUserGuid();
+        Status targetStatus = subscription.getNewStatus();
+
+        SubscriptionPlan targetPlan = subscriptionPlanRepository.findByStatus(targetStatus)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_SUBSCRIPTION_PLAN, targetStatus)));
+
+        if (targetPlan.getTier() == 0) {
+            resetToDefault(userGuid);
+            return;
+        }
+
+        User user = userRepository.findByGuidForUpdate(userGuid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, userGuid)));
+
+        chargeAndRenew(subscription, user, targetStatus, targetPlan.getPrice(), now);
+    }
+
+    private void chargeAndRenew(UserSubscription subscription, User user, Status targetStatus, BigDecimal price, Instant now) {
+        UUID userGuid = subscription.getUserGuid();
+
+        BigDecimal balanceBefore = user.getBalance();
+        BigDecimal balanceAfter = balanceBefore.subtract(price);
+
+        if (balanceAfter.compareTo(BigDecimal.ZERO) < 0) {
+            resetToDefault(userGuid);
+            return;
+        }
+
+        user.setBalance(balanceAfter);
+        user.setStatus(targetStatus);
+        userRepository.save(user);
+
+        subscription.setStartedAt(now);
+        subscription.setExpiresAt(now.plus(SubscriptionHelper.SUBSCRIPTION_PERIOD_DAYS, ChronoUnit.DAYS));
+        subscription.setNewStatus(null);
+        subscription.setStatusChangeAt(null);
+        userSubscriptionRepository.save(subscription);
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUpdateSubscription(),
+                kafkaMessageHelper.buildUpdateSubscriptionEvent(userGuid, SUBSCRIPTION_UPGRADE, price, balanceBefore, balanceAfter)
+        );
+    }
+
+    private void resetToDefault(UUID userGuid) {
+        userRepository.updateStatus(userGuid, Status.DEFAULT.name());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserSubscription> findExpiringOrScheduled(Instant now, PageRequest pageRequest) {
+        return userSubscriptionRepository.findExpiringOrScheduled(now, pageRequest);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserSubscription> findExpiringInDays(Instant now, PageRequest pageRequest) {
+        Instant daysLeft = now.plus(SUBSCRIPTION_EXPIRING_IN_DAYS, ChronoUnit.DAYS);
+        return userSubscriptionRepository.findExpiringInDays(now, daysLeft, pageRequest);
+    }
+
+    @Transactional
+    public void sendExpiringInDaysNotification(UserSubscription subscription, Instant now) {
+        try {
+            User user = userRepository.findByGuid(subscription.getUserGuid())
+                    .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, subscription.getUserGuid())));
+
+            Duration remaining = Duration.between(now, subscription.getExpiresAt());
+            long daysLeft = remaining.toDays();
+
+            if (remaining.minusDays(daysLeft).compareTo(Duration.ZERO) > 0) {
+                daysLeft++;
+            }
+
+            Map<String, String> params = Map.of(
+                    NotificationEventParams.USERNAME.getParam(), user.getUsername(),
+                    NotificationEventParams.TIER.getParam(), user.getStatus().name(),
+                    NotificationEventParams.DAYS_LEFT.getParam(), String.valueOf(daysLeft)
+            );
+
+            kafkaMessageHelper.save(
+                    kafkaMessageHelper.getTopics().getUserNotification(),
+                    kafkaMessageHelper.buildSubscriptionExpiringInDaysEvent(subscription.getUserGuid(), subscription.getExpiresAt(), params)
+            );
+        } catch (Exception e) {
+            log.error("Unexpected error notifying expiring subscription for userGuid={}", subscription.getUserGuid(), e);
+        }
+    }
+}

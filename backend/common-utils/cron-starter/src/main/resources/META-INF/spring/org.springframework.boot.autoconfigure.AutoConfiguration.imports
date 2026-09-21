@@ -1,2 +1,2 @@
-com.cron_starter.config.CronAutoConfiguration
-com.cron_starter.config.CronOpenApiCustomizer
+com.casualgames.cronstarter.config.CronAutoConfiguration
+com.casualgames.cronstarter.config.CronOpenApiCustomizer
