@@ -107,7 +107,7 @@ logging:
   level:
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
     org.springframework.web.websocket: ${LOG_LEVEL_WEBSOCKET:INFO}
-    com.grpc_utils: ${LOG_LEVEL_GRPC:INFO}
+    com.casualgames.grpcutils: ${LOG_LEVEL_GRPC:INFO}
 
 springdoc:
   preLoadingEnabled: true

@@ -1,0 +1,83 @@
+package com.casualgames.userservice.repository;
+
+import com.casualgames.userservice.domain.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findByEmail(String email);
+
+    Optional<User> findByGuid(UUID guid);
+
+    boolean existsByGuid(UUID guid);
+
+    void deleteByGuid(UUID guid);
+
+    @Query(value = """
+            SELECT *
+            FROM users
+            WHERE guid IN :guids
+            FOR UPDATE
+            """, nativeQuery = true)
+    List<User> findAllByGuidWithLock(Collection<UUID> guids);
+
+    Collection<User> findAllByGuidIn(Collection<UUID> guids);
+
+    @Query(value = """
+            SELECT *
+            FROM users
+            WHERE guid = :guid
+            FOR UPDATE
+            """, nativeQuery = true)
+    Optional<User> findByGuidForUpdate(UUID guid);
+
+    @Query(value = """
+            SELECT *
+            FROM users
+            WHERE (:username IS NULL OR username ILIKE CONCAT('%', :username, '%'))
+            AND (:status IS NULL OR status = :status)
+            """, nativeQuery = true)
+    List<User> search(String username, String status);
+
+    @Modifying
+    @Query(value = """
+            UPDATE users
+            SET status = :status
+            WHERE guid = :guid
+            """, nativeQuery = true)
+    void updateStatus(UUID guid, String status);
+
+    @Query(value = """
+            SELECT balance
+            FROM users
+            WHERE guid = :guid
+            """, nativeQuery = true)
+    Optional<BigDecimal> getBalance(UUID guid);
+
+    @Query(value = """
+            SELECT *
+            FROM users
+            WHERE lower(username) ILIKE lower(CONCAT('%',:username,'%'))
+            AND guid <> :actorGuid
+            """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM users
+                    WHERE lower(username) ILIKE lower(CONCAT('%',:username,'%'))
+                    AND guid <> :actorGuid
+                    """,
+            nativeQuery = true)
+    Page<User> searchByUsername(String username, UUID actorGuid, Pageable pageable);
+}

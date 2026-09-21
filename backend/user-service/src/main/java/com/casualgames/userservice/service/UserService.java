@@ -1,0 +1,246 @@
+package com.casualgames.userservice.service;
+
+import com.casualgames.commonutils.exception.ForbiddenException;
+import com.casualgames.commonutils.exception.NotFoundException;
+import com.casualgames.securitystarter.config.AuthenticationToken;
+import com.casualgames.securitystarter.config.PermissionContext;
+import com.casualgames.securitystarter.enums.Operation;
+import com.casualgames.securitystarter.enums.Permissions;
+import com.casualgames.securitystarter.enums.Role;
+import com.casualgames.securitystarter.validator.PermissionValidator;
+import com.casualgames.userservice.config.AttachmentsProperties;
+import com.casualgames.userservice.domain.dto.UpdateUserRequest;
+import com.casualgames.userservice.domain.dto.UserResponse;
+import com.casualgames.userservice.domain.dto.UserSearchFilterRequest;
+import com.casualgames.userservice.domain.entity.User;
+import com.casualgames.userservice.domain.enums.AttachmentType;
+import com.casualgames.userservice.mapper.UserMapper;
+import com.casualgames.userservice.repository.UserRepository;
+import com.casualgames.userservice.service.file.ImageFileService;
+import com.casualgames.userservice.service.grpc.client.GrpcSecurityClient;
+import com.casualgames.userservice.service.helper.KafkaMessageHelper;
+import com.casualgames.userservice.service.helper.PermissionHelper;
+import com.casualgames.userservice.validator.UserValidator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+import static com.casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_DELETE_PROFILE_PICTURE;
+import static com.casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_DELETE_USER;
+import static com.casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_READ_USER_BALANCE;
+import static com.casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_UPDATE_PROFILE_PICTURE;
+import static com.casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_UPDATE_USER;
+import static com.casualgames.userservice.config.ResourceMessageConstants.DO_NOT_HAVE_PERMISSION_TO_UPDATE_USER_ROLE;
+import static com.casualgames.userservice.config.ResourceMessageConstants.NOT_FOUND_USER;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class UserService {
+
+    private final UserRepository userRepository;
+
+    private final UserMapper userMapper;
+
+    private final UserValidator userValidator;
+
+    private final GrpcSecurityClient grpcSecurityClient;
+
+    private final PermissionHelper permissionHelper;
+
+    private final PermissionValidator permissionValidator;
+
+    private final KafkaMessageHelper kafkaMessageHelper;
+
+    private final ImageFileService imageFileService;
+
+    private final AttachmentsProperties attachmentsProperties;
+
+    @Transactional
+    public UserResponse update(UUID guid, UpdateUserRequest request, AuthenticationToken token) {
+        PermissionContext context = permissionHelper.getContext(guid, token);
+
+        if (!permissionValidator.hasAccess(Permissions.USER, Operation.UPDATE, context, token)) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_USER);
+        }
+
+        User target = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
+
+        userValidator.validateEmailForUpdate(request.email(), target);
+
+        permissionValidator.updateObject(target, request, context, token);
+
+        User saved = userRepository.save(target);
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
+
+        return buildResponse(saved, context, token);
+    }
+
+    public UserResponse buildResponse(User user, PermissionContext context, AuthenticationToken token) {
+        UserResponse response = userMapper.toResponse(user);
+        permissionValidator.readObject(response, context, token);
+        return response;
+    }
+
+    @Transactional
+    public void deleteByGuid(UUID guid, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(Permissions.USER, Operation.DELETE, permissionHelper.getContext(guid, token), token)) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_DELETE_USER);
+        }
+
+        if (!userRepository.existsByGuid(guid)) {
+            throw new NotFoundException(String.format(NOT_FOUND_USER, guid));
+        }
+
+        userRepository.deleteByGuid(guid);
+
+        grpcSecurityClient.delete(guid);
+    }
+
+    public List<UserResponse> findAll(AuthenticationToken token) {
+        return userRepository.findAll().stream()
+                .map(user -> buildResponse(
+                        user,
+                        permissionHelper.getContext(user.getGuid(), token),
+                        token
+                ))
+                .toList();
+    }
+
+    public List<UserResponse> search(UserSearchFilterRequest request, AuthenticationToken token) {
+        String status = request.status() == null ? null : request.status().name();
+        return userRepository.search(request.username(), status).stream()
+                .map(user -> buildResponse(user, permissionHelper.getContext(user.getGuid(), token), token))
+                .toList();
+    }
+
+    public UserResponse findByGuid(UUID guid, AuthenticationToken token) {
+        User user = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
+
+        return buildResponse(user, permissionHelper.getContext(user.getGuid(), token), token);
+    }
+
+    @Transactional
+    public UserResponse updateRole(UUID guid, Role role, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(Permissions.ROLE, Operation.UPDATE, permissionHelper.getContext(guid, token), token)) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_USER_ROLE);
+        }
+
+        User target = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
+
+        target.setRole(role);
+
+        User saved = userRepository.save(target);
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
+
+        return buildResponse(saved, permissionHelper.getContext(saved.getGuid(), token), token);
+    }
+
+    public BigDecimal getBalance(UUID guid, AuthenticationToken token) {
+        if (!permissionValidator.hasAccess(Permissions.BALANCE, Operation.READ, permissionHelper.getContext(guid, token), token)) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_READ_USER_BALANCE);
+        }
+
+        return userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)))
+                .getBalance();
+    }
+
+    public UserResponse uploadImageFile(UUID guid, MultipartFile fullFile, MultipartFile miniFile, AuthenticationToken token) {
+        PermissionContext context = permissionHelper.getContext(guid, token);
+
+        if (!permissionValidator.hasAccess(Permissions.USER, Operation.UPDATE, context, token)) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_UPDATE_PROFILE_PICTURE);
+        }
+
+        User user = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
+
+        String oldFullUrl = user.getLinkProfilePicture();
+        String oldMiniUrl = user.getLinkProfilePictureMini();
+
+        User updated = imageFileService.upload(user, fullFile, miniFile);
+        User saved = userRepository.save(updated);
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
+
+        String bucket = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE).getBucket();
+        imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);
+
+        log.info("Profile picture uploaded for user guid={}", guid);
+
+        return buildResponse(saved, context, token);
+    }
+
+    public void deleteImageFile(UUID guid, AuthenticationToken token) {
+        PermissionContext context = permissionHelper.getContext(guid, token);
+
+        if (!permissionValidator.hasAccess(Permissions.USER, Operation.UPDATE, context, token)) {
+            throw new ForbiddenException(DO_NOT_HAVE_PERMISSION_TO_DELETE_PROFILE_PICTURE);
+        }
+
+        User user = userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
+
+        String oldFullUrl = user.getLinkProfilePicture();
+        String oldMiniUrl = user.getLinkProfilePictureMini();
+
+        if (oldFullUrl == null && oldMiniUrl == null) {
+            return;
+        }
+
+        user.setLinkProfilePicture(null);
+        user.setLinkProfilePictureMini(null);
+        User saved = userRepository.save(user);
+
+        kafkaMessageHelper.save(
+                kafkaMessageHelper.getTopics().getUser(),
+                saved.getGuid().toString(),
+                kafkaMessageHelper.buildSynchronizedUserMessage(saved)
+        );
+
+        String bucket = attachmentsProperties.getByType().get(AttachmentType.PROFILE_PICTURE).getBucket();
+        imageFileService.deleteOldImages(bucket, oldFullUrl, oldMiniUrl);
+
+        log.info("Profile picture deleted for user guid={}", guid);
+    }
+
+    public User getByGuid(UUID guid) {
+        return userRepository.findByGuid(guid)
+                .orElseThrow(() -> new NotFoundException(String.format(NOT_FOUND_USER, guid)));
+    }
+
+    public Collection<User> getByGuidIn(List<UUID> guids) {
+        return userRepository.findAllByGuidIn(guids);
+    }
+
+    public Page<User> searchByUsername(String username, Pageable pageable, AuthenticationToken token) {
+        return userRepository.searchByUsername(username, token.getGuid(), pageable);
+    }
+}

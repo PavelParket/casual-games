@@ -1,2 +1,2 @@
-com.common_utils.config.CommonUtilsAutoConfiguration
-com.common_utils.config.OpenApiAutoConfiguration
+com.casualgames.commonutils.config.CommonUtilsAutoConfiguration
+com.casualgames.commonutils.config.OpenApiAutoConfiguration

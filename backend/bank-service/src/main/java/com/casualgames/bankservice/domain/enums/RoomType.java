@@ -1,0 +1,11 @@
+package com.casualgames.bankservice.domain.enums;
+
+public enum RoomType {
+
+    SYSTEM,
+    TIC_TAC_TOE,
+    DE_CODER,
+    HORSE_RACE,
+    DURAK,
+    MAHJONG
+}
